@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 
 const links = [
-  { label: "Destinations", href: "#destinations" },
-  { label: "Membership", href: "#membership" },
-  { label: "Experiences", href: "#experiences" },
-  { label: "Journal", href: "#journal" },
-  { label: "Contact", href: "#contact" },
+  { label: "Domestic", to: "/domestic" },
+  { label: "International", to: "/international" },
+  { label: "Blog", to: "/blog" },
+  { label: "About", to: "/about" },
+  { label: "Contact", to: "/contact" },
 ];
 
 export function Nav() {
@@ -24,7 +25,7 @@ export function Nav() {
     <motion.header
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6"
     >
       <nav
@@ -32,31 +33,32 @@ export function Nav() {
           scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent"
         }`}
       >
-        <a href="#top" className="flex items-center gap-2 font-display text-xl tracking-tight">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl tracking-tight">
           <span className="inline-block size-2 rounded-full bg-gold shadow-[0_0_18px_var(--gold)]" />
           <span className="text-foreground">Fly <span className="italic text-gold">n</span> Feel</span>
-        </a>
+        </Link>
 
         <ul className="hidden items-center gap-8 text-sm text-muted-foreground lg:flex">
           {links.map((l) => (
             <li key={l.label}>
-              <a
-                href={l.href}
+              <Link
+                to={l.to}
                 className="relative transition-colors hover:text-foreground"
+                activeProps={{ className: "text-foreground" }}
               >
                 {l.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
         <div className="flex items-center gap-3">
-          <a
-            href="#contact"
+          <Link
+            to="/contact"
             className="hidden rounded-full bg-gold px-5 py-2 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] md:inline-block"
           >
             Plan a Journey
-          </a>
+          </Link>
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
@@ -82,9 +84,9 @@ export function Nav() {
             <ul className="flex flex-col gap-4 font-display text-2xl">
               {links.map((l) => (
                 <li key={l.label}>
-                  <a onClick={() => setOpen(false)} href={l.href} className="block">
+                  <Link onClick={() => setOpen(false)} to={l.to} className="block">
                     {l.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
