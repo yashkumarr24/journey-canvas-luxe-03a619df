@@ -24,10 +24,15 @@ export default defineConfig({
     server: { entry: "server" },
   },
   // Enable Nitro explicitly so it runs outside the Lovable sandbox (e.g. on Vercel CI).
-  nitro: {
-    preset,
-    output: {
-      dir: outputDirByPreset[preset] ?? "dist",
-    },
-  },
+  nitro: (() => {
+    const dir = outputDirByPreset[preset] ?? "dist";
+    return {
+      preset,
+      output: {
+        dir,
+        serverDir: `${dir}/server`,
+        publicDir: `${dir}/client`,
+      },
+    };
+  })(),
 });
