@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
 import { Route as DomesticRouteImport } from './routes/domestic'
@@ -23,6 +24,11 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/domestic'
     | '/international'
     | '/privacy'
+    | '/sitemap.xml'
     | '/terms'
     | '/blog/$slug'
     | '/destinations/$slug'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/domestic'
     | '/international'
     | '/privacy'
+    | '/sitemap.xml'
     | '/terms'
     | '/blog/$slug'
     | '/destinations/$slug'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/domestic'
     | '/international'
     | '/privacy'
+    | '/sitemap.xml'
     | '/terms'
     | '/blog/$slug'
     | '/destinations/$slug'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   DomesticRoute: typeof DomesticRoute
   InternationalRoute: typeof InternationalRoute
   PrivacyRoute: typeof PrivacyRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   DomesticRoute: DomesticRoute,
   InternationalRoute: InternationalRoute,
   PrivacyRoute: PrivacyRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
@@ -250,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
