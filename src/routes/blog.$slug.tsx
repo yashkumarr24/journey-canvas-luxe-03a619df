@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
-import { getPost } from "@/data/posts";
+import { getPost, type Post } from "@/data/posts";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ params }) => {
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/blog/$slug")({
 });
 
 function BlogPost() {
-  const p = Route.useLoaderData();
+  const p = Route.useLoaderData() as Post;
   return (
     <main className="relative bg-background text-foreground">
       <ScrollProgress />

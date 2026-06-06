@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
-import { destinations, getDestination } from "@/data/destinations";
+import { destinations, getDestination, type Destination } from "@/data/destinations";
 
 export const Route = createFileRoute("/destinations/$slug")({
   loader: ({ params }) => {
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/destinations/$slug")({
 });
 
 function DestinationPage() {
-  const d = Route.useLoaderData();
+  const d = Route.useLoaderData() as Destination;
   const others = destinations.filter((x) => x.region === d.region && x.slug !== d.slug);
 
   return (
