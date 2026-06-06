@@ -19,7 +19,7 @@ export function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <section id="top" ref={ref} className="relative h-[100svh] min-h-[680px] w-full overflow-hidden">
+    <section id="top" ref={ref} className="relative h-[100svh] min-h-[600px] w-full overflow-hidden">
       <motion.div style={{ y, scale }} className="absolute inset-0">
         <img
           src={hero}
@@ -28,7 +28,7 @@ export function Hero() {
           width={1920}
           height={1280}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/30 to-ink" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-ink/30 to-ink" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,oklch(0.08_0.02_260/0.6)_100%)]" />
       </motion.div>
 
@@ -37,51 +37,51 @@ export function Hero() {
         variants={stagger}
         initial="hidden"
         animate="show"
-        className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-6 pb-24 md:pb-32"
+        className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-6 pb-12 pt-28 sm:pb-16 sm:pt-32 md:pb-24 md:pt-36 lg:pb-28"
       >
-        <motion.div variants={rise} className="mb-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold">
-          <span className="block h-px w-10 bg-gold" />
+        <motion.div variants={rise} className="mb-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:mb-6 sm:text-xs">
+          <span className="block h-px w-8 bg-gold sm:w-10" />
           Crafting Journeys Since 2012
         </motion.div>
 
         <motion.h1
           variants={rise}
-          className="text-balance font-display text-[clamp(2.75rem,7vw,6.5rem)] leading-[0.95] tracking-tight"
+          className="text-balance font-display text-[clamp(2.25rem,6vw,5.75rem)] leading-[1.02] tracking-tight"
         >
           Where the world<br />
           becomes <span className="italic gold-gradient">unforgettable.</span>
         </motion.h1>
 
-        <motion.p variants={rise} className="mt-8 max-w-xl text-pretty text-base text-muted-foreground md:text-lg">
+        <motion.p variants={rise} className="mt-5 max-w-xl text-pretty text-sm text-muted-foreground sm:mt-7 md:text-base lg:text-lg">
           Bespoke voyages curated by trusted experts. Sun-soaked coastlines, snow-laced
           summits, and quiet luxuries — designed entirely around you.
         </motion.p>
 
-        <motion.div variants={rise} className="mt-10 flex flex-wrap items-center gap-4">
+        <motion.div variants={rise} className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8 sm:gap-4">
           <a
             href="#destinations"
-            className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03]"
+            className="group inline-flex items-center gap-3 rounded-full bg-gold px-6 py-3.5 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:px-7 sm:py-4"
           >
             Explore International
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </a>
           <a
             href="#destinations"
-            className="inline-flex items-center gap-3 rounded-full border border-white/20 px-7 py-4 text-sm font-medium text-foreground/90 backdrop-blur-md transition-colors hover:bg-white/5"
+            className="inline-flex items-center gap-3 rounded-full border border-white/20 px-6 py-3.5 text-sm font-medium text-foreground/90 backdrop-blur-md transition-colors hover:bg-white/5 sm:px-7 sm:py-4"
           >
             Discover Domestic
           </a>
         </motion.div>
 
-        <motion.div variants={rise} className="mt-16 grid max-w-3xl grid-cols-3 gap-8 border-t border-white/10 pt-8">
+        <motion.div variants={rise} className="mt-8 grid max-w-3xl grid-cols-3 gap-4 border-t border-white/10 pt-5 sm:mt-12 sm:gap-8 sm:pt-7 lg:mt-14">
           {[
             { k: "12+", v: "Years curating" },
             { k: "60+", v: "Destinations" },
             { k: "98%", v: "Repeat travellers" },
           ].map((s) => (
             <div key={s.v}>
-              <div className="font-display text-3xl text-gold md:text-4xl">{s.k}</div>
-              <div className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{s.v}</div>
+              <div className="font-display text-2xl text-gold sm:text-3xl md:text-4xl">{s.k}</div>
+              <div className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">{s.v}</div>
             </div>
           ))}
         </motion.div>
