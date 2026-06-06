@@ -9,9 +9,8 @@ import singapore from "@/assets/singapore.jpg";
 import bangkok from "@/assets/bangkok.jpg";
 
 export type Pkg = {
-  name: string;
-  price: string;
   tier: string;
+  price: string;
   notes: string;
 };
 
