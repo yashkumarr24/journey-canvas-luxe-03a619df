@@ -29,21 +29,21 @@ export function Nav() {
       className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6"
     >
       <nav
-        className={`flex w-full max-w-6xl items-center justify-between rounded-full border border-white/10 px-5 py-3 transition-all duration-500 md:px-7 ${
-          scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent"
+        className={`flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-white/10 px-4 py-2.5 transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7 ${
+          scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent backdrop-blur-sm"
         }`}
       >
-        <Link to="/" className="flex items-center gap-2 font-display text-xl tracking-tight">
+        <Link to="/" className="flex shrink-0 items-center gap-2 font-display text-lg tracking-tight sm:text-xl">
           <span className="inline-block size-2 rounded-full bg-gold shadow-[0_0_18px_var(--gold)]" />
           <span className="text-foreground">Fly <span className="italic text-gold">n</span> Feel</span>
         </Link>
 
-        <ul className="hidden items-center gap-8 text-sm text-muted-foreground lg:flex">
+        <ul className="hidden min-w-0 items-center gap-5 text-sm text-muted-foreground lg:flex xl:gap-8">
           {links.map((l) => (
             <li key={l.label}>
               <Link
                 to={l.to}
-                className="relative transition-colors hover:text-foreground"
+                className="relative whitespace-nowrap transition-colors hover:text-foreground"
                 activeProps={{ className: "text-foreground" }}
               >
                 {l.label}
@@ -52,17 +52,17 @@ export function Nav() {
           ))}
         </ul>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link
             to="/contact"
-            className="hidden rounded-full bg-gold px-5 py-2 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] md:inline-block"
+            className="hidden whitespace-nowrap rounded-full bg-gold px-4 py-2 text-xs font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 sm:text-sm md:inline-block"
           >
             Plan a Journey
           </Link>
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-full border border-white/15 text-foreground lg:hidden"
+            className="grid size-9 place-items-center rounded-full border border-white/15 text-foreground sm:size-10 lg:hidden"
           >
             <span className="relative block size-4">
               <span className={`absolute left-0 top-1 h-px w-full bg-current transition-transform ${open ? "translate-y-[6px] rotate-45" : ""}`} />
