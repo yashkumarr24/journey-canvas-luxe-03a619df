@@ -77,8 +77,7 @@ export function Hero() {
 
 
   // Fog rises
-  const fogY = useTransform(smooth, [0, 0.5], ["20%", `${-30 * m}%`]);
-  const fogOpacity = useTransform(smooth, [0, 0.3, 0.5], [0.35, 0.7, 1]);
+  // (Fog layer is now static — no scroll-linked transforms.)
 
   // Content — transform + opacity ONLY (no per-frame blur filter = much smoother)
   const contentY = useTransform(smooth, [0, 0.5], ["0%", `${-25 * m}%`]);
