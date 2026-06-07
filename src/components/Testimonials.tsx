@@ -31,7 +31,7 @@ export function Testimonials() {
               <blockquote className="font-display text-2xl leading-snug text-foreground/95 md:text-3xl">
                 "{t.q}"
               </blockquote>
-              <figcaption className="mt-8 flex items-center justify-between border-t border-white/10 pt-5 text-sm">
+              <figcaption className="mt-8 flex items-center justify-between border-t border-foreground/10 pt-5 text-sm">
                 <span className="text-foreground">{t.who}</span>
                 <span className="text-muted-foreground">{t.trip}</span>
               </figcaption>

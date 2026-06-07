@@ -44,7 +44,7 @@ function BlogIndex() {
               className="group"
             >
               <Link to="/blog/$slug" params={{ slug: p.slug }} className="block">
-                <div className="aspect-[16/10] overflow-hidden rounded-3xl border border-white/10">
+                <div className="aspect-[16/10] overflow-hidden rounded-3xl border border-foreground/10">
                   <img src={p.cover} alt={p.title} loading="lazy" className="size-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110" />
                 </div>
                 <div className="mt-5 flex items-center gap-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">

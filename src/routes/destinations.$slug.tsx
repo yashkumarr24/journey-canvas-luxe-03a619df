@@ -70,7 +70,7 @@ function DestinationPage() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: i * 0.05 }}
-              className="rounded-2xl border border-white/10 bg-card/60 p-6"
+              className="rounded-2xl border border-foreground/10 bg-card/60 p-6"
             >
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{m.l}</div>
               <div className="mt-2 font-display text-2xl text-gold">{m.v}</div>
@@ -111,7 +111,7 @@ function DestinationPage() {
                     whileInView={{ x: 0, opacity: 1 }}
                     viewport={{ once: true, margin: "-60px" }}
                     transition={{ duration: 0.7, delay: i * 0.05 }}
-                    className="relative rounded-2xl border border-white/10 bg-card/60 p-6 md:p-8"
+                    className="relative rounded-2xl border border-foreground/10 bg-card/60 p-6 md:p-8"
                   >
                     <div className="flex items-baseline gap-4">
                       <span className="font-display text-3xl text-gold">{day.day}</span>
@@ -128,13 +128,13 @@ function DestinationPage() {
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-card/60 p-7">
+              <div className="rounded-2xl border border-foreground/10 bg-card/60 p-7">
                 <h3 className="font-display text-2xl text-gold">Inclusions</h3>
                 <ul className="mt-4 space-y-2 text-sm text-foreground/85">
                   {d.includes.map((i) => <li key={i} className="flex gap-3"><span className="mt-2 inline-block size-1 shrink-0 rounded-full bg-gold" />{i}</li>)}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-card/60 p-7">
+              <div className="rounded-2xl border border-foreground/10 bg-card/60 p-7">
                 <h3 className="font-display text-2xl text-gold">Exclusions</h3>
                 <ul className="mt-4 space-y-2 text-sm text-foreground/85">
                   {d.excludes.map((i) => <li key={i} className="flex gap-3"><span className="mt-2 inline-block size-1 shrink-0 rounded-full bg-muted-foreground/40" />{i}</li>)}
@@ -159,7 +159,7 @@ function DestinationPage() {
               <div className="hairline mt-6" />
               <div className="mt-6 space-y-3">
                 {d.faqs.map((f) => (
-                  <details key={f.q} className="group rounded-2xl border border-white/10 bg-card/60 p-6 transition-all open:border-gold/30">
+                  <details key={f.q} className="group rounded-2xl border border-foreground/10 bg-card/60 p-6 transition-all open:border-gold/30">
                     <summary className="cursor-pointer list-none font-display text-lg md:text-xl flex items-center justify-between gap-4">
                       {f.q}
                       <span className="text-gold transition-transform group-open:rotate-45">+</span>
@@ -183,14 +183,14 @@ function DestinationPage() {
             </div>
 
             {d.packages.map((p) => (
-              <div key={p.tier} className="rounded-3xl border border-white/10 bg-card/60 p-7">
+              <div key={p.tier} className="rounded-3xl border border-foreground/10 bg-card/60 p-7">
                 <h3 className="font-display text-2xl">{p.tier}</h3>
                 <div className="mt-2 font-display text-3xl text-gold">{p.price}</div>
                 <p className="mt-3 text-sm text-muted-foreground">{p.notes}</p>
               </div>
             ))}
 
-            <div className="rounded-3xl border border-white/10 bg-card/60 p-7 text-sm">
+            <div className="rounded-3xl border border-foreground/10 bg-card/60 p-7 text-sm">
               <div className="text-[10px] uppercase tracking-[0.25em] text-gold">Trip Facts</div>
               <ul className="mt-3 space-y-2 text-muted-foreground">
                 <li><span className="text-foreground">Duration ·</span> {d.nights}</li>
@@ -208,7 +208,7 @@ function DestinationPage() {
         <div className="hairline mt-6" />
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {others.slice(0, 3).map((o) => (
-            <Link key={o.slug} to="/destinations/$slug" params={{ slug: o.slug }} className="group block overflow-hidden rounded-2xl border border-white/10">
+            <Link key={o.slug} to="/destinations/$slug" params={{ slug: o.slug }} className="group block overflow-hidden rounded-2xl border border-foreground/10">
               <div className="aspect-[4/3] overflow-hidden">
                 <img src={o.img} alt={o.name} loading="lazy" className="size-full object-cover transition-transform duration-[1400ms] group-hover:scale-110" />
               </div>

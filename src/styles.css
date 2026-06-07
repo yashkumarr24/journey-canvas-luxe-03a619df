@@ -35,6 +35,8 @@
   --color-gold-soft: var(--gold-soft);
   --color-ink: var(--ink);
   --color-navy: var(--navy);
+  --color-pearl: var(--pearl);
+  --color-ivory: var(--ivory);
 
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
@@ -44,41 +46,52 @@
 :root {
   --radius: 0.5rem;
 
-  /* Luxury travel palette: deep navy / rich black / pure white / soft gold */
-  --navy: oklch(0.18 0.04 260);
-  --ink: oklch(0.08 0.02 260);
-  --gold: oklch(0.82 0.13 85);
-  --gold-soft: oklch(0.88 0.08 85);
+  /* Pearl White × Rich Black — luxury hospitality palette */
+  --pearl: #F8F8F6;
+  --ivory: #FAFAF7;
+  --warm-offwhite: #F5F5F0;
+  --rich-black: #111111;
+  --charcoal: #444444;
+  --medium-gray: #777777;
+  --soft-gray: #EAEAEA;
 
-  --background: oklch(0.08 0.02 260);
-  --foreground: oklch(0.97 0.01 90);
-  --card: oklch(0.12 0.025 260);
-  --card-foreground: oklch(0.97 0.01 90);
-  --popover: oklch(0.12 0.025 260);
-  --popover-foreground: oklch(0.97 0.01 90);
-  --primary: oklch(0.82 0.13 85);
-  --primary-foreground: oklch(0.08 0.02 260);
-  --secondary: oklch(0.18 0.04 260);
-  --secondary-foreground: oklch(0.97 0.01 90);
-  --muted: oklch(0.16 0.03 260);
-  --muted-foreground: oklch(0.68 0.02 90);
-  --accent: oklch(0.82 0.13 85);
-  --accent-foreground: oklch(0.08 0.02 260);
+  /* Semantic mappings */
+  --background: #F8F8F6;
+  --foreground: #111111;
+  --card: #FFFFFF;
+  --card-foreground: #111111;
+  --popover: #FFFFFF;
+  --popover-foreground: #111111;
+  --primary: #111111;
+  --primary-foreground: #F8F8F6;
+  --secondary: #F5F5F0;
+  --secondary-foreground: #111111;
+  --muted: #F5F5F0;
+  --muted-foreground: #777777;
+  --accent: #111111;
+  --accent-foreground: #F8F8F6;
   --destructive: oklch(0.6 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.82 0.13 85);
+  --destructive-foreground: #FFFFFF;
+  --border: #EAEAEA;
+  --input: #EAEAEA;
+  --ring: #111111;
 
-  --gradient-gold: linear-gradient(135deg, oklch(0.88 0.08 85), oklch(0.75 0.15 70));
-  --gradient-night: linear-gradient(180deg, oklch(0.08 0.02 260) 0%, oklch(0.14 0.04 260) 100%);
-  --shadow-luxe: 0 30px 80px -20px oklch(0 0 0 / 0.5), 0 8px 24px -8px oklch(0.82 0.13 85 / 0.2);
-  --shadow-soft: 0 20px 60px -20px oklch(0 0 0 / 0.6);
+  /* Legacy tokens, remapped for the new theme */
+  --gold: #111111;          /* accent text now reads as rich black */
+  --gold-soft: #444444;
+  --ink: #F8F8F6;           /* image-overlay gradients now fade to pearl */
+  --navy: #FAFAF7;
+
+  --gradient-gold: linear-gradient(135deg, #111111, #444444);
+  --gradient-night: linear-gradient(180deg, #F8F8F6 0%, #F5F5F0 100%);
+  --shadow-luxe: 0 30px 80px -30px rgba(17, 17, 17, 0.18), 0 8px 24px -12px rgba(17, 17, 17, 0.08);
+  --shadow-soft: 0 20px 60px -28px rgba(17, 17, 17, 0.12);
+  --shadow-card: 0 1px 2px rgba(17, 17, 17, 0.04), 0 8px 24px -12px rgba(17, 17, 17, 0.08);
 }
 
 .dark {
-  --background: oklch(0.08 0.02 260);
-  --foreground: oklch(0.97 0.01 90);
+  --background: #F8F8F6;
+  --foreground: #111111;
 }
 
 @layer base {
@@ -101,8 +114,8 @@
     letter-spacing: -0.02em;
   }
   ::selection {
-    background: var(--gold);
-    color: var(--ink);
+    background: #111111;
+    color: #F8F8F6;
   }
 
   /* Lenis smooth scroll */
@@ -116,26 +129,26 @@
 @utility text-pretty { text-wrap: pretty; }
 
 @utility gold-gradient {
-  background: var(--gradient-gold);
+  background: linear-gradient(135deg, #111111 0%, #444444 60%, #777777 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 @utility hairline {
-  background: linear-gradient(90deg, transparent, oklch(0.82 0.13 85 / 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.25), transparent);
   height: 1px;
 }
 
 @utility glass {
-  background: oklch(0.12 0.025 260 / 0.55);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid oklch(1 0 0 / 0.08);
+  border: 1px solid rgba(17, 17, 17, 0.06);
 }
 
 @utility shimmer {
-  background: linear-gradient(110deg, transparent 30%, oklch(0.82 0.13 85 / 0.25) 50%, transparent 70%);
+  background: linear-gradient(110deg, transparent 30%, rgba(17, 17, 17, 0.08) 50%, transparent 70%);
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
 }

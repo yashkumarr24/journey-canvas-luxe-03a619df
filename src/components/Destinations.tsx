@@ -10,7 +10,7 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
       whileInView={{ y: 0, opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.9, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative overflow-hidden rounded-3xl border border-white/10 bg-card"
+      className="group relative overflow-hidden rounded-3xl border border-foreground/10 bg-card"
     >
       <Link to="/destinations/$slug" params={{ slug: p.slug }} className="block">
         <div className="relative aspect-[4/5] w-full overflow-hidden">
@@ -23,7 +23,7 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
             className="size-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-          <div className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-foreground/90 backdrop-blur-md">
+          <div className="absolute left-5 top-5 rounded-full border border-foreground/10 bg-white/80 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-foreground backdrop-blur-md">
             {p.country}
           </div>
         </div>
@@ -40,7 +40,7 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-muted-foreground">
+          <div className="mt-5 flex items-center justify-between border-t border-foreground/10 pt-4 text-xs text-muted-foreground">
             <span>{p.nights} · {p.from}</span>
             <span className="inline-flex items-center gap-1 text-foreground transition-colors group-hover:text-gold">
               View Itinerary <span className="transition-transform group-hover:translate-x-1">→</span>

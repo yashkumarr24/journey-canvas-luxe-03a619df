@@ -78,7 +78,7 @@ function BlogPost() {
             <div className="hairline mt-4" />
             <div className="mt-6 space-y-3">
               {p.faqs.map((f) => (
-                <details key={f.q} className="group rounded-2xl border border-white/10 bg-card/60 p-6 open:border-gold/30">
+                <details key={f.q} className="group rounded-2xl border border-foreground/10 bg-card/60 p-6 open:border-gold/30">
                   <summary className="cursor-pointer list-none font-display text-lg flex items-center justify-between">
                     {f.q}
                     <span className="text-gold transition-transform group-open:rotate-45">+</span>
@@ -90,7 +90,7 @@ function BlogPost() {
           </section>
         )}
 
-        <div className="mt-16 flex justify-between border-t border-white/10 pt-8 text-sm">
+        <div className="mt-16 flex justify-between border-t border-foreground/10 pt-8 text-sm">
           <Link to="/blog" className="text-muted-foreground hover:text-gold">← All articles</Link>
           <Link to="/contact" className="text-gold">Plan your trip →</Link>
         </div>

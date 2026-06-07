@@ -16,7 +16,7 @@ function Field({ label, type = "text", as = "input" }: { label: string; type?: s
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         rows={as === "textarea" ? 4 : undefined}
-        className="peer w-full resize-none border-b border-white/15 bg-transparent px-0 pb-3 pt-7 text-base text-foreground outline-none transition-colors focus:border-gold"
+        className="peer w-full resize-none border-b border-foreground/15 bg-transparent px-0 pb-3 pt-7 text-base text-foreground outline-none transition-colors focus:border-gold"
       />
       <label
         className={`pointer-events-none absolute left-0 origin-left transition-all ${
