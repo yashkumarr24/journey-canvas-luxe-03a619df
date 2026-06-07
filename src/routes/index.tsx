@@ -50,7 +50,7 @@ function ValueProps() {
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.8, delay: i * 0.1 }}
-            className="group rounded-3xl border border-white/10 bg-card/60 p-8 transition-all hover:border-gold/30"
+            className="group rounded-3xl border border-foreground/10 bg-card/60 p-8 transition-all hover:border-gold/30"
           >
             <div className="font-display text-3xl text-gold">0{i + 1}</div>
             <h3 className="mt-4 font-display text-2xl">{v.t}</h3>
@@ -84,7 +84,7 @@ function BlogTeaser() {
             transition={{ duration: 0.9, delay: i * 0.1 }}
           >
             <Link to="/blog/$slug" params={{ slug: p.slug }} className="group block">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-white/10">
+              <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-foreground/10">
                 <img src={p.cover} alt={p.title} loading="lazy" className="size-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110" />
               </div>
               <div className="mt-5 flex items-center justify-between text-xs uppercase tracking-[0.25em] text-muted-foreground">

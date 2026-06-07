@@ -67,13 +67,13 @@ export function Hero() {
           </a>
           <a
             href="#destinations"
-            className="inline-flex items-center gap-3 rounded-full border border-white/20 px-5 py-3 text-sm font-medium text-foreground/90 backdrop-blur-md transition-colors hover:bg-white/5 sm:px-7 sm:py-4"
+            className="inline-flex items-center gap-3 rounded-full border border-foreground/20 px-5 py-3 text-sm font-medium text-foreground/90 backdrop-blur-md transition-colors hover:bg-foreground/5 sm:px-7 sm:py-4"
           >
             Discover Domestic
           </a>
         </motion.div>
 
-        <motion.div variants={rise} className="mt-6 grid max-w-3xl grid-cols-3 gap-4 border-t border-white/10 pt-4 sm:mt-10 sm:gap-8 sm:pt-6">
+        <motion.div variants={rise} className="mt-6 grid max-w-3xl grid-cols-3 gap-4 border-t border-foreground/10 pt-4 sm:mt-10 sm:gap-8 sm:pt-6">
           {[
             { k: "12+", v: "Years curating" },
             { k: "60+", v: "Destinations" },

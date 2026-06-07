@@ -62,7 +62,7 @@ function ContactPage() {
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {offices.map((o) => (
-            <div key={o.name} className="rounded-3xl border border-white/10 bg-card/60 p-7">
+            <div key={o.name} className="rounded-3xl border border-foreground/10 bg-card/60 p-7">
               <h3 className="font-display text-xl text-gold">{o.name}</h3>
               <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                 {o.body.map((b) => <div key={b}>{b}</div>)}

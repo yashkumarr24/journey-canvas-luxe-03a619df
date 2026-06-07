@@ -29,7 +29,7 @@ export function Nav() {
       className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6"
     >
       <nav
-        className={`flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-white/10 px-4 py-2.5 transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7 ${
+        className={`flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-foreground/10 px-4 py-2.5 transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7 ${
           scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent backdrop-blur-sm"
         }`}
       >
@@ -62,7 +62,7 @@ export function Nav() {
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-9 place-items-center rounded-full border border-white/15 text-foreground sm:size-10 lg:hidden"
+            className="grid size-9 place-items-center rounded-full border border-foreground/15 text-foreground sm:size-10 lg:hidden"
           >
             <span className="relative block size-4">
               <span className={`absolute left-0 top-1 h-px w-full bg-current transition-transform ${open ? "translate-y-[6px] rotate-45" : ""}`} />

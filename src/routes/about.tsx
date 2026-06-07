@@ -65,7 +65,7 @@ function About() {
         <div className="hairline mt-6" />
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {services.map((s, i) => (
-            <motion.div key={s} initial={{ y: 30, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.05 }} className="rounded-2xl border border-white/10 bg-card/60 p-6">
+            <motion.div key={s} initial={{ y: 30, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.05 }} className="rounded-2xl border border-foreground/10 bg-card/60 p-6">
               <div className="font-display text-3xl text-gold">0{i + 1}</div>
               <div className="mt-3 font-display text-xl">{s}</div>
             </motion.div>
@@ -76,7 +76,7 @@ function About() {
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="grid gap-6 md:grid-cols-3">
           {offers.map((o) => (
-            <div key={o.t} className="rounded-3xl border border-white/10 bg-card/60 p-8">
+            <div key={o.t} className="rounded-3xl border border-foreground/10 bg-card/60 p-8">
               <h3 className="font-display text-2xl text-gold">{o.t}</h3>
               <p className="mt-3 text-sm text-muted-foreground">{o.d}</p>
             </div>

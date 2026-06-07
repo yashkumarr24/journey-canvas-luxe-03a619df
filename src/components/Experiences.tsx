@@ -35,7 +35,7 @@ export function Experiences() {
                 whileInView={{ x: 0, opacity: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.8, delay: i * 0.1 }}
-                className="flex gap-5 border-t border-white/10 pt-8"
+                className="flex gap-5 border-t border-foreground/10 pt-8"
               >
                 <div className="font-display text-2xl text-gold">0{i + 1}</div>
                 <div>
@@ -48,10 +48,10 @@ export function Experiences() {
         </div>
 
         <div className="relative h-[560px] md:h-[720px]">
-          <motion.div style={{ y: y1 }} className="absolute right-0 top-0 h-[58%] w-[72%] overflow-hidden rounded-3xl border border-white/10">
+          <motion.div style={{ y: y1 }} className="absolute right-0 top-0 h-[58%] w-[72%] overflow-hidden rounded-3xl border border-foreground/10">
             <img src={maldives} alt="Maldives overwater villa" loading="lazy" width={1600} height={1200} className="size-full object-cover" />
           </motion.div>
-          <motion.div style={{ y: y2 }} className="absolute bottom-0 left-0 h-[55%] w-[60%] overflow-hidden rounded-3xl border border-white/10">
+          <motion.div style={{ y: y2 }} className="absolute bottom-0 left-0 h-[55%] w-[60%] overflow-hidden rounded-3xl border border-foreground/10">
             <img src={bhutan} alt="Bhutan monastery" loading="lazy" width={1600} height={1200} className="size-full object-cover" />
           </motion.div>
           <motion.div style={{ y: y1 }} className="absolute bottom-[8%] right-[2%] h-[34%] w-[38%] overflow-hidden rounded-2xl border border-gold/30 shadow-[var(--shadow-luxe)]">
