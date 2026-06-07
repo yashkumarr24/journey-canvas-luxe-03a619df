@@ -99,14 +99,14 @@ export function Hero() {
         {/* Distant mountains */}
         <motion.div
           style={{ y: farY }}
-          className="absolute inset-x-0 bottom-0 h-[80%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[70%] will-change-transform"
         >
           <img
             src={mountainsFar}
             alt=""
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom opacity-90"
-            style={{ filter: "blur(1px) saturate(0.7)" }}
+            className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom opacity-80"
+            style={{ filter: "saturate(0.85) sepia(0.15)" }}
           />
         </motion.div>
 
@@ -120,10 +120,10 @@ export function Hero() {
           }}
         />
 
-        {/* Mid mountains */}
+        {/* Mid mountains — warm golden hour peaks */}
         <motion.div
           style={{ y: midY }}
-          className="absolute inset-x-0 bottom-0 h-[75%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[65%] will-change-transform"
         >
           <img
             src={mountainsMid}
@@ -131,28 +131,38 @@ export function Hero() {
             aria-hidden="true"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
           />
+          {/* Warm haze blending the base of mid mountains into the foreground */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%]"
+            style={{
+              background:
+                "linear-gradient(to top, oklch(0.55 0.08 55 / 0.85) 0%, oklch(0.65 0.09 60 / 0.45) 35%, transparent 80%)",
+            }}
+          />
         </motion.div>
 
-        {/* Atmospheric haze between mid & near */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-[15%] h-[40%]"
-          style={{
-            background:
-              "linear-gradient(to top, oklch(0.97 0.01 80 / 0.55), transparent)",
-          }}
-        />
-
-        {/* Near foreground */}
+        {/* Near foreground — warm dark ridge with pines */}
         <motion.div
           style={{ y: nearY, scale: nearScale }}
-          className="absolute inset-x-0 bottom-0 h-[55%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[42%] will-change-transform"
         >
           <img
             src={mountainsNear}
             alt=""
             aria-hidden="true"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
+            style={{ filter: "brightness(0.95) saturate(1.05)" }}
+          />
+          {/* Soft warm glow on top edge to tie into mid layer light */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[30%]"
+            style={{
+              background:
+                "linear-gradient(to bottom, oklch(0.75 0.12 65 / 0.25), transparent)",
+              mixBlendMode: "screen",
+            }}
           />
         </motion.div>
 
