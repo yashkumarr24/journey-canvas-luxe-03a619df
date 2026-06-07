@@ -27,7 +27,8 @@ const fadeUp = {
 };
 
 // Spring config tuned for buttery smooth high-refresh scrolling.
-const SPRING = { stiffness: 120, damping: 30, mass: 0.3, restDelta: 0.001 };
+const SPRING = { stiffness: 220, damping: 38, mass: 0.25, restDelta: 0.001 };
+const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 };
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
@@ -53,16 +54,20 @@ export function Hero() {
 
   // Smoothed progress for 120fps-feel motion
   const smooth = useSpring(scrollYProgress, SPRING);
+  // Tighter spring for the foreground — must track the scrubber 1:1 with no lag.
+  const tight = useSpring(scrollYProgress, TIGHT_SPRING);
   const m = prefersReduced ? 0 : 1;
 
   // Parallax — rear iced peaks stay almost still; the front black ridge
-  // slides DOWN off-screen as the user scrolls, revealing the glacier.
+  // physically slides DOWN off-screen (translateY), revealing the glacier.
+  // Percentages here are relative to each layer's own height, so 120%
+  // guarantees full exit on every viewport size.
   const skyY = useTransform(smooth, [0, 1], ["0%", `${2 * m}%`]);
   const skyScale = useTransform(smooth, [0, 1], [1.05, 1.08]);
   const farY = useTransform(smooth, [0, 1], ["0%", `${3 * m}%`]);
-  const midY = useTransform(smooth, [0, 1], ["0%", `${6 * m}%`]);
-  const nearY = useTransform(smooth, [0, 1], ["0%", `${130 * m}%`]);
-  const nearScale = useTransform(smooth, [0, 1], [1, 1.25]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${5 * m}%`]);
+  const nearY = useTransform(tight, [0, 1], ["0%", `${140 * m}%`]);
+
 
   // Fog rises
   const fogY = useTransform(smooth, [0, 1], ["20%", `${-30 * m}%`]);
