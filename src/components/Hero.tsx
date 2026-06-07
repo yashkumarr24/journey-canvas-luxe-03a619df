@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import sky from "@/assets/parallax-sky.jpg";
 import mountainsFar from "@/assets/parallax-mountains-far.png";
@@ -7,32 +7,33 @@ import mountainsNear from "@/assets/parallax-mountains-near.png";
 
 const containerVariants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.14, delayChildren: 0.6 } },
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.5 } },
 };
 const wordVariants = {
-  hidden: { y: "110%", opacity: 0, filter: "blur(12px)" },
+  hidden: { y: "110%", opacity: 0 },
   show: {
     y: "0%",
     opacity: 1,
-    filter: "blur(0px)",
-    transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] as const },
-  },
-};
-const fadeUp = {
-  hidden: { y: 28, opacity: 0, filter: "blur(8px)" },
-  show: {
-    y: 0,
-    opacity: 1,
-    filter: "blur(0px)",
     transition: { duration: 1, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
+const fadeUp = {
+  hidden: { y: 24, opacity: 0 },
+  show: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+// Spring config tuned for buttery smooth high-refresh scrolling.
+const SPRING = { stiffness: 120, damping: 30, mass: 0.3, restDelta: 0.001 };
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display leading-[0.95] tracking-[-0.02em] text-[clamp(2.5rem,8vw+1vh,9rem)]">
+    <h1 className="font-display leading-[0.95] tracking-[-0.02em] text-[clamp(2.25rem,9vw,7.5rem)]">
       {lines.map((line, li) => (
-        <span key={li} className="block overflow-hidden">
+        <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
             {line}
           </motion.span>
@@ -50,26 +51,25 @@ export function Hero() {
     offset: ["start start", "end start"],
   });
 
-  // Parallax depth — sky slowest, foreground fastest. Disabled if reduced motion.
+  // Smoothed progress for 120fps-feel motion
+  const smooth = useSpring(scrollYProgress, SPRING);
   const m = prefersReduced ? 0 : 1;
-  const skyY = useTransform(scrollYProgress, [0, 1], ["0%", `${8 * m}%`]);
-  const skyScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.12]);
-  const farY = useTransform(scrollYProgress, [0, 1], ["0%", `${18 * m}%`]);
-  const midY = useTransform(scrollYProgress, [0, 1], ["0%", `${32 * m}%`]);
-  const nearY = useTransform(scrollYProgress, [0, 1], ["0%", `${55 * m}%`]);
-  const nearScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
 
-  // Fog rises and thickens
-  const fogY = useTransform(scrollYProgress, [0, 1], ["20%", `${-25 * m}%`]);
-  const fogOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [0.35, 0.7, 1]);
+  // Parallax depth — sky slowest, foreground fastest.
+  const skyY = useTransform(smooth, [0, 1], ["0%", `${8 * m}%`]);
+  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.12]);
+  const farY = useTransform(smooth, [0, 1], ["0%", `${18 * m}%`]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${32 * m}%`]);
+  const nearY = useTransform(smooth, [0, 1], ["0%", `${55 * m}%`]);
+  const nearScale = useTransform(smooth, [0, 1], [1, 1.16]);
 
-  // Content fades and lifts as camera "moves through"
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", `${-30 * m}%`]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.55, 0.85], [1, 0.6, 0]);
-  const contentBlur = useTransform(scrollYProgress, [0, 0.6, 1], ["0px", "4px", "12px"]);
+  // Fog rises
+  const fogY = useTransform(smooth, [0, 1], ["20%", `${-25 * m}%`]);
+  const fogOpacity = useTransform(smooth, [0, 0.6, 1], [0.35, 0.7, 1]);
 
-  // Vignette deepens
-  const vignette = useTransform(scrollYProgress, [0, 1], [0.45, 0.85]);
+  // Content — transform + opacity ONLY (no per-frame blur filter = much smoother)
+  const contentY = useTransform(smooth, [0, 1], ["0%", `${-25 * m}%`]);
+  const contentOpacity = useTransform(smooth, [0, 0.55, 0.85], [1, 0.55, 0]);
 
   return (
     <section
@@ -79,11 +79,11 @@ export function Hero() {
       aria-label="Cinematic mountain hero"
     >
       {/* Sticky viewport — virtual camera */}
-      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[oklch(0.97_0.005_85)]">
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[oklch(0.97_0.005_85)] [transform:translateZ(0)] [backface-visibility:hidden]">
         {/* Sky */}
         <motion.div
           style={{ y: skyY, scale: skyScale }}
-          className="absolute inset-0 will-change-transform"
+          className="absolute inset-0 will-change-transform [transform:translateZ(0)]"
         >
           <img
             src={sky}
@@ -93,18 +93,21 @@ export function Hero() {
             width={1920}
             height={1280}
             fetchPriority="high"
+            decoding="async"
           />
         </motion.div>
 
         {/* Distant mountains */}
         <motion.div
           style={{ y: farY }}
-          className="absolute inset-x-0 bottom-0 h-[52%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[55%] will-change-transform sm:h-[52%]"
         >
           <img
             src={mountainsFar}
             alt=""
             aria-hidden="true"
+            loading="eager"
+            decoding="async"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom opacity-80"
             style={{ filter: "saturate(0.85) sepia(0.15)" }}
           />
@@ -120,34 +123,38 @@ export function Hero() {
           }}
         />
 
-        {/* Mid mountains — warm golden hour peaks */}
+        {/* Mid mountains */}
         <motion.div
           style={{ y: midY }}
-          className="absolute inset-x-0 bottom-0 h-[48%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[50%] will-change-transform sm:h-[48%]"
         >
           <img
             src={mountainsMid}
             alt=""
             aria-hidden="true"
+            loading="eager"
+            decoding="async"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
           />
         </motion.div>
 
-        {/* Near foreground — warm dark ridge with pines */}
+        {/* Near foreground */}
         <motion.div
           style={{ y: nearY, scale: nearScale }}
-          className="absolute inset-x-0 bottom-0 h-[42%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[44%] will-change-transform sm:h-[42%]"
         >
           <img
             src={mountainsNear}
             alt=""
             aria-hidden="true"
+            loading="eager"
+            decoding="async"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
             style={{ filter: "brightness(0.95) saturate(1.05)" }}
           />
         </motion.div>
 
-        {/* Volumetric fog — CSS based */}
+        {/* Volumetric fog */}
         <motion.div
           aria-hidden="true"
           style={{ y: fogY, opacity: fogOpacity }}
@@ -158,74 +165,76 @@ export function Hero() {
             style={{
               background:
                 "linear-gradient(to top, oklch(0.98 0.005 85 / 0.95) 0%, oklch(0.96 0.01 80 / 0.6) 40%, transparent 100%)",
-              filter: "blur(2px)",
             }}
           />
         </motion.div>
 
-        {/* Floating dust particles */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          {[...Array(14)].map((_, i) => (
+        {/* Floating dust particles (reduced count, hidden on small screens for perf) */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
+          {[...Array(8)].map((_, i) => (
             <motion.span
               key={i}
-              className="absolute block rounded-full bg-white/60"
+              className="absolute block rounded-full bg-white/60 will-change-transform"
               style={{
                 width: 2 + (i % 3),
                 height: 2 + (i % 3),
                 left: `${(i * 137) % 100}%`,
                 top: `${(i * 53) % 100}%`,
-                filter: "blur(1px)",
               }}
               animate={{
-                y: [0, -30, 0],
+                y: [0, -28, 0],
                 opacity: [0.2, 0.7, 0.2],
               }}
               transition={{
-                duration: 8 + (i % 5),
+                duration: 9 + (i % 5),
                 repeat: Infinity,
                 ease: "easeInOut",
-                delay: i * 0.4,
+                delay: i * 0.5,
               }}
             />
           ))}
         </div>
 
-        {/* Vignette */}
-        <motion.div
+        {/* Vignette — static, no per-frame recalc */}
+        <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            background: useTransform(
-              vignette,
-              (v) => `radial-gradient(ellipse at center, transparent 35%, oklch(0.15 0.01 80 / ${v}) 110%)`,
-            ),
+            background:
+              "radial-gradient(ellipse at center, transparent 38%, oklch(0.15 0.01 80 / 0.65) 110%)",
           }}
         />
 
         {/* Content */}
         <motion.div
-          style={{ y: contentY, opacity: contentOpacity, filter: useTransform(contentBlur, (b) => `blur(${b})`) }}
-          className="relative z-10 flex h-full w-full items-center justify-center px-6 will-change-transform"
+          style={{ y: contentY, opacity: contentOpacity }}
+          className="relative z-10 flex h-full w-full items-center justify-center px-5 sm:px-6 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="mx-auto w-full max-w-6xl text-left"
+            className="mx-auto w-full max-w-5xl text-center"
           >
             <motion.div
               variants={fadeUp}
-              className="mb-6 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-xs"
+              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-xs sm:mb-6"
             >
-              <span className="block h-px w-10 bg-gold" />
+              <span className="block h-px w-8 bg-gold sm:w-10" />
               Crafting Journeys Since 2012
+              <span className="block h-px w-8 bg-gold sm:w-10" />
             </motion.div>
 
-            <SplitHeading lines={["Where the world", <>becomes <span key="u" className="italic gold-gradient">unforgettable.</span></>]} />
+            <SplitHeading
+              lines={[
+                "Where the world",
+                <>becomes <span key="u" className="italic gold-gradient">unforgettable.</span></>,
+              ]}
+            />
 
             <motion.p
               variants={fadeUp}
-              className="mt-8 max-w-xl text-pretty text-left text-sm leading-relaxed text-foreground/75 sm:text-base md:text-lg"
+              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/75 sm:mt-8 sm:text-base md:text-lg"
             >
               Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
               snow‑draped summits and quiet luxury — designed entirely around you.
@@ -233,18 +242,18 @@ export function Hero() {
 
             <motion.div
               variants={fadeUp}
-              className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
+              className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 sm:gap-4"
             >
               <a
                 href="/international"
-                className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03]"
+                className="group inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3.5 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:gap-3 sm:px-7 sm:py-4"
               >
                 Explore International
                 <span className="transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
                 href="/domestic"
-                className="inline-flex items-center gap-3 rounded-full border border-foreground/25 bg-background/40 px-7 py-4 text-sm font-medium text-foreground backdrop-blur-md transition-colors hover:bg-background/70"
+                className="inline-flex items-center gap-3 rounded-full border border-foreground/25 bg-background/40 px-6 py-3.5 text-sm font-medium text-foreground backdrop-blur-md transition-colors hover:bg-background/70 sm:px-7 sm:py-4"
               >
                 Discover Domestic
               </a>
@@ -252,7 +261,7 @@ export function Hero() {
 
             <motion.div
               variants={fadeUp}
-              className="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-foreground/15 pt-8 text-left"
+              className="mx-auto mt-10 grid max-w-xl grid-cols-3 gap-4 border-t border-foreground/15 pt-6 text-center sm:mt-14 sm:gap-6 sm:pt-8"
             >
               {[
                 { n: "12+", l: "Years Curating" },
@@ -260,8 +269,8 @@ export function Hero() {
                 { n: "98%", l: "Repeat Travellers" },
               ].map((s) => (
                 <div key={s.l}>
-                  <div className="font-display text-3xl text-gold sm:text-4xl">{s.n}</div>
-                  <div className="mt-2 text-[10px] uppercase tracking-[0.25em] text-foreground/70 sm:text-xs">
+                  <div className="font-display text-2xl text-gold sm:text-3xl md:text-4xl">{s.n}</div>
+                  <div className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-foreground/70 sm:mt-2 sm:text-xs sm:tracking-[0.25em]">
                     {s.l}
                   </div>
                 </div>
@@ -276,12 +285,12 @@ export function Hero() {
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 1.2 }}
           style={{ opacity: contentOpacity }}
-          className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-[10px] uppercase tracking-[0.4em] text-foreground/60"
+          className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-[10px] uppercase tracking-[0.4em] text-foreground/60 sm:bottom-8"
         >
           <motion.span
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            className="inline-block"
+            className="inline-block will-change-transform"
           >
             Scroll to explore
           </motion.span>
