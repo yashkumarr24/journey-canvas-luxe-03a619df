@@ -230,7 +230,7 @@ export function Hero() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="mx-auto w-full max-w-6xl text-center"
+            className="mx-auto w-full max-w-6xl text-left"
           >
             <motion.div
               variants={fadeUp}
@@ -240,9 +240,7 @@ export function Hero() {
               Crafting Journeys Since 2012
             </motion.div>
 
-            <div className="text-left">
-              <SplitHeading lines={["Where the world", <>becomes <span key="u" className="italic gold-gradient">unforgettable.</span></>] as unknown as string[]} />
-            </div>
+            <SplitHeading lines={["Where the world", <>becomes <span key="u" className="italic gold-gradient">unforgettable.</span></>]} />
 
             <motion.p
               variants={fadeUp}
