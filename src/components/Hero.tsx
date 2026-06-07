@@ -28,7 +28,7 @@ const fadeUp = {
   },
 };
 
-function SplitHeading({ lines }: { lines: string[] }) {
+function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
     <h1 className="font-display leading-[0.95] tracking-[-0.02em] text-[clamp(2.5rem,8vw+1vh,9rem)]">
       {lines.map((line, li) => (
@@ -230,44 +230,61 @@ export function Hero() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="mx-auto w-full max-w-6xl text-center"
+            className="mx-auto w-full max-w-6xl text-left"
           >
             <motion.div
               variants={fadeUp}
-              className="mx-auto mb-6 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.4em] text-foreground/70 sm:text-xs"
+              className="mb-6 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-xs"
             >
-              <span className="block h-px w-10 bg-foreground/40" />
-              A Cinematic Journey
-              <span className="block h-px w-10 bg-foreground/40" />
+              <span className="block h-px w-10 bg-gold" />
+              Crafting Journeys Since 2012
             </motion.div>
 
-            <SplitHeading lines={["Above the", "clouds, beyond", "the ordinary."]} />
+            <SplitHeading lines={["Where the world", <>becomes <span key="u" className="italic gold-gradient">unforgettable.</span></>]} />
 
             <motion.p
               variants={fadeUp}
-              className="mx-auto mt-8 max-w-xl text-pretty text-sm leading-relaxed text-foreground/75 sm:text-base md:text-lg"
+              className="mt-8 max-w-xl text-pretty text-left text-sm leading-relaxed text-foreground/75 sm:text-base md:text-lg"
             >
-              Bespoke voyages through the world's most breathtaking landscapes —
-              quietly luxurious, meticulously curated, entirely yours.
+              Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
+              snow‑draped summits and quiet luxury — designed entirely around you.
             </motion.p>
 
             <motion.div
               variants={fadeUp}
-              className="mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+              className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
             >
               <a
-                href="#destinations"
-                className="group inline-flex items-center gap-3 rounded-full bg-foreground px-7 py-4 text-sm font-medium text-background transition-transform hover:scale-[1.03]"
+                href="/international"
+                className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03]"
               >
-                Begin the Journey
+                Explore International
                 <span className="transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
-                href="#destinations"
+                href="/domestic"
                 className="inline-flex items-center gap-3 rounded-full border border-foreground/25 bg-background/40 px-7 py-4 text-sm font-medium text-foreground backdrop-blur-md transition-colors hover:bg-background/70"
               >
-                Discover Destinations
+                Discover Domestic
               </a>
+            </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              className="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-foreground/15 pt-8 text-left"
+            >
+              {[
+                { n: "12+", l: "Years Curating" },
+                { n: "60+", l: "Destinations" },
+                { n: "98%", l: "Repeat Travellers" },
+              ].map((s) => (
+                <div key={s.l}>
+                  <div className="font-display text-3xl text-gold sm:text-4xl">{s.n}</div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.25em] text-foreground/70 sm:text-xs">
+                    {s.l}
+                  </div>
+                </div>
+              ))}
             </motion.div>
           </motion.div>
         </motion.div>
