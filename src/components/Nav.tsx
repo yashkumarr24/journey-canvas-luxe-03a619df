@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import logo from "@/assets/flynfeel-logo.png";
 
 const links = [
   { label: "Domestic", to: "/domestic" },
