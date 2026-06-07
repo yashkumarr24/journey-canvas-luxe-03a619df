@@ -110,8 +110,8 @@ export function Hero() {
 
         {/* Distant mountains */}
         <motion.div
-          style={{ y: farY }}
-          className="absolute inset-x-0 bottom-0 h-[55%] will-change-transform sm:h-[52%]"
+          style={{ y: farY, scale: farScale, transformOrigin: "50% 75%" }}
+          className="absolute inset-x-0 bottom-0 h-[55%] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:h-[52%]"
         >
           <img
             src={mountainsFar}
