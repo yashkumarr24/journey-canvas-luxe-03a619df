@@ -166,11 +166,10 @@ export function Hero() {
           />
         </motion.div>
 
-        {/* Volumetric fog */}
-        <motion.div
+        {/* Volumetric fog — static, locked to the base of the scene */}
+        <div
           aria-hidden="true"
-          style={{ y: fogY, opacity: fogOpacity }}
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] will-change-transform"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]"
         >
           <div
             className="absolute inset-0"
@@ -179,7 +178,7 @@ export function Hero() {
                 "linear-gradient(to top, oklch(0.98 0.005 85 / 0.95) 0%, oklch(0.96 0.01 80 / 0.6) 40%, transparent 100%)",
             }}
           />
-        </motion.div>
+        </div>
 
         {/* Floating dust particles (reduced count, hidden on small screens for perf) */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
