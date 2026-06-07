@@ -28,7 +28,7 @@ const fadeUp = {
   },
 };
 
-function SplitHeading({ lines }: { lines: string[] }) {
+function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
     <h1 className="font-display leading-[0.95] tracking-[-0.02em] text-[clamp(2.5rem,8vw+1vh,9rem)]">
       {lines.map((line, li) => (
