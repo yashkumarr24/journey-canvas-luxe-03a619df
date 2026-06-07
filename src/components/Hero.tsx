@@ -99,7 +99,7 @@ export function Hero() {
         {/* Distant mountains */}
         <motion.div
           style={{ y: farY }}
-          className="absolute inset-x-0 bottom-0 h-[70%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[52%] will-change-transform"
         >
           <img
             src={mountainsFar}
@@ -116,14 +116,14 @@ export function Hero() {
           className="pointer-events-none absolute inset-0 mix-blend-screen opacity-60"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 65% 20%, oklch(0.95 0.08 75 / 0.55), transparent 60%)",
+              "radial-gradient(ellipse 60% 45% at 65% 28%, oklch(0.95 0.08 75 / 0.55), transparent 60%)",
           }}
         />
 
         {/* Mid mountains — warm golden hour peaks */}
         <motion.div
           style={{ y: midY }}
-          className="absolute inset-x-0 bottom-0 h-[65%] will-change-transform"
+          className="absolute inset-x-0 bottom-0 h-[48%] will-change-transform"
         >
           <img
             src={mountainsMid}
