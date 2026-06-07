@@ -55,27 +55,28 @@ export function Hero() {
   const smooth = useSpring(scrollYProgress, SPRING);
   const m = prefersReduced ? 0 : 1;
 
-  // Parallax depth — sky slowest, foreground fastest.
-  const skyY = useTransform(smooth, [0, 1], ["0%", `${8 * m}%`]);
-  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.12]);
-  const farY = useTransform(smooth, [0, 1], ["0%", `${18 * m}%`]);
-  const midY = useTransform(smooth, [0, 1], ["0%", `${32 * m}%`]);
-  const nearY = useTransform(smooth, [0, 1], ["0%", `${55 * m}%`]);
-  const nearScale = useTransform(smooth, [0, 1], [1, 1.16]);
+  // Parallax depth — sky barely moves, foreground slides down dramatically
+  // to reveal the rear glacier ridges (the effect you liked on mobile).
+  const skyY = useTransform(smooth, [0, 1], ["0%", `${4 * m}%`]);
+  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.1]);
+  const farY = useTransform(smooth, [0, 1], ["0%", `${10 * m}%`]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${28 * m}%`]);
+  const nearY = useTransform(smooth, [0, 1], ["0%", `${85 * m}%`]);
+  const nearScale = useTransform(smooth, [0, 1], [1, 1.2]);
 
   // Fog rises
-  const fogY = useTransform(smooth, [0, 1], ["20%", `${-25 * m}%`]);
+  const fogY = useTransform(smooth, [0, 1], ["20%", `${-30 * m}%`]);
   const fogOpacity = useTransform(smooth, [0, 0.6, 1], [0.35, 0.7, 1]);
 
   // Content — transform + opacity ONLY (no per-frame blur filter = much smoother)
   const contentY = useTransform(smooth, [0, 1], ["0%", `${-25 * m}%`]);
-  const contentOpacity = useTransform(smooth, [0, 0.55, 0.85], [1, 0.55, 0]);
+  const contentOpacity = useTransform(smooth, [0, 0.5, 0.8], [1, 0.5, 0]);
 
   return (
     <section
       id="top"
       ref={ref}
-      className="relative h-[160svh] w-full"
+      className="relative h-[220svh] w-full"
       aria-label="Cinematic mountain hero"
     >
       {/* Sticky viewport — virtual camera */}
