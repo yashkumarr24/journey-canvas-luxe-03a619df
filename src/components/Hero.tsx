@@ -66,8 +66,11 @@ export function Hero() {
   // guarantees full exit on every viewport size.
   const skyY = useTransform(smooth, [0, 1], ["0%", `${2 * m}%`]);
   const skyScale = useTransform(smooth, [0, 1], [1.05, 1.08]);
-  const farY = useTransform(smooth, [0, 1], ["0%", `${3 * m}%`]);
-  const midY = useTransform(smooth, [0, 1], ["0%", `${5 * m}%`]);
+  // Background snowy ranges: subtle cinematic push-in + faint upward drift.
+  const farY = useTransform(smooth, [0, 1], ["0%", `${-4 * m}%`]);
+  const farScale = useTransform(smooth, [0, 1], [1, 1.18]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${-2 * m}%`]);
+  const midScale = useTransform(smooth, [0, 1], [1, 1.12]);
   const nearY = useTransform(tight, [0, 1], ["0%", `${140 * m}%`]);
 
 
