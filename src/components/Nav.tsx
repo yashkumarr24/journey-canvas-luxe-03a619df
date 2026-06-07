@@ -38,7 +38,7 @@ export function Nav() {
           <img
             src={logo}
             alt="Fly n Feel Holidays"
-            className="h-9 w-auto sm:h-10 md:h-11 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+            className="h-11 w-auto sm:h-12 md:h-14 lg:h-16 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
             loading="eager"
             decoding="async"
           />
