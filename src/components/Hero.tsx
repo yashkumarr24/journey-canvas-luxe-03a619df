@@ -131,15 +131,6 @@ export function Hero() {
             aria-hidden="true"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
           />
-          {/* Warm haze blending the base of mid mountains into the foreground */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%]"
-            style={{
-              background:
-                "linear-gradient(to top, oklch(0.55 0.08 55 / 0.85) 0%, oklch(0.65 0.09 60 / 0.45) 35%, transparent 80%)",
-            }}
-          />
         </motion.div>
 
         {/* Near foreground — warm dark ridge with pines */}
@@ -153,16 +144,6 @@ export function Hero() {
             aria-hidden="true"
             className="absolute inset-x-0 bottom-0 w-full object-cover object-bottom"
             style={{ filter: "brightness(0.95) saturate(1.05)" }}
-          />
-          {/* Soft warm glow on top edge to tie into mid layer light */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[30%]"
-            style={{
-              background:
-                "linear-gradient(to bottom, oklch(0.75 0.12 65 / 0.25), transparent)",
-              mixBlendMode: "screen",
-            }}
           />
         </motion.div>
 
