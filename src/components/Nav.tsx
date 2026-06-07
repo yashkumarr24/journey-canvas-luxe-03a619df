@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import logo from "@/assets/flynfeel-logo.png";
 
 const links = [
   { label: "Domestic", to: "/domestic" },
@@ -33,9 +34,14 @@ export function Nav() {
           scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent backdrop-blur-sm"
         }`}
       >
-        <Link to="/" className="flex shrink-0 items-center gap-2 font-display text-lg tracking-tight sm:text-xl">
-          <span className="inline-block size-2 rounded-full bg-gold shadow-[0_0_18px_var(--gold)]" />
-          <span className="text-foreground">Fly <span className="italic text-gold">n</span> Feel</span>
+        <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
+          <img
+            src={logo}
+            alt="Fly n Feel Holidays"
+            className="h-9 w-auto sm:h-10 md:h-11 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+            loading="eager"
+            decoding="async"
+          />
         </Link>
 
         <ul className="hidden min-w-0 items-center gap-5 text-sm text-muted-foreground lg:flex xl:gap-8">
