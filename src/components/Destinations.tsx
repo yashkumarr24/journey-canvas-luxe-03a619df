@@ -23,7 +23,7 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
             className="size-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-          <div className="absolute left-5 top-5 rounded-full border border-foreground/20 bg-black/30 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-foreground/90 backdrop-blur-md">
+          <div className="absolute left-5 top-5 rounded-full border border-foreground/10 bg-white/80 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-foreground backdrop-blur-md">
             {p.country}
           </div>
         </div>
