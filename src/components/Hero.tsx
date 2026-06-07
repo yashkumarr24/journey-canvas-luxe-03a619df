@@ -55,14 +55,14 @@ export function Hero() {
   const smooth = useSpring(scrollYProgress, SPRING);
   const m = prefersReduced ? 0 : 1;
 
-  // Parallax depth — sky barely moves, foreground slides down dramatically
-  // to reveal the rear glacier ridges (the effect you liked on mobile).
-  const skyY = useTransform(smooth, [0, 1], ["0%", `${4 * m}%`]);
-  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.1]);
-  const farY = useTransform(smooth, [0, 1], ["0%", `${10 * m}%`]);
-  const midY = useTransform(smooth, [0, 1], ["0%", `${28 * m}%`]);
-  const nearY = useTransform(smooth, [0, 1], ["0%", `${85 * m}%`]);
-  const nearScale = useTransform(smooth, [0, 1], [1, 1.2]);
+  // Parallax — rear iced peaks stay almost still; the front black ridge
+  // slides DOWN off-screen as the user scrolls, revealing the glacier.
+  const skyY = useTransform(smooth, [0, 1], ["0%", `${2 * m}%`]);
+  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.08]);
+  const farY = useTransform(smooth, [0, 1], ["0%", `${3 * m}%`]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${6 * m}%`]);
+  const nearY = useTransform(smooth, [0, 1], ["0%", `${130 * m}%`]);
+  const nearScale = useTransform(smooth, [0, 1], [1, 1.25]);
 
   // Fog rises
   const fogY = useTransform(smooth, [0, 1], ["20%", `${-30 * m}%`]);
