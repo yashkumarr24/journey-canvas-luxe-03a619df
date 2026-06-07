@@ -146,7 +146,7 @@ export function Hero() {
 
         {/* Near foreground */}
         <motion.div
-          style={{ y: nearY, scale: nearScale }}
+          style={{ y: nearY }}
           className="absolute inset-x-0 bottom-0 h-[44%] will-change-transform sm:h-[42%]"
         >
           <img
