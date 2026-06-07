@@ -56,7 +56,9 @@ export function Hero() {
   const smooth = useSpring(scrollYProgress, SPRING);
   // Tighter spring for the foreground — must track the scrubber 1:1 with no lag.
   const tight = useSpring(scrollYProgress, TIGHT_SPRING);
-  const m = prefersReduced ? 0 : 1;
+  // Parallax is a core part of the hero, so it runs regardless of the
+  // OS reduced-motion setting. We only disable the looping dust below.
+  const m = 1;
 
   // Parallax — rear iced peaks stay almost still; the front black ridge
   // physically slides DOWN off-screen (translateY), revealing the glacier.
