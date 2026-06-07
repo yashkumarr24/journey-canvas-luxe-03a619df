@@ -64,23 +64,25 @@ export function Hero() {
   // physically slides DOWN off-screen (translateY), revealing the glacier.
   // Percentages here are relative to each layer's own height, so 120%
   // guarantees full exit on every viewport size.
-  const skyY = useTransform(smooth, [0, 1], ["0%", `${2 * m}%`]);
-  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.08]);
-  // Background snowy ranges: subtle cinematic push-in + faint upward drift.
-  const farY = useTransform(smooth, [0, 1], ["0%", `${-4 * m}%`]);
-  const farScale = useTransform(smooth, [0, 1], [1, 1.18]);
-  const midY = useTransform(smooth, [0, 1], ["0%", `${-2 * m}%`]);
-  const midScale = useTransform(smooth, [0, 1], [1, 1.12]);
-  const nearY = useTransform(tight, [0, 1], ["0%", `${140 * m}%`]);
+  // All parallax must COMPLETE before the sticky viewport releases (~0.5
+  // progress for a 220svh section over a 100svh sticky), otherwise the
+  // half-translated foreground stays visible as the hero scrolls away.
+  const skyY = useTransform(smooth, [0, 0.5], ["0%", `${2 * m}%`]);
+  const skyScale = useTransform(smooth, [0, 0.5], [1.05, 1.08]);
+  const farY = useTransform(smooth, [0, 0.5], ["0%", `${-4 * m}%`]);
+  const farScale = useTransform(smooth, [0, 0.5], [1, 1.18]);
+  const midY = useTransform(smooth, [0, 0.5], ["0%", `${-2 * m}%`]);
+  const midScale = useTransform(smooth, [0, 0.5], [1, 1.12]);
+  const nearY = useTransform(tight, [0, 0.5], ["0%", `${140 * m}%`]);
 
 
   // Fog rises
-  const fogY = useTransform(smooth, [0, 1], ["20%", `${-30 * m}%`]);
-  const fogOpacity = useTransform(smooth, [0, 0.6, 1], [0.35, 0.7, 1]);
+  const fogY = useTransform(smooth, [0, 0.5], ["20%", `${-30 * m}%`]);
+  const fogOpacity = useTransform(smooth, [0, 0.3, 0.5], [0.35, 0.7, 1]);
 
   // Content — transform + opacity ONLY (no per-frame blur filter = much smoother)
-  const contentY = useTransform(smooth, [0, 1], ["0%", `${-25 * m}%`]);
-  const contentOpacity = useTransform(smooth, [0, 0.5, 0.8], [1, 0.5, 0]);
+  const contentY = useTransform(smooth, [0, 0.5], ["0%", `${-25 * m}%`]);
+  const contentOpacity = useTransform(smooth, [0, 0.25, 0.45], [1, 0.5, 0]);
 
   return (
     <section
