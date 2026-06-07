@@ -57,15 +57,12 @@ export function Hero() {
 
   // Parallax — rear iced peaks stay almost still; the front black ridge
   // slides DOWN off-screen as the user scrolls, revealing the glacier.
-  // Sky and far snow peaks barely move — they're the "background" that gets revealed.
-  const skyY = useTransform(smooth, [0, 1], ["0%", `${-2 * m}%`]);
-  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.1]);
-  const farY = useTransform(smooth, [0, 1], ["0%", `${-1 * m}%`]);
-  // Mid (darker silhouette) slides down moderately so it doesn't hide the snow peaks.
-  const midY = useTransform(smooth, [0, 1], ["0%", `${90 * m}%`]);
-  // Near (black foreground hill) slides all the way down and off-screen.
-  const nearY = useTransform(smooth, [0, 1], ["0%", `${160 * m}%`]);
-  const nearScale = useTransform(smooth, [0, 1], [1, 1.15]);
+  const skyY = useTransform(smooth, [0, 1], ["0%", `${2 * m}%`]);
+  const skyScale = useTransform(smooth, [0, 1], [1.05, 1.08]);
+  const farY = useTransform(smooth, [0, 1], ["0%", `${3 * m}%`]);
+  const midY = useTransform(smooth, [0, 1], ["0%", `${6 * m}%`]);
+  const nearY = useTransform(smooth, [0, 1], ["0%", `${130 * m}%`]);
+  const nearScale = useTransform(smooth, [0, 1], [1, 1.25]);
 
   // Fog rises
   const fogY = useTransform(smooth, [0, 1], ["20%", `${-30 * m}%`]);
