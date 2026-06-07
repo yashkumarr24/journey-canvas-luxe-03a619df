@@ -136,8 +136,8 @@ export function Hero() {
 
         {/* Mid mountains */}
         <motion.div
-          style={{ y: midY }}
-          className="absolute inset-x-0 bottom-0 h-[50%] will-change-transform sm:h-[48%]"
+          style={{ y: midY, scale: midScale, transformOrigin: "50% 80%" }}
+          className="absolute inset-x-0 bottom-0 h-[50%] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:h-[48%]"
         >
           <img
             src={mountainsMid}
