@@ -70,7 +70,7 @@ export function Hero() {
   const skyY = useTransform(smooth, [0, 0.5], ["0%", `${2 * m}%`]);
   const skyScale = useTransform(smooth, [0, 0.5], [1.05, 1.08]);
   const farY = useTransform(smooth, [0, 0.5], ["0%", `${-4 * m}%`]);
-  const farScale = useTransform(smooth, [0, 0.5], [1, 1.18]);
+  const farScale = useTransform(smooth, [0, 0.5], [1, 1.45]);
   const midY = useTransform(smooth, [0, 0.5], ["0%", `${-2 * m}%`]);
   const midScale = useTransform(smooth, [0, 0.5], [1, 1.12]);
   const nearY = useTransform(tight, [0, 0.5], ["0%", `${140 * m}%`]);
