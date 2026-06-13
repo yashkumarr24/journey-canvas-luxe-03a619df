@@ -28,7 +28,7 @@ export function PageHero({
     >
       <motion.div style={{ y, scale }} className="absolute inset-0">
         <img src={image} alt="" className="size-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/40 to-ink" />
+        <div className="absolute inset-0 bg-black/30" />
       </motion.div>
       <motion.div
         style={{ opacity }}
