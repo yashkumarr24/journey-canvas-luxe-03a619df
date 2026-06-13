@@ -46,6 +46,7 @@ function About() {
         eyebrow="About Us"
         title={<>A travel studio <span className="italic gold-gradient">since 2012.</span></>}
         subtitle="Ahmedabad‑based, with desks in Dubai and Bangkok. We specialise in group tours, business tours, personalised tours and custom tours."
+        lightText
       />
 
       <section className="mx-auto max-w-4xl px-6 py-20">
