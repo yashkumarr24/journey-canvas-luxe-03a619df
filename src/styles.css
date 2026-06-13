@@ -130,11 +130,7 @@
 @utility text-pretty { text-wrap: pretty; }
 
 @utility gold-gradient {
-  background: linear-gradient(135deg, #b41e1e 0%, #d62828 45%, #f25c5c 75%, #b41e1e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 10px rgba(242, 92, 92, 0.6)) drop-shadow(0 0 22px rgba(214, 40, 40, 0.4));
+  color: #d62828;
 }
 
 
