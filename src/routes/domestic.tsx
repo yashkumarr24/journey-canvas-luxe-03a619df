@@ -32,6 +32,7 @@ function DomesticPage() {
         eyebrow="India · Domestic"
         title={<>Explore <span className="italic gold-gradient">India's</span> tour packages</>}
         subtitle="We offer a guaranteed lowest price on India holiday packages. Browse by destination, choose a route, and we'll quote your departure city — Ahmedabad or anywhere — with the best mix of car, train and air."
+        lightText
       />
       <Destinations
         items={domesticDestinations}
