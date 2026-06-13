@@ -91,7 +91,7 @@ export function Hero() {
       aria-label="Cinematic mountain hero"
     >
       {/* Sticky viewport — virtual camera */}
-      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[oklch(0.97_0.005_85)] [transform:translateZ(0)] [backface-visibility:hidden]">
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[oklch(0.14_0.01_260)] [transform:translateZ(0)] [backface-visibility:hidden]">
         {/* Sky */}
         <motion.div
           style={{ y: skyY, scale: skyScale }}
@@ -166,7 +166,7 @@ export function Hero() {
           />
         </motion.div>
 
-        {/* Volumetric fog — static, locked to the base of the scene */}
+        {/* Volumetric fog — dark, locked to the base of the scene */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]"
@@ -175,10 +175,11 @@ export function Hero() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to top, oklch(0.98 0.005 85 / 0.95) 0%, oklch(0.96 0.01 80 / 0.6) 40%, transparent 100%)",
+                "linear-gradient(to top, oklch(0.12 0.01 260 / 0.96) 0%, oklch(0.18 0.015 260 / 0.7) 45%, transparent 100%)",
             }}
           />
         </div>
+
 
         {/* Floating dust particles (reduced count, hidden on small screens for perf) */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
@@ -219,7 +220,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-center justify-center px-5 pt-32 sm:px-6 sm:pt-36 md:pt-40 lg:pt-44 will-change-transform"
+          className="relative z-10 flex h-full w-full items-start justify-center px-5 pt-40 sm:px-6 sm:pt-44 md:items-center md:pt-32 lg:pt-36 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
