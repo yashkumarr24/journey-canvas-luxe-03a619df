@@ -230,11 +230,11 @@ export function Hero() {
           >
             <motion.div
               variants={fadeUp}
-              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-xs sm:mb-6"
+              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.5)] sm:text-xs sm:mb-6"
             >
-              <span className="block h-px w-8 bg-gold sm:w-10" />
+              <span className="block h-px w-8 bg-white sm:w-10" />
               Crafting Journeys Since 2012
-              <span className="block h-px w-8 bg-gold sm:w-10" />
+              <span className="block h-px w-8 bg-white sm:w-10" />
             </motion.div>
 
             <SplitHeading
