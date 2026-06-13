@@ -28,7 +28,7 @@ export function PageHero({
     >
       <motion.div style={{ y, scale }} className="absolute inset-0">
         <img src={image} alt="" className="size-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/40 to-ink" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/55 to-ink" />
       </motion.div>
       <motion.div
         style={{ opacity }}
@@ -43,7 +43,7 @@ export function PageHero({
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="text-balance font-display text-[clamp(2.5rem,6vw,5.5rem)] leading-[0.95]"
+          className="text-balance font-display text-[clamp(2.5rem,6vw,5.5rem)] leading-[0.95] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.45)]"
         >
           {title}
         </motion.h1>
@@ -52,7 +52,7 @@ export function PageHero({
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, delay: 0.15 }}
-            className="mt-6 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg"
+            className="mt-6 max-w-2xl text-pretty text-base text-white/85 md:text-lg"
           >
             {subtitle}
           </motion.p>
