@@ -57,6 +57,7 @@ function ContactPage() {
         eyebrow="Get in Touch"
         title={<>Connect <span className="italic gold-gradient">with us.</span></>}
         subtitle="Reach our travel desk by phone, WhatsApp or email. Tell us how you like to travel — we'll take it from there."
+        lightText
       />
 
       <section className="mx-auto max-w-6xl px-6 py-16">
