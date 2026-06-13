@@ -130,11 +130,12 @@
 @utility text-pretty { text-wrap: pretty; }
 
 @utility gold-gradient {
-  background: linear-gradient(135deg, #b8862c 0%, #e9c66a 45%, #f5dca0 75%, #c9962f 100%);
+  background: linear-gradient(135deg, #b41e1e 0%, #d62828 45%, #f25c5c 75%, #b41e1e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+
 
 @utility hairline {
   background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.25), transparent);
