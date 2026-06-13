@@ -32,7 +32,7 @@ const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display font-normal leading-[0.95] tracking-[-0.03em] text-[clamp(2.5rem,9.5vw,8rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
+    <h1 className="font-display font-normal leading-[1.02] tracking-[-0.03em] text-[clamp(2.25rem,6.5vw,6rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
       {lines.map((line, li) => (
         <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
@@ -219,7 +219,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-center justify-center px-5 pt-28 sm:px-6 sm:pt-32 md:pt-24 will-change-transform"
+          className="relative z-10 flex h-full w-full items-center justify-center px-5 pt-32 sm:px-6 sm:pt-36 md:pt-40 lg:pt-44 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
