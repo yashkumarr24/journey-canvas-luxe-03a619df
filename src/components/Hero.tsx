@@ -112,7 +112,7 @@ export function Hero() {
         {/* Distant mountains */}
         <motion.div
           style={{ y: farY, scale: farScale, transformOrigin: "50% 75%" }}
-          className="absolute inset-x-0 bottom-0 h-[55%] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:h-[52%]"
+          className="absolute inset-x-0 bottom-0 h-[52svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden]"
         >
           <img
             src={mountainsFar}
@@ -138,7 +138,7 @@ export function Hero() {
         {/* Mid mountains */}
         <motion.div
           style={{ y: midY, scale: midScale, transformOrigin: "50% 80%" }}
-          className="absolute inset-x-0 bottom-0 h-[50%] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:h-[48%]"
+          className="absolute inset-x-0 bottom-0 h-[48svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden]"
         >
           <img
             src={mountainsMid}
@@ -153,7 +153,7 @@ export function Hero() {
         {/* Near foreground */}
         <motion.div
           style={{ y: nearY }}
-          className="absolute inset-x-0 bottom-0 h-[44%] will-change-transform sm:h-[42%]"
+          className="absolute inset-x-0 bottom-0 h-[42svh] will-change-transform"
         >
           <img
             src={mountainsNear}
@@ -220,7 +220,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-end justify-center px-5 pb-20 sm:px-6 sm:pb-24 md:pb-28 lg:pb-32 will-change-transform"
+          className="relative z-10 flex h-full w-full items-end justify-center px-5 pb-[clamp(4.5rem,11svh,8rem)] sm:px-6 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
