@@ -38,8 +38,8 @@
   --color-pearl: var(--pearl);
   --color-ivory: var(--ivory);
 
-  --font-display: "Playfair Display", "Cormorant Garamond", "Times New Roman", serif;
-  --font-sans: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
