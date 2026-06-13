@@ -112,7 +112,7 @@ export function Hero() {
         {/* Distant mountains */}
         <motion.div
           style={{ y: farY, scale: farScale, transformOrigin: "50% 75%" }}
-          className="absolute inset-x-0 bottom-0 h-[52svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden]"
+          className="absolute inset-x-0 bottom-[6svh] h-[52svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:bottom-0 lg:bottom-[-4svh]"
         >
           <img
             src={mountainsFar}
@@ -138,7 +138,7 @@ export function Hero() {
         {/* Mid mountains */}
         <motion.div
           style={{ y: midY, scale: midScale, transformOrigin: "50% 80%" }}
-          className="absolute inset-x-0 bottom-0 h-[48svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden]"
+          className="absolute inset-x-0 bottom-[5svh] h-[48svh] will-change-transform [transform:translateZ(0)] [backface-visibility:hidden] sm:bottom-0 lg:bottom-[-4svh]"
         >
           <img
             src={mountainsMid}
@@ -153,7 +153,7 @@ export function Hero() {
         {/* Near foreground */}
         <motion.div
           style={{ y: nearY }}
-          className="absolute inset-x-0 bottom-0 h-[42svh] will-change-transform"
+          className="absolute inset-x-0 bottom-[4svh] h-[42svh] will-change-transform sm:bottom-0 lg:bottom-[-4svh]"
         >
           <img
             src={mountainsNear}
