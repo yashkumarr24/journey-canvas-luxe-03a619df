@@ -31,6 +31,7 @@ function InternationalPage() {
         eyebrow="The World · International"
         title={<>The world, <span className="italic gold-gradient">tailored to you.</span></>}
         subtitle="Tell us how you like to travel — solo, with someone, or as a private group of family, friends or colleagues — and we'll compose a tailor‑made itinerary at our best negotiated rates."
+        lightText
       />
       <Destinations
         items={internationalDestinations}
