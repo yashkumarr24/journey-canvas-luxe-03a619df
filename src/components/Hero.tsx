@@ -32,7 +32,7 @@ const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display font-bold leading-[0.95] tracking-[-0.02em] text-[clamp(2.5rem,9.5vw,8rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
+    <h1 className="font-display font-normal leading-[0.95] tracking-[-0.03em] text-[clamp(2.5rem,9.5vw,8rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
       {lines.map((line, li) => (
         <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
