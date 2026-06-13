@@ -220,7 +220,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-center justify-center px-5 sm:px-6 will-change-transform"
+          className="relative z-10 flex h-full w-full items-end justify-center px-5 pb-[clamp(4.5rem,11svh,8rem)] sm:px-6 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
@@ -281,8 +281,8 @@ export function Hero() {
                 { n: "98%", l: "Repeat Travellers" },
               ].map((s) => (
                 <div key={s.l}>
-                  <div className="font-display text-2xl text-gold sm:text-3xl md:text-4xl">{s.n}</div>
-                  <div className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-foreground/70 sm:mt-2 sm:text-xs sm:tracking-[0.25em]">
+                  <div className="font-display text-2xl text-white sm:text-3xl md:text-4xl [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">{s.n}</div>
+                  <div className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-white/80 sm:mt-2 sm:text-xs sm:tracking-[0.25em] [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
                     {s.l}
                   </div>
                 </div>
