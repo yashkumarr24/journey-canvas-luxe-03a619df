@@ -153,7 +153,7 @@ export function Hero() {
         {/* Near foreground */}
         <motion.div
           style={{ y: nearY }}
-          className="absolute inset-x-0 bottom-[4svh] h-[42svh] will-change-transform sm:bottom-0 lg:bottom-[-4svh]"
+          className="absolute inset-x-0 bottom-0 h-[42svh] will-change-transform"
         >
           <img
             src={mountainsNear}
