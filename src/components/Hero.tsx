@@ -220,7 +220,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-start justify-center px-5 pt-40 sm:px-6 sm:pt-44 md:items-center md:pt-32 lg:pt-36 will-change-transform"
+          className="relative z-10 flex h-full w-full items-start justify-center px-5 pt-44 sm:px-6 sm:pt-48 md:pt-52 lg:pt-56 xl:pt-44 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
