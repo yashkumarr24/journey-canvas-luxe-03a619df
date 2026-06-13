@@ -4,9 +4,9 @@ import { Link } from "@tanstack/react-router";
 import logo from "@/assets/flynfeel-logo.png";
 
 const links = [
+  { label: "Home", to: "/" },
   { label: "Domestic", to: "/domestic" },
   { label: "International", to: "/international" },
-  { label: "Blog", to: "/blog" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
