@@ -245,7 +245,7 @@ export function Hero() {
 
             <motion.p
               variants={fadeUp}
-              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/75 sm:mt-8 sm:text-base md:text-lg"
+              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/85 font-medium [text-shadow:0_1px_12px_rgba(255,255,255,0.6)] sm:mt-8 sm:text-base md:text-lg"
             >
               Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
               snow‑draped summits and quiet luxury — designed entirely around you.
