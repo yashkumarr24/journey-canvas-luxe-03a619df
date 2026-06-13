@@ -38,8 +38,8 @@
   --color-pearl: var(--pearl);
   --color-ivory: var(--ivory);
 
-  --font-display: "Cormorant Garamond", "Times New Roman", serif;
-  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
