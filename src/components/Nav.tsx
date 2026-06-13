@@ -30,19 +30,18 @@ export function Nav() {
       className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6"
     >
       <nav
-        className={`flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-foreground/10 px-4 py-2.5 transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7 ${
-          scrolled ? "glass shadow-[var(--shadow-soft)]" : "bg-transparent backdrop-blur-sm"
-        }`}
+        className="flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-foreground/10 bg-[#F8F8F6] px-4 py-2.5 shadow-[var(--shadow-soft)] transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7"
       >
         <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
           <img
             src={logo}
             alt="Fly n Feel Holidays"
-            className="h-9 w-auto sm:h-10 md:h-11 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+            className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
             loading="eager"
             decoding="async"
           />
         </Link>
+
 
         <ul className="hidden min-w-0 items-center gap-5 text-sm text-muted-foreground lg:flex xl:gap-8">
           {links.map((l) => (
