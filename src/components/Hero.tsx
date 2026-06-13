@@ -220,7 +220,7 @@ export function Hero() {
         {/* Content */}
         <motion.div
           style={{ y: contentY, opacity: contentOpacity }}
-          className="relative z-10 flex h-full w-full items-end justify-center px-5 pb-[clamp(4.5rem,11svh,8rem)] pt-24 sm:px-6 lg:items-center lg:pb-0 lg:pt-28 will-change-transform"
+          className="relative z-10 flex h-full w-full items-end justify-center px-5 pb-[clamp(4.5rem,11svh,8rem)] pt-24 sm:px-6 lg:items-center lg:pb-0 lg:pt-52 will-change-transform"
         >
           <motion.div
             variants={containerVariants}
@@ -230,11 +230,11 @@ export function Hero() {
           >
             <motion.div
               variants={fadeUp}
-              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-xs sm:mb-6"
+              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.5)] sm:text-xs sm:mb-6"
             >
-              <span className="block h-px w-8 bg-gold sm:w-10" />
+              <span className="block h-px w-8 bg-white sm:w-10" />
               Crafting Journeys Since 2012
-              <span className="block h-px w-8 bg-gold sm:w-10" />
+              <span className="block h-px w-8 bg-white sm:w-10" />
             </motion.div>
 
             <SplitHeading
