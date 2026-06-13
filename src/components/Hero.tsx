@@ -265,7 +265,7 @@ export function Hero() {
               </a>
               <a
                 href="/domestic"
-                className="inline-flex items-center gap-3 rounded-full border border-foreground/25 bg-background/40 px-6 py-3.5 text-sm font-medium text-foreground backdrop-blur-md transition-colors hover:bg-background/70 sm:px-7 sm:py-4"
+                className="inline-flex items-center gap-3 rounded-full border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:px-7 sm:py-4"
               >
                 Discover Domestic
               </a>
