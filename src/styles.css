@@ -77,8 +77,9 @@
   --ring: #111111;
 
   /* Legacy tokens, remapped for the new theme */
-  --gold: #111111;          /* accent text now reads as rich black */
-  --gold-soft: #444444;
+  --gold: #d62828;          /* logo red — used as the brand accent everywhere */
+  --gold-soft: #f25c5c;
+
   --ink: #F8F8F6;           /* image-overlay gradients now fade to pearl */
   --navy: #FAFAF7;
 
