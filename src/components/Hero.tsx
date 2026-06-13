@@ -32,7 +32,7 @@ const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display leading-[0.95] tracking-[-0.02em] text-[clamp(2.25rem,9vw,7.5rem)]">
+    <h1 className="font-display font-bold leading-[0.95] tracking-[-0.02em] text-[clamp(2.5rem,9.5vw,8rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
       {lines.map((line, li) => (
         <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
@@ -245,7 +245,7 @@ export function Hero() {
 
             <motion.p
               variants={fadeUp}
-              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/75 sm:mt-8 sm:text-base md:text-lg"
+              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/85 font-medium [text-shadow:0_1px_12px_rgba(255,255,255,0.6)] sm:mt-8 sm:text-base md:text-lg"
             >
               Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
               snow‑draped summits and quiet luxury — designed entirely around you.
