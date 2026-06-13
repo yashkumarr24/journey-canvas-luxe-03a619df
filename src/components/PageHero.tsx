@@ -7,12 +7,14 @@ export function PageHero({
   title,
   subtitle,
   height = "70svh",
+  lightText = false,
 }: {
   image: string;
   eyebrow?: string;
   title: ReactNode;
   subtitle?: string;
   height?: string;
+  lightText?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
