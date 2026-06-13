@@ -83,7 +83,7 @@
   --ink: #F8F8F6;           /* image-overlay gradients now fade to pearl */
   --navy: #FAFAF7;
 
-  --gradient-gold: linear-gradient(135deg, #111111, #444444);
+  --gradient-gold: linear-gradient(135deg, #d62828, #f25c5c);
   --gradient-night: linear-gradient(180deg, #F8F8F6 0%, #F5F5F0 100%);
   --shadow-luxe: 0 30px 80px -30px rgba(17, 17, 17, 0.18), 0 8px 24px -12px rgba(17, 17, 17, 0.08);
   --shadow-soft: 0 20px 60px -28px rgba(17, 17, 17, 0.12);
