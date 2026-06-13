@@ -32,7 +32,7 @@ const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display font-normal leading-[1.02] tracking-[-0.03em] text-[clamp(2.25rem,6.5vw,6rem)] [text-shadow:0_2px_24px_rgba(17,17,17,0.18),0_1px_2px_rgba(17,17,17,0.25)]">
+    <h1 className="font-display font-normal leading-[1.02] tracking-[-0.03em] text-[clamp(2.25rem,6.5vw,6rem)] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.55),0_1px_3px_rgba(0,0,0,0.5)]">
       {lines.map((line, li) => (
         <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
@@ -246,7 +246,7 @@ export function Hero() {
 
             <motion.p
               variants={fadeUp}
-              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-foreground/85 font-medium [text-shadow:0_1px_12px_rgba(255,255,255,0.6)] sm:mt-8 sm:text-base md:text-lg"
+              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-white/95 font-medium [text-shadow:0_2px_18px_rgba(0,0,0,0.55),0_1px_2px_rgba(0,0,0,0.45)] sm:mt-8 sm:text-base md:text-lg"
             >
               Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
               snow‑draped summits and quiet luxury — designed entirely around you.
