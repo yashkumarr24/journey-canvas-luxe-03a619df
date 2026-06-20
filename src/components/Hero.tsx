@@ -26,9 +26,9 @@ const fadeUp = {
   },
 };
 
-// Spring config tuned for buttery smooth high-refresh scrolling.
-const SPRING = { stiffness: 220, damping: 38, mass: 0.25, restDelta: 0.001 };
-const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 };
+// Snappier spring configs for faster response and less scroll lag.
+const SPRING = { stiffness: 350, damping: 35, mass: 0.12, restDelta: 0.001 };
+const TIGHT_SPRING = { stiffness: 500, damping: 42, mass: 0.1, restDelta: 0.001 };
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
@@ -87,7 +87,7 @@ export function Hero() {
     <section
       id="top"
       ref={ref}
-      className="relative h-[220svh] w-full"
+      className="relative h-[130svh] w-full"
       aria-label="Cinematic mountain hero"
     >
       {/* Sticky viewport — virtual camera */}
