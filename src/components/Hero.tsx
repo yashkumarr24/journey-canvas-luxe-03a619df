@@ -1,4 +1,4 @@
-import { motion, useScroll, useSpring, useTransform, useReducedMotion } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { useRef } from "react";
 import sky from "@/assets/parallax-sky.jpg";
 import mountainsFar from "@/assets/parallax-mountains-far.png";
@@ -26,9 +26,9 @@ const fadeUp = {
   },
 };
 
-// Spring config tuned for buttery smooth high-refresh scrolling.
-const SPRING = { stiffness: 220, damping: 38, mass: 0.25, restDelta: 0.001 };
-const TIGHT_SPRING = { stiffness: 400, damping: 50, mass: 0.2, restDelta: 0.001 };
+// Snappier spring configs for faster response and less scroll lag.
+const SPRING = { stiffness: 350, damping: 35, mass: 0.12, restDelta: 0.001 };
+const TIGHT_SPRING = { stiffness: 500, damping: 42, mass: 0.1, restDelta: 0.001 };
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
@@ -46,18 +46,13 @@ function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
-  const prefersReduced = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
 
-  // Smoothed progress for 120fps-feel motion
   const smooth = useSpring(scrollYProgress, SPRING);
-  // Tighter spring for the foreground — must track the scrubber 1:1 with no lag.
   const tight = useSpring(scrollYProgress, TIGHT_SPRING);
-  // Parallax is a core part of the hero, so it runs regardless of the
-  // OS reduced-motion setting. We only disable the looping dust below.
   const m = 1;
 
   // Parallax — rear iced peaks stay almost still; the front black ridge
@@ -87,7 +82,7 @@ export function Hero() {
     <section
       id="top"
       ref={ref}
-      className="relative h-[220svh] w-full"
+      className="relative h-[130svh] w-full"
       aria-label="Cinematic mountain hero"
     >
       {/* Sticky viewport — virtual camera */}
@@ -181,31 +176,6 @@ export function Hero() {
         </div>
 
 
-        {/* Floating dust particles (reduced count, hidden on small screens for perf) */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
-          {[...Array(8)].map((_, i) => (
-            <motion.span
-              key={i}
-              className="absolute block rounded-full bg-white/60 will-change-transform"
-              style={{
-                width: 2 + (i % 3),
-                height: 2 + (i % 3),
-                left: `${(i * 137) % 100}%`,
-                top: `${(i * 53) % 100}%`,
-              }}
-              animate={{
-                y: [0, -28, 0],
-                opacity: [0.2, 0.7, 0.2],
-              }}
-              transition={{
-                duration: 9 + (i % 5),
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.5,
-              }}
-            />
-          ))}
-        </div>
 
         {/* Vignette — static, no per-frame recalc */}
         <div
