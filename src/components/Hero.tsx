@@ -181,31 +181,6 @@ export function Hero() {
         </div>
 
 
-        {/* Floating dust particles (reduced count, hidden on small screens for perf) */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
-          {[...Array(8)].map((_, i) => (
-            <motion.span
-              key={i}
-              className="absolute block rounded-full bg-white/60 will-change-transform"
-              style={{
-                width: 2 + (i % 3),
-                height: 2 + (i % 3),
-                left: `${(i * 137) % 100}%`,
-                top: `${(i * 53) % 100}%`,
-              }}
-              animate={{
-                y: [0, -28, 0],
-                opacity: [0.2, 0.7, 0.2],
-              }}
-              transition={{
-                duration: 9 + (i % 5),
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.5,
-              }}
-            />
-          ))}
-        </div>
 
         {/* Vignette — static, no per-frame recalc */}
         <div
