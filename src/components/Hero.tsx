@@ -7,22 +7,22 @@ import mountainsNear from "@/assets/parallax-mountains-near.png";
 
 const containerVariants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.5 } },
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.15 } },
 };
 const wordVariants = {
   hidden: { y: "110%", opacity: 0 },
   show: {
     y: "0%",
     opacity: 1,
-    transition: { duration: 1, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 const fadeUp = {
-  hidden: { y: 24, opacity: 0 },
+  hidden: { y: 16, opacity: 0 },
   show: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
@@ -265,7 +265,7 @@ export function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 1.2 }}
+          transition={{ delay: 1, duration: 0.8 }}
           style={{ opacity: contentOpacity }}
           className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-[10px] uppercase tracking-[0.4em] text-foreground/60 sm:bottom-8"
         >
