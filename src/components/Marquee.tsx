@@ -6,12 +6,15 @@ const tags = [
 export function Marquee() {
   const items = [...tags, ...tags];
   return (
-    <section className="border-y border-foreground/5 bg-card/40 py-8 overflow-hidden">
-      <div className="flex marquee whitespace-nowrap">
+    <section className="border-y border-foreground/5 bg-card/40 py-4 overflow-hidden">
+      <div className="flex marquee marquee-track whitespace-nowrap">
         {items.map((t, i) => (
-          <span key={i} className="mx-8 inline-flex items-center gap-8 font-display text-2xl text-muted-foreground md:text-4xl">
-            {t}
-            <span className="size-1.5 rounded-full bg-gold/70" />
+          <span
+            key={i}
+            className="group mx-4 inline-flex items-center gap-4 font-display text-base md:text-xl text-muted-foreground transition-colors duration-300 hover:text-gold cursor-default"
+          >
+            <span className="transition-transform duration-300 group-hover:-translate-y-0.5">{t}</span>
+            <span className="size-1 rounded-full bg-gold/70 transition-transform duration-300 group-hover:scale-150" />
           </span>
         ))}
       </div>
