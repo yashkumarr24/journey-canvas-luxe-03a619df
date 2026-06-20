@@ -200,10 +200,16 @@ export function Hero() {
           >
             <motion.div
               variants={fadeUp}
-              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white sm:text-xs sm:mb-6 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]"
+              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white sm:text-xs sm:mb-6"
             >
               <span className="block h-px w-8 bg-white sm:w-10" />
-              Crafting Journeys Since 2012
+              <span className="inline-flex">
+                {"Crafting Journeys Since 2012".split("").map((ch, i) => (
+                  <span key={i} className="[text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
+                    {ch === " " ? "\u00A0" : ch}
+                  </span>
+                ))}
+              </span>
               <span className="block h-px w-8 bg-white sm:w-10" />
             </motion.div>
 
