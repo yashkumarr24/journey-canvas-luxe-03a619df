@@ -1,4 +1,4 @@
-import { motion, useScroll, useSpring, useTransform, useReducedMotion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import sky from "@/assets/parallax-sky.jpg";
 import mountainsFar from "@/assets/parallax-mountains-far.png";
