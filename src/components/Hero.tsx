@@ -32,7 +32,7 @@ const TIGHT_SPRING = { stiffness: 500, damping: 42, mass: 0.1, restDelta: 0.001 
 
 function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
   return (
-    <h1 className="font-display font-normal leading-[1.02] tracking-[-0.03em] text-[clamp(2.25rem,6.5vw,6rem)] text-white">
+    <h1 className="font-display font-normal leading-[1.02] tracking-[-0.03em] text-[clamp(2.25rem,6.5vw,6rem)] text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
       {lines.map((line, li) => (
         <span key={li} className="block overflow-hidden pb-[0.08em]">
           <motion.span variants={wordVariants} className="inline-block will-change-transform">
@@ -200,7 +200,7 @@ export function Hero() {
           >
             <motion.div
               variants={fadeUp}
-              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white sm:text-xs sm:mb-6"
+              className="mx-auto mb-5 flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.3em] text-white sm:text-xs sm:mb-6 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]"
             >
               <span className="block h-px w-8 bg-white sm:w-10" />
               Crafting Journeys Since 2012
@@ -216,7 +216,7 @@ export function Hero() {
 
             <motion.p
               variants={fadeUp}
-              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-white/95 font-medium sm:mt-8 sm:text-base md:text-lg"
+              className="mx-auto mt-6 max-w-xl text-pretty text-sm leading-relaxed text-white/95 font-medium sm:mt-8 sm:text-base md:text-lg [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]"
             >
               Bespoke voyages curated by trusted experts. Sun‑soaked coastlines,
               snow‑draped summits and quiet luxury — designed entirely around you.
@@ -251,8 +251,8 @@ export function Hero() {
                 { n: "98%", l: "Repeat Travellers" },
               ].map((s) => (
                 <div key={s.l}>
-                  <div className="font-display text-2xl text-white sm:text-3xl md:text-4xl">{s.n}</div>
-                  <div className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-white/80 sm:mt-2 sm:text-xs sm:tracking-[0.25em]">
+                  <div className="font-display text-2xl text-white sm:text-3xl md:text-4xl [text-shadow:0_1px_3px_rgba(0,0,0,0.3)]">{s.n}</div>
+                  <div className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-white/80 sm:mt-2 sm:text-xs sm:tracking-[0.25em] [text-shadow:0_1px_2px_rgba(0,0,0,0.3)]">
                     {s.l}
                   </div>
                 </div>
