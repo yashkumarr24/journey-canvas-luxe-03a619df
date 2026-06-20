@@ -46,18 +46,13 @@ function SplitHeading({ lines }: { lines: React.ReactNode[] }) {
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
-  const prefersReduced = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
 
-  // Smoothed progress for 120fps-feel motion
   const smooth = useSpring(scrollYProgress, SPRING);
-  // Tighter spring for the foreground — must track the scrubber 1:1 with no lag.
   const tight = useSpring(scrollYProgress, TIGHT_SPRING);
-  // Parallax is a core part of the hero, so it runs regardless of the
-  // OS reduced-motion setting. We only disable the looping dust below.
   const m = 1;
 
   // Parallax — rear iced peaks stay almost still; the front black ridge
