@@ -170,3 +170,11 @@
 }
 @utility marquee { animation: marquee 22s linear infinite; will-change: transform; }
 .marquee-track:hover { animation-play-state: paused; }
+
+@media (min-width: 1024px) and (max-height: 720px) {
+  .hero-copy {
+    align-items: flex-start;
+    padding-top: 9rem;
+    padding-bottom: 2rem;
+  }
+}
