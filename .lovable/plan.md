@@ -1,62 +1,62 @@
-## Goal
+# Flight & Hotel Booking with TripJack
 
-Make the project deploy cleanly to **Vercel** today, and stay portable to any **Node.js host** (Hostinger Node plans, VPS, Render, Railway, etc.) tomorrow — with no Vercel-specific lock-in.
+Goal: turn Fly n Feel into a full online travel booking site (MakeMyTrip-style) powered by the TripJack API, with Razorpay payments and guest checkout (no login). Building starts only after you approve — nothing is created yet.
 
-## Important honesty up front
+## What we need before building
 
-- **GoDaddy shared hosting and Hostinger shared (cPanel) hosting cannot run this app.** They only serve static files / PHP. Any SSR React app (Next, Remix, TanStack Start, Nuxt, SvelteKit) needs a Node runtime. If you want to host on those, you need their "Node.js hosting" / "Cloud Hosting" / "VPS" tiers — not the basic shared plans.
-- What I *can* guarantee: the build output will run on **any host that gives you a Node process** (Vercel, Hostinger VPS/Node, GoDaddy VPS, Render, Railway, Fly, your own server).
+1. TripJack UAT credentials (API key / user id) — you said test-only for now. Live keys can be swapped in later without code changes.
+2. Lovable Cloud enabled — needed to store bookings, travellers, payment records and TripJack booking references, and to keep API keys off the browser.
+3. Razorpay test key id + secret.
 
-## Changes I'll make
+## Booking flow (both products)
 
-### 1. Switch SSR target from Cloudflare Workers → Node
-- Configure Nitro preset via `vite.config.ts` to build a portable Node server (`node-server`) by default, with Vercel auto-detected when deploying there (Nitro handles this natively — same codebase, different output per host, zero lock-in).
-- Remove the Cloudflare Worker entry wrapper (`src/server.ts`) and the `server.ts` Nitro entry override — those are Workers-specific.
-- Keep `src/lib/error-capture.ts` / `error-page.ts` only if they remain useful for Node; otherwise remove.
-
-### 2. Add `npm run start` and a real production server script
-- After `npm run build`, output goes to `.output/server/index.mjs` (Nitro convention).
-- `npm run start` → `node .output/server/index.mjs`.
-- Works identically on Vercel, VPS, Hostinger Node, Docker, etc.
-
-### 3. Vercel deployment files
-- Add a minimal `vercel.json` only if needed (usually Nitro's Vercel preset needs nothing). Vercel auto-detects Vite + Nitro.
-- No `@vercel/*` packages, no Vercel Edge functions, no `next.config` — keep it framework-neutral.
-
-### 4. Portability audit
-- Confirm no imports from `cloudflare:*`, `@cloudflare/*`, `wrangler`, or `@vercel/*`.
-- Confirm no usage of Workers-only APIs (KV, Durable Objects, R2 bindings) — there are none.
-- Confirm all `process.env` reads happen inside server function handlers (already the pattern).
-- Lovable asset URLs (`/__l5e/assets-v1/...`) — verify these resolve when self-hosted. If they don't, swap to bundled imports.
-
-### 5. Build & route verification
-- Run production build, fix any TS/ESLint errors that surface.
-- Verify every route renders: `/`, `/about`, `/contact`, `/domestic`, `/international`, `/destinations/$slug` (all 9 slugs), `/blog`, `/blog/$slug`, `/terms`, `/privacy`.
-- Check SSR head metadata (titles, OG tags) is emitted in the rendered HTML.
-
-### 6. SEO basics
-- Add `public/robots.txt`.
-- Add a dynamic `src/routes/sitemap[.]xml.ts` listing all static + destination + blog routes.
-
-## What I will NOT change
-- Animations (Lenis, Framer Motion, GSAP) — already portable, pure JS.
-- Components, content, design system, routes — untouched.
-- TanStack Start framework — staying on it; just retargeting the server output.
-
-## Deployment instructions you'll get at the end
-
-**Vercel:** push to GitHub → import repo → deploy. No config needed.
-
-**Hostinger Node / VPS / GoDaddy VPS / any Node host:**
-```bash
-npm install
-npm run build
-npm run start   # serves on PORT env var, default 3000
+```text
+Search form -> results + filters -> select -> review & price re-check
+   -> traveller/guest details -> Razorpay payment -> TripJack booking
+   -> confirmation page + email + booking reference lookup
 ```
-Put it behind nginx/Apache reverse proxy, use PM2 or systemd to keep it alive. Standard Node app deployment — no framework-specific tooling.
 
-**Shared cPanel hosting (basic GoDaddy/Hostinger plans):** not supported by any SSR React framework. If that's a hard requirement, the only path is converting to a static SPA, which we'd discuss separately.
+Every TripJack call runs on our server, never from the browser.
 
-## Risk
+## Phase 1 — Foundation
 
-The biggest unknown is whether the Lovable preview environment continues to work after switching off the Cloudflare Worker preset, since the in-editor preview is built around that runtime. I'll verify after the switch and revert/adjust if the live preview breaks.
+- Enable Lovable Cloud; store TripJack and Razorpay keys as secrets.
+- Server-side TripJack client (UAT base URL, auth header, error mapping, timeouts).
+- Database: `bookings`, `booking_travellers`, `payments`, `search_logs`. Guest bookings keyed by a generated reference + email/phone.
+- Shared booking UI shell matching the current design system (red accent, Inter Tight/Inter, pearl-white surfaces).
+
+## Phase 2 — Flights
+
+- `/flights` search: from/to airport autocomplete, dates, one-way / round-trip, pax counts, cabin class.
+- TripJack air search -> results page with airline, times, duration, stops, fare; filters (stops, airline, price, departure window) and sorting.
+- Fare rules and baggage detail on selection; re-price check before payment.
+- Traveller details form with the fields TripJack requires (name as per ID, DOB, gender, contact; passport for international).
+- Book -> hold -> Razorpay payment -> ticket confirmation, PNR shown and stored.
+
+## Phase 3 — Hotels
+
+- `/hotels` search: city/hotel autocomplete, check-in/out, rooms + guests.
+- Results with photo, star rating, location, price per night, amenity chips, map-free list first.
+- Hotel detail: gallery, room/rate options, cancellation policy, inclusions.
+- Guest details -> Razorpay payment -> TripJack hotel booking -> voucher + confirmation.
+
+## Phase 4 — Post-booking & polish
+
+- `/booking/lookup` — retrieve a booking with reference + email (guest friendly).
+- Confirmation emails (flight e-ticket summary / hotel voucher) with a PDF-style printable page.
+- Cancellation request flow: user submits, your desk approves, TripJack cancel API called.
+- Admin view for your team to see bookings, payment status and TripJack responses.
+- Nav update: Flights and Hotels as primary links alongside the existing pages.
+
+## Technical notes
+
+- TanStack Start `createServerFn` for all TripJack and Razorpay calls; secrets read inside handlers.
+- Razorpay: order created server-side, checkout opened client-side, signature verified in a server route before the TripJack booking is confirmed. Booking is only issued after verified payment; failed issuance triggers an automatic refund request and alerts your desk.
+- Idempotency keys on booking calls so a double-click never double-books.
+- Search results cached briefly (TripJack rate limits) and always re-priced before payment.
+- Zod validation on every search and traveller payload.
+- Everything responsive; results pages designed mobile-first.
+
+## Suggested build order
+
+Phase 1 -> Phase 2 (flights end to end in test mode) -> Phase 3 (hotels) -> Phase 4. Each phase is testable on UAT before moving on.
