@@ -33,7 +33,7 @@ import {
   type FlightSortKey,
 } from "@/types/booking";
 
-export const Route = createFileRoute("/flights")({
+export const Route = createFileRoute("/flights/")({
   head: () => ({
     meta: [
       { title: "Flight Search — Fly n Feel Holidays" },
