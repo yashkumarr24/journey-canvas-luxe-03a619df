@@ -30,6 +30,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
+import { Route as AuthenticatedAccountBookingsRouteImport } from './routes/_authenticated/account.bookings'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -138,6 +139,12 @@ const AuthenticatedAccountProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountBookingsRoute =
+  AuthenticatedAccountBookingsRouteImport.update({
+    id: '/bookings',
+    path: '/bookings',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
     | '/account/'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog'
+    | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
     | '/account'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/_authenticated/account/bookings'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/travellers'
     | '/_authenticated/account/'
@@ -444,16 +457,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/bookings': {
+      id: '/_authenticated/account/bookings'
+      path: '/bookings'
+      fullPath: '/account/bookings'
+      preLoaderRoute: typeof AuthenticatedAccountBookingsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
   }
 }
 
 interface AuthenticatedAccountRouteChildren {
+  AuthenticatedAccountBookingsRoute: typeof AuthenticatedAccountBookingsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
   AuthenticatedAccountTravellersRoute: typeof AuthenticatedAccountTravellersRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
+  AuthenticatedAccountBookingsRoute: AuthenticatedAccountBookingsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
   AuthenticatedAccountTravellersRoute: AuthenticatedAccountTravellersRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
