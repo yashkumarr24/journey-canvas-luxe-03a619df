@@ -28,6 +28,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
+import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
 
 const TermsRoute = TermsRouteImport.update({
@@ -125,6 +126,12 @@ const AuthenticatedAccountIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountTravellersRoute =
+  AuthenticatedAccountTravellersRouteImport.update({
+    id: '/travellers',
+    path: '/travellers',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesByTo {
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog': typeof BlogIndexRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesById {
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRouteTypes {
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/destinations/$slug'
     | '/blog/'
     | '/account/profile'
+    | '/account/travellers'
     | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/destinations/$slug'
     | '/blog'
     | '/account/profile'
+    | '/account/travellers'
     | '/account'
   id:
     | '__root__'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/destinations/$slug'
     | '/blog/'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/travellers'
     | '/_authenticated/account/'
   fileRoutesById: FileRoutesById
 }
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/travellers': {
+      id: '/_authenticated/account/travellers'
+      path: '/travellers'
+      fullPath: '/account/travellers'
+      preLoaderRoute: typeof AuthenticatedAccountTravellersRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/profile': {
       id: '/_authenticated/account/profile'
       path: '/profile'
@@ -429,11 +449,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountTravellersRoute: typeof AuthenticatedAccountTravellersRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountTravellersRoute: AuthenticatedAccountTravellersRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 
