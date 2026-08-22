@@ -54,7 +54,17 @@ function Leg({ itinerary }: { itinerary: FlightItinerary }) {
   );
 }
 
-export function FlightResultCard({ result }: { result: FlightResult }) {
+export interface FlightResultCardProps {
+  result: FlightResult;
+  /** Starts server-side re-pricing for this fare. */
+  onSelect?: (result: FlightResult) => void;
+  /** True while this specific fare is being revalidated. */
+  selecting?: boolean;
+  /** True while any fare on the page is being revalidated. */
+  disabled?: boolean;
+}
+
+export function FlightResultCard({ result, onSelect, selecting, disabled }: FlightResultCardProps) {
   const price = result.fare?.totalPrice;
   const stops = totalStops(result);
 
@@ -82,10 +92,12 @@ export function FlightResultCard({ result }: { result: FlightResult }) {
           </div>
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm text-primary-foreground transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={() => onSelect?.(result)}
+            disabled={disabled || selecting || !onSelect}
+            className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm text-primary-foreground transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             aria-label={`Select flight for ${formatMoney(price?.amount, price?.currency ?? "INR")}, ${stopsLabel(stops)}`}
           >
-            Select <ArrowRight className="size-4" aria-hidden="true" />
+            {selecting ? "Checking…" : "Select"} <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
       </div>

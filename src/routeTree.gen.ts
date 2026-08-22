@@ -13,13 +13,14 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
-import { Route as FlightsRouteImport } from './routes/flights'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FlightsIndexRouteImport } from './routes/flights.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as FlightsReviewRouteImport } from './routes/flights.review'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -52,11 +53,6 @@ const InternationalRoute = InternationalRouteImport.update({
   path: '/international',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FlightsRoute = FlightsRouteImport.update({
-  id: '/flights',
-  path: '/flights',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DomesticRoute = DomesticRouteImport.update({
   id: '/domestic',
   path: '/domestic',
@@ -81,9 +77,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FlightsIndexRoute = FlightsIndexRouteImport.update({
+  id: '/flights/',
+  path: '/flights/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsReviewRoute = FlightsReviewRouteImport.update({
+  id: '/flights/review',
+  path: '/flights/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
@@ -151,7 +157,6 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -163,7 +168,9 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
+  '/flights/': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -174,7 +181,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -185,7 +191,9 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog': typeof BlogIndexRoute
+  '/flights': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -198,7 +206,6 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -210,7 +217,9 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
+  '/flights/': typeof FlightsIndexRoute
   '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -223,7 +232,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -235,7 +243,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog/'
+    | '/flights/'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -246,7 +256,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -257,7 +266,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog'
+    | '/flights'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -269,7 +280,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -281,7 +291,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog/'
+    | '/flights/'
     | '/_authenticated/account/bookings'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/travellers'
@@ -294,7 +306,6 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
-  FlightsRoute: typeof FlightsRoute
   InternationalRoute: typeof InternationalRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -305,7 +316,9 @@ export interface RootRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
+  FlightsReviewRoute: typeof FlightsReviewRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  FlightsIndexRoute: typeof FlightsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -336,13 +349,6 @@ declare module '@tanstack/react-router' {
       path: '/international'
       fullPath: '/international'
       preLoaderRoute: typeof InternationalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/flights': {
-      id: '/flights'
-      path: '/flights'
-      fullPath: '/flights'
-      preLoaderRoute: typeof FlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/domestic': {
@@ -380,11 +386,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/flights/': {
+      id: '/flights/'
+      path: '/flights'
+      fullPath: '/flights/'
+      preLoaderRoute: typeof FlightsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/review': {
+      id: '/flights/review'
+      path: '/flights/review'
+      fullPath: '/flights/review'
+      preLoaderRoute: typeof FlightsReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinations/$slug': {
@@ -502,7 +522,6 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
-  FlightsRoute: FlightsRoute,
   InternationalRoute: InternationalRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -513,7 +532,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
+  FlightsReviewRoute: FlightsReviewRoute,
   BlogIndexRoute: BlogIndexRoute,
+  FlightsIndexRoute: FlightsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

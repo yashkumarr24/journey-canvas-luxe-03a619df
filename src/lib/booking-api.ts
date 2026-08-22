@@ -16,10 +16,14 @@ import type {
   APIResponse,
   BookingError,
   BookingErrorKind,
+  FlightReviewResponse,
   FlightSearchRequest,
   FlightSearchResponse,
+  FlightSelectionRequest,
   HotelSearchRequest,
   HotelSearchResponse,
+  TravellerDetailsRequest,
+  TravellerDetailsResponse,
 } from "@/types/booking";
 
 /* ------------------------------------------------------------------ */
@@ -280,6 +284,33 @@ export const bookingApi = {
   /** Flight search. The backend endpoint is added in a later phase. */
   searchFlights: (payload: FlightSearchRequest, options?: RequestOptions) =>
     request<FlightSearchResponse>("POST", "/api/v1/flights/search", payload, options),
+
+  /**
+   * Select a fare. The backend re-prices it with the provider and opens a
+   * server-held review session; we only ever receive opaque tokens back.
+   */
+  selectFlight: (payload: FlightSelectionRequest, options?: RequestOptions) =>
+    request<FlightReviewResponse>("POST", "/api/v1/flights/select", payload, options),
+
+  /**
+   * Re-read a review session. The guest token travels in a header so it stays
+   * out of URLs, browser history and server access logs.
+   */
+  getReview: (reviewToken: string, guestToken?: string | null, options?: RequestOptions) =>
+    request<FlightReviewResponse>(
+      "GET",
+      `/api/v1/flights/review/${encodeURIComponent(reviewToken)}`,
+      undefined,
+      {
+        timeoutMs: 15_000,
+        ...options,
+        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
+      },
+    ),
+
+  /** Submit traveller + contact details and create a draft booking. */
+  submitTravellers: (payload: TravellerDetailsRequest, options?: RequestOptions) =>
+    request<TravellerDetailsResponse>("POST", "/api/v1/flights/travellers", payload, options),
 
   /** Hotel search. The backend endpoint is added in a later phase. */
   searchHotels: (payload: HotelSearchRequest, options?: RequestOptions) =>

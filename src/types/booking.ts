@@ -233,3 +233,114 @@ export const defaultFlightFilters: FlightFilters = {
   airlines: [],
   stops: [],
 };
+
+/* ------------------------------------------------------------------ */
+/* Fare review + travellers (PHASE 7)                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * IMPORTANT: no request type below carries a price, a currency or a user id.
+ * The backend resolves the payable amount from its own stored session and
+ * rejects any request that tries to send one.
+ */
+
+export interface FlightSelectionRequest {
+  /** Our own search id from FlightSearchResponse. */
+  searchId: string;
+  /** Opaque fare handle echoed back from the search result. */
+  fareId: string;
+  /** Guest continuity token issued by the server on a previous selection. */
+  guestToken?: string;
+  /** Guards against a double-submit creating two provider pre-books. */
+  idempotencyKey?: string;
+}
+
+export interface PriceChange {
+  previous: Money;
+  current: Money;
+  difference: Money;
+  direction: "increase" | "decrease";
+}
+
+export interface TravellerRequirements {
+  passportRequired: boolean;
+  passportExpiryRequired: boolean;
+  nationalityRequired: boolean;
+  dateOfBirthRequired: boolean;
+  international: boolean;
+}
+
+export interface ReviewFare {
+  totalPrice: Money;
+  basePrice?: Money;
+  taxes?: Money;
+  otherCharges?: Money;
+  fareType?: string;
+  refundable?: boolean;
+  conditions?: string[];
+  baggageCheckIn?: string;
+  baggageCabin?: string;
+  seatsAvailable?: number;
+}
+
+export interface FlightReviewResponse {
+  /** Opaque handle for this review session — the only thing we persist. */
+  reviewToken: string;
+  /** Returned exactly once, when a guest session is created. */
+  guestToken?: string;
+  status: "reviewed" | "price_changed";
+  itineraries: FlightItinerary[];
+  fare: ReviewFare;
+  priceChange?: PriceChange;
+  passengers: PassengerCounts;
+  requirements: TravellerRequirements;
+  expiresAt: string;
+  validForSeconds: number;
+}
+
+export type PassengerType = "adult" | "child" | "infant";
+
+export interface TravellerInput {
+  type: PassengerType;
+  title?: string;
+  firstName: string;
+  lastName: string;
+  /** YYYY-MM-DD. */
+  dateOfBirth?: string;
+  gender?: "male" | "female" | "other";
+  /** ISO-3166 alpha-2. */
+  nationality?: string;
+  passportNumber?: string;
+  passportExpiry?: string;
+  passportIssuingCountry?: string;
+  /** Ownership is re-verified server-side against the signed-in user. */
+  savedTravellerId?: string;
+  saveToProfile?: boolean;
+}
+
+export interface ContactInput {
+  email: string;
+  phone: string;
+}
+
+export interface TravellerDetailsRequest {
+  reviewToken: string;
+  guestToken?: string;
+  travellers: TravellerInput[];
+  contact: ContactInput;
+  /** Consent to a server-detected price increase. Never an amount. */
+  acceptPriceChange?: boolean;
+  idempotencyKey?: string;
+}
+
+export interface TravellerDetailsResponse {
+  bookingReference: string;
+  /** Draft only — nothing is held or paid until the payment phase. */
+  status: "awaiting_payment";
+  totalPrice: Money;
+  passengers: PassengerCounts;
+  travellerCount: number;
+  contactEmail: string;
+  expiresAt: string;
+  nextStep: "payment";
+}
