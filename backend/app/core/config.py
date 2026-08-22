@@ -52,9 +52,25 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
 
-    # ---- future integrations (declared, intentionally unused) ---------------
+    # ---- TripJack (BACKEND ONLY — never exposed to the browser) ------------
+    # Staging/UAT: https://apitest.tripjack.com  (production uses its own host
+    # AND its own key; the two are never mixed).
     tripjack_base_url: str = Field(default="", alias="TRIPJACK_BASE_URL")
     tripjack_api_key: str = Field(default="", alias="TRIPJACK_API_KEY")
+    tripjack_connect_timeout: float = Field(default=5.0, alias="TRIPJACK_CONNECT_TIMEOUT")
+    tripjack_read_timeout: float = Field(default=40.0, alias="TRIPJACK_READ_TIMEOUT")
+    tripjack_write_timeout: float = Field(default=10.0, alias="TRIPJACK_WRITE_TIMEOUT")
+    tripjack_pool_timeout: float = Field(default=5.0, alias="TRIPJACK_POOL_TIMEOUT")
+    tripjack_max_connections: int = Field(default=20, alias="TRIPJACK_MAX_CONNECTIONS")
+    # Search is idempotent, so a tiny retry budget is safe. Booking calls will
+    # always use 0.
+    tripjack_search_retries: int = Field(default=1, alias="TRIPJACK_SEARCH_RETRIES")
+
+    # Only enable behind a trusted reverse proxy; otherwise clients could spoof
+    # X-Forwarded-For and bypass rate limiting.
+    trust_proxy_headers: bool = Field(default=False, alias="TRUST_PROXY_HEADERS")
+
+    # ---- future integrations (declared, intentionally unused) ---------------
     razorpay_key_id: str = Field(default="", alias="RAZORPAY_KEY_ID")
     razorpay_key_secret: str = Field(default="", alias="RAZORPAY_KEY_SECRET")
 

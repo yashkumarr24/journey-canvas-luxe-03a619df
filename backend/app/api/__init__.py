@@ -7,8 +7,10 @@ here so main.py never needs to change.
 from fastapi import APIRouter
 
 from app.api import health
+from app.api.v1 import flights
 
 api_router = APIRouter()
 api_router.include_router(health.router)
+api_router.include_router(flights.router)
 
 __all__ = ["api_router"]

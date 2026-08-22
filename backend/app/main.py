@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger, log_extra
 from app.core.security import configure_cors
+from app.integrations.tripjack.client import close_client as close_tripjack_client
 from app.middleware.request_context import RequestContextMiddleware
 
 settings = get_settings()
@@ -24,11 +25,18 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Never log credential values — only whether they are present.
     logger.info(
         "startup",
-        extra=log_extra(env=settings.app_env, debug=settings.app_debug),
+        extra=log_extra(
+            env=settings.app_env,
+            debug=settings.app_debug,
+            tripjack_configured=bool(settings.tripjack_base_url and settings.tripjack_api_key),
+        ),
     )
     yield
+    # Release the pooled TripJack connections cleanly.
+    await close_tripjack_client()
     logger.info("shutdown")
 
 
