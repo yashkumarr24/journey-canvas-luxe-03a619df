@@ -1,54 +1,82 @@
-# TripJack Integration — Zero-Cost Path
+# Project Audit — Fly n Feel Holidays (read-only, no changes made)
 
-You want this done without paying for extra services. That is possible. The only thing money would normally buy here is a fixed outbound IP address, and there are two free ways around it.
+## A. Existing architecture
 
-## The one requirement that matters
+TanStack Start v1 (React 19 + Vite 7), file-based routing, SSR enabled. Not a plain CRA/Vite SPA.
 
-Their guide says: the API key only appears after you save Whitelisted IPs, and only those IPs may call the API. IPv6 must be off. Our app's backend runs on serverless infrastructure with rotating IPs, so there is no single IP to give them.
+```text
+src/
+  routes/          file-based routes (+ generated routeTree.gen.ts)
+  components/      marketing components + components/ui (shadcn set)
+  data/            destinations.ts, posts.ts (static content, no DB)
+  assets/          bundled images
+  lib/             utils, error reporting, config.server.ts, api/example.functions.ts
+  styles.css       Tailwind v4 theme (CSS-first, no tailwind.config.js)
+  router.tsx / start.ts / server.ts
+```
 
-Free ways to satisfy this, in order of preference:
+Build target: Nitro, default preset `cloudflare-module`; `build:vercel` and `build:node` presets also wired.
 
-1. **Ask your TripJack agent to open staging** — request `0.0.0.0/0` (all IPs) for the UAT/test key. Most agents allow this for testing since no real money moves. Costs nothing, unblocks everything today. Send them one message asking exactly this.
-2. **Free always-free VPS relay** — Oracle Cloud Always Free (or similar) gives a permanent public IPv4 at no cost. We run a tiny relay there, whitelist that one IP with TripJack, and our backend calls TripJack through it. More setup, still free, and it also works for the live key later.
+## B. Routes / pages
 
-Live/production will very likely require a real whitelisted IP, so option 2 becomes the long-term answer either way. We start with option 1 so building can begin now.
+`/`, `/about`, `/contact`, `/domestic`, `/international`, `/blog`, `/blog/$slug`, `/destinations/$slug`, `/privacy`, `/terms`, `/sitemap.xml` (server handler). Root shell: `src/routes/__root.tsx` (head meta, fonts, scroll-to-top on route change, error + 404 boundaries).
 
-## What you do on the TripJack portal
+## C. Reusable components
 
-1. Log in at https://apitest.tripjack.com/ and change the password.
-2. Manage User -> API Configuration.
-3. Enter the whitelisted IPs -> SAVE.
-4. Popup -> YES to generate the key.
-5. Copy the key immediately. It is masked permanently afterwards. You will paste it into a secure form here, never into chat or email.
+- Layout/chrome: `Nav`, `Footer`, `PageHero`, `Section` (SectionTitle), `SmoothScroll` (Lenis), `ScrollProgress`, `Cursor`
+- Content: `Hero`, `Marquee`, `Destinations`, `Experiences`, `Testimonials`, `Contact`
+- Full shadcn/ui library in `src/components/ui` (button, input, select, calendar, dialog, drawer, tabs, form, popover, sonner…) — already sufficient for search forms, date pickers, filter panels and booking modals.
 
-## Build phases (all free-tier)
+## D. Design system
 
-**Phase 1 — Foundation**
-- Enable Lovable Cloud (free tier) for the database and secure key storage. The last attempt errored; I will retry.
-- Store `TRIPJACK_API_KEY` and the staging base URL as server secrets.
-- Server-side TripJack client with auth header, timeouts, and error mapping. An optional relay URL setting so switching to option 2 later is a config change, not a rewrite.
-- Tables: `bookings`, `booking_travellers`, `payments`. Guest bookings keyed by reference + email.
-- A `/dev/tripjack-check` page that fires one authenticated test call, so we confirm whitelisting works before building any UI.
+Tailwind v4 via `@theme inline` in `src/styles.css`. Pearl-white/rich-black luxury palette: `--background #F8F8F6`, `--foreground #111111`, brand accent `--gold: #d62828` (logo red). Fonts: display = Helvetica Neue / Inter Tight, body = SF Pro / Inter. Semantic tokens only — new booking UI must use `bg-card`, `text-gold`, `border-foreground/10`, etc.
 
-**Phase 2 — Flights**
-Search form (from/to, dates, one-way/round-trip, pax, cabin) -> TripJack air search -> results with filters and sort -> fare rules and baggage -> traveller details -> re-price -> Razorpay test payment -> book -> PNR and confirmation page.
+## E. API / backend functionality
 
-**Phase 3 — Hotels**
-City/date/rooms search -> results with photos, star rating, price -> hotel detail with room and rate options and cancellation policy -> guest details -> payment -> booking voucher.
+Essentially none. One template file `src/lib/api/example.functions.ts` (`createServerFn` greeting demo) and `src/lib/config.server.ts` (server-only env reader stub). One server route handler: sitemap. All destination and blog content is static TypeScript.
 
-**Phase 4 — Post-booking**
-Guest booking lookup by reference + email, confirmation emails, printable ticket/voucher, cancellation request flow, and an internal view for your desk.
+## F. Supabase
 
-Razorpay is free to set up; they only take a per-transaction cut on live payments. Test mode costs nothing.
+Not integrated. No `src/integrations/supabase`, no client, no tables, no migrations, no dependency in package.json.
 
-## Technical notes
+## G. Authentication
 
-- All TripJack and Razorpay calls run in `createServerFn` handlers; keys are read inside handlers and never reach the browser.
-- Base URL and optional relay host are config values, so test -> live and no-relay -> relay are switches, not rewrites.
-- Idempotency keys on booking calls; prices always re-checked before payment.
-- Zod validation on every search and traveller payload.
-- Mobile-first results pages using the existing design system.
+None. No login, no session, no protected routes, no `_authenticated` layout.
 
-## What unblocks the build
+## H. Environment variables / configuration
 
-The API key plus a whitelisting answer. Everything in Phase 1 except the live test call can be built before that arrives.
+No `.env` in the repo. Only `NITRO_PRESET` at build time. No secrets anywhere in the frontend today — clean starting point for the "no credentials in React" rule.
+
+## I. Dependencies
+
+React 19, TanStack Router/Start/Query, framer-motion, lenis, tailwindcss v4, full Radix set, react-hook-form + @hookform/resolvers + zod, date-fns, react-day-picker, embla, recharts, sonner, lucide-react. Notably absent: axios, supabase-js, razorpay, any auth lib. TanStack Query is installed and wired into the router context but currently unused for data fetching.
+
+## J. Deployment
+
+`vercel.json` → `npm run build:vercel` (Nitro vercel preset). `DEPLOYMENT.md` documents Node/VPS (`build:node` + `node .output/server/index.mjs`) and other presets. Lovable preview builds with the cloudflare preset.
+
+## K. Recommended placement for booking functionality
+
+- New routes: `src/routes/flights.tsx` (+ `flights.results.tsx`, `flights.review.tsx`), `src/routes/hotels.tsx` (+ results/detail/review), `src/routes/booking.$id.tsx` for confirmation/voucher, optionally `src/routes/manage-booking.tsx`.
+- New folder `src/components/booking/` for search widgets, result cards, filter rails, traveller forms, fare/price breakdown — built from `components/ui`, styled with existing tokens.
+- Single API layer: `src/lib/booking-api.ts` — a thin typed `fetch` wrapper pointing at `import.meta.env.VITE_BOOKING_API_URL` (public backend URL only). All calls go through it; no component calls the backend directly.
+- Data fetching: TanStack Query (already in router context) — `useQuery` for searches, `useMutation` for booking/payment steps.
+- Nav/Footer get "Flights" and "Hotels" links; the home Hero can host a compact search widget later, without altering existing copy or layout.
+
+## L. Potential conflicts with the FastAPI architecture
+
+1. **SSR loaders vs. IP whitelisting.** TanStack Start SSR runs on Vercel/Cloudflare with rotating IPs. Any booking call made inside a route `loader` runs server-side from a non-whitelisted host. Rule: all TripJack-backed calls must be client-side (`useQuery` in components) hitting the FastAPI VPS, which is the only whitelisted IP.
+2. **Don't reintroduce a second backend.** The template pushes `createServerFn` for server logic; using it for TripJack would put logic on Vercel, defeating the VPS/IP model. Keep `createServerFn` unused for booking.
+3. **CORS.** FastAPI must allow the Vercel prod domain, the Lovable preview domain, and localhost.
+4. **HTTPS.** The VPS needs a real TLS cert (nginx + certbot); the browser will block plain-HTTP calls from the HTTPS site.
+5. **Env exposure.** Only `VITE_`-prefixed values exist in the browser — the backend base URL and Razorpay *key_id* are fine there; nothing else.
+6. **Long-running TripJack searches.** 10-30s responses need loading/pending UI and a client timeout; SSR prerender must never wait on them.
+7. **Session/auth later.** Guest booking works today; if login is added, it belongs on FastAPI/Supabase, not the frontend.
+
+## M. Do not change
+
+`src/styles.css` tokens, `Nav`/`Footer`/`Hero`/`PageHero`/`Section` layout and copy, all existing routes and their `head()` metadata, `src/data/destinations.ts` and `posts.ts`, `src/routeTree.gen.ts` (generated), `vite.config.ts` Nitro/preset block, `vercel.json`, `src/routes/__root.tsx` shell, the hero alignment CSS media query for short laptop viewports.
+
+## Next step (not executed)
+
+Once TripJack staging IP whitelisting is resolved and the API key is issued, the first build step is the FastAPI service skeleton on the VPS plus `src/lib/booking-api.ts` and a `/flights` search route — additive only.
