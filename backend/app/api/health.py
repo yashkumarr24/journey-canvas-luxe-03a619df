@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Response, status
 
+from app.core.config import get_settings
 from app.schemas.common import HealthResponse, ReadinessResponse
 
 router = APIRouter(tags=["health"])
