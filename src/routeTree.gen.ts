@@ -13,12 +13,12 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
-import { Route as FlightsRouteImport } from './routes/flights'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FlightsIndexRouteImport } from './routes/flights.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -52,11 +52,6 @@ const InternationalRoute = InternationalRouteImport.update({
   path: '/international',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FlightsRoute = FlightsRouteImport.update({
-  id: '/flights',
-  path: '/flights',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DomesticRoute = DomesticRouteImport.update({
   id: '/domestic',
   path: '/domestic',
@@ -79,6 +74,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsIndexRoute = FlightsIndexRouteImport.update({
+  id: '/flights/',
+  path: '/flights/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
@@ -151,7 +151,6 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -164,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/flights/': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -174,7 +174,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -186,6 +185,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/flights': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -198,7 +198,6 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
-  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -211,6 +210,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/flights/': typeof FlightsIndexRoute
   '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -223,7 +223,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -236,6 +235,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/flights/'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -246,7 +246,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -258,6 +257,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog'
+    | '/flights'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -269,7 +269,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
-    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -282,6 +281,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/flights/'
     | '/_authenticated/account/bookings'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/travellers'
@@ -294,7 +294,6 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
-  FlightsRoute: typeof FlightsRoute
   InternationalRoute: typeof InternationalRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -306,6 +305,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  FlightsIndexRoute: typeof FlightsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -336,13 +336,6 @@ declare module '@tanstack/react-router' {
       path: '/international'
       fullPath: '/international'
       preLoaderRoute: typeof InternationalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/flights': {
-      id: '/flights'
-      path: '/flights'
-      fullPath: '/flights'
-      preLoaderRoute: typeof FlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/domestic': {
@@ -378,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/': {
+      id: '/flights/'
+      path: '/flights'
+      fullPath: '/flights/'
+      preLoaderRoute: typeof FlightsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/': {
@@ -502,7 +502,6 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
-  FlightsRoute: FlightsRoute,
   InternationalRoute: InternationalRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -514,6 +513,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
+  FlightsIndexRoute: FlightsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
