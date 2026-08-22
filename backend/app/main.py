@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger, log_extra
 from app.core.security import configure_cors
+from app.integrations.tripjack.client import close_client as close_tripjack_client
 from app.middleware.request_context import RequestContextMiddleware
 
 settings = get_settings()
