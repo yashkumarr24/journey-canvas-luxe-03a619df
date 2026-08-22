@@ -20,10 +20,15 @@ async def health() -> HealthResponse:
 
 @router.get("/health/ready", response_model=ReadinessResponse, summary="Readiness probe")
 async def readiness(response: Response) -> ReadinessResponse:
-    # Phase 2: the app itself is the only dependency. Later this will also
-    # check Supabase, TripJack session validity and Razorpay reachability —
-    # each reported as a boolean, never with connection details.
-    checks = {"app": True}
+    # Booleans only: no hostnames, no key material, no connection strings.
+    # `flight_provider` reports whether TripJack is CONFIGURED, not whether a
+    # key is valid — probing the provider on every health check would burn
+    # quota and leak whitelist state.
+    settings = get_settings()
+    checks = {
+        "app": True,
+        "flight_provider": bool(settings.tripjack_base_url and settings.tripjack_api_key),
+    }
     ready = all(checks.values())
     if not ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
