@@ -250,6 +250,7 @@ function FlightsPage() {
                 )}
               </div>
             </div>
+            </>
           )}
 
           {!query.isFetching && !error && !query.isSuccess && (
