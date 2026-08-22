@@ -28,6 +28,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
+import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -124,6 +125,12 @@ const AuthenticatedAccountIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountProfileRoute =
+  AuthenticatedAccountProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesByTo {
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesById {
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRouteTypes {
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/account/profile'
     | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog'
+    | '/account/profile'
     | '/account'
   id:
     | '__root__'
@@ -246,6 +258,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
+    | '/_authenticated/account/profile'
     | '/_authenticated/account/'
   fileRoutesById: FileRoutesById
 }
@@ -404,14 +417,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/profile': {
+      id: '/_authenticated/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
   }
 }
 
 interface AuthenticatedAccountRouteChildren {
+  AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
+  AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 
