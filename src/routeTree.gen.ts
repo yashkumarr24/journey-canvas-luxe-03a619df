@@ -21,6 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AuthRegisterRouteImport } from './routes/auth.register'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 
 const TermsRoute = TermsRouteImport.update({
@@ -83,6 +84,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/blog/': typeof BlogIndexRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/auth/login'
+    | '/auth/register'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/auth/login'
+    | '/auth/register'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/auth/login'
+    | '/auth/register'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/blog/'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
@@ -306,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
