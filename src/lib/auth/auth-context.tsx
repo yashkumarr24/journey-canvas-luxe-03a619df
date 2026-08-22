@@ -122,12 +122,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /* --- centralized bearer-token resolver for the booking API ------------ */
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
     setBookingAuthTokenResolver(async () => {
       // Reads (and transparently refreshes) the session held by the Supabase
       // client. The token is handed straight to the Authorization header and
       // is never stored or logged by us.
-      const { data } = await supabase.auth.getSession();
+      const { data } = await client.auth.getSession();
       return data.session?.access_token ?? null;
     });
     return () => setBookingAuthTokenResolver(null);
