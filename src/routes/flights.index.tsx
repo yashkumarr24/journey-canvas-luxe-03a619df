@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, Info, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -25,10 +25,12 @@ import {
   type FlightSearchFormValues,
 } from "@/lib/flight-search";
 import { applyFlightFilters, collectAirlines, priceRange, sortFlightResults, sortOptions } from "@/lib/flight-filters";
-import { toBookingError } from "@/lib/booking-api";
+import { bookingApi, toBookingError } from "@/lib/booking-api";
+import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
 import {
   defaultFlightFilters,
   type FlightFilters,
+  type FlightResult,
   type FlightSearchRequest,
   type FlightSortKey,
 } from "@/types/booking";
@@ -64,6 +66,35 @@ function FlightsPage() {
   // aborts the in-flight request via the signal we forward to the API client,
   // so an older search can never overwrite a newer one.
   const query = useQuery(flightSearchQueryOptions(request));
+  const navigate = useNavigate();
+  const [selectingId, setSelectingId] = useState<string | null>(null);
+
+  // Selecting a fare re-prices it server-side. The browser sends only the
+  // search id and the opaque fare handle — never a price — and receives an
+  // opaque review token back.
+  const select = useMutation({
+    mutationFn: (result: FlightResult) =>
+      bookingApi.selectFlight({
+        searchId: query.data?.searchId as string,
+        fareId: result.fare?.fareId ?? result.id,
+        idempotencyKey: newIdempotencyKey(),
+      }),
+    onSuccess: (review) => {
+      // The guest secret is kept in sessionStorage; only the opaque review
+      // token travels in the URL.
+      rememberGuestToken(review.reviewToken, review.guestToken);
+      navigate({ to: "/flights/review", search: { token: review.reviewToken } });
+    },
+    onSettled: () => setSelectingId(null),
+  });
+
+  const handleSelect = (result: FlightResult) => {
+    if (!query.data?.searchId || select.isPending) return;
+    setSelectingId(result.id);
+    select.mutate(result);
+  };
+
+  const selectError = select.isError ? toBookingError(select.error) : null;
 
   const results = query.data?.results ?? [];
   const currency = query.data?.currency ?? "INR";
@@ -149,6 +180,14 @@ function FlightsPage() {
           )}
 
           {!query.isFetching && !error && query.isSuccess && (
+            <>
+            {selectError && (
+              <Alert variant="destructive" className="mb-6" role="alert">
+                <AlertCircle className="size-4" aria-hidden="true" />
+                <AlertTitle>We couldn't hold that fare</AlertTitle>
+                <AlertDescription>{selectError.message}</AlertDescription>
+              </Alert>
+            )}
             <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
               <aside className="hidden lg:block">{filtersPanel}</aside>
 
@@ -199,7 +238,13 @@ function FlightsPage() {
                 ) : (
                   <div className="space-y-4">
                     {visible.map((result) => (
-                      <FlightResultCard key={result.id} result={result} />
+                      <FlightResultCard
+                        key={result.id}
+                        result={result}
+                        onSelect={query.data?.searchId ? handleSelect : undefined}
+                        selecting={selectingId === result.id}
+                        disabled={select.isPending}
+                      />
                     ))}
                   </div>
                 )}

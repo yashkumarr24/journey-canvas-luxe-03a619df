@@ -20,6 +20,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FlightsIndexRouteImport } from './routes/flights.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as FlightsReviewRouteImport } from './routes/flights.review'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -84,6 +85,11 @@ const FlightsIndexRoute = FlightsIndexRouteImport.update({
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsReviewRoute = FlightsReviewRouteImport.update({
+  id: '/flights/review',
+  path: '/flights/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog': typeof BlogIndexRoute
   '/flights': typeof FlightsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog/'
     | '/flights/'
     | '/account/bookings'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog'
     | '/flights'
     | '/account/bookings'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/review'
     | '/blog/'
     | '/flights/'
     | '/_authenticated/account/bookings'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
+  FlightsReviewRoute: typeof FlightsReviewRoute
   BlogIndexRoute: typeof BlogIndexRoute
   FlightsIndexRoute: typeof FlightsIndexRoute
 }
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/review': {
+      id: '/flights/review'
+      path: '/flights/review'
+      fullPath: '/flights/review'
+      preLoaderRoute: typeof FlightsReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinations/$slug': {
@@ -512,6 +532,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
+  FlightsReviewRoute: FlightsReviewRoute,
   BlogIndexRoute: BlogIndexRoute,
   FlightsIndexRoute: FlightsIndexRoute,
 }
