@@ -5,6 +5,7 @@ import logo from "@/assets/flynfeel-logo.png";
 
 const links = [
   { label: "Home", to: "/" },
+  { label: "Flights", to: "/flights" },
   { label: "Domestic", to: "/domestic" },
   { label: "International", to: "/international" },
   { label: "About", to: "/about" },

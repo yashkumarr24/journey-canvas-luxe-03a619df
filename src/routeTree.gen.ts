@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
+import { Route as FlightsRouteImport } from './routes/flights'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
@@ -39,6 +40,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const InternationalRoute = InternationalRouteImport.update({
   id: '/international',
   path: '/international',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsRoute = FlightsRouteImport.update({
+  id: '/flights',
+  path: '/flights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DomesticRoute = DomesticRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/flights': typeof FlightsRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
+    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
+    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/domestic'
+    | '/flights'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
+  FlightsRoute: typeof FlightsRoute
   InternationalRoute: typeof InternationalRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/international'
       fullPath: '/international'
       preLoaderRoute: typeof InternationalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights': {
+      id: '/flights'
+      path: '/flights'
+      fullPath: '/flights'
+      preLoaderRoute: typeof FlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/domestic': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
+  FlightsRoute: FlightsRoute,
   InternationalRoute: InternationalRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
