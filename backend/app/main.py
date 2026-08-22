@@ -24,11 +24,18 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Never log credential values — only whether they are present.
     logger.info(
         "startup",
-        extra=log_extra(env=settings.app_env, debug=settings.app_debug),
+        extra=log_extra(
+            env=settings.app_env,
+            debug=settings.app_debug,
+            tripjack_configured=bool(settings.tripjack_base_url and settings.tripjack_api_key),
+        ),
     )
     yield
+    # Release the pooled TripJack connections cleanly.
+    await close_tripjack_client()
     logger.info("shutdown")
 
 
