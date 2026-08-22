@@ -45,9 +45,14 @@ class Settings(BaseSettings):
         alias="CORS_ALLOWED_ORIGIN_REGEX",
     )
 
-    # ---- future integrations (declared, intentionally unused in Phase 2) --
+    # ---- Supabase (placeholders in this phase; one project per environment) --
+    # The service-role key is BACKEND ONLY and must never reach the browser.
     supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_anon_key: str = Field(default="", alias="SUPABASE_ANON_KEY")
     supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY")
+    supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
+
+    # ---- future integrations (declared, intentionally unused) ---------------
     tripjack_base_url: str = Field(default="", alias="TRIPJACK_BASE_URL")
     tripjack_api_key: str = Field(default="", alias="TRIPJACK_API_KEY")
     razorpay_key_id: str = Field(default="", alias="RAZORPAY_KEY_ID")
