@@ -280,7 +280,9 @@ def test_child_without_date_of_birth_is_rejected() -> None:
         service._validate_travellers(
             [
                 TravellerInput.model_validate(_traveller()),
-                TravellerInput.model_validate({**_traveller(), "type": "child"}),
+                TravellerInput.model_validate(
+                    {**_traveller(date_of_birth=None), "type": "child"}
+                ),
             ],
             session,
             TravellerRequirements(),
@@ -336,7 +338,12 @@ def _traveller(**overrides: Any) -> dict[str, Any]:
         "dateOfBirth": "1990-05-04",
         "gender": "male",
     }
-    base.update(overrides)
+    for key, value in overrides.items():
+        camel = key.split("_")[0] + "".join(part.title() for part in key.split("_")[1:])
+        if value is None:
+            base.pop(camel, None)
+        else:
+            base[camel] = value
     return base
 
 
