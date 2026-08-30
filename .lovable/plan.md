@@ -1,82 +1,73 @@
-# Project Audit — Fly n Feel Holidays (read-only, no changes made)
+# Mobile Apps (Android & iOS) via Capacitor
 
-## A. Existing architecture
+Goal: turn the finished Fly n Feel web app into installable Android and iOS apps that reuse 100% of the existing booking UI, auth, and FastAPI/TripJack backend — no app rewrite.
 
-TanStack Start v1 (React 19 + Vite 7), file-based routing, SSR enabled. Not a plain CRA/Vite SPA.
+## Why this approach
+
+- The web app is built on React/TanStack Start. Capacitor wraps that same web build into a native shell, so every flight/hotel flow, payment step, and Supabase auth path already works on mobile with no duplicated code.
+- The FastAPI backend and Supabase database already expose HTTP APIs; the mobile apps call the identical endpoints the browser uses. Zero backend changes.
+- This is a hybrid (webview) app, not fully native. For a travel-booking product this is the right tradeoff: one codebase, fast to ship, good performance, and the same approach used by many production apps.
+
+## When this happens
+
+After the web booking flow is complete end to end — flights, hotels, payments, confirmation, booking lookup. Mobile is a **final phase**, not a parallel track, so it wraps an already-working product. Starting it sooner means wrapping a half-built app and redoing screens as the web changes.
+
+## What gets built
 
 ```text
-src/
-  routes/          file-based routes (+ generated routeTree.gen.ts)
-  components/      marketing components + components/ui (shadcn set)
-  data/            destinations.ts, posts.ts (static content, no DB)
-  assets/          bundled images
-  lib/             utils, error reporting, config.server.ts, api/example.functions.ts
-  styles.css       Tailwind v4 theme (CSS-first, no tailwind.config.js)
-  router.tsx / start.ts / server.ts
+Existing web build (unchanged)
+   │
+   ├─ Capacitor config (capacitor.config.ts)
+   ├─ Android project (native shell, Gradle, AndroidManifest)
+   ├─ iOS project (native shell, Xcode, Info.plist)
+   └─ Shared web assets + native plugins
 ```
 
-Build target: Nitro, default preset `cloudflare-module`; `build:vercel` and `build:node` presets also wired.
+1. **Capacitor setup** — add `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`. Configure app id, bundle id, server URL (bundled assets), and splash screen. Run `cap add android` / `cap add ios`.
+2. **Native plugins** for device capabilities the web app can't reach:
+   - `@capacitor/haptics` — tap feedback on booking buttons
+   - `@capacitor/preferences` — secure token storage instead of localStorage
+   - `@capacitor/app` — lifecycle + back-button handling
+   - `@capacitor/status-bar` / `@capacitor/safe-area` — notch + status bar sizing
+   - `@capacitor/keyboard` — form scroll behaviour
+   - Native **push notifications** (`@capacitor/push-notifications`) — FCM (Android) + APNs (iOS) for booking confirmations and trip reminders
+   - **Biometric auth** (`@capacitor-community/biometric-auth`) — optional Face ID / fingerprint unlock
+   - **Google/Apple sign-in** via native providers (faster, more reliable than web OAuth on mobile)
+3. **App-only config branch** — read platform at runtime and adjust: hide browser-only chrome, use native push token registration against Supabase, route OAuth through native providers.
+4. **Safe-area + responsive polish** — the existing Tailwind layout already targets mobile; add `env(safe-area-inset-*)` padding for notches and test every booking screen on a real device.
+5. **Build & ship** — `cap sync` then open in Android Studio / Xcode, build signed release AAB and IPA.
 
-## B. Routes / pages
+## What stays unchanged
 
-`/`, `/about`, `/contact`, `/domestic`, `/international`, `/blog`, `/blog/$slug`, `/destinations/$slug`, `/privacy`, `/terms`, `/sitemap.xml` (server handler). Root shell: `src/routes/__root.tsx` (head meta, fonts, scroll-to-top on route change, error + 404 boundaries).
+- `src/` web app, routes, and components — no rewrite.
+- `backend/` FastAPI + TripJack integration — called over the same HTTPS endpoints.
+- Supabase schema, RLS, and auth — mobile users are the same authenticated users.
+- Razorpay payments — Razorpay's native mobile SDK (or the same checkout webview) is used; signature verification stays server-side.
 
-## C. Reusable components
+## Account & submission requirements
 
-- Layout/chrome: `Nav`, `Footer`, `PageHero`, `Section` (SectionTitle), `SmoothScroll` (Lenis), `ScrollProgress`, `Cursor`
-- Content: `Hero`, `Marquee`, `Destinations`, `Experiences`, `Testimonials`, `Contact`
-- Full shadcn/ui library in `src/components/ui` (button, input, select, calendar, dialog, drawer, tabs, form, popover, sonner…) — already sufficient for search forms, date pickers, filter panels and booking modals.
+- **Apple Developer Program** — ~$99/year; needed for App Store and TestFlight.
+- **Google Play Developer account** — $25 one-time; needed for Play Store.
+- **Signing keys** — Android keystore, iOS distribution certificate + provisioning profile (kept as secrets, never in the repo).
+- **Store listings** — icons, screenshots, descriptions, privacy policy URL (already exists at `/privacy`).
+- **Review process** — Apple review ~1–3 days; Google ~1–7 days. Apple reviews webview apps carefully, so the app must provide real native value (push, biometrics, native sign-in) rather than a bare website wrapper.
 
-## D. Design system
+## Tradeoffs to accept
 
-Tailwind v4 via `@theme inline` in `src/styles.css`. Pearl-white/rich-black luxury palette: `--background #F8F8F6`, `--foreground #111111`, brand accent `--gold: #d62828` (logo red). Fonts: display = Helvetica Neue / Inter Tight, body = SF Pro / Inter. Semantic tokens only — new booking UI must use `bg-card`, `text-gold`, `border-foreground/10`, etc.
+- Hybrid performance — good, not identical to fully native. Acceptable for this product.
+- App review rejections are possible if the app "looks like a website" — mitigated by native plugins and platform-tuned UX above.
+- Two stores to maintain — each OS gets its own build and update cadence.
+- Push notifications need ongoing FCM/APNs credentials and a server worker to send them.
 
-## E. API / backend functionality
+## Suggested order (after web ships)
 
-Essentially none. One template file `src/lib/api/example.functions.ts` (`createServerFn` greeting demo) and `src/lib/config.server.ts` (server-only env reader stub). One server route handler: sitemap. All destination and blog content is static TypeScript.
+1. Capacitor scaffold + Android/iOS shells, run the existing web app inside them.
+2. Add native plugins: safe-area, haptics, preferences, status bar, keyboard.
+3. Native push notifications (FCM + APNs) wired to booking events.
+4. Native Google/Apple sign-in replacing web OAuth on mobile.
+5. Biometric unlock (optional).
+6. Store submission: Android AAB to Play, iOS IPA to App Store via TestFlight then review.
 
-## F. Supabase
+## Note
 
-Not integrated. No `src/integrations/supabase`, no client, no tables, no migrations, no dependency in package.json.
-
-## G. Authentication
-
-None. No login, no session, no protected routes, no `_authenticated` layout.
-
-## H. Environment variables / configuration
-
-No `.env` in the repo. Only `NITRO_PRESET` at build time. No secrets anywhere in the frontend today — clean starting point for the "no credentials in React" rule.
-
-## I. Dependencies
-
-React 19, TanStack Router/Start/Query, framer-motion, lenis, tailwindcss v4, full Radix set, react-hook-form + @hookform/resolvers + zod, date-fns, react-day-picker, embla, recharts, sonner, lucide-react. Notably absent: axios, supabase-js, razorpay, any auth lib. TanStack Query is installed and wired into the router context but currently unused for data fetching.
-
-## J. Deployment
-
-`vercel.json` → `npm run build:vercel` (Nitro vercel preset). `DEPLOYMENT.md` documents Node/VPS (`build:node` + `node .output/server/index.mjs`) and other presets. Lovable preview builds with the cloudflare preset.
-
-## K. Recommended placement for booking functionality
-
-- New routes: `src/routes/flights.tsx` (+ `flights.results.tsx`, `flights.review.tsx`), `src/routes/hotels.tsx` (+ results/detail/review), `src/routes/booking.$id.tsx` for confirmation/voucher, optionally `src/routes/manage-booking.tsx`.
-- New folder `src/components/booking/` for search widgets, result cards, filter rails, traveller forms, fare/price breakdown — built from `components/ui`, styled with existing tokens.
-- Single API layer: `src/lib/booking-api.ts` — a thin typed `fetch` wrapper pointing at `import.meta.env.VITE_BOOKING_API_URL` (public backend URL only). All calls go through it; no component calls the backend directly.
-- Data fetching: TanStack Query (already in router context) — `useQuery` for searches, `useMutation` for booking/payment steps.
-- Nav/Footer get "Flights" and "Hotels" links; the home Hero can host a compact search widget later, without altering existing copy or layout.
-
-## L. Potential conflicts with the FastAPI architecture
-
-1. **SSR loaders vs. IP whitelisting.** TanStack Start SSR runs on Vercel/Cloudflare with rotating IPs. Any booking call made inside a route `loader` runs server-side from a non-whitelisted host. Rule: all TripJack-backed calls must be client-side (`useQuery` in components) hitting the FastAPI VPS, which is the only whitelisted IP.
-2. **Don't reintroduce a second backend.** The template pushes `createServerFn` for server logic; using it for TripJack would put logic on Vercel, defeating the VPS/IP model. Keep `createServerFn` unused for booking.
-3. **CORS.** FastAPI must allow the Vercel prod domain, the Lovable preview domain, and localhost.
-4. **HTTPS.** The VPS needs a real TLS cert (nginx + certbot); the browser will block plain-HTTP calls from the HTTPS site.
-5. **Env exposure.** Only `VITE_`-prefixed values exist in the browser — the backend base URL and Razorpay *key_id* are fine there; nothing else.
-6. **Long-running TripJack searches.** 10-30s responses need loading/pending UI and a client timeout; SSR prerender must never wait on them.
-7. **Session/auth later.** Guest booking works today; if login is added, it belongs on FastAPI/Supabase, not the frontend.
-
-## M. Do not change
-
-`src/styles.css` tokens, `Nav`/`Footer`/`Hero`/`PageHero`/`Section` layout and copy, all existing routes and their `head()` metadata, `src/data/destinations.ts` and `posts.ts`, `src/routeTree.gen.ts` (generated), `vite.config.ts` Nitro/preset block, `vercel.json`, `src/routes/__root.tsx` shell, the hero alignment CSS media query for short laptop viewports.
-
-## Next step (not executed)
-
-Once TripJack staging IP whitelisting is resolved and the API key is issued, the first build step is the FastAPI service skeleton on the VPS plus `src/lib/booking-api.ts` and a `/flights` search route — additive only.
+This plan is for a **future phase**. Nothing here is implemented now; it executes only after the web booking flow (flights, hotels, payments, confirmation) is complete and verified. If you'd rather get an installable phone experience sooner without the store-review process, a PWA (Add to Home Screen) is a lighter interim option and can be added in parallel with the web work.
