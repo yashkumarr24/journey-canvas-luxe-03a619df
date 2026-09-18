@@ -115,8 +115,9 @@ function HotelCheckoutPage() {
         navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
         return;
       }
-      setStage("failed");
+      setStage("booking_failed");
       setMessage(result.message ?? result.booking.statusMessage ?? null);
+
       // A fresh attempt must not reuse the previous idempotency key.
       setIdempotencyKey(newIdempotencyKey());
       booking.refetch();
