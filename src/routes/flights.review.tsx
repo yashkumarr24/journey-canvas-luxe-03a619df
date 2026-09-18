@@ -114,6 +114,10 @@ function ReviewPage() {
     queryFn: ({ signal }) => bookingApi.getReview(token as string, guestToken, { signal }),
   });
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
+  useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
+
   const submit = useMutation({
     mutationFn: async (values: {
       travellers: TravellerInput[];
@@ -132,6 +136,9 @@ function ReviewPage() {
     },
     onSuccess: ({ result, values }) => {
       setDraft(result);
+      track(ANALYTICS_EVENTS.travellerDetailsCompleted, {
+        travellerCount: values.travellers.length,
+      });
       // Carry the reviewed journey forward so checkout can render it, and keep
       // the guest secret with the booking reference (never in the URL).
       rememberBookingGuestToken(result.bookingReference, guestToken);
