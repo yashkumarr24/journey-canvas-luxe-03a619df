@@ -115,6 +115,28 @@ class SupabaseRest:
         prefer = "return=representation" if returning else "return=minimal"
         return await self._send("POST", table, json=rows, prefer=prefer)
 
+    async def upsert(
+        self,
+        table: str,
+        rows: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+        *,
+        on_conflict: str,
+        returning: bool = False,
+    ) -> list[dict[str, Any]]:
+        """INSERT ... ON CONFLICT DO UPDATE via PostgREST's merge-duplicates."""
+        prefer = "resolution=merge-duplicates," + (
+            "return=representation" if returning else "return=minimal"
+        )
+        return await self._send(
+            "POST",
+            table,
+            params={"on_conflict": on_conflict},
+            json=rows,
+            prefer=prefer,
+        )
+
+
+
     async def update(
         self,
         table: str,
