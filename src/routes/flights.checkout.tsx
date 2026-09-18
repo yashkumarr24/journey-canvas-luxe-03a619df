@@ -114,11 +114,17 @@ function CheckoutPage() {
     },
     onSuccess: (result) => {
       if (result.status === "confirmed" || result.status === "booking_processing") {
+        track(ANALYTICS_EVENTS.flightPaymentSuccess);
+        track(ANALYTICS_EVENTS.flightBookingCompleted, {
+          reference: result.booking.bookingReference,
+          bookingStatus: result.status,
+        });
         navigate({ to: "/flights/confirmation", search: { ref: result.booking.bookingReference } });
         return;
       }
       setStage("failed");
       setMessage(result.message ?? result.booking.statusMessage ?? null);
+      track(ANALYTICS_EVENTS.flightBookingFailed, { bookingStatus: result.status });
       // A fresh attempt must not reuse the previous idempotency key.
       setIdempotencyKey(newIdempotencyKey());
       booking.refetch();
@@ -126,6 +132,7 @@ function CheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.flightBookingFailed, { reason: toBookingError(error).kind });
       setIdempotencyKey(newIdempotencyKey());
     },
   });
