@@ -166,8 +166,14 @@ class DemoAssistantProvider(AssistantProvider):
         understood: list[str] = []
 
         # ---- route -------------------------------------------------------
+        stop = r"(?=[,.]|\s+(?:on|next|in|for|this|tomorrow|with|by)\b|$)"
+        # "from X to Y" and the bare "X to Y" phrasing both resolve a full route.
         from_to = re.search(
-            r"\bfrom\s+([a-z\s]{3,30}?)\s+to\s+([a-z\s]{3,30}?)(?=[,.]|\s+(?:on|next|in|for|this|tomorrow|with|by)\b|$)",
+            rf"\bfrom\s+([a-z\s]{{3,30}}?)\s+to\s+([a-z\s]{{3,30}}?){stop}",
+            message,
+            re.IGNORECASE,
+        ) or re.search(
+            rf"^\s*(?:i\s+want\s+|i'd\s+like\s+|book\s+|find\s+|show\s+)?([a-z\s]{{3,30}}?)\s+to\s+([a-z\s]{{3,30}}?){stop}",
             message,
             re.IGNORECASE,
         )

@@ -175,9 +175,11 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
   const lower = message.toLowerCase();
 
   // ---- route -----------------------------------------------------------
-  const fromTo = /\bfrom\s+([a-z\s]{3,30}?)\s+to\s+([a-z\s]{3,30}?)(?=[,.]|\s+(?:on|next|in|for|this|tomorrow|with|by)\b|$)/i.exec(
-    message,
-  );
+  const STOP = "(?=[,.]|\\s+(?:on|next|in|for|this|tomorrow|with|by)\\b|$)";
+  // "from X to Y" and the bare "X to Y" phrasing both resolve a full route.
+  const fromTo =
+    new RegExp(`\\bfrom\\s+([a-z\\s]{3,30}?)\\s+to\\s+([a-z\\s]{3,30}?)${STOP}`, "i").exec(message) ??
+    new RegExp(`^\\s*(?:i\\s+want\\s+|i'd\\s+like\\s+|book\\s+|find\\s+|show\\s+)?([a-z\\s]{3,30}?)\\s+to\\s+([a-z\\s]{3,30}?)${STOP}`, "i").exec(message);
   if (fromTo) {
     const origin = findPlace(fromTo[1]!);
     const destination = findPlace(fromTo[2]!);
