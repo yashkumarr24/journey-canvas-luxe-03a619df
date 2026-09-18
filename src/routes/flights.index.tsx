@@ -26,6 +26,8 @@ import {
 } from "@/lib/flight-search";
 import { applyFlightFilters, collectAirlines, priceRange, sortFlightResults, sortOptions } from "@/lib/flight-filters";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
 import {
   defaultFlightFilters,
@@ -68,6 +70,7 @@ function FlightsPage() {
   const query = useQuery(flightSearchQueryOptions(request));
   const navigate = useNavigate();
   const [selectingId, setSelectingId] = useState<string | null>(null);
+  const { track } = useAnalytics();
 
   // Selecting a fare re-prices it server-side. The browser sends only the
   // search id and the opaque fare handle — never a price — and receives an
@@ -83,6 +86,7 @@ function FlightsPage() {
       // The guest secret is kept in sessionStorage; only the opaque review
       // token travels in the URL.
       rememberGuestToken(review.reviewToken, review.guestToken);
+      track(ANALYTICS_EVENTS.flightSelected);
       navigate({ to: "/flights/review", search: { token: review.reviewToken } });
     },
     onSettled: () => setSelectingId(null),
@@ -99,6 +103,11 @@ function FlightsPage() {
   const results = query.data?.results ?? [];
   const currency = query.data?.currency ?? "INR";
 
+  // One marker per visit to the results step, so the funnel counts visits.
+  useTrackOnce(ANALYTICS_EVENTS.flightResultsViewed, results.length > 0, {
+    resultCount: results.length,
+  });
+
   const airlines = useMemo(() => collectAirlines(results), [results]);
   const bounds = useMemo(() => priceRange(results), [results]);
   const visible = useMemo(
@@ -108,7 +117,21 @@ function FlightsPage() {
 
   const handleSearch = (values: FlightSearchFormValues) => {
     setFilters(defaultFlightFilters);
-    setRequest(toSearchRequest(values));
+    const request = toSearchRequest(values);
+    setRequest(request);
+    // Route/date/pax only — no traveller identity is ever tracked.
+    track(ANALYTICS_EVENTS.flightSearch, {
+      origin: request.origin,
+      destination: request.destination,
+      departureDate: request.departureDate,
+      returnDate: request.returnDate ?? null,
+      passengers:
+        (request.passengers.adults ?? 0) +
+        (request.passengers.children ?? 0) +
+        (request.passengers.infants ?? 0),
+      cabin: request.cabinClass,
+      tripType: request.tripType,
+    });
   };
 
   const error = query.isError ? toBookingError(query.error) : null;
@@ -117,7 +140,10 @@ function FlightsPage() {
   const filtersPanel = (
     <FlightFiltersPanel
       filters={filters}
-      onChange={setFilters}
+      onChange={(next) => {
+        setFilters(next);
+        track(ANALYTICS_EVENTS.flightFilterUsed);
+      }}
       airlines={airlines}
       priceBounds={bounds}
       currency={currency}

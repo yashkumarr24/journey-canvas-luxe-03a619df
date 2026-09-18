@@ -34,6 +34,8 @@ import {
   type HotelSearchFormValues,
 } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
   defaultHotelFilters,
   type HotelFilters,
@@ -75,6 +77,7 @@ function HotelsPage() {
   const [request, setRequest] = useState<HotelSearchRequest | null>(null);
   const [filters, setFilters] = useState<HotelFilters>(defaultHotelFilters);
   const [sort, setSort] = useState<HotelSortKey>("recommended");
+  const { track } = useAnalytics();
 
   const query = useQuery(hotelSearchQueryOptions(request));
 
@@ -82,6 +85,10 @@ function HotelsPage() {
   const currency = query.data?.currency ?? request?.currency ?? "INR";
   const nights = query.data?.nights ?? 0;
   const roomCount = request?.rooms.length ?? 1;
+
+  useTrackOnce(ANALYTICS_EVENTS.hotelResultsViewed, results.length > 0, {
+    resultCount: results.length,
+  });
 
   const amenities = useMemo(
     () => query.data?.amenities ?? collectAmenities(results),
@@ -100,7 +107,17 @@ function HotelsPage() {
   const handleSearch = (values: HotelSearchFormValues) => {
     setFilters(defaultHotelFilters);
     setSort("recommended");
-    setRequest(toHotelSearchRequest(values));
+    const request = toHotelSearchRequest(values);
+    setRequest(request);
+    // Destination, dates and occupancy counts only — no guest identity.
+    track(ANALYTICS_EVENTS.hotelSearch, {
+      destination: request.destination,
+      checkIn: request.checkIn,
+      checkOut: request.checkOut,
+      rooms: request.rooms.length,
+      adults: request.rooms.reduce((sum, room) => sum + (room.adults ?? 0), 0),
+      children: request.rooms.reduce((sum, room) => sum + (room.childAges?.length ?? 0), 0),
+    });
   };
 
   const openHotel = (result: HotelResult) => {
@@ -117,7 +134,10 @@ function HotelsPage() {
   const filtersPanel = (
     <HotelFiltersPanel
       filters={filters}
-      onChange={setFilters}
+      onChange={(next) => {
+        setFilters(next);
+        track(ANALYTICS_EVENTS.hotelFilterUsed);
+      }}
       amenities={amenities}
       propertyTypes={propertyTypes}
       priceBounds={bounds}

@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "../lib/auth/auth-context";
+import { AnalyticsProvider } from "../lib/analytics/tracker";
+import { AdminAuthProvider } from "../lib/admin/admin-context";
 
 function NotFoundComponent() {
   return (
@@ -133,8 +136,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider>
+        {/* Activity tracking is fire-and-forget: it never blocks or breaks a booking. */}
+        <AnalyticsProvider>
+          <AdminAuthProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </AdminAuthProvider>
+        </AnalyticsProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -10,6 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { newIdempotencyKey, readGuestToken } from "@/lib/review-session";
 import { rememberBookingGuestToken, saveCheckoutSnapshot } from "@/lib/checkout-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
@@ -114,6 +116,10 @@ function ReviewPage() {
     queryFn: ({ signal }) => bookingApi.getReview(token as string, guestToken, { signal }),
   });
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
+  useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
+
   const submit = useMutation({
     mutationFn: async (values: {
       travellers: TravellerInput[];
@@ -132,6 +138,9 @@ function ReviewPage() {
     },
     onSuccess: ({ result, values }) => {
       setDraft(result);
+      track(ANALYTICS_EVENTS.travellerDetailsCompleted, {
+        travellerCount: values.travellers.length,
+      });
       // Carry the reviewed journey forward so checkout can render it, and keep
       // the guest secret with the booking reference (never in the URL).
       rememberBookingGuestToken(result.bookingReference, guestToken);

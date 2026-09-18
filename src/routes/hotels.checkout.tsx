@@ -20,6 +20,8 @@ import { openRazorpayCheckout } from "@/lib/razorpay";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PaymentOrder } from "@/types/booking";
 
 /**
@@ -89,6 +91,9 @@ function HotelCheckoutPage() {
 
   const data = booking.data;
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.hotelCheckoutStarted, Boolean(data));
+
   // Align the default method with what the backend actually offers.
   useEffect(() => {
     const first = data?.paymentMethods?.find((option) => option.enabled);
@@ -112,11 +117,17 @@ function HotelCheckoutPage() {
     },
     onSuccess: (result) => {
       if (result.status === "confirmed" || result.status === "booking_processing") {
+        track(ANALYTICS_EVENTS.hotelPaymentSuccess);
+        track(ANALYTICS_EVENTS.hotelBookingCompleted, {
+          reference: result.booking.bookingReference,
+          bookingStatus: result.status,
+        });
         navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
         return;
       }
       setStage("booking_failed");
       setMessage(result.message ?? result.booking.statusMessage ?? null);
+      track(ANALYTICS_EVENTS.hotelBookingFailed, { bookingStatus: result.status });
 
       // A fresh attempt must not reuse the previous idempotency key.
       setIdempotencyKey(newIdempotencyKey());
@@ -125,6 +136,7 @@ function HotelCheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.hotelBookingFailed, { reason: toBookingError(error).kind });
       setIdempotencyKey(newIdempotencyKey());
     },
   });
@@ -147,6 +159,8 @@ function HotelCheckoutPage() {
     mutationFn: () => {
       setStage("creating_order");
       setMessage(null);
+      // Method only — never an amount or any card detail.
+      track(ANALYTICS_EVENTS.hotelPaymentStarted, { method });
       return hotelApi.createOrder({
         bookingReference: ref as string,
         guestToken: guestToken ?? undefined,
@@ -163,11 +177,13 @@ function HotelCheckoutPage() {
         onFailed: (reason) => {
           setStage("failed");
           setMessage(reason ?? "The payment did not go through. No money has been taken.");
+          track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "failed" });
           reportFailure("failed", reason);
         },
         onDismissed: () => {
           setStage("cancelled");
           setMessage("You closed the payment window before paying. Your room is still held.");
+          track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "cancelled" });
           reportFailure("cancelled");
         },
       });
@@ -178,6 +194,7 @@ function HotelCheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "order_failed" });
     },
   });
 

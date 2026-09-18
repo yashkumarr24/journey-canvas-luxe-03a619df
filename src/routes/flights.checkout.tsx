@@ -14,6 +14,8 @@ import { TravellerSummary } from "@/components/booking/TravellerSummary";
 import { PaymentMethods } from "@/components/booking/PaymentMethods";
 import { TestPaymentSheet } from "@/components/booking/TestPaymentSheet";
 import { checkoutApi, useTestCheckout } from "@/lib/checkout-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { readBookingGuestToken } from "@/lib/checkout-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { openRazorpayCheckout } from "@/lib/razorpay";
@@ -86,6 +88,9 @@ function CheckoutPage() {
 
   const data = booking.data;
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.flightCheckoutStarted, Boolean(data));
+
   // Align the default method with what the backend actually offers.
   useEffect(() => {
     const first = data?.paymentMethods?.find((option) => option.enabled);
@@ -109,11 +114,17 @@ function CheckoutPage() {
     },
     onSuccess: (result) => {
       if (result.status === "confirmed" || result.status === "booking_processing") {
+        track(ANALYTICS_EVENTS.flightPaymentSuccess);
+        track(ANALYTICS_EVENTS.flightBookingCompleted, {
+          reference: result.booking.bookingReference,
+          bookingStatus: result.status,
+        });
         navigate({ to: "/flights/confirmation", search: { ref: result.booking.bookingReference } });
         return;
       }
       setStage("failed");
       setMessage(result.message ?? result.booking.statusMessage ?? null);
+      track(ANALYTICS_EVENTS.flightBookingFailed, { bookingStatus: result.status });
       // A fresh attempt must not reuse the previous idempotency key.
       setIdempotencyKey(newIdempotencyKey());
       booking.refetch();
@@ -121,6 +132,7 @@ function CheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.flightBookingFailed, { reason: toBookingError(error).kind });
       setIdempotencyKey(newIdempotencyKey());
     },
   });
@@ -143,6 +155,8 @@ function CheckoutPage() {
     mutationFn: () => {
       setStage("creating_order");
       setMessage(null);
+      // Method only — never an amount, a card detail or a fare identifier.
+      track(ANALYTICS_EVENTS.flightPaymentStarted, { method });
       return checkoutApi.createOrder({
         bookingReference: ref as string,
         guestToken: guestToken ?? undefined,
@@ -159,11 +173,13 @@ function CheckoutPage() {
         onFailed: (reason) => {
           setStage("failed");
           setMessage(reason ?? "The payment did not go through. No money has been taken.");
+          track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "failed" });
           reportFailure("failed", reason);
         },
         onDismissed: () => {
           setStage("cancelled");
           setMessage("You closed the payment window before paying. Your fare is still held.");
+          track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "cancelled" });
           reportFailure("cancelled");
         },
       });
@@ -174,6 +190,7 @@ function CheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "order_failed" });
     },
   });
 

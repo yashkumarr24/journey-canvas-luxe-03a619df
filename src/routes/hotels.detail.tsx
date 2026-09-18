@@ -15,6 +15,8 @@ import { hotelDetailQueryOptions, stayLabel } from "@/lib/hotel-search";
 import { rememberHotelGuestToken } from "@/lib/hotel-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { HotelRoomOption } from "@/types/booking";
 
 /**
@@ -57,6 +59,9 @@ function HotelDetailPage() {
 
   const detail = useQuery(hotelDetailQueryOptions(searchId, hotelId));
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.hotelViewed, Boolean(detail.data));
+
   const select = useMutation({
     mutationFn: (room: HotelRoomOption) =>
       hotelApi.review({
@@ -68,6 +73,7 @@ function HotelDetailPage() {
     onSuccess: (review) => {
       // The guest secret stays in sessionStorage; only the token is in the URL.
       rememberHotelGuestToken(review.reviewToken, review.guestToken);
+      track(ANALYTICS_EVENTS.hotelRoomSelected);
       navigate({ to: "/hotels/review", search: { token: review.reviewToken } });
     },
     onSettled: () => setSelectingId(null),
