@@ -103,6 +103,11 @@ function FlightsPage() {
   const results = query.data?.results ?? [];
   const currency = query.data?.currency ?? "INR";
 
+  // One marker per visit to the results step, so the funnel counts visits.
+  useTrackOnce(ANALYTICS_EVENTS.flightResultsViewed, results.length > 0, {
+    resultCount: results.length,
+  });
+
   const airlines = useMemo(() => collectAirlines(results), [results]);
   const bounds = useMemo(() => priceRange(results), [results]);
   const visible = useMemo(
