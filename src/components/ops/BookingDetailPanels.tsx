@@ -138,7 +138,13 @@ export function BookingDetailPanels({ detail }: { detail: BookingDetail }) {
               <Row label="Nights" value={hotel.stay.nights} />
               <Row label="Room" value={`${hotel.room.roomCount} × ${hotel.room.roomName}`} />
               <Row label="Meal plan" value={hotel.room.mealPlan ?? "Room only"} />
-              <Row label="Cancellation policy" value={hotel.room.cancellation.summary ?? hotel.room.cancellation.type} />
+              <Row
+                label="Cancellation policy"
+                value={
+                  hotel.room.cancellation.summary ??
+                  (hotel.room.cancellation.refundable ? "Refundable" : "Non-refundable")
+                }
+              />
               <Row label="Hotel confirmation" value={hotel.hotelConfirmationNumber ?? "Pending"} />
             </div>
           </Card>
