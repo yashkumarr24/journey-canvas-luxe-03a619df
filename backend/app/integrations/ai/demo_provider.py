@@ -165,6 +165,13 @@ class DemoAssistantProvider(AssistantProvider):
         patch: dict[str, object] = {}
         understood: list[str] = []
 
+        products = set(current.products or ["flights"])
+        if re.search(r"\b(hotel|stay|staying|accommodation|room|resort)\b", lower):
+            products.add("hotels")
+        if re.search(r"\b(flight|fly|flying)\b", lower):
+            products.add("flights")
+        patch["products"] = list(products)
+
         # ---- route -------------------------------------------------------
         stop = r"(?=[,.]|\s+(?:on|next|in|for|this|tomorrow|with|by)\b|$)"
         # "from X to Y" and the bare "X to Y" phrasing both resolve a full route.
@@ -240,6 +247,20 @@ class DemoAssistantProvider(AssistantProvider):
                 patch["return_date"] = base + timedelta(days=nights)
             understood.append(f"a {nights}-night trip")
 
+        stay_duration = re.search(
+            r"\bstay(?:ing)?(?:\s+for)?\s+(\d{1,2})\s*(day|days|night|nights|week|weeks)\b",
+            lower,
+        )
+        if stay_duration:
+            amount = int(stay_duration.group(1))
+            nights = amount * 7 if "week" in stay_duration.group(2) else amount
+            patch["duration_nights"] = nights
+            patch["trip_type"] = "roundtrip"
+            patch["products"] = list(set(patch.get("products", [])) | {"flights", "hotels"})
+            base = patch.get("departure_date") or current.departure_date
+            if isinstance(base, date):
+                patch["return_date"] = base + timedelta(days=nights)
+
         if re.search(r"\bone[- ]?way\b", lower):
             patch["trip_type"] = "oneway"
         if re.search(r"\bround[- ]?trip\b|\breturn trip\b", lower):
@@ -278,8 +299,24 @@ class DemoAssistantProvider(AssistantProvider):
         departure_fragment = lower.replace(arrival.group(0), " ") if arrival else lower
         window = _parse_window(departure_fragment)
         if window:
-            patch["preferred_departure_window"] = window
-            understood.append("a preferred departure time")
+            if re.search(r"\b(return|coming back|back flight|inbound)\b", lower):
+                patch["preferred_return_window"] = window
+                understood.append("a preferred return time")
+            else:
+                patch["preferred_departure_window"] = window
+                understood.append("a preferred departure time")
+
+        hotel_area = re.search(
+            r"\b(?:hotel|stay|room)s?\s+(?:near|around|in)\s+([a-z\s]{3,40}?)(?=[,.]|$)",
+            message,
+            re.IGNORECASE,
+        )
+        if hotel_area:
+            patch["hotel_location_preference"] = hotel_area.group(1).strip()
+        if re.search(r"\bcheaper|cheapest|lowest price|budget\b", lower):
+            patch["result_sort"] = "cheapest"
+        if re.search(r"\bfastest|shortest\b", lower):
+            patch["result_sort"] = "fastest"
 
         if re.search(r"\bnon[- ]?stop\b|\bnonstop\b|\bdirect\b|\bno layover\b", lower):
             patch["non_stop_only"] = True
