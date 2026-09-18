@@ -53,8 +53,12 @@ export const ANALYTICS_EVENTS = {
   assistantResponseReceived: "assistant_response_received",
   assistantRequirementsReady: "assistant_requirements_ready",
   assistantSearchStarted: "assistant_search_started",
+  assistantHotelSearchStarted: "assistant_hotel_search_started",
+  assistantFlightResultsShown: "assistant_flight_results_shown",
+  assistantHotelResultsShown: "assistant_hotel_results_shown",
   assistantRecommendationsShown: "assistant_recommendations_shown",
   assistantFlightSelected: "assistant_flight_selected",
+  assistantHotelSelected: "assistant_hotel_selected",
   assistantHandoffToBooking: "assistant_handoff_to_booking",
   assistantFailed: "assistant_failed",
 } as const;

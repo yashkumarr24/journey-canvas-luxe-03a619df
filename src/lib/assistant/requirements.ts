@@ -15,6 +15,8 @@ import {
   type FlightSearchFormValues,
 } from "@/lib/flight-search";
 import type { FlightSearchRequest } from "@/types/booking";
+import { hotelSearchSchema, toHotelSearchRequest } from "@/lib/hotel-search";
+import type { HotelSearchRequest } from "@/types/booking";
 import type { MissingRequirement, RequirementField, TravelRequirements } from "@/types/assistant";
 
 export const MAX_ASSISTANT_MESSAGE_LENGTH = 500;
@@ -107,6 +109,34 @@ export function toValidatedSearchRequest(requirements: TravelRequirements): Vali
   }
 
   return { ok: true, request: toSearchRequest(parsed.data), issues: [] };
+}
+
+export interface HotelValidationOutcome {
+  ok: boolean;
+  request?: HotelSearchRequest;
+  issues: string[];
+}
+
+export function wantsHotels(requirements: TravelRequirements): boolean {
+  return requirements.products?.includes("hotels") ?? false;
+}
+
+/** Uses the existing hotel schema, so assistant output cannot bypass validation. */
+export function toValidatedHotelSearchRequest(requirements: TravelRequirements): HotelValidationOutcome {
+  if (!wantsHotels(requirements)) return { ok: false, issues: [] };
+  const values = {
+    destination: requirements.hotelDestination ?? requirements.destinationLabel ?? "",
+    checkIn: requirements.departureDate ?? "",
+    checkOut: requirements.returnDate ?? "",
+    rooms: [{ adults: requirements.adults ?? 1, childAges: Array(requirements.children ?? 0).fill(8) }],
+    nationality: "IN",
+    currency: "INR",
+  };
+  const parsed = hotelSearchSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, issues: [...new Set(parsed.error.issues.map((issue) => issue.message))] };
+  }
+  return { ok: true, request: toHotelSearchRequest(parsed.data), issues: [] };
 }
 
 export function isReady(requirements: TravelRequirements): boolean {

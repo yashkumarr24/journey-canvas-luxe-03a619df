@@ -33,17 +33,19 @@ from .base import AssistantInterpretation, AssistantProvider, AssistantUnavailab
 logger = get_logger(__name__)
 
 _STRUCTURE_INSTRUCTIONS = """
-You are a flight travel assistant for an online travel agency.
+You are a flight and hotel search assistant for an online travel agency.
 Extract ONLY structured search requirements from the conversation and return a
 single JSON object with these optional keys:
+products (list containing flights and/or hotels),
 tripType (oneway|roundtrip), origin (IATA), originLabel, destination (IATA),
 destinationLabel, departureDate (YYYY-MM-DD), returnDate (YYYY-MM-DD),
 durationNights, adults, children, infants,
 cabinClass (economy|premium_economy|business|first),
-preferredDepartureWindow / preferredArrivalWindow
+preferredDepartureWindow / preferredArrivalWindow / preferredReturnWindow
 (early_morning|morning|afternoon|evening|night), nonStopOnly (bool),
 baggagePreference (checked_baggage|cabin_only), preferredAirlines (list),
-notes (list).
+hotelDestination, hotelLocationPreference,
+resultSort (recommended|cheapest|fastest), notes (list).
 Never invent flights, fares, prices, fare ids, timings, seat availability or
 baggage allowances. If a required detail is missing, leave it out.
 """.strip()

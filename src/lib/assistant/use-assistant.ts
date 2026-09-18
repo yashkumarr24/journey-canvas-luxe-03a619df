@@ -21,15 +21,15 @@ import { missingRequirements, sanitizeAssistantMessage } from "./requirements";
 
 const GREETING = createMessage(
   "assistant",
-  "Hi! Tell me about the trip you have in mind — for example, \u201cI want to travel from Ahmedabad to Dubai next month for 5 days, economy, preferably a morning flight.\u201d I'll turn it into a flight search.",
+  "Tell me where you want to go, when you want to travel, and whether you need a stay. I’ll turn it into a flight and hotel search.",
   "text",
 );
 
 export const SUGGESTED_PROMPTS = [
-  "Ahmedabad to Dubai next month for 5 days, economy, morning flight",
+  "Ahmedabad to Mumbai tomorrow, stay 4 nights, return in the evening",
   "One-way Mumbai to Singapore on 12 March for 2 adults",
   "Delhi to Bangkok next week, non-stop only, business class",
-  "Family trip: Bengaluru to Goa this weekend, 2 adults 1 child",
+  "Family trip: Bengaluru to Goa this weekend, 2 adults, 1 child and a hotel",
 ];
 
 export interface UseAssistantResult {
