@@ -191,7 +191,7 @@ export const hotelApi = {
     reason: "cancelled" | "failed";
     message?: string;
   }): Promise<unknown> {
-    return guard(() =>
+    return guard<unknown>(() =>
       useMockHotels
         ? mockHotelProvider.reportFailure(payload.bookingReference, payload.reason, payload.message)
         : bookingApi.reportPaymentFailure(payload),
