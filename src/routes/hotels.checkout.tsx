@@ -302,17 +302,29 @@ function HotelCheckoutPage() {
         </Alert>
       )}
 
-      {(stage === "failed" || stage === "cancelled" || data.status === "payment_failed") && (
+      {(stage === "failed" ||
+        stage === "booking_failed" ||
+        stage === "cancelled" ||
+        data.status === "payment_failed") && (
         <Alert variant={stage === "cancelled" ? "default" : "destructive"} className="mb-6" role="alert">
           <AlertCircle className="size-4" aria-hidden="true" />
           <AlertTitle>
-            {stage === "cancelled" ? "Payment not completed" : "That payment didn't go through"}
+            {stage === "cancelled"
+              ? "Payment not completed"
+              : stage === "booking_failed"
+                ? "The hotel couldn't confirm this room"
+                : "That payment didn't go through"}
           </AlertTitle>
           <AlertDescription>
-            {message ?? data.statusMessage ?? "No money has been taken. You can try paying again."}
+            {message ??
+              data.statusMessage ??
+              (stage === "booking_failed"
+                ? "Your payment is safe and any amount charged is refunded automatically. Please pick another room or property."
+                : "No money has been taken. You can try paying again.")}
           </AlertDescription>
         </Alert>
       )}
+
 
       {expired && (
         <Alert variant="destructive" className="mb-6" role="alert">
