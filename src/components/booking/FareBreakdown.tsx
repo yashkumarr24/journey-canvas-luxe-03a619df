@@ -17,15 +17,27 @@ function travellersLabel(passengers: PassengerCounts): string {
 export interface FareBreakdownProps {
   breakdown: FareBreakdownLine[];
   totalPayable: Money;
-  passengers: PassengerCounts;
-  /** Rendered under the total, e.g. how long the fare is held. */
+  /** Flight bookings pass passenger counts. */
+  passengers?: PassengerCounts;
+  /** Hotel bookings pass a room/guest line instead. */
+  occupancy?: { label: string; value: string };
+  /** Heading above the lines. */
+  title?: string;
+  /** Rendered under the total, e.g. how long the price is held. */
   footnote?: string;
 }
 
-export function FareBreakdown({ breakdown, totalPayable, passengers, footnote }: FareBreakdownProps) {
+export function FareBreakdown({
+  breakdown,
+  totalPayable,
+  passengers,
+  occupancy,
+  title = "Fare breakdown",
+  footnote,
+}: FareBreakdownProps) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Fare breakdown</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
 
       <dl className="mt-4 space-y-3 text-sm">
         {breakdown.map((line) => (
@@ -40,10 +52,18 @@ export function FareBreakdown({ breakdown, totalPayable, passengers, footnote }:
             </dd>
           </div>
         ))}
-        <div className="flex items-baseline justify-between gap-4">
-          <dt className="text-muted-foreground">Travellers</dt>
-          <dd>{travellersLabel(passengers)}</dd>
-        </div>
+        {passengers && (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">Travellers</dt>
+            <dd>{travellersLabel(passengers)}</dd>
+          </div>
+        )}
+        {occupancy && (
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">{occupancy.label}</dt>
+            <dd className="text-right">{occupancy.value}</dd>
+          </div>
+        )}
       </dl>
 
       <div className="mt-5 flex items-end justify-between gap-4 border-t border-foreground/10 pt-5">
