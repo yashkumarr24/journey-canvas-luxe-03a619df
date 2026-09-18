@@ -14,7 +14,6 @@ import { assistantApi, toAssistantError, useDemoAssistant, type AssistantApiErro
 import {
   clearAssistantSession,
   createMessage,
-  emptyAssistantSession,
   loadAssistantSession,
   saveAssistantSession,
 } from "./assistant-session";
@@ -148,7 +147,6 @@ export function useAssistant(): UseAssistantResult {
     setError(null);
     readyTracked.current = false;
     lastMessage.current = null;
-    void emptyAssistantSession;
   }, []);
 
   const missing = missingRequirements(requirements);
