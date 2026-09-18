@@ -35,9 +35,11 @@ import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-passw
 import { Route as AuthRegisterRouteImport } from './routes/auth.register'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminFunnelRouteImport } from './routes/admin.funnel'
+import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -175,6 +177,11 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSessionsRoute = AdminSessionsRouteImport.update({
   id: '/admin/sessions',
   path: '/admin/sessions',
@@ -188,6 +195,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
 const AdminFunnelRoute = AdminFunnelRouteImport.update({
   id: '/admin/funnel',
   path: '/admin/funnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBookingsRoute = AdminBookingsRouteImport.update({
+  id: '/admin/bookings',
+  path: '/admin/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -242,9 +254,11 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -278,9 +292,11 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -317,9 +333,11 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
@@ -356,9 +374,11 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin/activity'
     | '/admin/analytics'
+    | '/admin/bookings'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
@@ -392,9 +412,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/activity'
     | '/admin/analytics'
+    | '/admin/bookings'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
@@ -430,9 +452,11 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/admin/activity'
     | '/admin/analytics'
+    | '/admin/bookings'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
@@ -468,9 +492,11 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminBookingsRoute: typeof AdminBookingsRoute
   AdminFunnelRoute: typeof AdminFunnelRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminSessionsRoute: typeof AdminSessionsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
@@ -674,6 +700,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/sessions': {
       id: '/admin/sessions'
       path: '/admin/sessions'
@@ -693,6 +726,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/funnel'
       fullPath: '/admin/funnel'
       preLoaderRoute: typeof AdminFunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/bookings': {
+      id: '/admin/bookings'
+      path: '/admin/bookings'
+      fullPath: '/admin/bookings'
+      preLoaderRoute: typeof AdminBookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/analytics': {
@@ -788,9 +828,11 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminBookingsRoute: AdminBookingsRoute,
   AdminFunnelRoute: AdminFunnelRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminSessionsRoute: AdminSessionsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
