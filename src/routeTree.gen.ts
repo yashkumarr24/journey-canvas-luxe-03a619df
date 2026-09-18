@@ -37,14 +37,17 @@ import { Route as AuthRegisterRouteImport } from './routes/auth.register'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminFunnelRouteImport } from './routes/admin.funnel'
-import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
+import { Route as AdminBookingActivityRouteImport } from './routes/admin.booking-activity'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
+import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authenticated/account.support'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
@@ -190,6 +193,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/admin/support',
+  path: '/admin/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSessionsRoute = AdminSessionsRouteImport.update({
   id: '/admin/sessions',
   path: '/admin/sessions',
@@ -205,9 +213,9 @@ const AdminFunnelRoute = AdminFunnelRouteImport.update({
   path: '/admin/funnel',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminBookingsRoute = AdminBookingsRouteImport.update({
-  id: '/admin/bookings',
-  path: '/admin/bookings',
+const AdminBookingActivityRoute = AdminBookingActivityRouteImport.update({
+  id: '/admin/booking-activity',
+  path: '/admin/booking-activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -225,12 +233,22 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
+  id: '/admin/bookings/',
+  path: '/admin/bookings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountIndexRoute =
   AuthenticatedAccountIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
+  id: '/admin/bookings/$reference',
+  path: '/admin/bookings/$reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountTravellersRoute =
   AuthenticatedAccountTravellersRouteImport.update({
     id: '/travellers',
@@ -275,10 +293,11 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -300,7 +319,9 @@ export interface FileRoutesByFullPath {
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
+  '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
+  '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -316,10 +337,11 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -341,7 +363,9 @@ export interface FileRoutesByTo {
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
+  '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
   '/account': typeof AuthenticatedAccountIndexRoute
+  '/admin/bookings': typeof AdminBookingsIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -360,10 +384,11 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin/activity': typeof AdminActivityRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/sessions': typeof AdminSessionsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -385,7 +410,9 @@ export interface FileRoutesById {
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
+  '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/admin/bookings/': typeof AdminBookingsIndexRoute
   '/_authenticated/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/_authenticated/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -404,10 +431,11 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin/activity'
     | '/admin/analytics'
-    | '/admin/bookings'
+    | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -429,7 +457,9 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/support'
     | '/account/travellers'
+    | '/admin/bookings/$reference'
     | '/account/'
+    | '/admin/bookings/'
     | '/account/bookings/$reference'
     | '/account/bookings/'
   fileRoutesByTo: FileRoutesByTo
@@ -445,10 +475,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/activity'
     | '/admin/analytics'
-    | '/admin/bookings'
+    | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -470,7 +501,9 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/support'
     | '/account/travellers'
+    | '/admin/bookings/$reference'
     | '/account'
+    | '/admin/bookings'
     | '/account/bookings/$reference'
     | '/account/bookings'
   id:
@@ -488,10 +521,11 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/admin/activity'
     | '/admin/analytics'
-    | '/admin/bookings'
+    | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
     | '/admin/sessions'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -513,7 +547,9 @@ export interface FileRouteTypes {
     | '/_authenticated/account/profile'
     | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
+    | '/admin/bookings/$reference'
     | '/_authenticated/account/'
+    | '/admin/bookings/'
     | '/_authenticated/account/bookings/$reference'
     | '/_authenticated/account/bookings/'
   fileRoutesById: FileRoutesById
@@ -531,10 +567,11 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
-  AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminBookingActivityRoute: typeof AdminBookingActivityRoute
   AdminFunnelRoute: typeof AdminFunnelRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminSessionsRoute: typeof AdminSessionsRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -553,6 +590,8 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   FlightsIndexRoute: typeof FlightsIndexRoute
   HotelsIndexRoute: typeof HotelsIndexRoute
+  AdminBookingsReferenceRoute: typeof AdminBookingsReferenceRoute
+  AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -753,6 +792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/admin/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/sessions': {
       id: '/admin/sessions'
       path: '/admin/sessions'
@@ -774,11 +820,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFunnelRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/bookings': {
-      id: '/admin/bookings'
-      path: '/admin/bookings'
-      fullPath: '/admin/bookings'
-      preLoaderRoute: typeof AdminBookingsRouteImport
+    '/admin/booking-activity': {
+      id: '/admin/booking-activity'
+      path: '/admin/booking-activity'
+      fullPath: '/admin/booking-activity'
+      preLoaderRoute: typeof AdminBookingActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/analytics': {
@@ -802,12 +848,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/admin/bookings/': {
+      id: '/admin/bookings/'
+      path: '/admin/bookings'
+      fullPath: '/admin/bookings/'
+      preLoaderRoute: typeof AdminBookingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/account/': {
       id: '/_authenticated/account/'
       path: '/'
       fullPath: '/account/'
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/admin/bookings/$reference': {
+      id: '/admin/bookings/$reference'
+      path: '/admin/bookings/$reference'
+      fullPath: '/admin/bookings/$reference'
+      preLoaderRoute: typeof AdminBookingsReferenceRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/travellers': {
       id: '/_authenticated/account/travellers'
@@ -895,10 +955,11 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
-  AdminBookingsRoute: AdminBookingsRoute,
+  AdminBookingActivityRoute: AdminBookingActivityRoute,
   AdminFunnelRoute: AdminFunnelRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminSessionsRoute: AdminSessionsRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
@@ -917,6 +978,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   FlightsIndexRoute: FlightsIndexRoute,
   HotelsIndexRoute: HotelsIndexRoute,
+  AdminBookingsReferenceRoute: AdminBookingsReferenceRoute,
+  AdminBookingsIndexRoute: AdminBookingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

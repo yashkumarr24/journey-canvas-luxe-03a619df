@@ -6,6 +6,8 @@ import { LiveActivityTable } from "@/components/admin/LiveActivityTable";
 import { MetricCard, MetricGrid } from "@/components/admin/MetricCard";
 import { DemoActivityControls } from "@/components/admin/DemoActivityControls";
 import { useAdminSnapshot } from "@/lib/admin/admin-api";
+import { useQuery } from "@tanstack/react-query";
+import { opsApi } from "@/lib/ops/ops-api";
 import {
   defaultFilters,
   liveActivity,
@@ -40,6 +42,12 @@ export const Route = createFileRoute("/admin/")({
 function AdminDashboard() {
   const { snapshot, loading, error, revision } = useAdminSnapshot();
   const [filters, setFilters] = useState<Filters>(() => defaultFilters(7));
+
+  // Operational metrics come from booking records, not analytics events.
+  const ops = useQuery({
+    queryKey: ["admin", "ops", "metrics"],
+    queryFn: () => opsApi.adminOperationsMetrics(),
+  });
 
   const metrics = useMemo(() => overview(snapshot, filters), [snapshot, filters]);
   const rows = useMemo(() => liveActivity(snapshot, 12), [snapshot, revision]);
@@ -128,6 +136,33 @@ function AdminDashboard() {
           hint="Booked sessions ÷ sessions that searched."
         />
       </MetricGrid>
+
+      {/* Operational metrics are a separate concept from the analytics above:
+          they count booking RECORDS and support cases, not tracked events. */}
+      <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight text-foreground">Operations today</h2>
+          <span className="text-xs text-muted-foreground">Booking records, not analytics events</span>
+        </div>
+        {ops.isPending ? (
+          <div className="h-24 animate-pulse rounded-lg border border-border bg-background" />
+        ) : ops.isError ? (
+          <p className="rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
+            Operational metrics are unavailable right now.
+          </p>
+        ) : ops.data ? (
+          <MetricGrid>
+            <MetricCard label="Total bookings" value={ops.data.totalBookings} hint="All booking records." />
+            <MetricCard label="Today" value={ops.data.todayBookings} hint="Bookings created today." />
+            <MetricCard label="Pending" value={ops.data.pendingBookings} hint="Awaiting payment or provider confirmation." />
+            <MetricCard label="Failed" value={ops.data.failedBookings} tone="negative" hint="Payment or provider failures." />
+            <MetricCard label="Payment pending" value={ops.data.paymentPending} hint="Not paid or payment in progress." />
+            <MetricCard label="Cancellation requests" value={ops.data.cancellationRequests} hint="Awaiting a decision from the desk." />
+            <MetricCard label="Open support" value={ops.data.openSupport} hint="Cases not resolved or closed." />
+            <MetricCard label="Flights / hotels" value={`${ops.data.flightBookings} / ${ops.data.hotelBookings}`} hint="Booking records by product." />
+          </MetricGrid>
+        ) : null}
+      </section>
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">

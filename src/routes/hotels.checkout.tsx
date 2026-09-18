@@ -20,6 +20,9 @@ import { openRazorpayCheckout } from "@/lib/razorpay";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
+import { useAuth } from "@/lib/auth/auth-context";
+import { useMockOperations } from "@/lib/ops/ops-api";
+import { recordHotelBooking } from "@/lib/ops/ops-mock";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PaymentOrder } from "@/types/booking";
@@ -92,6 +95,7 @@ function HotelCheckoutPage() {
   const data = booking.data;
 
   const { track } = useAnalytics();
+  const { userId } = useAuth();
   useTrackOnce(ANALYTICS_EVENTS.hotelCheckoutStarted, Boolean(data));
 
   // Align the default method with what the backend actually offers.
@@ -116,6 +120,9 @@ function HotelCheckoutPage() {
       });
     },
     onSuccess: (result) => {
+      // Mirror the outcome into the operations records ("my trips" + admin desk).
+      // Test mode only, best effort — it must never affect the booking result.
+      if (useMockOperations) recordHotelBooking(result.booking, { userId });
       if (result.status === "confirmed" || result.status === "booking_processing") {
         track(ANALYTICS_EVENTS.hotelPaymentSuccess);
         track(ANALYTICS_EVENTS.hotelBookingCompleted, {

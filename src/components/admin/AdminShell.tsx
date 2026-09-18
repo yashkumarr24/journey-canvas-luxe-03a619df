@@ -18,6 +18,7 @@ import {
   BarChart3,
   Filter,
   LayoutDashboard,
+  LifeBuoy,
   Loader2,
   LogOut,
   ShieldCheck,
@@ -43,6 +44,13 @@ const NAV: NavItem[] = [
   { to: "/admin/funnel", label: "Booking funnel", icon: Filter, permission: "analytics.view" },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, permission: "analytics.view" },
   { to: "/admin/bookings", label: "Bookings", icon: Ticket, permission: "bookings.view" },
+  {
+    to: "/admin/booking-activity",
+    label: "Booking activity",
+    icon: Activity,
+    permission: "bookings.view",
+  },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy, permission: "support.view" },
   { to: "/admin/users", label: "Admin users", icon: ShieldCheck, permission: "admins.manage" },
 ];
 

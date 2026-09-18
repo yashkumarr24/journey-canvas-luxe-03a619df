@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, MailWarning, Plane, UserRound, Users } from "lucide-react";
+import { CheckCircle2, LifeBuoy, MailWarning, Plane, UserRound, Users } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/auth-context";
 import { useProfile, useTravellers } from "@/lib/account/account-queries";
@@ -67,16 +67,16 @@ function AccountOverview() {
         <OverviewCard
           icon={<Plane className="size-4" aria-hidden />}
           title="Bookings"
-          body="Your flight and hotel bookings will appear here once booking goes live."
+          body="Your flight and hotel trips, with payment status, documents and cancellation requests."
           to="/account/bookings"
           cta="View bookings"
         />
         <OverviewCard
-          icon={<Plane className="size-4 rotate-45" aria-hidden />}
-          title="Search flights"
-          body="Search and book with or without an account — nothing is gated behind sign-in."
-          to="/flights"
-          cta="Search flights"
+          icon={<LifeBuoy className="size-4" aria-hidden />}
+          title="Support"
+          body="Open a request about a booking, a payment, a refund or a document and follow its status."
+          to="/account/support"
+          cta="Go to support"
         />
       </div>
     </div>
@@ -93,7 +93,7 @@ function OverviewCard({
   icon: React.ReactNode;
   title: string;
   body: string;
-  to: "/account/profile" | "/account/travellers" | "/account/bookings" | "/flights";
+  to: "/account/profile" | "/account/travellers" | "/account/bookings" | "/account/support" | "/flights";
   cta: string;
 }) {
   return (

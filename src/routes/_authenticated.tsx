@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
@@ -34,15 +34,21 @@ function AuthenticatedLayout() {
     select: (s) => `${s.location.pathname}${s.location.searchStr ?? ""}`,
   });
 
+  // The location changes the moment we navigate away, so the redirect target
+  // is captured ONCE and the bounce fires ONCE. Re-running it would send
+  // /auth/login back to itself and nest the redirect value forever.
+  const intended = useRef(pathname);
+  const bounced = useRef(false);
+
   useEffect(() => {
-    if (status === "unauthenticated") {
-      void navigate({
-        to: "/auth/login",
-        search: { redirect: pathname },
-        replace: true,
-      });
-    }
-  }, [status, pathname, navigate]);
+    if (status !== "unauthenticated" || bounced.current) return;
+    bounced.current = true;
+    void navigate({
+      to: "/auth/login",
+      search: { redirect: intended.current },
+      replace: true,
+    });
+  }, [status, navigate]);
 
   if (status !== "authenticated") {
     return (
