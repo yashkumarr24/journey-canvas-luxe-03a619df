@@ -357,9 +357,67 @@ export const bookingApi = {
   reportPaymentFailure: (payload: PaymentFailureRequest, options?: RequestOptions) =>
     request<BookingSummary>("POST", "/api/v1/payments/failure", payload, options),
 
-  /** Hotel search. The backend endpoint is added in a later phase. */
+  /* --- Hotels (PHASE 9) ------------------------------------------------ */
+
+  /** Hotel listing/search. Opens a server-held search session. */
   searchHotels: (payload: HotelSearchRequest, options?: RequestOptions) =>
     request<HotelSearchResponse>("POST", "/api/v1/hotels/search", payload, options),
+
+  /**
+   * Dynamic hotel detail + sellable room options for one search session.
+   * The room list is always provider-fresh; the frontend caches nothing.
+   */
+  hotelDetail: (payload: HotelDetailRequest, options?: RequestOptions) =>
+    request<HotelDetailResponse>("POST", "/api/v1/hotels/detail", payload, options),
+
+  /**
+   * Select a room/rate. The backend re-prices and re-checks availability with
+   * the provider and opens a server-held review session; we only ever receive
+   * opaque tokens back.
+   */
+  reviewHotel: (payload: HotelSelectionRequest, options?: RequestOptions) =>
+    request<HotelReviewResponse>("POST", "/api/v1/hotels/review", payload, options),
+
+  /** Re-read a hotel review session. Guest token travels in a header. */
+  getHotelReview: (reviewToken: string, guestToken?: string | null, options?: RequestOptions) =>
+    request<HotelReviewResponse>(
+      "GET",
+      `/api/v1/hotels/review/${encodeURIComponent(reviewToken)}`,
+      undefined,
+      {
+        timeoutMs: 15_000,
+        ...options,
+        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
+      },
+    ),
+
+  /** Submit guest details and create a draft hotel booking. */
+  submitHotelGuests: (payload: HotelGuestDetailsRequest, options?: RequestOptions) =>
+    request<HotelGuestDetailsResponse>("POST", "/api/v1/hotels/guests", payload, options),
+
+  /** Server-authoritative hotel booking summary for checkout/confirmation. */
+  getHotelBooking: (bookingReference: string, guestToken?: string | null, options?: RequestOptions) =>
+    request<HotelBookingSummary>(
+      "GET",
+      `/api/v1/hotels/bookings/${encodeURIComponent(bookingReference)}`,
+      undefined,
+      {
+        timeoutMs: 15_000,
+        ...options,
+        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
+      },
+    ),
+
+  /**
+   * Verifies the payment server-side and then books the stay with the provider.
+   * Payment orders are created through the shared /api/v1/payments/order
+   * endpoint, so hotels reuse one payment architecture with flights.
+   */
+  bookHotel: (payload: HotelBookingRequest, options?: RequestOptions) =>
+    request<HotelBookingResult>("POST", "/api/v1/hotels/booking", payload, {
+      timeoutMs: 90_000,
+      ...options,
+    }),
 };
 
 export type { APIResponse };
