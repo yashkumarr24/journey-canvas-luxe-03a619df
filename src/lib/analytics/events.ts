@@ -46,6 +46,17 @@ export const ANALYTICS_EVENTS = {
   hotelPaymentFailed: "hotel_payment_failed",
   hotelBookingCompleted: "hotel_booking_completed",
   hotelBookingFailed: "hotel_booking_failed",
+
+  /* ---- AI travel assistant (PHASE 12) --------------------------------- */
+  assistantOpened: "assistant_opened",
+  assistantMessageSent: "assistant_message_sent",
+  assistantResponseReceived: "assistant_response_received",
+  assistantRequirementsReady: "assistant_requirements_ready",
+  assistantSearchStarted: "assistant_search_started",
+  assistantRecommendationsShown: "assistant_recommendations_shown",
+  assistantFlightSelected: "assistant_flight_selected",
+  assistantHandoffToBooking: "assistant_handoff_to_booking",
+  assistantFailed: "assistant_failed",
 } as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
@@ -161,6 +172,7 @@ export function pageKeyFromPath(pathname: string): string {
   const path = pathname.replace(/\/+$/, "") || "/";
   const map: Record<string, string> = {
     "/": "home",
+    "/assistant": "assistant",
     "/flights": "flights",
     "/flights/review": "flight_review",
     "/flights/checkout": "flight_checkout",
@@ -187,6 +199,7 @@ export function pageKeyFromPath(pathname: string): string {
 export function pageLabel(pageKey: string): string {
   const labels: Record<string, string> = {
     home: "Home",
+    assistant: "Travel assistant",
     flights: "Flight search",
     flight_results: "Flight results",
     flight_review: "Flight review",
