@@ -16,12 +16,18 @@ import type {
   APIResponse,
   BookingError,
   BookingErrorKind,
+  BookingSummary,
   FlightReviewResponse,
   FlightSearchRequest,
   FlightSearchResponse,
   FlightSelectionRequest,
   HotelSearchRequest,
   HotelSearchResponse,
+  PaymentConfirmRequest,
+  PaymentFailureRequest,
+  PaymentOrder,
+  PaymentOrderRequest,
+  PaymentResult,
   TravellerDetailsRequest,
   TravellerDetailsResponse,
 } from "@/types/booking";
@@ -311,6 +317,45 @@ export const bookingApi = {
   /** Submit traveller + contact details and create a draft booking. */
   submitTravellers: (payload: TravellerDetailsRequest, options?: RequestOptions) =>
     request<TravellerDetailsResponse>("POST", "/api/v1/flights/travellers", payload, options),
+
+  /* --- Checkout / payment (PHASE 8) ----------------------------------- */
+
+  /**
+   * Server-authoritative booking summary for the checkout and confirmation
+   * screens. The guest token travels in a header, never in the URL.
+   */
+  getBooking: (bookingReference: string, guestToken?: string | null, options?: RequestOptions) =>
+    request<BookingSummary>(
+      "GET",
+      `/api/v1/bookings/${encodeURIComponent(bookingReference)}`,
+      undefined,
+      {
+        timeoutMs: 15_000,
+        ...options,
+        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
+      },
+    ),
+
+  /**
+   * Creates a payment order. The backend resolves the payable amount itself and
+   * returns only an order id plus a publishable key id.
+   */
+  createPaymentOrder: (payload: PaymentOrderRequest, options?: RequestOptions) =>
+    request<PaymentOrder>("POST", "/api/v1/payments/order", payload, options),
+
+  /**
+   * Hands the provider acknowledgement to the backend, which verifies the
+   * signature server-side and then issues the booking.
+   */
+  confirmPayment: (payload: PaymentConfirmRequest, options?: RequestOptions) =>
+    request<PaymentResult>("POST", "/api/v1/payments/confirm", payload, {
+      timeoutMs: 60_000,
+      ...options,
+    }),
+
+  /** Records a cancelled or declined payment attempt against the booking. */
+  reportPaymentFailure: (payload: PaymentFailureRequest, options?: RequestOptions) =>
+    request<BookingSummary>("POST", "/api/v1/payments/failure", payload, options),
 
   /** Hotel search. The backend endpoint is added in a later phase. */
   searchHotels: (payload: HotelSearchRequest, options?: RequestOptions) =>

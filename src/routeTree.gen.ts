@@ -21,6 +21,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as FlightsIndexRouteImport } from './routes/flights.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as FlightsReviewRouteImport } from './routes/flights.review'
+import { Route as FlightsConfirmationRouteImport } from './routes/flights.confirmation'
+import { Route as FlightsCheckoutRouteImport } from './routes/flights.checkout'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -90,6 +92,16 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
 const FlightsReviewRoute = FlightsReviewRouteImport.update({
   id: '/flights/review',
   path: '/flights/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsConfirmationRoute = FlightsConfirmationRouteImport.update({
+  id: '/flights/confirmation',
+  path: '/flights/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsCheckoutRoute = FlightsCheckoutRouteImport.update({
+  id: '/flights/checkout',
+  path: '/flights/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
@@ -168,6 +180,8 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/checkout': typeof FlightsCheckoutRoute
+  '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
@@ -191,6 +205,8 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/checkout': typeof FlightsCheckoutRoute
+  '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
   '/blog': typeof BlogIndexRoute
   '/flights': typeof FlightsIndexRoute
@@ -217,6 +233,8 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/flights/checkout': typeof FlightsCheckoutRoute
+  '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
@@ -243,6 +261,8 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/checkout'
+    | '/flights/confirmation'
     | '/flights/review'
     | '/blog/'
     | '/flights/'
@@ -266,6 +286,8 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/checkout'
+    | '/flights/confirmation'
     | '/flights/review'
     | '/blog'
     | '/flights'
@@ -291,6 +313,8 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/blog/$slug'
     | '/destinations/$slug'
+    | '/flights/checkout'
+    | '/flights/confirmation'
     | '/flights/review'
     | '/blog/'
     | '/flights/'
@@ -316,6 +340,8 @@ export interface RootRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
+  FlightsCheckoutRoute: typeof FlightsCheckoutRoute
+  FlightsConfirmationRoute: typeof FlightsConfirmationRoute
   FlightsReviewRoute: typeof FlightsReviewRoute
   BlogIndexRoute: typeof BlogIndexRoute
   FlightsIndexRoute: typeof FlightsIndexRoute
@@ -405,6 +431,20 @@ declare module '@tanstack/react-router' {
       path: '/flights/review'
       fullPath: '/flights/review'
       preLoaderRoute: typeof FlightsReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/confirmation': {
+      id: '/flights/confirmation'
+      path: '/flights/confirmation'
+      fullPath: '/flights/confirmation'
+      preLoaderRoute: typeof FlightsConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/checkout': {
+      id: '/flights/checkout'
+      path: '/flights/checkout'
+      fullPath: '/flights/checkout'
+      preLoaderRoute: typeof FlightsCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinations/$slug': {
@@ -532,6 +572,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
+  FlightsCheckoutRoute: FlightsCheckoutRoute,
+  FlightsConfirmationRoute: FlightsConfirmationRoute,
   FlightsReviewRoute: FlightsReviewRoute,
   BlogIndexRoute: BlogIndexRoute,
   FlightsIndexRoute: FlightsIndexRoute,

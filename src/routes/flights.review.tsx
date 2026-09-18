@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { newIdempotencyKey, readGuestToken } from "@/lib/review-session";
+import { rememberBookingGuestToken, saveCheckoutSnapshot } from "@/lib/checkout-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
 import type {
   ContactInput,
@@ -114,20 +115,40 @@ function ReviewPage() {
   });
 
   const submit = useMutation({
-    mutationFn: (values: {
+    mutationFn: async (values: {
       travellers: TravellerInput[];
       contact: ContactInput;
       acceptPriceChange: boolean;
-    }) =>
-      bookingApi.submitTravellers({
+    }) => {
+      const result = await bookingApi.submitTravellers({
         reviewToken: token as string,
         guestToken: guestToken ?? undefined,
         travellers: values.travellers,
         contact: values.contact,
         acceptPriceChange: values.acceptPriceChange,
         idempotencyKey,
-      }),
-    onSuccess: (result) => setDraft(result),
+      });
+      return { result, values };
+    },
+    onSuccess: ({ result, values }) => {
+      setDraft(result);
+      // Carry the reviewed journey forward so checkout can render it, and keep
+      // the guest secret with the booking reference (never in the URL).
+      rememberBookingGuestToken(result.bookingReference, guestToken);
+      if (review.data) {
+        saveCheckoutSnapshot({
+          bookingReference: result.bookingReference,
+          itineraries: review.data.itineraries,
+          fare: review.data.fare,
+          passengers: review.data.passengers,
+          travellers: values.travellers,
+          contact: values.contact,
+          priceChange: review.data.priceChange,
+          expiresAt: result.expiresAt,
+        });
+      }
+      navigate({ to: "/flights/checkout", search: { ref: result.bookingReference } });
+    },
   });
 
   if (!token) {
@@ -195,15 +216,16 @@ function ReviewPage() {
             {formatMoney(draft.totalPrice.amount, draft.totalPrice.currency)}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            No payment has been taken and no seat is ticketed yet — secure payment is the next step and our desk
-            will confirm before anything is issued.
+            No payment has been taken and no seat is ticketed yet — secure payment is the next step.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button variant="outline" onClick={() => navigate({ to: "/flights" })}>
               Back to search
             </Button>
             <Button asChild>
-              <Link to="/contact">Talk to our desk</Link>
+              <Link to="/flights/checkout" search={{ ref: draft.bookingReference }}>
+                Continue to payment
+              </Link>
             </Button>
           </div>
         </div>
