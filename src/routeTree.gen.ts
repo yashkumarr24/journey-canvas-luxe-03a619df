@@ -46,7 +46,8 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
-import { Route as AuthenticatedAccountBookingsRouteImport } from './routes/_authenticated/account.bookings'
+import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
+import { Route as AuthenticatedAccountBookingsReferenceRouteImport } from './routes/_authenticated/account.bookings.$reference'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -235,10 +236,16 @@ const AuthenticatedAccountProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
-const AuthenticatedAccountBookingsRoute =
-  AuthenticatedAccountBookingsRouteImport.update({
-    id: '/bookings',
-    path: '/bookings',
+const AuthenticatedAccountBookingsIndexRoute =
+  AuthenticatedAccountBookingsIndexRouteImport.update({
+    id: '/bookings/',
+    path: '/bookings/',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountBookingsReferenceRoute =
+  AuthenticatedAccountBookingsReferenceRouteImport.update({
+    id: '/bookings/$reference',
+    path: '/bookings/$reference',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 
@@ -276,10 +283,11 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
-  '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
+  '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
+  '/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -314,10 +322,11 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/flights': typeof FlightsIndexRoute
   '/hotels': typeof HotelsIndexRoute
-  '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
+  '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
+  '/account/bookings': typeof AuthenticatedAccountBookingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -355,10 +364,11 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
-  '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
+  '/_authenticated/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -396,10 +406,11 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/flights/'
     | '/hotels/'
-    | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
     | '/account/'
+    | '/account/bookings/$reference'
+    | '/account/bookings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -434,10 +445,11 @@ export interface FileRouteTypes {
     | '/blog'
     | '/flights'
     | '/hotels'
-    | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
     | '/account'
+    | '/account/bookings/$reference'
+    | '/account/bookings'
   id:
     | '__root__'
     | '/'
@@ -474,10 +486,11 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/flights/'
     | '/hotels/'
-    | '/_authenticated/account/bookings'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/travellers'
     | '/_authenticated/account/'
+    | '/_authenticated/account/bookings/$reference'
+    | '/_authenticated/account/bookings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -777,28 +790,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
-    '/_authenticated/account/bookings': {
-      id: '/_authenticated/account/bookings'
+    '/_authenticated/account/bookings/': {
+      id: '/_authenticated/account/bookings/'
       path: '/bookings'
-      fullPath: '/account/bookings'
-      preLoaderRoute: typeof AuthenticatedAccountBookingsRouteImport
+      fullPath: '/account/bookings/'
+      preLoaderRoute: typeof AuthenticatedAccountBookingsIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/bookings/$reference': {
+      id: '/_authenticated/account/bookings/$reference'
+      path: '/bookings/$reference'
+      fullPath: '/account/bookings/$reference'
+      preLoaderRoute: typeof AuthenticatedAccountBookingsReferenceRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
   }
 }
 
 interface AuthenticatedAccountRouteChildren {
-  AuthenticatedAccountBookingsRoute: typeof AuthenticatedAccountBookingsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
   AuthenticatedAccountTravellersRoute: typeof AuthenticatedAccountTravellersRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+  AuthenticatedAccountBookingsReferenceRoute: typeof AuthenticatedAccountBookingsReferenceRoute
+  AuthenticatedAccountBookingsIndexRoute: typeof AuthenticatedAccountBookingsIndexRoute
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
-  AuthenticatedAccountBookingsRoute: AuthenticatedAccountBookingsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
   AuthenticatedAccountTravellersRoute: AuthenticatedAccountTravellersRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+  AuthenticatedAccountBookingsReferenceRoute:
+    AuthenticatedAccountBookingsReferenceRoute,
+  AuthenticatedAccountBookingsIndexRoute:
+    AuthenticatedAccountBookingsIndexRoute,
 }
 
 const AuthenticatedAccountRouteWithChildren =
