@@ -15,6 +15,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as BookingLookupRouteImport } from './routes/booking-lookup'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -45,6 +46,7 @@ import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
+import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authenticated/account.support'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
 import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
 import { Route as AuthenticatedAccountBookingsReferenceRouteImport } from './routes/_authenticated/account.bookings.$reference'
@@ -77,6 +79,11 @@ const DomesticRoute = DomesticRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingLookupRoute = BookingLookupRouteImport.update({
+  id: '/booking-lookup',
+  path: '/booking-lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -230,6 +237,12 @@ const AuthenticatedAccountTravellersRoute =
     path: '/travellers',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountSupportRoute =
+  AuthenticatedAccountSupportRouteImport.update({
+    id: '/support',
+    path: '/support',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountProfileRoute =
   AuthenticatedAccountProfileRouteImport.update({
     id: '/profile',
@@ -252,6 +265,7 @@ const AuthenticatedAccountBookingsReferenceRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
@@ -284,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
@@ -292,6 +307,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
@@ -323,6 +339,7 @@ export interface FileRoutesByTo {
   '/flights': typeof FlightsIndexRoute
   '/hotels': typeof HotelsIndexRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
@@ -333,6 +350,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
   '/international': typeof InternationalRoute
@@ -365,6 +383,7 @@ export interface FileRoutesById {
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
@@ -375,6 +394,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/booking-lookup'
     | '/contact'
     | '/domestic'
     | '/international'
@@ -407,6 +427,7 @@ export interface FileRouteTypes {
     | '/flights/'
     | '/hotels/'
     | '/account/profile'
+    | '/account/support'
     | '/account/travellers'
     | '/account/'
     | '/account/bookings/$reference'
@@ -415,6 +436,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/booking-lookup'
     | '/contact'
     | '/domestic'
     | '/international'
@@ -446,6 +468,7 @@ export interface FileRouteTypes {
     | '/flights'
     | '/hotels'
     | '/account/profile'
+    | '/account/support'
     | '/account/travellers'
     | '/account'
     | '/account/bookings/$reference'
@@ -455,6 +478,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/booking-lookup'
     | '/contact'
     | '/domestic'
     | '/international'
@@ -487,6 +511,7 @@ export interface FileRouteTypes {
     | '/flights/'
     | '/hotels/'
     | '/_authenticated/account/profile'
+    | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
     | '/_authenticated/account/'
     | '/_authenticated/account/bookings/$reference'
@@ -497,6 +522,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  BookingLookupRoute: typeof BookingLookupRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
   InternationalRoute: typeof InternationalRoute
@@ -571,6 +597,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking-lookup': {
+      id: '/booking-lookup'
+      path: '/booking-lookup'
+      fullPath: '/booking-lookup'
+      preLoaderRoute: typeof BookingLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -783,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountTravellersRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/support': {
+      id: '/_authenticated/account/support'
+      path: '/support'
+      fullPath: '/account/support'
+      preLoaderRoute: typeof AuthenticatedAccountSupportRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/profile': {
       id: '/_authenticated/account/profile'
       path: '/profile'
@@ -809,6 +849,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
+  AuthenticatedAccountSupportRoute: typeof AuthenticatedAccountSupportRoute
   AuthenticatedAccountTravellersRoute: typeof AuthenticatedAccountTravellersRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
   AuthenticatedAccountBookingsReferenceRoute: typeof AuthenticatedAccountBookingsReferenceRoute
@@ -817,6 +858,7 @@ interface AuthenticatedAccountRouteChildren {
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
+  AuthenticatedAccountSupportRoute: AuthenticatedAccountSupportRoute,
   AuthenticatedAccountTravellersRoute: AuthenticatedAccountTravellersRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
   AuthenticatedAccountBookingsReferenceRoute:
@@ -844,6 +886,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  BookingLookupRoute: BookingLookupRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
   InternationalRoute: InternationalRoute,
