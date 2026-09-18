@@ -67,12 +67,9 @@ async def _load_admin(user_id: str, settings: Settings) -> Optional[dict]:
     try:
         rows = await rest.select(
             "admin_users",
-            params={
-                "user_id": f"eq.{user_id}",
-                "status": "eq.active",
-                "select": "id,user_id,role,display_name,status",
-                "limit": "1",
-            },
+            columns="id,user_id,role,display_name,status",
+            filters={"user_id": f"eq.{user_id}", "status": "eq.active"},
+            limit=1,
         )
     except SupabaseUnavailableError:
         logger.warning("admin_lookup_unavailable")

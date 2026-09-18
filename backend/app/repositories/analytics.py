@@ -135,7 +135,9 @@ class AnalyticsRepository:
         try:
             return await self._rest.select(
                 "user_sessions",
-                params={"order": "last_activity_at.desc", "limit": str(limit)},
+                filters={},
+                limit=limit,
+                order="last_activity_at.desc",
             )
         except SupabaseUnavailableError:
             return []
@@ -146,7 +148,9 @@ class AnalyticsRepository:
         try:
             return await self._rest.select(
                 "activity_events",
-                params={"order": "occurred_at.desc", "limit": str(limit)},
+                filters={},
+                limit=limit,
+                order="occurred_at.desc",
             )
         except SupabaseUnavailableError:
             return []
