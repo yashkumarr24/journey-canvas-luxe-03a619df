@@ -140,7 +140,6 @@ function BookingDetailPage() {
             <dd className="text-foreground">{new Date(detail.bookedAt).toLocaleDateString("en-IN")}</dd>
           </div>
         </dl>
-        {detail.statusMessageHint ? null : null}
       </section>
 
       <BookingDetailPanels detail={detail} />
