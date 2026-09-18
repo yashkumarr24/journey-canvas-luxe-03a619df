@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     razorpay_key_id: str = Field(default="", alias="RAZORPAY_KEY_ID")
     razorpay_key_secret: str = Field(default="", alias="RAZORPAY_KEY_SECRET")
 
+    # ---- AI travel assistant (BACKEND ONLY — never a VITE_ variable) -------
+    # "demo" (rule-based, no credentials) or "openai" once a key is configured.
+    assistant_provider: str = Field(default="demo", alias="ASSISTANT_PROVIDER")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="", alias="OPENAI_MODEL")
+    openai_timeout: float = Field(default=25.0, alias="OPENAI_TIMEOUT")
+
     @property
     def is_production(self) -> bool:
         return self.app_env.lower() in {"production", "prod"}

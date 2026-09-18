@@ -16,6 +16,7 @@ import { Route as InternationalRouteImport } from './routes/international'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BookingLookupRouteImport } from './routes/booking-lookup'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -87,6 +88,11 @@ const ContactRoute = ContactRouteImport.update({
 const BookingLookupRoute = BookingLookupRouteImport.update({
   id: '/booking-lookup',
   path: '/booking-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -283,6 +289,7 @@ const AuthenticatedAccountBookingsReferenceRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/assistant': typeof AssistantRoute
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/assistant'
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/assistant'
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/assistant'
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
@@ -558,6 +570,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  AssistantRoute: typeof AssistantRoute
   BookingLookupRoute: typeof BookingLookupRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
@@ -643,6 +656,13 @@ declare module '@tanstack/react-router' {
       path: '/booking-lookup'
       fullPath: '/booking-lookup'
       preLoaderRoute: typeof BookingLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -946,6 +966,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  AssistantRoute: AssistantRoute,
   BookingLookupRoute: BookingLookupRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
