@@ -397,3 +397,47 @@ After the move: `npm install`, `npm run dev`, typecheck, then walk one flight an
 - **Renaming or removing a route file breaks every link to it**; also update the nav, footer and sitemap.
 - **CORS must never be `*`**, and `TRUST_PROXY_HEADERS` must only be true behind a trusted proxy, or rate limiting can be bypassed.
 - **Cancellation/refund screens are recorded requests only.** Do not tell customers a refund happened until a payment provider is actually connected.
+
+---
+
+## PHASE 12 — AI TRAVEL ASSISTANT (complete, demo provider)
+
+Customer-facing route: `/assistant` (nav item "Assistant").
+
+**Frontend**
+- `src/types/assistant.ts` — assistant contracts. Deliberately has no field for a
+  fare, fare id, price, schedule or availability.
+- `src/lib/assistant/requirements.ts` — sanitisation, requirement merging, gap
+  detection and `toValidatedSearchRequest()`, the ONLY path from assistant output
+  to a search. It runs the shared `flightSearchSchema`.
+- `src/lib/assistant/assistant-mock.ts` — demo (rule-based) provider.
+- `src/lib/assistant/assistant-api.ts` — single network boundary. Demo provider
+  when `VITE_BOOKING_API_URL` is unset or `VITE_ASSISTANT_DEMO_MODE=true`,
+  otherwise `POST /api/v1/assistant/interpret`.
+- `src/lib/assistant/assistant-session.ts` — conversation in sessionStorage. No
+  database table was added in this phase.
+- `src/lib/assistant/recommendations.ts` — ranking/filtering of REAL results only.
+- `src/lib/assistant/use-assistant.ts`, `src/components/assistant/*`,
+  `src/routes/assistant.tsx`.
+
+**Backend**
+- `POST /api/v1/assistant/interpret` — guests allowed, user id from the verified
+  bearer token only, input sanitised/capped, history trimmed, 20 req/min per
+  identity, provider output re-validated. Returns requirements only.
+- `backend/app/integrations/ai/` — `base.py`, `demo_provider.py`,
+  `openai_provider.py` (skeleton, inactive), `get_assistant_provider()`.
+- `backend/app/services/assistant.py`, `backend/app/schemas/assistant.py`.
+- New env names (backend only, values never committed): `ASSISTANT_PROVIDER`,
+  `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_TIMEOUT`. Never use a `VITE_` variable
+  for the OpenAI key.
+
+**Database:** no migration. Phase 12 needs no persistence.
+
+**Analytics:** `assistant_opened`, `assistant_message_sent`,
+`assistant_response_received`, `assistant_requirements_ready`,
+`assistant_search_started`, `assistant_recommendations_shown`,
+`assistant_flight_selected`, `assistant_handoff_to_booking`, `assistant_failed`.
+
+**To connect OpenAI later:** implement `_call_model` in `openai_provider.py`, set
+`ASSISTANT_PROVIDER=openai` and `OPENAI_API_KEY` on the backend host, and keep the
+structured-output validation in `services/assistant.py` in place.
