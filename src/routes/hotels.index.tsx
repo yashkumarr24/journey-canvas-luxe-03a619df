@@ -77,6 +77,7 @@ function HotelsPage() {
   const [request, setRequest] = useState<HotelSearchRequest | null>(null);
   const [filters, setFilters] = useState<HotelFilters>(defaultHotelFilters);
   const [sort, setSort] = useState<HotelSortKey>("recommended");
+  const { track } = useAnalytics();
 
   const query = useQuery(hotelSearchQueryOptions(request));
 
@@ -111,7 +112,7 @@ function HotelsPage() {
       checkOut: request.checkOut,
       rooms: request.rooms.length,
       adults: request.rooms.reduce((sum, room) => sum + (room.adults ?? 0), 0),
-      children: request.rooms.reduce((sum, room) => sum + (room.children?.length ?? 0), 0),
+      children: request.rooms.reduce((sum, room) => sum + (room.childAges?.length ?? 0), 0),
     });
   };
 
