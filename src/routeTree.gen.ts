@@ -18,8 +18,13 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
 import { Route as FlightsIndexRouteImport } from './routes/flights.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as HotelsReviewRouteImport } from './routes/hotels.review'
+import { Route as HotelsDetailRouteImport } from './routes/hotels.detail'
+import { Route as HotelsConfirmationRouteImport } from './routes/hotels.confirmation'
+import { Route as HotelsCheckoutRouteImport } from './routes/hotels.checkout'
 import { Route as FlightsReviewRouteImport } from './routes/flights.review'
 import { Route as FlightsConfirmationRouteImport } from './routes/flights.confirmation'
 import { Route as FlightsCheckoutRouteImport } from './routes/flights.checkout'
@@ -79,6 +84,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HotelsIndexRoute = HotelsIndexRouteImport.update({
+  id: '/hotels/',
+  path: '/hotels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FlightsIndexRoute = FlightsIndexRouteImport.update({
   id: '/flights/',
   path: '/flights/',
@@ -87,6 +97,26 @@ const FlightsIndexRoute = FlightsIndexRouteImport.update({
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsReviewRoute = HotelsReviewRouteImport.update({
+  id: '/hotels/review',
+  path: '/hotels/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsDetailRoute = HotelsDetailRouteImport.update({
+  id: '/hotels/detail',
+  path: '/hotels/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsConfirmationRoute = HotelsConfirmationRouteImport.update({
+  id: '/hotels/confirmation',
+  path: '/hotels/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsCheckoutRoute = HotelsCheckoutRouteImport.update({
+  id: '/hotels/checkout',
+  path: '/hotels/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlightsReviewRoute = FlightsReviewRouteImport.update({
@@ -183,8 +213,13 @@ export interface FileRoutesByFullPath {
   '/flights/checkout': typeof FlightsCheckoutRoute
   '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
+  '/hotels/checkout': typeof HotelsCheckoutRoute
+  '/hotels/confirmation': typeof HotelsConfirmationRoute
+  '/hotels/detail': typeof HotelsDetailRoute
+  '/hotels/review': typeof HotelsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -208,8 +243,13 @@ export interface FileRoutesByTo {
   '/flights/checkout': typeof FlightsCheckoutRoute
   '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
+  '/hotels/checkout': typeof HotelsCheckoutRoute
+  '/hotels/confirmation': typeof HotelsConfirmationRoute
+  '/hotels/detail': typeof HotelsDetailRoute
+  '/hotels/review': typeof HotelsReviewRoute
   '/blog': typeof BlogIndexRoute
   '/flights': typeof FlightsIndexRoute
+  '/hotels': typeof HotelsIndexRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -236,8 +276,13 @@ export interface FileRoutesById {
   '/flights/checkout': typeof FlightsCheckoutRoute
   '/flights/confirmation': typeof FlightsConfirmationRoute
   '/flights/review': typeof FlightsReviewRoute
+  '/hotels/checkout': typeof HotelsCheckoutRoute
+  '/hotels/confirmation': typeof HotelsConfirmationRoute
+  '/hotels/detail': typeof HotelsDetailRoute
+  '/hotels/review': typeof HotelsReviewRoute
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/_authenticated/account/bookings': typeof AuthenticatedAccountBookingsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -264,8 +309,13 @@ export interface FileRouteTypes {
     | '/flights/checkout'
     | '/flights/confirmation'
     | '/flights/review'
+    | '/hotels/checkout'
+    | '/hotels/confirmation'
+    | '/hotels/detail'
+    | '/hotels/review'
     | '/blog/'
     | '/flights/'
+    | '/hotels/'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -289,8 +339,13 @@ export interface FileRouteTypes {
     | '/flights/checkout'
     | '/flights/confirmation'
     | '/flights/review'
+    | '/hotels/checkout'
+    | '/hotels/confirmation'
+    | '/hotels/detail'
+    | '/hotels/review'
     | '/blog'
     | '/flights'
+    | '/hotels'
     | '/account/bookings'
     | '/account/profile'
     | '/account/travellers'
@@ -316,8 +371,13 @@ export interface FileRouteTypes {
     | '/flights/checkout'
     | '/flights/confirmation'
     | '/flights/review'
+    | '/hotels/checkout'
+    | '/hotels/confirmation'
+    | '/hotels/detail'
+    | '/hotels/review'
     | '/blog/'
     | '/flights/'
+    | '/hotels/'
     | '/_authenticated/account/bookings'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/travellers'
@@ -343,8 +403,13 @@ export interface RootRouteChildren {
   FlightsCheckoutRoute: typeof FlightsCheckoutRoute
   FlightsConfirmationRoute: typeof FlightsConfirmationRoute
   FlightsReviewRoute: typeof FlightsReviewRoute
+  HotelsCheckoutRoute: typeof HotelsCheckoutRoute
+  HotelsConfirmationRoute: typeof HotelsConfirmationRoute
+  HotelsDetailRoute: typeof HotelsDetailRoute
+  HotelsReviewRoute: typeof HotelsReviewRoute
   BlogIndexRoute: typeof BlogIndexRoute
   FlightsIndexRoute: typeof FlightsIndexRoute
+  HotelsIndexRoute: typeof HotelsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -412,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hotels/': {
+      id: '/hotels/'
+      path: '/hotels'
+      fullPath: '/hotels/'
+      preLoaderRoute: typeof HotelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/flights/': {
       id: '/flights/'
       path: '/flights'
@@ -424,6 +496,34 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/review': {
+      id: '/hotels/review'
+      path: '/hotels/review'
+      fullPath: '/hotels/review'
+      preLoaderRoute: typeof HotelsReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/detail': {
+      id: '/hotels/detail'
+      path: '/hotels/detail'
+      fullPath: '/hotels/detail'
+      preLoaderRoute: typeof HotelsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/confirmation': {
+      id: '/hotels/confirmation'
+      path: '/hotels/confirmation'
+      fullPath: '/hotels/confirmation'
+      preLoaderRoute: typeof HotelsConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/checkout': {
+      id: '/hotels/checkout'
+      path: '/hotels/checkout'
+      fullPath: '/hotels/checkout'
+      preLoaderRoute: typeof HotelsCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flights/review': {
@@ -575,8 +675,13 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsCheckoutRoute: FlightsCheckoutRoute,
   FlightsConfirmationRoute: FlightsConfirmationRoute,
   FlightsReviewRoute: FlightsReviewRoute,
+  HotelsCheckoutRoute: HotelsCheckoutRoute,
+  HotelsConfirmationRoute: HotelsConfirmationRoute,
+  HotelsDetailRoute: HotelsDetailRoute,
+  HotelsReviewRoute: HotelsReviewRoute,
   BlogIndexRoute: BlogIndexRoute,
   FlightsIndexRoute: FlightsIndexRoute,
+  HotelsIndexRoute: HotelsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
