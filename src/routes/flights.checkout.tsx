@@ -88,6 +88,9 @@ function CheckoutPage() {
 
   const data = booking.data;
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.flightCheckoutStarted, Boolean(data));
+
   // Align the default method with what the backend actually offers.
   useEffect(() => {
     const first = data?.paymentMethods?.find((option) => option.enabled);
