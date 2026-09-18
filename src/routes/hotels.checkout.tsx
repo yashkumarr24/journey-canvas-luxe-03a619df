@@ -403,9 +403,13 @@ function HotelCheckoutPage() {
               disabled={expired || pay.isPending}
               onClick={() => pay.mutate()}
             >
-              {stage === "failed" || stage === "cancelled" || data.status === "payment_failed"
+              {stage === "failed" ||
+              stage === "booking_failed" ||
+              stage === "cancelled" ||
+              data.status === "payment_failed"
                 ? "Try payment again"
                 : `Pay ${formatMoney(payable.amount, payable.currency)}`}
+
             </Button>
 
             <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
