@@ -84,7 +84,7 @@ def _reply(understood: list[str], missing: list[MissingRequirement], issues: lis
         return f"{heard} One thing to fix first: {' '.join(issues)}"
     return (
         f"{heard} I have everything I need — check the summary and I'll run a live "
-        "flight search for you."
+        "flight and hotel search for you."
     )
 
 

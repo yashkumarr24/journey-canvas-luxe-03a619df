@@ -20,6 +20,8 @@ CabinClass = Literal["economy", "premium_economy", "business", "first"]
 TripType = Literal["oneway", "roundtrip"]
 TimeWindow = Literal["early_morning", "morning", "afternoon", "evening", "night"]
 BaggagePreference = Literal["checked_baggage", "cabin_only"]
+AssistantProduct = Literal["flights", "hotels"]
+ResultSortPreference = Literal["recommended", "cheapest", "fastest"]
 
 MAX_MESSAGE_LENGTH = 500
 MAX_HISTORY = 8
@@ -35,6 +37,7 @@ def _clean(value: str, limit: int = MAX_MESSAGE_LENGTH) -> str:
 
 
 class TravelRequirements(BaseModel):
+    products: List[AssistantProduct] = Field(default_factory=lambda: ["flights"])
     """Structured requirements. Every field optional — gaps are asked about."""
 
     trip_type: Optional[TripType] = Field(default=None, alias="tripType")
@@ -55,9 +58,15 @@ class TravelRequirements(BaseModel):
     preferred_arrival_window: Optional[TimeWindow] = Field(
         default=None, alias="preferredArrivalWindow"
     )
+    preferred_return_window: Optional[TimeWindow] = Field(
+        default=None, alias="preferredReturnWindow"
+    )
     non_stop_only: Optional[bool] = Field(default=None, alias="nonStopOnly")
     baggage_preference: Optional[BaggagePreference] = Field(default=None, alias="baggagePreference")
     preferred_airlines: List[str] = Field(default_factory=list, alias="preferredAirlines")
+    hotel_destination: Optional[str] = Field(default=None, alias="hotelDestination")
+    hotel_location_preference: Optional[str] = Field(default=None, alias="hotelLocationPreference")
+    result_sort: Optional[ResultSortPreference] = Field(default=None, alias="resultSort")
     notes: List[str] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
@@ -72,7 +81,7 @@ class TravelRequirements(BaseModel):
             raise ValueError("Airport codes must be 3 letters.")
         return code
 
-    @field_validator("origin_label", "destination_label")
+    @field_validator("origin_label", "destination_label", "hotel_destination", "hotel_location_preference")
     @classmethod
     def _label(cls, value: Optional[str]) -> Optional[str]:
         return _clean(value, 60) if value else None

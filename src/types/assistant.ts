@@ -28,6 +28,8 @@ export interface AssistantMessage {
 export type TimeWindow = "early_morning" | "morning" | "afternoon" | "evening" | "night";
 
 export type BaggagePreference = "checked_baggage" | "cabin_only";
+export type AssistantProduct = "flights" | "hotels";
+export type ResultSortPreference = "recommended" | "cheapest" | "fastest";
 
 /**
  * Structured travel requirements accumulated across the conversation.
@@ -35,6 +37,7 @@ export type BaggagePreference = "checked_baggage" | "cabin_only";
  * guessing.
  */
 export interface TravelRequirements {
+  products?: AssistantProduct[];
   tripType?: TripType;
   /** IATA code, uppercase. */
   origin?: string;
@@ -53,10 +56,14 @@ export interface TravelRequirements {
   cabinClass?: CabinClass;
   preferredDepartureWindow?: TimeWindow;
   preferredArrivalWindow?: TimeWindow;
+  preferredReturnWindow?: TimeWindow;
   nonStopOnly?: boolean;
   baggagePreference?: BaggagePreference;
   /** Airline names/codes the user mentioned. Only used to rank real results. */
   preferredAirlines?: string[];
+  hotelDestination?: string;
+  hotelLocationPreference?: string;
+  resultSort?: ResultSortPreference;
   /** Anything else worth showing back to the user, e.g. "flexible dates". */
   notes?: string[];
 }

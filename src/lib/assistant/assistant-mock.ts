@@ -10,6 +10,7 @@
  */
 
 import type {
+  AssistantProduct,
   AssistantProvider,
   AssistantTurnRequest,
   AssistantTurnResponse,
@@ -174,6 +175,11 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
   const understood: string[] = [];
   const lower = message.toLowerCase();
 
+  const products = new Set<AssistantProduct>(current.products ?? ["flights"]);
+  if (/\b(hotel|stay|staying|accommodation|room|resort)\b/.test(lower)) products.add("hotels");
+  if (/\b(flight|fly|flying)\b/.test(lower)) products.add("flights");
+  patch.products = [...products];
+
   // ---- route -----------------------------------------------------------
   const STOP = "(?=[,.]|\\s+(?:on|next|in|for|this|tomorrow|with|by)\\b|$)";
   // "from X to Y" and the bare "X to Y" phrasing both resolve a full route.
@@ -259,6 +265,17 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
     understood.push(`a ${nights}-night trip`);
   }
 
+  const stayDuration = /\bstay(?:ing)?(?:\s+for)?\s+(\d{1,2})\s*(day|days|night|nights|week|weeks)\b/i.exec(lower);
+  if (stayDuration) {
+    const amount = Number(stayDuration[1]);
+    const nights = /week/.test(stayDuration[2]!) ? amount * 7 : amount;
+    patch.durationNights = nights;
+    patch.tripType = "roundtrip";
+    patch.products = [...new Set<AssistantProduct>([...(patch.products ?? []), "flights", "hotels"])];
+    const base = patch.departureDate ?? current.departureDate;
+    if (base) patch.returnDate = isoDate(addDays(new Date(`${base}T00:00:00`), nights));
+  }
+
   if (/\bone[- ]?way\b/.test(lower)) patch.tripType = "oneway";
   if (/\bround[- ]?trip\b|\breturn trip\b/.test(lower)) patch.tripType = "roundtrip";
 
@@ -293,9 +310,19 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
     lower.replace(arrivalFragment ? arrivalFragment[0] : "", " "),
   );
   if (departureWindow) {
-    patch.preferredDepartureWindow = departureWindow;
-    understood.push("a preferred departure time");
+    if (/\b(return|coming back|back flight|inbound)\b/.test(lower)) {
+      patch.preferredReturnWindow = departureWindow;
+      understood.push("a preferred return time");
+    } else {
+      patch.preferredDepartureWindow = departureWindow;
+      understood.push("a preferred departure time");
+    }
   }
+
+  const hotelArea = /\b(?:hotel|stay|room)s?\s+(?:near|around|in)\s+([a-z\s]{3,40}?)(?=[,.]|$)/i.exec(message);
+  if (hotelArea) patch.hotelLocationPreference = hotelArea[1]!.trim();
+  if (/\bcheaper|cheapest|lowest price|budget\b/.test(lower)) patch.resultSort = "cheapest";
+  if (/\bfastest|shortest\b/.test(lower)) patch.resultSort = "fastest";
 
   if (/\bnon[- ]?stop\b|\bnonstop\b|\bdirect\b|\bno layover\b/.test(lower)) {
     patch.nonStopOnly = true;
@@ -366,7 +393,7 @@ function buildReply(
     : "Noted.";
 
   if (missing.length > 0) {
-    return { reply: `${heard} ${missing[0]!.prompt}`, suggestions: [] };
+    return { reply: missing[0]!.prompt, suggestions: [] };
   }
 
   if (!validation.ok) {
@@ -377,8 +404,8 @@ function buildReply(
   }
 
   return {
-    reply: `${heard} I have everything I need — check the summary and I'll run a live flight search for you.`,
-    suggestions: ["Only non-stop flights", "Prefer a morning departure", "Make it business class"],
+    reply: `${heard} Your trip is ready to search.`,
+    suggestions: ["Only evening flights", "Show cheaper options", "Hotels near the airport"],
   };
 }
 
