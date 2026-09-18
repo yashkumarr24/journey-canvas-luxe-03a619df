@@ -167,13 +167,65 @@ export interface FlightSearchResponse {
 }
 
 /* ------------------------------------------------------------------ */
-/* Hotels                                                              */
+/* Hotels — search, detail, rooms (PHASE 9)                            */
 /* ------------------------------------------------------------------ */
+
+/**
+ * As with flights, these are OUR normalized contracts. The FastAPI adapter maps
+ * the provider flow (Listing/Search -> Detail -> Review -> Book) onto them, so
+ * nothing here mentions a provider field name, a provider id or a raw payload.
+ */
 
 export interface HotelOccupancy {
   adults: number;
-  /** Ages of children in the room; empty when none. */
+  /** Ages of children sharing the room; empty when none. */
   childAges: number[];
+}
+
+export interface HotelImage {
+  url: string;
+  caption?: string;
+}
+
+export interface HotelLocation {
+  address?: string;
+  area?: string;
+  city?: string;
+  country?: string;
+  landmark?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+/** Cheapest sellable rate for the whole stay, as shown in results. */
+export interface HotelRateSummary {
+  totalPrice: Money;
+  perNightPrice?: Money;
+  mealPlan?: string;
+  refundable?: boolean;
+  /** ISO timestamp; absent when the provider gives no free-cancellation window. */
+  freeCancellationUntil?: string;
+  roomName?: string;
+  roomsAvailable?: number;
+}
+
+/** Identity fields shared by results, detail, review and confirmation. */
+export interface HotelSummary {
+  /** Opaque, server-controlled handle. Never a provider id we invent. */
+  id: string;
+  name: string;
+  starRating?: number;
+  propertyType?: string;
+  location?: HotelLocation;
+  thumbnailUrl?: string;
+  images?: HotelImage[];
+}
+
+export interface HotelResult extends HotelSummary {
+  amenities?: string[];
+  reviewScore?: number;
+  reviewCount?: number;
+  rate?: HotelRateSummary;
 }
 
 export interface HotelSearchRequest {
@@ -182,32 +234,116 @@ export interface HotelSearchRequest {
   /** ISO date, YYYY-MM-DD. */
   checkIn: string;
   checkOut: string;
+  /** One entry per physical room requested. */
   rooms: HotelOccupancy[];
+  /** ISO-3166 alpha-2 guest nationality; affects rates and tax. */
   nationality?: string;
   currency?: string;
 }
 
-export interface HotelResult {
-  id: string;
-  name: string;
-  starRating?: number;
-  address?: string;
-  city?: string;
-  country?: string;
-  thumbnailUrl?: string;
-  /** Lowest available total for the stay. */
-  price?: Money;
-  refundable?: boolean;
-  amenities?: string[];
-  reviewScore?: number;
-}
-
 export interface HotelSearchResponse {
+  /** Server-side search session id, required by detail and review. */
   searchId?: string;
   results: HotelResult[];
   currency?: string;
+  /** ISO timestamp after which the search session must be repeated. */
+  expiresAt?: string;
+  nights?: number;
+  /** Facets for the filter UI, derived server-side. */
+  amenities?: string[];
+  propertyTypes?: string[];
+}
+
+export interface HotelDetailRequest {
+  searchId: string;
+  hotelId: string;
+}
+
+export interface HotelCancellationRule {
+  /** ISO timestamps bounding the window this charge applies to. */
+  from?: string;
+  to?: string;
+  charge?: Money;
+  description?: string;
+}
+
+export interface HotelCancellationPolicy {
+  refundable: boolean;
+  /** Short provider-supplied summary; rendered as-is. */
+  summary?: string;
+  freeCancellationUntil?: string;
+  rules?: HotelCancellationRule[];
+}
+
+/**
+ * One sellable room/rate option. `id` is an opaque rate handle: the browser
+ * echoes it back on selection and never sends a price with it.
+ */
+export interface HotelRoomOption {
+  id: string;
+  roomName: string;
+  roomType?: string;
+  bedType?: string;
+  occupancy: HotelOccupancy;
+  /** Number of physical rooms this option covers. */
+  roomCount: number;
+  mealPlan?: string;
+  inclusions?: string[];
+  cancellation: HotelCancellationPolicy;
+  basePrice?: Money;
+  taxes?: Money;
+  feesAndCharges?: Money;
+  totalPrice: Money;
+  roomsAvailable?: number;
+  /** e.g. "Pay now", "Pay at hotel". */
+  paymentPolicy?: string;
+}
+
+/**
+ * Detail payload. Everything below is designed to arrive from the provider's
+ * dynamic detail call at request time — the frontend keeps no static copy.
+ */
+export interface HotelDetail extends HotelResult {
+  description?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  facilities?: string[];
+  /** Property rules and notes, one line each. */
+  policies?: string[];
+  rooms: HotelRoomOption[];
+}
+
+export interface HotelDetailResponse {
+  searchId?: string;
+  hotel: HotelDetail;
+  checkIn?: string;
+  checkOut?: string;
+  nights?: number;
+  currency?: string;
   expiresAt?: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* Hotels — filtering / sorting                                        */
+/* ------------------------------------------------------------------ */
+
+export type HotelSortKey = "recommended" | "price_low" | "price_high" | "rating";
+
+export interface HotelFilters {
+  /** Star ratings to include; empty means "all". */
+  starRatings: number[];
+  maxPrice?: number;
+  amenities: string[];
+  propertyTypes: string[];
+  freeCancellationOnly: boolean;
+}
+
+export const defaultHotelFilters: HotelFilters = {
+  starRatings: [],
+  amenities: [],
+  propertyTypes: [],
+  freeCancellationOnly: false,
+};
 
 /* ------------------------------------------------------------------ */
 /* Results filtering / sorting                                         */
