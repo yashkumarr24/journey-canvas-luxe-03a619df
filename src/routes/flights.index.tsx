@@ -118,12 +118,14 @@ function FlightsPage() {
     track(ANALYTICS_EVENTS.flightSearch, {
       origin: request.origin,
       destination: request.destination,
-      departDate: request.departDate ?? null,
+      departureDate: request.departureDate,
       returnDate: request.returnDate ?? null,
       passengers:
-        (request.adults ?? 0) + (request.children ?? 0) + (request.infants ?? 0),
-      cabin: request.cabinClass ?? null,
-      tripType: request.returnDate ? "round_trip" : "one_way",
+        (request.passengers.adults ?? 0) +
+        (request.passengers.children ?? 0) +
+        (request.passengers.infants ?? 0),
+      cabin: request.cabinClass,
+      tripType: request.tripType,
     });
   };
 
