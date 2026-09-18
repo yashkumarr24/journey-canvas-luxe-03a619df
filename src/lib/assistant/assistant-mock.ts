@@ -10,6 +10,7 @@
  */
 
 import type {
+  AssistantProduct,
   AssistantProvider,
   AssistantTurnRequest,
   AssistantTurnResponse,
@@ -174,7 +175,7 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
   const understood: string[] = [];
   const lower = message.toLowerCase();
 
-  const products = new Set(current.products ?? ["flights"]);
+  const products = new Set<AssistantProduct>(current.products ?? ["flights"]);
   if (/\b(hotel|stay|staying|accommodation|room|resort)\b/.test(lower)) products.add("hotels");
   if (/\b(flight|fly|flying)\b/.test(lower)) products.add("flights");
   patch.products = [...products];
@@ -270,7 +271,7 @@ function extract(message: string, current: TravelRequirements, today: Date): Ext
     const nights = /week/.test(stayDuration[2]!) ? amount * 7 : amount;
     patch.durationNights = nights;
     patch.tripType = "roundtrip";
-    patch.products = [...new Set([...(patch.products ?? []), "flights", "hotels"] as const)];
+    patch.products = [...new Set<AssistantProduct>([...(patch.products ?? []), "flights", "hotels"])];
     const base = patch.departureDate ?? current.departureDate;
     if (base) patch.returnDate = isoDate(addDays(new Date(`${base}T00:00:00`), nights));
   }
