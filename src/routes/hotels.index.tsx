@@ -34,6 +34,8 @@ import {
   type HotelSearchFormValues,
 } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
   defaultHotelFilters,
   type HotelFilters,
@@ -100,7 +102,17 @@ function HotelsPage() {
   const handleSearch = (values: HotelSearchFormValues) => {
     setFilters(defaultHotelFilters);
     setSort("recommended");
-    setRequest(toHotelSearchRequest(values));
+    const request = toHotelSearchRequest(values);
+    setRequest(request);
+    // Destination, dates and occupancy counts only — no guest identity.
+    track(ANALYTICS_EVENTS.hotelSearch, {
+      destination: request.destination,
+      checkIn: request.checkIn,
+      checkOut: request.checkOut,
+      rooms: request.rooms.length,
+      adults: request.rooms.reduce((sum, room) => sum + (room.adults ?? 0), 0),
+      children: request.rooms.reduce((sum, room) => sum + (room.children?.length ?? 0), 0),
+    });
   };
 
   const openHotel = (result: HotelResult) => {
@@ -117,7 +129,10 @@ function HotelsPage() {
   const filtersPanel = (
     <HotelFiltersPanel
       filters={filters}
-      onChange={setFilters}
+      onChange={(next) => {
+        setFilters(next);
+        track(ANALYTICS_EVENTS.hotelFilterUsed);
+      }}
       amenities={amenities}
       propertyTypes={propertyTypes}
       priceBounds={bounds}

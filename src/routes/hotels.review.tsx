@@ -20,6 +20,8 @@ import {
 import { newIdempotencyKey } from "@/lib/review-session";
 import { occupancyLabel } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { HotelContactInput, HotelGuestInput } from "@/types/booking";
 
 /**
@@ -70,6 +72,10 @@ function HotelReviewPage() {
     queryFn: ({ signal }) => hotelApi.getReview(token as string, guestToken, { signal }),
   });
 
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.hotelReviewStarted, Boolean(review.data));
+  useTrackOnce(ANALYTICS_EVENTS.hotelGuestDetailsStarted, Boolean(review.data));
+
   const submit = useMutation({
     mutationFn: (values: {
       guests: HotelGuestInput[];
@@ -90,6 +96,7 @@ function HotelReviewPage() {
         .then((result) => ({ result, values })),
     onSuccess: ({ result, values }) => {
       rememberHotelBookingGuestToken(result.bookingReference, guestToken);
+      track(ANALYTICS_EVENTS.hotelGuestDetailsCompleted, { guestCount: values.guests.length });
       if (review.data) {
         // Presentation-only carry-forward; the payable amount still comes from
         // the server on the checkout page.
