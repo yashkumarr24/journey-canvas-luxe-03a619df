@@ -86,6 +86,10 @@ function HotelsPage() {
   const nights = query.data?.nights ?? 0;
   const roomCount = request?.rooms.length ?? 1;
 
+  useTrackOnce(ANALYTICS_EVENTS.hotelResultsViewed, results.length > 0, {
+    resultCount: results.length,
+  });
+
   const amenities = useMemo(
     () => query.data?.amenities ?? collectAmenities(results),
     [query.data?.amenities, results],
