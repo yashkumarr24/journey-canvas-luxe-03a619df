@@ -155,6 +155,8 @@ function CheckoutPage() {
     mutationFn: () => {
       setStage("creating_order");
       setMessage(null);
+      // Method only — never an amount, a card detail or a fare identifier.
+      track(ANALYTICS_EVENTS.flightPaymentStarted, { method });
       return checkoutApi.createOrder({
         bookingReference: ref as string,
         guestToken: guestToken ?? undefined,
@@ -171,11 +173,13 @@ function CheckoutPage() {
         onFailed: (reason) => {
           setStage("failed");
           setMessage(reason ?? "The payment did not go through. No money has been taken.");
+          track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "failed" });
           reportFailure("failed", reason);
         },
         onDismissed: () => {
           setStage("cancelled");
           setMessage("You closed the payment window before paying. Your fare is still held.");
+          track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "cancelled" });
           reportFailure("cancelled");
         },
       });
@@ -186,6 +190,7 @@ function CheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.flightPaymentFailed, { outcome: "order_failed" });
     },
   });
 
