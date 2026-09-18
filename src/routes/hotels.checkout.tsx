@@ -40,7 +40,9 @@ type Stage =
   | "processing"
   | "booking"
   | "failed"
+  | "booking_failed"
   | "cancelled";
+
 
 export const Route = createFileRoute("/hotels/checkout")({
   validateSearch: (search: Record<string, unknown>): Search => ({
