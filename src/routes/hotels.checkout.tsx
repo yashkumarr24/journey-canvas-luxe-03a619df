@@ -117,11 +117,17 @@ function HotelCheckoutPage() {
     },
     onSuccess: (result) => {
       if (result.status === "confirmed" || result.status === "booking_processing") {
+        track(ANALYTICS_EVENTS.hotelPaymentSuccess);
+        track(ANALYTICS_EVENTS.hotelBookingCompleted, {
+          reference: result.booking.bookingReference,
+          bookingStatus: result.status,
+        });
         navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
         return;
       }
       setStage("booking_failed");
       setMessage(result.message ?? result.booking.statusMessage ?? null);
+      track(ANALYTICS_EVENTS.hotelBookingFailed, { bookingStatus: result.status });
 
       // A fresh attempt must not reuse the previous idempotency key.
       setIdempotencyKey(newIdempotencyKey());
@@ -130,6 +136,7 @@ function HotelCheckoutPage() {
     onError: (error) => {
       setStage("failed");
       setMessage(toBookingError(error).message);
+      track(ANALYTICS_EVENTS.hotelBookingFailed, { reason: toBookingError(error).kind });
       setIdempotencyKey(newIdempotencyKey());
     },
   });
