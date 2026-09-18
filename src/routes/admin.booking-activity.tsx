@@ -28,7 +28,7 @@ const BOOKING_EVENTS = new Set<string>([
  * analytics — the full booking record arrives from the booking API once the
  * live backend is connected.
  */
-export const Route = createFileRoute("/admin/bookings")({
+export const Route = createFileRoute("/admin/booking-activity")({
   ssr: false,
   head: () => ({
     meta: [

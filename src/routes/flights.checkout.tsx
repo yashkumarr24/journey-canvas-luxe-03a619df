@@ -21,6 +21,9 @@ import { newIdempotencyKey } from "@/lib/review-session";
 import { openRazorpayCheckout } from "@/lib/razorpay";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
+import { useAuth } from "@/lib/auth/auth-context";
+import { useMockOperations } from "@/lib/ops/ops-api";
+import { recordFlightBooking } from "@/lib/ops/ops-mock";
 import type { PaymentOrder } from "@/types/booking";
 
 /**
@@ -89,6 +92,7 @@ function CheckoutPage() {
   const data = booking.data;
 
   const { track } = useAnalytics();
+  const { userId } = useAuth();
   useTrackOnce(ANALYTICS_EVENTS.flightCheckoutStarted, Boolean(data));
 
   // Align the default method with what the backend actually offers.
@@ -113,6 +117,9 @@ function CheckoutPage() {
       });
     },
     onSuccess: (result) => {
+      // Mirror the outcome into the operations records ("my trips" + admin desk).
+      // Test mode only, best effort — it must never affect the booking result.
+      if (useMockOperations) recordFlightBooking(result.booking, { userId });
       if (result.status === "confirmed" || result.status === "booking_processing") {
         track(ANALYTICS_EVENTS.flightPaymentSuccess);
         track(ANALYTICS_EVENTS.flightBookingCompleted, {

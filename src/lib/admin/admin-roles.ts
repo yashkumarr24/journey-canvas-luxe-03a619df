@@ -44,11 +44,17 @@ export type AdminPermission =
   | "analytics.view"
   | "activity.view"
   | "reports.view"
+  | "notes.view"
+  | "notes.manage"
+  | "support.view"
+  | "support.manage"
+  | "cancellations.manage"
   | "admins.manage"
   | "settings.manage";
 
 const PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
-  staff: ["dashboard.view", "bookings.view", "customers.view"],
+  // Level 1 is read-only operations: see bookings and support, change nothing.
+  staff: ["dashboard.view", "bookings.view", "customers.view", "notes.view", "support.view"],
   manager: [
     "dashboard.view",
     "bookings.view",
@@ -58,6 +64,11 @@ const PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "analytics.view",
     "activity.view",
     "reports.view",
+    "notes.view",
+    "notes.manage",
+    "support.view",
+    "support.manage",
+    "cancellations.manage",
   ],
   owner: [
     "dashboard.view",
@@ -68,6 +79,11 @@ const PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "analytics.view",
     "activity.view",
     "reports.view",
+    "notes.view",
+    "notes.manage",
+    "support.view",
+    "support.manage",
+    "cancellations.manage",
     "admins.manage",
     "settings.manage",
   ],
