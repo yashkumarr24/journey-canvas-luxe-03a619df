@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowRight, Building2, Clock3, MapPin, Plane, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDuration, formatMoney, formatTime, totalDurationMinutes, totalStops } from "@/lib/flight-search";
@@ -86,6 +87,6 @@ export function AssistantHotelCard({ hotel, nights, onSelect }: { hotel: HotelRe
   );
 }
 
-export function ResultLoading({ children }: { children: string }) {
+export function ResultLoading({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground"><Clock3 className="size-4 animate-pulse text-primary" />{children}</div>;
 }
