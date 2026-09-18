@@ -56,6 +56,9 @@ export function useAssistant(): UseAssistantResult {
   const [error, setError] = useState<AssistantApiError | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const lastMessage = useRef<string | null>(null);
+  // Requirements are also held in a ref so two messages sent in quick
+  // succession always merge onto the latest understanding, never a stale one.
+  const requirementsRef = useRef<TravelRequirements>({});
   const readyTracked = useRef(false);
   const hydrated = useRef(false);
 
@@ -65,9 +68,14 @@ export function useAssistant(): UseAssistantResult {
     if (restored.messages.length > 0) {
       setMessages(restored.messages);
       setRequirements(restored.requirements);
+      requirementsRef.current = restored.requirements;
     }
     hydrated.current = true;
   }, []);
+
+  useEffect(() => {
+    requirementsRef.current = requirements;
+  }, [requirements]);
 
   useEffect(() => {
     if (!hydrated.current) return;
@@ -81,10 +89,11 @@ export function useAssistant(): UseAssistantResult {
       try {
         const response = await assistantApi.interpret({
           message: text,
-          requirements,
+          requirements: requirementsRef.current,
           history: history.map((m) => ({ role: m.role, text: m.text })),
         });
 
+        requirementsRef.current = response.requirements;
         setRequirements(response.requirements);
         setSuggestions(response.suggestions ?? []);
         setMessages((prev) => [
@@ -116,7 +125,7 @@ export function useAssistant(): UseAssistantResult {
         setPending(false);
       }
     },
-    [requirements, track],
+    [track],
   );
 
   const send = useCallback(
@@ -143,6 +152,7 @@ export function useAssistant(): UseAssistantResult {
     clearAssistantSession();
     setMessages([GREETING]);
     setRequirements({});
+    requirementsRef.current = {};
     setSuggestions([]);
     setError(null);
     readyTracked.current = false;
