@@ -20,6 +20,8 @@ import { openRazorpayCheckout } from "@/lib/razorpay";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PaymentOrder } from "@/types/booking";
 
 /**
@@ -88,6 +90,9 @@ function HotelCheckoutPage() {
   });
 
   const data = booking.data;
+
+  const { track } = useAnalytics();
+  useTrackOnce(ANALYTICS_EVENTS.hotelCheckoutStarted, Boolean(data));
 
   // Align the default method with what the backend actually offers.
   useEffect(() => {
