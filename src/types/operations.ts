@@ -192,20 +192,28 @@ export interface InternalNote {
 
 export type NotificationType =
   | "booking_created"
+  | "booking_pending"
   | "booking_confirmed"
+  | "booking_failed"
+  | "booking_cancelled"
+  | "booking_update"
   | "payment_successful"
   | "payment_failed"
-  | "booking_failed"
+  | "payment_refunded"
   | "cancellation_requested"
   | "cancellation_status_changed"
   | "refund_status_changed"
+  | "documents_available"
   | "support_request_created"
+  | "support_request_replied"
   | "support_request_updated";
 
 /**
- * A notification is an EVENT record, not a message that was sent. No email,
- * SMS, WhatsApp or push provider is connected: `channels` lists where the event
- * would be dispatched once one is, and `dispatched` stays false until then.
+ * A notification is an EVENT record first. PHASE 13 adds a delivery layer on
+ * top (see `src/types/notifications.ts`): `channels` lists where the event would
+ * be dispatched, and the demo providers record delivery states against it. No
+ * real Email/SMS/WhatsApp provider is connected, so `dispatched` only becomes
+ * true once every attempted channel reported a demo success.
  */
 export interface NotificationEvent {
   id: string;
