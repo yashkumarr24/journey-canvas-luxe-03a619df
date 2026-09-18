@@ -344,3 +344,130 @@ export interface TravellerDetailsResponse {
   expiresAt: string;
   nextStep: "payment";
 }
+
+/* ------------------------------------------------------------------ */
+/* Checkout, payment + confirmation (PHASE 8)                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * IMPORTANT: no request type below carries an amount, a currency or a fare id.
+ * The browser sends a booking reference plus provider acknowledgement fields;
+ * the backend resolves the payable total from its own stored booking, verifies
+ * the provider signature and decides the outcome.
+ */
+
+/** Lifecycle of a booking from draft through to a ticketed order. */
+export type BookingStatus =
+  | "awaiting_payment"
+  | "payment_processing"
+  | "payment_failed"
+  | "booking_processing"
+  | "confirmed"
+  | "failed"
+  | "cancelled"
+  | "expired";
+
+export interface FareBreakdownLine {
+  label: string;
+  amount: Money;
+  kind?: "base" | "tax" | "fee" | "discount";
+  /** Rendered as smaller helper text under the label. */
+  note?: string;
+}
+
+export interface TravellerSummaryItem {
+  type: PassengerType;
+  title?: string;
+  fullName: string;
+  dateOfBirth?: string;
+  /** Masked by the backend; the frontend never reformats it. */
+  passportNumber?: string;
+  nationality?: string;
+  /** Present once the airline has issued a seat/ticket for this traveller. */
+  ticketNumber?: string;
+}
+
+export interface PaymentMethodOption {
+  id: string;
+  label: string;
+  description?: string;
+  enabled: boolean;
+}
+
+/** Everything the checkout and confirmation screens render. */
+export interface BookingSummary {
+  bookingReference: string;
+  status: BookingStatus;
+  itineraries: FlightItinerary[];
+  fare: ReviewFare;
+  breakdown: FareBreakdownLine[];
+  totalPayable: Money;
+  passengers: PassengerCounts;
+  travellers: TravellerSummaryItem[];
+  contact: ContactInput;
+  /** Deadline for paying while the fare is still held. */
+  expiresAt?: string;
+  priceChange?: PriceChange;
+  /** Airline PNR — only after the booking is confirmed. */
+  pnr?: string;
+  airlineBookingReference?: string;
+  /** Absolute URLs issued by the backend; absent means "not available yet". */
+  ticketUrl?: string | null;
+  invoiceUrl?: string | null;
+  paymentMethods?: PaymentMethodOption[];
+  /** Safe, user-facing explanation for a failed or cancelled booking. */
+  statusMessage?: string;
+  /** True when the summary came from the local test adapter, not the backend. */
+  isTestMode?: boolean;
+}
+
+export type PaymentProvider = "razorpay" | "test";
+
+export interface PaymentOrder {
+  provider: PaymentProvider;
+  bookingReference: string;
+  orderId: string;
+  /** Server-resolved payable amount, for display and provider handoff only. */
+  amount: Money;
+  /** Publishable key id. Never a secret. */
+  keyId?: string;
+  prefill?: { name?: string; email?: string; phone?: string };
+  expiresAt?: string;
+}
+
+export interface PaymentOrderRequest {
+  bookingReference: string;
+  guestToken?: string;
+  /** Chosen method id from BookingSummary.paymentMethods. */
+  method?: string;
+  idempotencyKey?: string;
+}
+
+export interface PaymentConfirmRequest {
+  bookingReference: string;
+  guestToken?: string;
+  provider: PaymentProvider;
+  orderId: string;
+  paymentId: string;
+  /** Provider signature, verified server-side. */
+  signature?: string;
+  idempotencyKey?: string;
+}
+
+export interface PaymentFailureRequest {
+  bookingReference: string;
+  guestToken?: string;
+  orderId?: string;
+  reason: "cancelled" | "failed";
+  /** Provider-supplied description, if any. */
+  message?: string;
+}
+
+export interface PaymentResult {
+  status: Extract<
+    BookingStatus,
+    "confirmed" | "booking_processing" | "payment_failed" | "failed"
+  >;
+  booking: BookingSummary;
+  message?: string;
+}
