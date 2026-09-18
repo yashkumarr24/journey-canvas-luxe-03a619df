@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, ShieldCheck } from "lucide-react";
 
@@ -37,9 +37,10 @@ function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (status === "authenticated") {
-    void navigate({ to: "/admin", replace: true });
-  }
+  // Already signed in: leave the login screen after render, never during it.
+  useEffect(() => {
+    if (status === "authenticated") void navigate({ to: "/admin", replace: true });
+  }, [status, navigate]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
