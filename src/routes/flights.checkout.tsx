@@ -14,6 +14,8 @@ import { TravellerSummary } from "@/components/booking/TravellerSummary";
 import { PaymentMethods } from "@/components/booking/PaymentMethods";
 import { TestPaymentSheet } from "@/components/booking/TestPaymentSheet";
 import { checkoutApi, useTestCheckout } from "@/lib/checkout-api";
+import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { readBookingGuestToken } from "@/lib/checkout-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { openRazorpayCheckout } from "@/lib/razorpay";

@@ -21,6 +21,8 @@ import { TravellerSummary } from "@/components/booking/TravellerSummary";
 import { checkoutApi } from "@/lib/checkout-api";
 import { readBookingGuestToken } from "@/lib/checkout-session";
 import { toBookingError } from "@/lib/booking-api";
+import { useTrackOnce } from "@/lib/analytics/tracker";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { BookingSummary } from "@/types/booking";
 
 /**
