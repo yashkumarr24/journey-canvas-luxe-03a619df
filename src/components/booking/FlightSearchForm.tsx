@@ -37,9 +37,11 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function FlightSearchForm({
   onSearch,
   isSearching,
+  initialValues,
 }: {
   onSearch: (values: FlightSearchFormValues) => void;
   isSearching: boolean;
+  initialValues?: FlightSearchFormValues;
 }) {
   const uid = useId();
   const {
@@ -50,7 +52,7 @@ export function FlightSearchForm({
     formState: { errors },
   } = useForm<FlightSearchFormValues>({
     resolver: zodResolver(flightSearchSchema),
-    defaultValues: defaultFlightSearchValues,
+    defaultValues: initialValues ?? defaultFlightSearchValues,
     mode: "onSubmit",
   });
 
@@ -65,7 +67,7 @@ export function FlightSearchForm({
     <form
       noValidate
       onSubmit={handleSubmit(onSearch)}
-      className="rounded-3xl border border-foreground/10 bg-card p-5 shadow-[var(--shadow-soft)] sm:p-7"
+      className="rounded-sm border border-foreground/10 bg-card p-5 shadow-[var(--shadow-soft)] sm:p-7"
       aria-busy={isSearching}
     >
       {/* Trip type */}
@@ -74,7 +76,7 @@ export function FlightSearchForm({
         <div
           role="radiogroup"
           aria-label="Trip type"
-          className="inline-flex rounded-full border border-foreground/10 bg-background p-1"
+          className="inline-flex rounded-sm border border-foreground/10 bg-background p-1"
         >
           {(
             [
@@ -90,7 +92,7 @@ export function FlightSearchForm({
                 role="radio"
                 aria-checked={active}
                 onClick={() => setValue("tripType", option.value, { shouldValidate: false })}
-                className={`rounded-full px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-5 ${
+                className={`rounded-sm px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-5 ${
                   active
                     ? "bg-gold text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -224,7 +226,7 @@ export function FlightSearchForm({
           type="submit"
           size="lg"
           disabled={isSearching}
-          className="w-full rounded-full bg-gold px-8 text-primary-foreground hover:bg-gold/90 sm:w-auto"
+          className="w-full rounded-sm bg-gold px-8 text-primary-foreground hover:bg-primary sm:w-auto"
         >
           {isSearching ? (
             <>

@@ -31,7 +31,7 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
   const location = result.location;
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-foreground/10 bg-card transition-shadow hover:shadow-[var(--shadow-soft)] sm:flex">
+    <article className="overflow-hidden rounded-sm border border-foreground/10 bg-card transition-all hover:border-gold/30 hover:shadow-[var(--shadow-soft)] sm:flex">
       <div className="relative aspect-[4/3] shrink-0 sm:aspect-auto sm:w-64">
         {result.thumbnailUrl ? (
           <img
@@ -46,7 +46,7 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
           </div>
         )}
         {result.propertyType && (
-          <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-xs">
+          <span className="absolute left-3 top-3 rounded-sm bg-background/90 px-3 py-1 text-xs">
             {result.propertyType}
           </span>
         )}
@@ -74,7 +74,7 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
               {result.amenities.slice(0, 5).map((amenity) => (
                 <li
                   key={amenity}
-                  className="rounded-full border border-foreground/10 px-2.5 py-1 text-xs text-muted-foreground"
+                  className="rounded-sm border border-foreground/10 px-2.5 py-1 text-xs text-muted-foreground"
                 >
                   {amenity}
                 </li>

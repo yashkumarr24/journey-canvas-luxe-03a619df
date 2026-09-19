@@ -243,7 +243,7 @@ function HotelsPage() {
                 )}
 
                 {!query.isFetching && !error && results.length === 0 && (
-                  <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
+                   <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No stays for these dates</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Try nearby dates, a different area, or fewer rooms — or let our desk find something for you.
@@ -252,7 +252,7 @@ function HotelsPage() {
                 )}
 
                 {!query.isFetching && !error && results.length > 0 && visible.length === 0 && (
-                  <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
+                   <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No stays match your filters</p>
                     <Button type="button" variant="outline" className="mt-4" onClick={() => setFilters(defaultHotelFilters)}>
                       Clear filters

@@ -25,7 +25,7 @@ export function Testimonials() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ duration: 0.8, delay: i * 0.08 }}
-              className="glass rounded-3xl p-8 md:p-10"
+              className="border border-foreground/10 bg-card rounded-sm p-8 transition-colors hover:border-gold/30 md:p-10"
             >
               <div className="mb-5 text-gold">★★★★★</div>
               <blockquote className="font-display text-2xl leading-snug text-foreground/95 md:text-3xl">

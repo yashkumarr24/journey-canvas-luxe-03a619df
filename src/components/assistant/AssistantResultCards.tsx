@@ -6,7 +6,7 @@ import type { FlightRecommendation } from "@/types/assistant";
 import type { FlightResult, HotelResult } from "@/types/booking";
 
 function ResultBadge({ children }: { children: string }) {
-  return <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-foreground">{children}</span>;
+  return <span className="rounded-sm bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-foreground">{children}</span>;
 }
 
 export function AssistantFlightCard({
@@ -75,7 +75,7 @@ export function AssistantHotelCard({ hotel, nights, onSelect }: { hotel: HotelRe
           <div className="flex items-start justify-between gap-2"><h3 className="font-display text-xl leading-tight">{hotel.name}</h3>{hotel.starRating ? <span className="flex shrink-0 items-center gap-1 text-xs"><Star className="size-3 fill-primary text-primary" />{hotel.starRating}</span> : null}</div>
           {location ? <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3.5" />{location}</p> : null}
           {hotel.rate?.roomName ? <p className="mt-4 text-sm">{hotel.rate.roomName}</p> : null}
-          <div className="mt-3 flex flex-wrap gap-1.5">{hotel.amenities?.slice(0, 3).map((item) => <span key={item} className="rounded-full border border-border px-2 py-1 text-[11px] text-muted-foreground">{item}</span>)}</div>
+          <div className="mt-3 flex flex-wrap gap-1.5">{hotel.amenities?.slice(0, 3).map((item) => <span key={item} className="rounded-sm border border-border px-2 py-1 text-[11px] text-muted-foreground">{item}</span>)}</div>
           {hotel.rate?.refundable !== undefined ? <p className="mt-3 text-xs text-muted-foreground">{hotel.rate.refundable ? "Refundable rate" : "Non-refundable rate"}</p> : null}
         </div>
         <div className="col-span-2 flex items-end justify-between gap-3 border-t border-border p-4 sm:col-span-1 sm:flex-col sm:items-end sm:border-l sm:border-t-0">

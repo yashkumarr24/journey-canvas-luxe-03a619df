@@ -69,7 +69,7 @@ export function FlightResultCard({ result, onSelect, selecting, disabled }: Flig
   const stops = totalStops(result);
 
   return (
-    <article className="rounded-3xl border border-foreground/10 bg-card p-5 shadow-[var(--shadow-soft)] transition-colors hover:border-gold/40 sm:p-6">
+    <article className="rounded-sm border border-foreground/10 bg-card p-5 shadow-[var(--shadow-card)] transition-colors hover:border-gold/40 hover:shadow-[var(--shadow-soft)] sm:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 space-y-5">
           {result.itineraries.map((itinerary, index) => (
@@ -94,7 +94,7 @@ export function FlightResultCard({ result, onSelect, selecting, disabled }: Flig
             type="button"
             onClick={() => onSelect?.(result)}
             disabled={disabled || selecting || !onSelect}
-            className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2.5 text-sm text-primary-foreground transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-sm text-primary-foreground transition-colors hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             aria-label={`Select flight for ${formatMoney(price?.amount, price?.currency ?? "INR")}, ${stopsLabel(stops)}`}
           >
             {selecting ? "Checking…" : "Select"} <ArrowRight className="size-4" aria-hidden="true" />
@@ -107,7 +107,7 @@ export function FlightResultCard({ result, onSelect, selecting, disabled }: Flig
           {result.fare.conditions.map((condition) => (
             <li
               key={condition}
-              className="rounded-full border border-foreground/10 px-3 py-1 text-xs text-muted-foreground"
+              className="rounded-sm border border-foreground/10 px-3 py-1 text-xs text-muted-foreground"
             >
               {condition}
             </li>

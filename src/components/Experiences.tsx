@@ -48,13 +48,13 @@ export function Experiences() {
         </div>
 
         <div className="relative h-[560px] md:h-[720px]">
-          <motion.div style={{ y: y1 }} className="absolute right-0 top-0 h-[58%] w-[72%] overflow-hidden rounded-3xl border border-foreground/10">
+          <motion.div style={{ y: y1 }} className="absolute right-0 top-0 h-[58%] w-[72%] overflow-hidden rounded-sm border border-foreground/10">
             <img src={maldives} alt="Maldives overwater villa" loading="lazy" width={1600} height={1200} className="size-full object-cover" />
           </motion.div>
-          <motion.div style={{ y: y2 }} className="absolute bottom-0 left-0 h-[55%] w-[60%] overflow-hidden rounded-3xl border border-foreground/10">
+          <motion.div style={{ y: y2 }} className="absolute bottom-0 left-0 h-[55%] w-[60%] overflow-hidden rounded-sm border border-foreground/10">
             <img src={bhutan} alt="Bhutan monastery" loading="lazy" width={1600} height={1200} className="size-full object-cover" />
           </motion.div>
-          <motion.div style={{ y: y1 }} className="absolute bottom-[8%] right-[2%] h-[34%] w-[38%] overflow-hidden rounded-2xl border border-gold/30 shadow-[var(--shadow-luxe)]">
+          <motion.div style={{ y: y1 }} className="absolute bottom-[8%] right-[2%] h-[34%] w-[38%] overflow-hidden rounded-sm border border-gold/30 shadow-[var(--shadow-luxe)]">
             <img src={swiss} alt="Swiss alps" loading="lazy" width={1600} height={1200} className="size-full object-cover" />
           </motion.div>
         </div>

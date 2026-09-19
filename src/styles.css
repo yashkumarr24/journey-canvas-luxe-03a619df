@@ -38,9 +38,11 @@
   --color-pearl: var(--pearl);
   --color-ivory: var(--ivory);
 
-  --font-display: "Helvetica Neue", Helvetica, "Inter Tight", Arial, sans-serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans: "Work Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-editorial: "Instrument Serif", Georgia, serif;
+  --font-work: "Work Sans", Arial, sans-serif;
 }
 
 :root {
@@ -109,10 +111,14 @@
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
   }
+  header {
+    --font-display: "Helvetica Neue", Helvetica, "Inter Tight", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
   }
   ::selection {
     background: #111111;
@@ -163,6 +169,19 @@
 }
 
 @utility float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+/* Customer surfaces use the approved sharp design language. The header is
+   deliberately excluded so the approved navigation remains pixel-stable. */
+body:has(header > nav.rounded-full) .rounded-3xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-2xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-lg:not(header *) {
+  border-radius: 0.25rem !important;
+}
+
+body:has(header > nav.rounded-full) .rounded-full:not(header *) {
+  border-radius: 0.25rem !important;
+}
 
 @keyframes marquee {
   0% { transform: translateX(0); }
