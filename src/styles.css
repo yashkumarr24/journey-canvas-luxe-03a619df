@@ -41,6 +41,8 @@
   --font-display: "Helvetica Neue", Helvetica, "Inter Tight", Arial, sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-editorial: "Instrument Serif", Georgia, serif;
+  --font-work: "Work Sans", Arial, sans-serif;
 }
 
 :root {
@@ -163,6 +165,19 @@
 }
 
 @utility float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+/* Customer surfaces use the approved sharp design language. The header is
+   deliberately excluded so the approved navigation remains pixel-stable. */
+main .rounded-3xl:not(header *),
+main .rounded-2xl:not(header *),
+main .rounded-xl:not(header *),
+main .rounded-lg:not(header *) {
+  border-radius: 0.25rem !important;
+}
+
+main .rounded-full:not(header *) {
+  border-radius: 0.25rem !important;
+}
 
 @keyframes marquee {
   0% { transform: translateX(0); }

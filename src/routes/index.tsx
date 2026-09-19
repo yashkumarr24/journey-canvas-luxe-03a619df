@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Fly n Feel Holidays — Bespoke Luxury Travel" },
       { property: "og:description", content: "Travel with trust. World‑class service, best‑price guarantee, fully customised tours since 2012." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),

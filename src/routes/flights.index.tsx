@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { AlertCircle, Info, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -21,6 +22,7 @@ import { FlightResultsSkeleton } from "@/components/booking/FlightResultsSkeleto
 import { FlightFiltersPanel } from "@/components/booking/FlightFiltersPanel";
 import {
   flightSearchQueryOptions,
+  flightSearchSchema,
   toSearchRequest,
   type FlightSearchFormValues,
 } from "@/lib/flight-search";
@@ -38,6 +40,17 @@ import {
 } from "@/types/booking";
 
 export const Route = createFileRoute("/flights/")({
+  validateSearch: z.object({
+    tripType: z.enum(["oneway", "roundtrip"]).optional(),
+    origin: z.string().optional(),
+    destination: z.string().optional(),
+    departureDate: z.string().optional(),
+    returnDate: z.string().optional(),
+    adults: z.coerce.number().optional(),
+    children: z.coerce.number().optional(),
+    infants: z.coerce.number().optional(),
+    cabinClass: z.enum(["economy", "premium_economy", "business", "first"]).optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Flight Search — Fly n Feel Holidays" },
@@ -59,7 +72,22 @@ export const Route = createFileRoute("/flights/")({
 });
 
 function FlightsPage() {
-  const [request, setRequest] = useState<FlightSearchRequest | null>(null);
+  const search = Route.useSearch();
+  const initialSearch = flightSearchSchema.safeParse({
+    tripType: search.tripType ?? "roundtrip",
+    origin: search.origin ?? "",
+    destination: search.destination ?? "",
+    departureDate: search.departureDate ?? "",
+    returnDate: search.returnDate ?? "",
+    adults: search.adults ?? 1,
+    children: search.children ?? 0,
+    infants: search.infants ?? 0,
+    cabinClass: search.cabinClass ?? "economy",
+  });
+  const initialValues = initialSearch.success ? initialSearch.data : undefined;
+  const [request, setRequest] = useState<FlightSearchRequest | null>(() =>
+    initialValues ? toSearchRequest(initialValues) : null,
+  );
   const [filters, setFilters] = useState<FlightFilters>(defaultFlightFilters);
   const [sort, setSort] = useState<FlightSortKey>("recommended");
 
@@ -166,7 +194,7 @@ function FlightsPage() {
         />
 
         <div className="mt-10">
-          <FlightSearchForm onSearch={handleSearch} isSearching={query.isFetching} />
+          <FlightSearchForm onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </div>
 
         <div className="mt-12">

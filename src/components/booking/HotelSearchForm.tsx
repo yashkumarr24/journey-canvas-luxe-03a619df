@@ -109,7 +109,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelS
       noValidate
       onSubmit={handleSubmit}
       aria-busy={isSearching}
-      className="rounded-3xl border border-foreground/10 bg-card p-5 shadow-[var(--shadow-soft)] sm:p-7"
+      className="rounded-sm border border-foreground/10 bg-card p-5 shadow-[var(--shadow-soft)] sm:p-7"
     >
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr_1fr]">
         <div>
@@ -175,7 +175,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelS
           {values.rooms.map((room, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-foreground/10 p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-6"
+              className="rounded-sm border border-foreground/10 p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-6"
             >
               <p className="text-sm font-medium sm:w-20">Room {index + 1}</p>
 
@@ -293,7 +293,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelS
             type="submit"
             size="lg"
             disabled={isSearching}
-            className="mt-4 w-full rounded-full bg-gold px-8 text-primary-foreground hover:bg-gold/90 sm:mt-0 sm:w-auto"
+            className="mt-4 w-full rounded-sm bg-gold px-8 text-primary-foreground hover:bg-primary sm:mt-0 sm:w-auto"
           >
             {isSearching ? (
               <>
@@ -348,7 +348,7 @@ function Counter({
           type="button"
           variant="outline"
           size="icon"
-          className="size-8 rounded-full"
+          className="size-8 rounded-sm"
           aria-label={`Remove one ${label.toLowerCase()}`}
           disabled={value <= min}
           onClick={() => onChange(Math.max(min, value - 1))}
@@ -362,7 +362,7 @@ function Counter({
           type="button"
           variant="outline"
           size="icon"
-          className="size-8 rounded-full"
+          className="size-8 rounded-sm"
           aria-label={`Add one ${label.toLowerCase()}`}
           disabled={value >= max}
           onClick={() => onChange(Math.min(max, value + 1))}
