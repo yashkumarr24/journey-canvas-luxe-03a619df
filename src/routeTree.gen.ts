@@ -40,6 +40,7 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-pas
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminFunnelRouteImport } from './routes/admin.funnel'
 import { Route as AdminBookingActivityRouteImport } from './routes/admin.booking-activity'
@@ -52,6 +53,7 @@ import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.booki
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authenticated/account.support'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
+import { Route as AuthenticatedAccountNotificationsRouteImport } from './routes/_authenticated/account.notifications'
 import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
 import { Route as AuthenticatedAccountBookingsReferenceRouteImport } from './routes/_authenticated/account.bookings.$reference'
 
@@ -209,6 +211,11 @@ const AdminSessionsRoute = AdminSessionsRouteImport.update({
   path: '/admin/sessions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -273,6 +280,12 @@ const AuthenticatedAccountProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountNotificationsRoute =
+  AuthenticatedAccountNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
 const AuthenticatedAccountBookingsIndexRoute =
   AuthenticatedAccountBookingsIndexRouteImport.update({
     id: '/bookings/',
@@ -303,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -323,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
+  '/account/notifications': typeof AuthenticatedAccountNotificationsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -348,6 +363,7 @@ export interface FileRoutesByTo {
   '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -368,6 +384,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/flights': typeof FlightsIndexRoute
   '/hotels': typeof HotelsIndexRoute
+  '/account/notifications': typeof AuthenticatedAccountNotificationsRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -396,6 +413,7 @@ export interface FileRoutesById {
   '/admin/booking-activity': typeof AdminBookingActivityRoute
   '/admin/funnel': typeof AdminFunnelRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/sessions': typeof AdminSessionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -416,6 +434,7 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/flights/': typeof FlightsIndexRoute
   '/hotels/': typeof HotelsIndexRoute
+  '/_authenticated/account/notifications': typeof AuthenticatedAccountNotificationsRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
   '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
@@ -444,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
+    | '/admin/notifications'
     | '/admin/sessions'
     | '/admin/support'
     | '/admin/users'
@@ -464,6 +484,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/flights/'
     | '/hotels/'
+    | '/account/notifications'
     | '/account/profile'
     | '/account/support'
     | '/account/travellers'
@@ -489,6 +510,7 @@ export interface FileRouteTypes {
     | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
+    | '/admin/notifications'
     | '/admin/sessions'
     | '/admin/support'
     | '/admin/users'
@@ -509,6 +531,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/flights'
     | '/hotels'
+    | '/account/notifications'
     | '/account/profile'
     | '/account/support'
     | '/account/travellers'
@@ -536,6 +559,7 @@ export interface FileRouteTypes {
     | '/admin/booking-activity'
     | '/admin/funnel'
     | '/admin/login'
+    | '/admin/notifications'
     | '/admin/sessions'
     | '/admin/support'
     | '/admin/users'
@@ -556,6 +580,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/flights/'
     | '/hotels/'
+    | '/_authenticated/account/notifications'
     | '/_authenticated/account/profile'
     | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
@@ -583,6 +608,7 @@ export interface RootRouteChildren {
   AdminBookingActivityRoute: typeof AdminBookingActivityRoute
   AdminFunnelRoute: typeof AdminFunnelRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminSessionsRoute: typeof AdminSessionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -826,6 +852,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSessionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -910,6 +943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/notifications': {
+      id: '/_authenticated/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AuthenticatedAccountNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
     '/_authenticated/account/bookings/': {
       id: '/_authenticated/account/bookings/'
       path: '/bookings'
@@ -928,6 +968,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAccountRouteChildren {
+  AuthenticatedAccountNotificationsRoute: typeof AuthenticatedAccountNotificationsRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
   AuthenticatedAccountSupportRoute: typeof AuthenticatedAccountSupportRoute
   AuthenticatedAccountTravellersRoute: typeof AuthenticatedAccountTravellersRoute
@@ -937,6 +978,8 @@ interface AuthenticatedAccountRouteChildren {
 }
 
 const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
+  AuthenticatedAccountNotificationsRoute:
+    AuthenticatedAccountNotificationsRoute,
   AuthenticatedAccountProfileRoute: AuthenticatedAccountProfileRoute,
   AuthenticatedAccountSupportRoute: AuthenticatedAccountSupportRoute,
   AuthenticatedAccountTravellersRoute: AuthenticatedAccountTravellersRoute,
@@ -979,6 +1022,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBookingActivityRoute: AdminBookingActivityRoute,
   AdminFunnelRoute: AdminFunnelRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminSessionsRoute: AdminSessionsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,

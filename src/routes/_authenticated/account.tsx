@@ -33,6 +33,7 @@ const tabs = [
   { to: "/account/profile", label: "Profile", exact: false },
   { to: "/account/travellers", label: "Travellers", exact: false },
   { to: "/account/bookings", label: "Bookings", exact: false },
+  { to: "/account/notifications", label: "Notifications", exact: false },
   { to: "/account/support", label: "Support", exact: false },
 ] as const;
 
