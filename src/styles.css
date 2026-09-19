@@ -172,14 +172,14 @@
 
 /* Customer surfaces use the approved sharp design language. The header is
    deliberately excluded so the approved navigation remains pixel-stable. */
-main .rounded-3xl:not(header *),
-main .rounded-2xl:not(header *),
-main .rounded-xl:not(header *),
-main .rounded-lg:not(header *) {
+body:has(header > nav.rounded-full) .rounded-3xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-2xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-xl:not(header *),
+body:has(header > nav.rounded-full) .rounded-lg:not(header *) {
   border-radius: 0.25rem !important;
 }
 
-main .rounded-full:not(header *) {
+body:has(header > nav.rounded-full) .rounded-full:not(header *) {
   border-radius: 0.25rem !important;
 }
 
