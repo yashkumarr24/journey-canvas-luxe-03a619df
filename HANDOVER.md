@@ -441,3 +441,54 @@ Customer-facing route: `/assistant` (nav item "Assistant").
 **To connect OpenAI later:** implement `_call_model` in `openai_provider.py`, set
 `ASSISTANT_PROVIDER=openai` and `OPENAI_API_KEY` on the backend host, and keep the
 structured-output validation in `services/assistant.py` in place.
+
+---
+
+## Phase 13 — Notifications
+
+Extends the Phase 11 `notification_events` foundation into a real delivery layer.
+No second notification system was created.
+
+**Frontend**
+- `src/types/notifications.ts` — channels, delivery states, records, provider interface.
+- `src/lib/notifications/templates.ts` — one template per event (audience, channels, copy).
+- `src/lib/notifications/providers.ts` — in-app (live) plus email/SMS/WhatsApp demo
+  providers; push intentionally unregistered and reported as `skipped`.
+- `src/lib/notifications/notification-service.ts` — the ONLY place that emits and
+  delivers. Deduplicates within 10 minutes, retries up to 3 attempts, never throws.
+- `src/lib/notifications/notifications-api.ts` — mock store when
+  `VITE_BOOKING_API_URL` is unset, FastAPI otherwise.
+- `src/lib/ops/notifications.ts` — thin Phase 11 shim, so every existing call site
+  is unchanged.
+- UI: `/account/notifications` (read/unread, time, related booking, mark read) and
+  `/admin/notifications` (audience filter, needs-attention filter, retry at level 2+).
+
+**Backend**
+- `backend/app/services/notifications.py` — centralised service + `ChannelProvider`
+  abstraction, dedupe, delivery states, `dispatch_pending()` for a future worker.
+- `backend/app/api/v1/notifications.py` — `GET /api/v1/notifications`,
+  `GET /api/v1/notifications/unread-count`,
+  `POST /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`,
+  `GET /api/v1/admin/notifications` (level 1),
+  `POST /api/v1/admin/notifications/{id}/retry` (level 2).
+- `backend/app/schemas/notifications.py`, notification methods in
+  `backend/app/repositories/operations.py`.
+- New env names (backend only, never `VITE_`): `NOTIFICATIONS_EMAIL_PROVIDER`,
+  `NOTIFICATIONS_SMS_PROVIDER`, `NOTIFICATIONS_WHATSAPP_PROVIDER`,
+  `NOTIFICATIONS_EMAIL_API_KEY`, `NOTIFICATIONS_EMAIL_FROM`,
+  `NOTIFICATIONS_SMS_API_KEY`, `NOTIFICATIONS_SMS_SENDER`,
+  `NOTIFICATIONS_WHATSAPP_API_KEY`, `NOTIFICATIONS_WHATSAPP_SENDER`.
+
+**Database:** `backend/db/migrations/0010_notifications.sql` — adds `user_id`,
+`audience`, `title`, `body`, `channels`, `read_at`, `dedupe_key` (unique) to
+`notification_events`, owner-only select/mark-read policies, and the internal
+`notification_deliveries` table. Not applied yet.
+
+**Guarantee:** notification delivery never determines booking or payment success;
+a delivery failure is recorded and surfaced to admins only.
+
+**To connect real Email/SMS/WhatsApp later:** add a `ChannelProvider` subclass per
+provider, register it in `_build_registry()` behind the matching
+`NOTIFICATIONS_*_PROVIDER` value, mirror the same swap in
+`src/lib/notifications/providers.ts` (which then routes through the backend), and
+schedule `dispatch_pending()` from a worker or cron endpoint.

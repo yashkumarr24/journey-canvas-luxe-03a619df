@@ -16,6 +16,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
   BarChart3,
+  Bell,
   Filter,
   LayoutDashboard,
   LifeBuoy,
@@ -51,6 +52,7 @@ const NAV: NavItem[] = [
     permission: "bookings.view",
   },
   { to: "/admin/support", label: "Support", icon: LifeBuoy, permission: "support.view" },
+  { to: "/admin/notifications", label: "Notifications", icon: Bell, permission: "bookings.view" },
   { to: "/admin/users", label: "Admin users", icon: ShieldCheck, permission: "admins.manage" },
 ];
 

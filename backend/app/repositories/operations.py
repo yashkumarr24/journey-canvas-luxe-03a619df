@@ -30,6 +30,14 @@ SUPPORT = "support_requests"
 SUPPORT_MESSAGES = "support_messages"
 NOTES = "booking_internal_notes"
 NOTIFICATIONS = "notification_events"
+NOTIFICATION_DELIVERIES = "notification_deliveries"
+
+# Notification columns safe for any response: references and copy only.
+NOTIFICATION_COLUMNS = (
+    "id,event_type,audience,title,body,channels,dispatched,read_at,created_at,"
+    "booking_id,request_id,payload"
+)
+DELIVERY_COLUMNS = "notification_id,channel,state,attempts,provider_id,mode,error,updated_at"
 
 # Booking columns safe for a customer response.
 BOOKING_COLUMNS = (
@@ -203,9 +211,111 @@ class OperationsRepository:
 
     # -- notifications -----------------------------------------------------
 
-    async def record_notification(self, values: dict[str, Any]) -> None:
-        """Best effort: a notification intent must never break a customer flow."""
+    async def record_notification(self, values: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """Best effort: a notification intent must never break a customer flow.
+
+        PHASE 13: returns the stored row so the notification service can attach
+        per-channel deliveries. `dedupe_key` is uniquely indexed, so a duplicate
+        emit resolves to the existing row instead of a second notification.
+        """
         try:
-            await self._db.insert(NOTIFICATIONS, {**values, "dispatched": False}, returning=False)
+            rows = await self._db.upsert(
+                NOTIFICATIONS,
+                {**values, "dispatched": False},
+                on_conflict="dedupe_key",
+                returning=True,
+            )
+            return rows[0] if rows else None
         except Exception:  # noqa: BLE001 - deliberately non-blocking
             logger.warning("notification_not_recorded")
+            return None
+
+    # -- notifications (PHASE 13) ------------------------------------------
+
+    async def get_notification(self, notification_id: str) -> Optional[dict[str, Any]]:
+        rows = await self._db.select(
+            NOTIFICATIONS, columns=NOTIFICATION_COLUMNS, filters={"id": f"eq.{notification_id}"}
+        )
+        return rows[0] if rows else None
+
+    async def list_notifications_for_user(
+        self, user_id: str, *, limit: int = 50, unread_only: bool = False
+    ) -> list[dict[str, Any]]:
+        filters = {"user_id": f"eq.{user_id}", "audience": "eq.customer"}
+        if unread_only:
+            filters["read_at"] = "is.null"
+        return await self._db.select(
+            NOTIFICATIONS,
+            columns=NOTIFICATION_COLUMNS,
+            filters=filters,
+            limit=limit,
+            order="created_at.desc",
+        )
+
+    async def count_unread_for_user(self, user_id: str) -> int:
+        rows = await self.list_notifications_for_user(user_id, limit=200, unread_only=True)
+        return len(rows)
+
+    async def mark_notification_read(self, notification_id: str, user_id: str) -> None:
+        # The user id stays in the predicate: another user's id matches no row.
+        await self._db.update(
+            NOTIFICATIONS,
+            {"read_at": "now()"},
+            filters={"id": f"eq.{notification_id}", "user_id": f"eq.{user_id}"},
+        )
+
+    async def mark_all_notifications_read(self, user_id: str) -> None:
+        await self._db.update(
+            NOTIFICATIONS,
+            {"read_at": "now()"},
+            filters={"user_id": f"eq.{user_id}", "read_at": "is.null"},
+        )
+
+    async def list_notifications_for_admin(
+        self, *, audience: Optional[str] = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        filters: dict[str, str] = {}
+        if audience:
+            filters["audience"] = f"eq.{audience}"
+        return await self._db.select(
+            NOTIFICATIONS,
+            columns=NOTIFICATION_COLUMNS,
+            filters=filters,
+            limit=limit,
+            order="created_at.desc",
+        )
+
+    async def upsert_notification_delivery(self, values: dict[str, Any]) -> None:
+        try:
+            await self._db.upsert(
+                NOTIFICATION_DELIVERIES, values, on_conflict="notification_id,channel"
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("notification_delivery_not_recorded")
+
+    async def list_notification_deliveries(self, notification_id: str) -> list[dict[str, Any]]:
+        return await self._db.select(
+            NOTIFICATION_DELIVERIES,
+            columns=DELIVERY_COLUMNS,
+            filters={"notification_id": f"eq.{notification_id}"},
+            limit=10,
+        )
+
+    async def list_pending_notification_deliveries(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        return await self._db.select(
+            NOTIFICATION_DELIVERIES,
+            columns=DELIVERY_COLUMNS,
+            filters={"state": "in.(queued,retrying)"},
+            limit=limit,
+            order="updated_at.asc",
+        )
+
+    async def refresh_notification_dispatched(self, notification_id: str) -> None:
+        """`dispatched` is true only when every attempted channel reported sent."""
+        deliveries = await self.list_notification_deliveries(notification_id)
+        if not deliveries:
+            return
+        done = all(d.get("state") in {"sent", "skipped"} for d in deliveries)
+        await self._db.update(
+            NOTIFICATIONS, {"dispatched": done}, filters={"id": f"eq.{notification_id}"}
+        )

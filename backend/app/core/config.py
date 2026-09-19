@@ -81,6 +81,23 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="", alias="OPENAI_MODEL")
     openai_timeout: float = Field(default=25.0, alias="OPENAI_TIMEOUT")
 
+    # ---- Notifications (PHASE 13 — BACKEND ONLY, never a VITE_ variable) ----
+    # Every outbound channel is "demo" today: the attempt is recorded and
+    # nothing leaves the server. Set a provider name and its credential to go
+    # live; no call site changes when you do.
+    notifications_email_provider: str = Field(default="demo", alias="NOTIFICATIONS_EMAIL_PROVIDER")
+    notifications_sms_provider: str = Field(default="demo", alias="NOTIFICATIONS_SMS_PROVIDER")
+    notifications_whatsapp_provider: str = Field(
+        default="demo", alias="NOTIFICATIONS_WHATSAPP_PROVIDER"
+    )
+    notifications_email_api_key: str = Field(default="", alias="NOTIFICATIONS_EMAIL_API_KEY")
+    notifications_email_from: str = Field(default="", alias="NOTIFICATIONS_EMAIL_FROM")
+    notifications_sms_api_key: str = Field(default="", alias="NOTIFICATIONS_SMS_API_KEY")
+    notifications_sms_sender: str = Field(default="", alias="NOTIFICATIONS_SMS_SENDER")
+    notifications_whatsapp_api_key: str = Field(default="", alias="NOTIFICATIONS_WHATSAPP_API_KEY")
+    notifications_whatsapp_sender: str = Field(default="", alias="NOTIFICATIONS_WHATSAPP_SENDER")
+
+
     @property
     def is_production(self) -> bool:
         return self.app_env.lower() in {"production", "prod"}

@@ -168,12 +168,20 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking confirmed`,
       body: `Booking ${reference} is confirmed.`,
       bookingReference: reference,
+      dedupeKey: `confirmed:${reference}`,
     });
     notify({
       type: "payment_successful",
       title: "Payment successful",
       body: `Test payment recorded for ${reference}.`,
       bookingReference: reference,
+      dedupeKey: `paid:${reference}`,
+    });
+    // Placeholders become available with the confirmation in this phase.
+    notify({
+      type: "documents_available",
+      bookingReference: reference,
+      dedupeKey: `documents:${reference}`,
     });
   } else if (status === "payment_failed") {
     notify({
@@ -188,6 +196,13 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking failed`,
       body: `${reference} could not be confirmed by the provider. Refund pending.`,
       bookingReference: reference,
+      dedupeKey: `failed:${reference}`,
+    });
+  } else if (status === "payment_processing" || status === "booking_processing") {
+    notify({
+      type: "booking_pending",
+      bookingReference: reference,
+      dedupeKey: `pending:${reference}`,
     });
   } else {
     notify({
@@ -195,6 +210,7 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking created`,
       body: `Booking ${reference} created.`,
       bookingReference: reference,
+      dedupeKey: `created:${reference}`,
     });
   }
 }
@@ -715,12 +731,22 @@ export const mockOpsProvider = {
       title: "Cancellation update",
       body: `${reference}: cancellation ${next.status}.`,
       bookingReference: reference,
+      dedupeKey: `cancellation:${reference}:${next.status}`,
     });
+    if (next.status === "approved") {
+      notify({
+        type: "booking_cancelled",
+        bookingReference: reference,
+        dedupeKey: `cancelled:${reference}`,
+      });
+    }
     notify({
-      type: "refund_status_changed",
-      title: "Refund update",
-      body: `${reference}: refund ${next.refundStatus}.`,
+      type: next.refundStatus === "completed" ? "payment_refunded" : "refund_status_changed",
+      title: next.refundStatus === "completed" ? undefined : "Refund update",
+      body:
+        next.refundStatus === "completed" ? undefined : `${reference}: refund ${next.refundStatus}.`,
       bookingReference: reference,
+      dedupeKey: `refund:${reference}:${next.refundStatus}`,
     });
     return updated;
   },
@@ -786,9 +812,13 @@ export const mockOpsProvider = {
     }));
     if (!updated) throw new OpsMockError(OPS_NOT_ALLOWED, "That support request no longer exists.");
     notify({
-      type: "support_request_updated",
-      title: "Support request updated",
-      body: `${updated.reference} is now ${updated.status.replace("_", " ")}.`,
+      // A reply and a status change are different customer experiences.
+      type: patch.reply && !patch.internal ? "support_request_replied" : "support_request_updated",
+      title: patch.reply && !patch.internal ? undefined : "Support request updated",
+      body:
+        patch.reply && !patch.internal
+          ? undefined
+          : `${updated.reference} is now ${updated.status.replace("_", " ")}.`,
       supportRequestId: id,
     });
     const store = readOpsStore();

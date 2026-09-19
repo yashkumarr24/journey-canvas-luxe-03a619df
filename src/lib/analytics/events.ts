@@ -61,6 +61,16 @@ export const ANALYTICS_EVENTS = {
   assistantHotelSelected: "assistant_hotel_selected",
   assistantHandoffToBooking: "assistant_handoff_to_booking",
   assistantFailed: "assistant_failed",
+
+  /* ---- notifications (PHASE 13) --------------------------------------- */
+  notificationCreated: "notification_created",
+  notificationDelivered: "notification_delivered",
+  notificationDeliveryFailed: "notification_delivery_failed",
+  notificationSuppressedDuplicate: "notification_suppressed_duplicate",
+  notificationRead: "notification_read",
+  notificationMarkedAllRead: "notification_marked_all_read",
+  notificationRetryRequested: "notification_retry_requested",
+  notificationCenterViewed: "notification_center_viewed",
 } as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
