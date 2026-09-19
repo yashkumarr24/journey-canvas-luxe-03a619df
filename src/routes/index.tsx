@@ -51,7 +51,7 @@ function ValueProps() {
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.8, delay: i * 0.1 }}
-            className="group rounded-3xl border border-foreground/10 bg-card/60 p-8 transition-all hover:border-gold/30"
+            className="group rounded-sm border border-foreground/10 bg-card p-8 transition-all hover:border-gold/40"
           >
             <div className="font-display text-3xl text-gold">0{i + 1}</div>
             <h3 className="mt-4 font-display text-2xl">{v.t}</h3>
@@ -105,15 +105,14 @@ function BlogTeaser() {
 function CTABand() {
   return (
     <section className="relative overflow-hidden px-6 py-24">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_50%,oklch(0.82_0.13_85/0.12),transparent_65%)]" />
-      <div className="mx-auto max-w-4xl text-center">
+        <div className="mx-auto max-w-4xl border-y border-foreground/10 py-16 text-center">
         <h2 className="font-display text-4xl md:text-6xl">
           Let's plan something <span className="italic gold-gradient">beautiful.</span>
         </h2>
         <p className="mt-5 text-muted-foreground">
           Tell us how you like to travel — solo, with someone, or a private group — and we'll compose an itinerary with negotiated rates you won't find online.
         </p>
-        <Link to="/contact" className="mt-8 inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03]">
+        <Link to="/contact" className="mt-8 inline-flex items-center gap-3 rounded-sm bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary">
           Start a Journey →
         </Link>
       </div>

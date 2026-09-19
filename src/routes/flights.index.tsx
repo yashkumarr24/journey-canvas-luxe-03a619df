@@ -283,7 +283,7 @@ function FlightsPage() {
                 </div>
 
                 {visible.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
+                   <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No flights match this search</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Try different dates, nearby airports, or clear a few filters.
@@ -308,7 +308,7 @@ function FlightsPage() {
           )}
 
           {!query.isFetching && !error && !query.isSuccess && (
-            <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
+             <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
               <p className="font-display text-2xl">Where would you like to fly?</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Enter your route and dates above to see available fares.
