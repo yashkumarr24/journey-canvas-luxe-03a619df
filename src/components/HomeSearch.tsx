@@ -20,9 +20,9 @@ import {
 
 const services = [
   { label: "Flights", to: "/flights", icon: PlaneTakeoff, active: true },
-  { label: "Hotels", to: "/hotels", icon: BedDouble },
-  { label: "Domestic", to: "/domestic", icon: Map },
-  { label: "International", to: "/international", icon: Globe2 },
+  { label: "Hotels", to: "/hotels", icon: BedDouble, active: false },
+  { label: "Domestic", to: "/domestic", icon: Map, active: false },
+  { label: "International", to: "/international", icon: Globe2, active: false },
 ] as const;
 
 function todayISO() {
