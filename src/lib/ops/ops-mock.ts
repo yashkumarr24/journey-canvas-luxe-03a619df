@@ -168,12 +168,20 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking confirmed`,
       body: `Booking ${reference} is confirmed.`,
       bookingReference: reference,
+      dedupeKey: `confirmed:${reference}`,
     });
     notify({
       type: "payment_successful",
       title: "Payment successful",
       body: `Test payment recorded for ${reference}.`,
       bookingReference: reference,
+      dedupeKey: `paid:${reference}`,
+    });
+    // Placeholders become available with the confirmation in this phase.
+    notify({
+      type: "documents_available",
+      bookingReference: reference,
+      dedupeKey: `documents:${reference}`,
     });
   } else if (status === "payment_failed") {
     notify({
@@ -188,6 +196,13 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking failed`,
       body: `${reference} could not be confirmed by the provider. Refund pending.`,
       bookingReference: reference,
+      dedupeKey: `failed:${reference}`,
+    });
+  } else if (status === "payment_processing" || status === "booking_processing") {
+    notify({
+      type: "booking_pending",
+      bookingReference: reference,
+      dedupeKey: `pending:${reference}`,
     });
   } else {
     notify({
@@ -195,6 +210,7 @@ function notifyForStatus(reference: string, status: BookingStatus, product: stri
       title: `${product} booking created`,
       body: `Booking ${reference} created.`,
       bookingReference: reference,
+      dedupeKey: `created:${reference}`,
     });
   }
 }
