@@ -1,44 +1,86 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, BadgeIndianRupee, Headphones, ShieldCheck, Users } from "lucide-react";
 import { HomeSearch } from "@/components/HomeSearch";
-import kashmir from "@/assets/kashmir.jpg";
-import maldives from "@/assets/maldives.jpg";
-import vietnam from "@/assets/vietnam.jpg";
+import { destinations } from "@/data/destinations";
+import heroImage from "@/assets/hero.jpg";
+
+const trustPoints = [
+  { icon: BadgeIndianRupee, title: "Best price", detail: "Guaranteed" },
+  { icon: Headphones, title: "24/7 customer", detail: "Support" },
+  { icon: ShieldCheck, title: "Safe & secure", detail: "Booking" },
+  { icon: Users, title: "Trusted travel", detail: "Experts" },
+];
+
+const featured = destinations.slice(0, 5);
 
 export function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden border-b border-foreground/10 bg-background px-4 pb-16 pt-32 sm:px-6 sm:pt-40 lg:pb-24">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid items-center gap-8 border border-foreground/10 bg-muted/40 lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-12">
-          <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7 }} className="min-w-0">
-            <div className="px-5 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
-            <p className="flex items-center gap-3 text-[11px] font-semibold uppercase text-gold"><span className="h-px w-10 bg-gold" />Travel designed around you</p>
-            <h1 className="font-editorial mt-5 max-w-4xl text-balance text-5xl leading-[0.98] sm:text-6xl lg:text-7xl">
-              Find your next journey, <span className="italic text-gold">beautifully.</span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Search flights, considered stays and tailor-made holidays with a travel team you can reach.
-            </p>
-            </div>
-          </motion.div>
+    <section id="top" className="relative border-b border-foreground/10">
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="Turquoise coastline seen from a cliff road" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/55" />
+      </div>
 
-          <motion.div initial={{ x: 24, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.1 }} className="hidden h-full min-h-[390px] grid-cols-2 gap-2 p-2 lg:grid">
-            <img src={kashmir} alt="Snow-covered Kashmir mountains" className="h-full w-full object-cover" />
-            <div className="grid gap-2">
-              <img src={maldives} alt="Maldives overwater retreat" className="h-full min-h-0 w-full object-cover" />
-              <img src={vietnam} alt="Vietnam landscape" className="h-full min-h-0 w-full object-cover" />
-            </div>
-          </motion.div>
-        </div>
+      <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-28 sm:px-6 sm:pt-36 lg:pb-14">
+        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7 }} className="max-w-3xl text-background">
+          <p className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em]">
+            <span className="h-px w-10 bg-gold" />
+            Travel designed around you
+          </p>
+          <h1 className="font-editorial mt-5 text-balance text-5xl leading-[0.95] sm:text-6xl lg:text-7xl">
+            Discover the world,
+            <br />
+            <span className="italic text-gold">your way.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-background/85 sm:text-lg">
+            Flights, hotels and tailor-made holidays — all in one place, with trusted human support.
+          </p>
 
-        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.18 }} className="relative z-10 mt-6 lg:-mt-10 lg:px-10">
+          <ul className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+            {trustPoints.map(({ icon: Icon, title, detail }) => (
+              <li key={title} className="flex min-w-0 items-center gap-2.5">
+                <Icon className="size-5 shrink-0 text-gold" aria-hidden="true" />
+                <span className="min-w-0 text-[11px] font-medium uppercase leading-tight tracking-[0.1em] text-background/90">
+                  {title}
+                  <br />
+                  {detail}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+
+        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative z-10 mt-10 lg:mt-14">
           <HomeSearch />
         </motion.div>
 
-        <div className="mt-8 grid grid-cols-3 border-y border-foreground/10 py-5 text-center">
-          {[{ n: "Since 2012", l: "Travel expertise" }, { n: "60+", l: "Curated destinations" }, { n: "Human", l: "Support throughout" }].map((item) => (
-            <div key={item.l} className="border-r border-foreground/10 px-2 last:border-r-0"><p className="font-editorial text-xl sm:text-2xl">{item.n}</p><p className="mt-1 text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:text-[10px]">{item.l}</p></div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.25 }} className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {featured.map((item) => (
+            <Link
+              key={item.slug}
+              to="/destinations/$slug"
+              params={{ slug: item.slug }}
+              className="group relative isolate min-h-24 overflow-hidden border border-background/25"
+            >
+              <img src={item.img} alt={item.name} className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <span className="absolute inset-0 -z-10 bg-foreground/45 transition-colors group-hover:bg-foreground/30" />
+              <span className="flex h-full flex-col justify-end p-3 text-background">
+                <span className="font-editorial text-lg leading-none">{item.name}</span>
+                <span className="mt-1 text-[10px] uppercase tracking-[0.14em] text-background/85">{item.nights}</span>
+              </span>
+            </Link>
           ))}
-        </div>
+          <Link
+            to="/destinations"
+            className="group flex min-h-24 flex-col justify-end border border-background/40 p-3 text-background transition-colors hover:bg-background/10"
+          >
+            <span className="font-editorial text-lg leading-none">Explore</span>
+            <span className="mt-1 flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-background/85">
+              All destinations <ArrowRight className="size-3 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </span>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
