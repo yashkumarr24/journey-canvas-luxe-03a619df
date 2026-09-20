@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import logo from "@/assets/flynfeel-logo.png";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [
   { label: "Home", to: "/" },
   { label: "Flights", to: "/flights" },
-  { label: "Assistant", to: "/assistant" },
   { label: "Hotels", to: "/hotels" },
   { label: "Domestic", to: "/domestic" },
   { label: "International", to: "/international" },
@@ -17,6 +17,7 @@ const links = [
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -62,6 +63,12 @@ export function Nav() {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link
+            to={isAuthenticated ? "/account" : "/auth/login"}
+            className="hidden whitespace-nowrap text-xs font-semibold text-foreground transition-colors hover:text-gold sm:inline-block"
+          >
+            {isAuthenticated ? "Account" : "Login / Sign Up"}
+          </Link>
+          <Link
             to="/contact"
             className="hidden whitespace-nowrap rounded-full bg-gold px-4 py-2 text-xs font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 sm:text-sm md:inline-block"
           >
@@ -97,6 +104,11 @@ export function Nav() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link onClick={() => setOpen(false)} to={isAuthenticated ? "/account" : "/auth/login"} className="block text-gold">
+                  {isAuthenticated ? "Account" : "Login / Sign Up"}
+                </Link>
+              </li>
             </ul>
           </motion.div>
         )}
