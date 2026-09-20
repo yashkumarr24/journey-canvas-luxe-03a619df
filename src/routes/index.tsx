@@ -14,6 +14,7 @@ import { SectionTitle } from "@/components/Section";
 import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
 import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { posts } from "@/data/posts";
+import heroImage from "@/assets/hero.webp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,7 +26,10 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [
+      { rel: "canonical", href: "/" },
+      { rel: "preload", as: "image", href: heroImage, fetchpriority: "high" },
+    ],
   }),
   component: Index,
 });
