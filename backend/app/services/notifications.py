@@ -261,6 +261,22 @@ class NotificationService:
         for channel in channels:
             await self._deliver(row, channel, attempts=0)
 
+    async def _recipient_email(self, channel: str, reference: Optional[str]) -> Optional[str]:
+        """Resolve the contact email already stored on the booking.
+
+        Nothing new is stored: the address is read at delivery time and stays out
+        of the notification row and out of every API response.
+        """
+
+        if channel != "email" or not reference:
+            return None
+        try:
+            booking = await self._repo.get_booking_admin(reference)
+        except Exception:  # noqa: BLE001
+            return None
+        value = (booking or {}).get("contact_email")
+        return str(value) if value else None
+
     async def _deliver(self, row: dict[str, Any], channel: str, *, attempts: int) -> None:
         notification_id = str(row.get("id"))
         provider = self._providers.get(channel)
