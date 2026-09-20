@@ -46,13 +46,13 @@ export function Nav() {
         </Link>
 
 
-        <ul className="hidden min-w-0 items-center gap-5 text-sm text-muted-foreground lg:flex xl:gap-8">
+        <ul className="hidden min-w-0 items-center gap-6 lg:flex xl:gap-9">
           {links.map((l) => (
             <li key={l.label}>
               <Link
                 to={l.to}
-                className="relative whitespace-nowrap transition-colors hover:text-foreground"
-                activeProps={{ className: "text-foreground" }}
+                className="relative whitespace-nowrap font-sans text-xs font-medium uppercase tracking-[0.1em] text-foreground/70 transition-colors hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-full after:bg-gold after:opacity-0 after:transition-opacity"
+                activeProps={{ className: "text-foreground after:opacity-100" }}
               >
                 {l.label}
               </Link>
