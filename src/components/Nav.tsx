@@ -95,10 +95,10 @@ export function Nav() {
             transition={{ duration: 0.3 }}
             className="glass absolute inset-x-0 top-[68px] border-b border-foreground/10 p-6 lg:hidden"
           >
-            <ul className="flex flex-col gap-4 font-display text-2xl">
+            <ul className="flex flex-col gap-4 font-sans text-sm font-medium uppercase tracking-[0.08em] text-foreground/80">
               {links.map((l) => (
                 <li key={l.label}>
-                  <Link onClick={() => setOpen(false)} to={l.to} className="block">
+                  <Link onClick={() => setOpen(false)} to={l.to} className="block transition-colors hover:text-foreground">
                     {l.label}
                   </Link>
                 </li>
