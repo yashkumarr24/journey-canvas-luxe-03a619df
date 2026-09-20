@@ -72,7 +72,7 @@ export function Hero() {
             </Link>
           ))}
           <Link
-            to="/destinations"
+            to="/domestic"
             className="group flex min-h-24 flex-col justify-end border border-background/40 p-3 text-background transition-colors hover:bg-background/10"
           >
             <span className="font-editorial text-lg leading-none">Explore</span>
