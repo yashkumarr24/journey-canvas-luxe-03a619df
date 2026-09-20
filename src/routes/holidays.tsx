@@ -5,7 +5,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
-import blogHero from "@/assets/blog-hero.jpg";
+import holidaysHero from "@/assets/holidays-hero.jpg";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({
