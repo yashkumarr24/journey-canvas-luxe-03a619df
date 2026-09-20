@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [
   { label: "Home", to: "/" },
-  { label: "Holidays", to: "/holidays" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
@@ -32,7 +31,7 @@ export function Nav() {
     >
       <nav
         style={{ borderRadius: "0 0 22px 22px" }}
-        className={`flex w-full max-w-[900px] items-center justify-between gap-4 rounded-full border border-t-0 border-foreground/10 bg-[#F8F8F6] px-4 py-2 transition-all duration-500 sm:px-6 sm:py-2.5 lg:px-8 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
+        className={`flex w-full max-w-[760px] items-center justify-between gap-4 rounded-full border border-t-0 border-foreground/10 bg-[#F8F8F6] px-4 py-1.5 transition-all duration-500 sm:px-6 sm:py-2 lg:px-8 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
       >
         <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
           <img
