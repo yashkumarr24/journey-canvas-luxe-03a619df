@@ -6,6 +6,8 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
 import holidaysHero from "@/assets/holidays-hero.jpg";
+import kashmir from "@/assets/kashmir.jpg";
+import maldives from "@/assets/maldives.jpg";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({
@@ -25,14 +27,14 @@ const options = [
     detail: "India's signature destinations",
     to: "/domestic",
     icon: MapPinned,
-    image: holidaysHero,
+    image: kashmir,
   },
   {
     label: "International Holidays",
     detail: "Curated escapes around the world",
     to: "/international",
     icon: Globe2,
-    image: holidaysHero,
+    image: maldives,
   },
 ];
 
@@ -61,9 +63,9 @@ function HolidaysPage() {
               <img
                 src={image}
                 alt=""
-                className="absolute inset-0 -z-20 size-full object-cover opacity-30 transition-transform duration-700 group-hover:scale-105"
+                className="absolute inset-0 -z-20 size-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
               />
-              <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/80 to-transparent" />
+              <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/50 to-transparent/20" />
               <div className="relative z-10">
                 <span className="mb-4 inline-flex size-12 items-center justify-center border border-foreground/10 bg-background text-gold">
                   <Icon className="size-6" aria-hidden="true" />
