@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as InternationalRouteImport } from './routes/international'
+import { Route as HolidaysRouteImport } from './routes/holidays'
 import { Route as DomesticRouteImport } from './routes/domestic'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BookingLookupRouteImport } from './routes/booking-lookup'
@@ -75,6 +76,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const InternationalRoute = InternationalRouteImport.update({
   id: '/international',
   path: '/international',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HolidaysRoute = HolidaysRouteImport.update({
+  id: '/holidays',
+  path: '/holidays',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DomesticRoute = DomesticRouteImport.update({
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/holidays': typeof HolidaysRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/holidays': typeof HolidaysRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -403,6 +411,7 @@ export interface FileRoutesById {
   '/booking-lookup': typeof BookingLookupRoute
   '/contact': typeof ContactRoute
   '/domestic': typeof DomesticRoute
+  '/holidays': typeof HolidaysRoute
   '/international': typeof InternationalRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -453,6 +462,7 @@ export interface FileRouteTypes {
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
+    | '/holidays'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
+    | '/holidays'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/booking-lookup'
     | '/contact'
     | '/domestic'
+    | '/holidays'
     | '/international'
     | '/privacy'
     | '/sitemap.xml'
@@ -599,6 +611,7 @@ export interface RootRouteChildren {
   BookingLookupRoute: typeof BookingLookupRoute
   ContactRoute: typeof ContactRoute
   DomesticRoute: typeof DomesticRoute
+  HolidaysRoute: typeof HolidaysRoute
   InternationalRoute: typeof InternationalRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -661,6 +674,13 @@ declare module '@tanstack/react-router' {
       path: '/international'
       fullPath: '/international'
       preLoaderRoute: typeof InternationalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/holidays': {
+      id: '/holidays'
+      path: '/holidays'
+      fullPath: '/holidays'
+      preLoaderRoute: typeof HolidaysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/domestic': {
@@ -1013,6 +1033,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookingLookupRoute: BookingLookupRoute,
   ContactRoute: ContactRoute,
   DomesticRoute: DomesticRoute,
+  HolidaysRoute: HolidaysRoute,
   InternationalRoute: InternationalRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

@@ -6,8 +6,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [
   { label: "Home", to: "/" },
-  { label: "Domestic", to: "/domestic" },
-  { label: "International", to: "/international" },
+  { label: "Holidays", to: "/holidays" },
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
