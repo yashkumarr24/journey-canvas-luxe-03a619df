@@ -103,7 +103,7 @@ export function Nav() {
                 </li>
               ))}
               <li>
-                <Link onClick={() => setOpen(false)} to={isAuthenticated ? "/account" : "/auth/login"} className="block text-gold">
+                <Link onClick={() => setOpen(false)} to={isAuthenticated ? "/account" : "/auth/login"} className="block font-sans text-sm font-medium uppercase tracking-[0.1em] text-gold">
                   {isAuthenticated ? "Account" : "Login / Sign Up"}
                 </Link>
               </li>
