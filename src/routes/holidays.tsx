@@ -5,7 +5,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
-import blogHero from "@/assets/blog-hero.jpg";
+import holidaysHero from "@/assets/holidays-hero.jpg";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({
@@ -25,14 +25,14 @@ const options = [
     detail: "India's signature destinations",
     to: "/domestic",
     icon: MapPinned,
-    image: blogHero,
+    image: holidaysHero,
   },
   {
     label: "International Holidays",
     detail: "Curated escapes around the world",
     to: "/international",
     icon: Globe2,
-    image: blogHero,
+    image: holidaysHero,
   },
 ];
 
@@ -43,7 +43,7 @@ function HolidaysPage() {
       <SmoothScroll />
       <Nav />
       <PageHero
-        image={blogHero}
+        image={holidaysHero}
         eyebrow="Holidays"
         title={<>Choose your next <span className="italic gold-gradient">holiday.</span></>}
         subtitle="Browse hand-crafted India packages or tailor-made international escapes — all designed around your dates, budget and travel style."
