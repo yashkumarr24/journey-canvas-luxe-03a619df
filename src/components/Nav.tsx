@@ -76,7 +76,7 @@ export function Nav() {
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-9 place-items-center rounded-full border border-foreground/15 text-foreground sm:size-10 lg:hidden"
+            className="grid size-9 place-items-center rounded-sm border border-foreground/15 text-foreground sm:size-10 lg:hidden"
           >
             <span className="relative block size-4">
               <span className={`absolute left-0 top-1 h-px w-full bg-current transition-transform ${open ? "translate-y-[6px] rotate-45" : ""}`} />
