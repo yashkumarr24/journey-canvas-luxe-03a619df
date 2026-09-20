@@ -21,7 +21,7 @@ import {
 const services = [
   { label: "Flights", to: "/flights", icon: PlaneTakeoff, active: true },
   { label: "Hotels", to: "/hotels", icon: BedDouble, active: false },
-  { label: "Holidays", to: "/domestic", icon: Gift, active: false },
+  { label: "Holidays", to: "/holidays", icon: Gift, active: false },
 ] as const;
 
 function todayISO() {
