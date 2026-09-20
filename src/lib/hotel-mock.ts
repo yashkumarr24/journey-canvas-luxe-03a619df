@@ -28,14 +28,14 @@
  *   payment id contains "fail"         -> payment declined (test sheet button)
  */
 
-import goa from "@/assets/goa.jpg";
-import dubai from "@/assets/dubai.jpg";
-import maldives from "@/assets/maldives.jpg";
-import kerala from "@/assets/kerala.jpg";
-import kashmir from "@/assets/kashmir.jpg";
-import singapore from "@/assets/singapore.jpg";
-import swiss from "@/assets/swiss.jpg";
-import bangkok from "@/assets/bangkok.jpg";
+import goa from "@/assets/goa.webp";
+import dubai from "@/assets/dubai.webp";
+import maldives from "@/assets/maldives.webp";
+import kerala from "@/assets/kerala.webp";
+import kashmir from "@/assets/kashmir.webp";
+import singapore from "@/assets/singapore.webp";
+import swiss from "@/assets/swiss.webp";
+import bangkok from "@/assets/bangkok.webp";
 import { nightsBetween } from "@/lib/hotel-search";
 import { readHotelSnapshot } from "@/lib/hotel-session";
 import type {

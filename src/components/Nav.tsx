@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/flynfeel-logo.png";
+import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [

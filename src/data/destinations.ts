@@ -1,12 +1,12 @@
-import kashmir from "@/assets/kashmir.jpg";
-import goa from "@/assets/goa.jpg";
-import kerala from "@/assets/kerala.jpg";
-import himachal from "@/assets/himachal.jpg";
-import vietnam from "@/assets/vietnam.jpg";
-import baku from "@/assets/baku.jpg";
-import dubai from "@/assets/dubai.jpg";
-import singapore from "@/assets/singapore.jpg";
-import bangkok from "@/assets/bangkok.jpg";
+import kashmir from "@/assets/kashmir.webp";
+import goa from "@/assets/goa.webp";
+import kerala from "@/assets/kerala.webp";
+import himachal from "@/assets/himachal.webp";
+import vietnam from "@/assets/vietnam.webp";
+import baku from "@/assets/baku.webp";
+import dubai from "@/assets/dubai.webp";
+import singapore from "@/assets/singapore.webp";
+import bangkok from "@/assets/bangkok.webp";
 
 export type Pkg = {
   tier: string;

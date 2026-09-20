@@ -5,9 +5,9 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
-import holidaysHero from "@/assets/holidays-hero.jpg";
-import kashmir from "@/assets/kashmir.jpg";
-import maldives from "@/assets/maldives.jpg";
+import holidaysHero from "@/assets/holidays-hero.webp";
+import kashmir from "@/assets/kashmir.webp";
+import maldives from "@/assets/maldives.webp";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({

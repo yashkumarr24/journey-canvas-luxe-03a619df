@@ -6,7 +6,7 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { Testimonials } from "@/components/Testimonials";
 import { motion } from "framer-motion";
-import hero from "@/assets/hero.jpg";
+import hero from "@/assets/hero.webp";
 
 export const Route = createFileRoute("/about")({
   head: () => ({

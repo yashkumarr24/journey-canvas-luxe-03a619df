@@ -6,7 +6,7 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { Destinations } from "@/components/Destinations";
 import { internationalDestinations } from "@/data/destinations";
-import vietnamHero from "@/assets/vietnam.jpg";
+import vietnamHero from "@/assets/vietnam.webp";
 
 export const Route = createFileRoute("/international")({
   head: () => ({

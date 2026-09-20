@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
-import hero from "@/assets/hero.jpg";
+import hero from "@/assets/hero.webp";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({

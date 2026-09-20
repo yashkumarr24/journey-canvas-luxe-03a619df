@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeIndianRupee, Headphones, ShieldCheck, Users } from "lucide-react";
 import { HomeSearch } from "@/components/HomeSearch";
 import { destinations } from "@/data/destinations";
-import heroImage from "@/assets/hero.jpg";
+import heroImage from "@/assets/hero.webp";
 
 const trustPoints = [
   { icon: BadgeIndianRupee, title: "Best price", detail: "Guaranteed" },
