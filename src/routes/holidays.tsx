@@ -63,9 +63,9 @@ function HolidaysPage() {
               <img
                 src={image}
                 alt=""
-                className="absolute inset-0 -z-20 size-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105"
+                className="absolute inset-0 -z-20 size-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
               />
-              <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/50 to-transparent/20" />
+              <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/55 to-transparent/5" />
               <div className="relative z-10">
                 <span className="mb-4 inline-flex size-12 items-center justify-center border border-foreground/10 bg-background text-gold">
                   <Icon className="size-6" aria-hidden="true" />
