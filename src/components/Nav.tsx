@@ -69,7 +69,7 @@ export function Nav() {
           </Link>
           <Link
             to="/contact"
-            className="hidden whitespace-nowrap rounded-full bg-gold px-4 py-2 text-xs font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 sm:text-sm md:inline-block"
+            className="hidden whitespace-nowrap rounded-sm bg-gold px-4 py-2 font-sans text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 md:inline-block"
           >
             Plan a Journey
           </Link>
