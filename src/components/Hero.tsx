@@ -71,7 +71,7 @@ export function Hero() {
               params={{ slug: item.slug }}
               className="group relative isolate min-h-24 overflow-hidden border border-background/25"
             >
-              <img src={item.img} alt={item.name} className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={item.img} alt={item.name} loading="lazy" decoding="async" width={800} height={600} className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span className="absolute inset-0 -z-10 bg-foreground/45 transition-colors group-hover:bg-foreground/30" />
               <span className="flex h-full flex-col justify-end p-3 text-background">
                 <span className="font-editorial text-lg leading-none">{item.name}</span>
