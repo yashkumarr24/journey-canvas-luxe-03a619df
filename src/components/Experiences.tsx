@@ -1,9 +1,9 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { SectionTitle } from "./Section";
-import maldives from "@/assets/maldives.jpg";
-import bhutan from "@/assets/bhutan.jpg";
-import swiss from "@/assets/swiss.jpg";
+import maldives from "@/assets/maldives.webp";
+import bhutan from "@/assets/bhutan.webp";
+import swiss from "@/assets/swiss.webp";
 
 const pillars = [
   { t: "Always available", d: "A real human on the line — from first idea to final touchdown. Wherever, whenever." },

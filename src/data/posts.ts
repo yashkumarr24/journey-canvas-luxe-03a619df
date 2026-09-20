@@ -1,4 +1,4 @@
-import blogHero from "@/assets/blog-hero.jpg";
+import blogHero from "@/assets/blog-hero.webp";
 
 export type Section = { heading: string; body: string };
 

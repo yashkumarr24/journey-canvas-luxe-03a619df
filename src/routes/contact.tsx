@@ -5,7 +5,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { Contact } from "@/components/Contact";
-import hero from "@/assets/hero.jpg";
+import hero from "@/assets/hero.webp";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({

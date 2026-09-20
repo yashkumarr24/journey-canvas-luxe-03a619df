@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/flynfeel-logo.png";
+import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [
@@ -38,6 +38,9 @@ export function Nav() {
           <img
             src={logo}
             alt="Fly n Feel Holidays"
+            width={560}
+            height={200}
+            fetchPriority="high"
             className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
             loading="eager"
             decoding="async"

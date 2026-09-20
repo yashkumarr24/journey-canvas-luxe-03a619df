@@ -5,9 +5,9 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
-import holidaysHero from "@/assets/holidays-hero.jpg";
-import kashmir from "@/assets/kashmir.jpg";
-import maldives from "@/assets/maldives.jpg";
+import holidaysHero from "@/assets/holidays-hero.webp";
+import kashmir from "@/assets/kashmir.webp";
+import maldives from "@/assets/maldives.webp";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({
@@ -63,6 +63,10 @@ function HolidaysPage() {
               <img
                 src={image}
                 alt=""
+                loading="lazy"
+                decoding="async"
+                width={1200}
+                height={800}
                 className="absolute inset-0 -z-20 size-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
               />
               <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/55 to-transparent/5" />

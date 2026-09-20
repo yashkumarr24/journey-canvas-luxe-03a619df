@@ -6,7 +6,7 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { Destinations } from "@/components/Destinations";
 import { domesticDestinations } from "@/data/destinations";
-import kashmirHero from "@/assets/kashmir.jpg";
+import kashmirHero from "@/assets/kashmir.webp";
 
 export const Route = createFileRoute("/domestic")({
   head: () => ({
