@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BedDouble, Bot, Globe2, Map, PlaneTakeoff, Search } from "lucide-react";
+import { BedDouble, Gift, PlaneTakeoff, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,8 +21,7 @@ import {
 const services = [
   { label: "Flights", to: "/flights", icon: PlaneTakeoff, active: true },
   { label: "Hotels", to: "/hotels", icon: BedDouble, active: false },
-  { label: "Domestic", to: "/domestic", icon: Map, active: false },
-  { label: "International", to: "/international", icon: Globe2, active: false },
+  { label: "Holidays", to: "/domestic", icon: Gift, active: false },
 ] as const;
 
 function todayISO() {
@@ -51,12 +50,12 @@ export function HomeSearch() {
 
   return (
     <div className="w-full">
-      <nav aria-label="Travel services" className="grid grid-cols-2 gap-px border border-foreground/10 bg-foreground/10 sm:grid-cols-4">
+      <nav aria-label="Travel services" className="grid grid-cols-3 gap-px border border-foreground/10 bg-foreground/10">
         {services.map(({ label, to, icon: Icon, active }) => (
           <Link
             key={label}
             to={to}
-            className={`group flex min-h-20 items-center gap-3 bg-background px-4 py-4 text-left transition-colors hover:bg-card sm:flex-col sm:justify-center sm:text-center ${active ? "text-foreground" : "text-muted-foreground"}`}
+            className={`group flex min-h-14 items-center justify-center gap-2 bg-background px-3 py-3 text-center transition-colors hover:bg-card sm:min-h-16 ${active ? "border-b-2 border-primary text-foreground" : "text-muted-foreground"}`}
           >
             <Icon className={`size-5 shrink-0 ${active ? "text-gold" : "transition-colors group-hover:text-gold"}`} aria-hidden="true" />
             <span className="text-xs font-semibold uppercase tracking-[0.16em]">{label}</span>
@@ -65,8 +64,8 @@ export function HomeSearch() {
       </nav>
 
       <form onSubmit={submit} className="border-x border-b border-foreground/10 bg-card p-3 shadow-[var(--shadow-luxe)]" noValidate>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 px-2 pb-3">
-          <div className="flex gap-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-foreground/10 px-2 pb-3">
+          <div className="flex min-w-0 flex-wrap gap-4">
             {(["roundtrip", "oneway"] as const).map((type) => (
               <label key={type} className="flex cursor-pointer items-center gap-2 text-xs font-medium">
                 <input
@@ -80,10 +79,10 @@ export function HomeSearch() {
                 {type === "roundtrip" ? "Return" : "One way"}
               </label>
             ))}
+            <span className="flex cursor-not-allowed items-center gap-2 text-xs font-medium text-muted-foreground" title="Multi-city search is not yet supported by the current flight system">
+              <input type="radio" disabled className="accent-gold" /> Multi-city <span className="hidden text-[10px] uppercase sm:inline">Coming soon</span>
+            </span>
           </div>
-          <Link to="/assistant" className="inline-flex items-center gap-2 text-xs font-semibold text-gold transition-colors hover:text-foreground">
-            <Bot className="size-4" aria-hidden="true" /> Ask AI instead
-          </Link>
         </div>
 
         <div className="grid gap-px bg-foreground/10 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
