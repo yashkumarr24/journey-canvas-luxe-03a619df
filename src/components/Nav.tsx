@@ -31,10 +31,11 @@ export function Nav() {
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 md:pt-6"
+      className="fixed inset-x-0 top-0 z-50 flex justify-center"
     >
       <nav
-        className="flex w-full max-w-6xl items-center justify-between gap-4 rounded-full border border-foreground/10 bg-[#F8F8F6] px-4 py-2.5 shadow-[var(--shadow-soft)] transition-all duration-500 sm:px-5 sm:py-3 md:px-6 lg:px-7"
+        style={{ borderRadius: 0 }}
+        className={`flex w-full items-center justify-between gap-4 rounded-full border-b border-foreground/10 bg-[#F8F8F6] px-4 py-2 transition-all duration-500 sm:px-6 sm:py-2.5 lg:px-10 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
       >
         <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
           <img
@@ -94,7 +95,7 @@ export function Nav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="glass absolute inset-x-4 top-[88px] rounded-3xl p-6 lg:hidden"
+            className="glass absolute inset-x-0 top-[68px] border-b border-foreground/10 p-6 lg:hidden"
           >
             <ul className="flex flex-col gap-4 font-display text-2xl">
               {links.map((l) => (
