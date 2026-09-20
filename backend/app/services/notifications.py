@@ -278,14 +278,16 @@ class NotificationService:
             )
             return
 
+        reference = (row.get("payload") or {}).get("booking_reference")
         message = NotificationMessage(
             notification_id=notification_id,
             channel=channel,
             event_type=str(row.get("event_type")),
             title=str(row.get("title") or ""),
             body=str(row.get("body") or ""),
-            booking_reference=(row.get("payload") or {}).get("booking_reference"),
+            booking_reference=reference,
             support_request_id=row.get("request_id"),
+            to_email=await self._recipient_email(channel, reference),
         )
 
         next_attempt = attempts + 1
