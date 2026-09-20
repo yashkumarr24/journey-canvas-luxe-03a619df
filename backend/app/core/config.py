@@ -97,6 +97,12 @@ class Settings(BaseSettings):
     notifications_whatsapp_api_key: str = Field(default="", alias="NOTIFICATIONS_WHATSAPP_API_KEY")
     notifications_whatsapp_sender: str = Field(default="", alias="NOTIFICATIONS_WHATSAPP_SENDER")
 
+    # ---- Resend (real email provider — BACKEND ONLY, never a VITE_ variable) --
+    # Active only when NOTIFICATIONS_EMAIL_PROVIDER=resend AND both values below
+    # are present. Missing values keep the demo provider, so nothing is sent.
+    resend_api_key: str = Field(default="", alias="RESEND_API_KEY")
+    resend_from_email: str = Field(default="", alias="RESEND_FROM_EMAIL")
+
 
     @property
     def is_production(self) -> bool:
