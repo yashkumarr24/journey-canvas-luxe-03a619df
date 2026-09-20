@@ -29,7 +29,7 @@ export function PageHero({
       style={{ height, minHeight: 520 }}
     >
       <motion.div style={{ y, scale }} className="absolute inset-0">
-        <img src={image} alt="" className="size-full object-cover" />
+        <img src={image} alt="" width={1920} height={1080} decoding="async" fetchPriority="high" className="size-full object-cover" />
         <div className="absolute inset-0 bg-foreground/35" />
       </motion.div>
       <motion.div

@@ -18,7 +18,15 @@ export function Hero() {
   return (
     <section id="top" className="relative border-b border-foreground/10">
       <div className="absolute inset-0">
-        <img src={heroImage} alt="Turquoise coastline seen from a cliff road" className="h-full w-full object-cover" />
+        <img
+          src={heroImage}
+          alt="Turquoise coastline seen from a cliff road"
+          width={1920}
+          height={1080}
+          decoding="async"
+          fetchPriority="high"
+          className="h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-foreground/55" />
       </div>
 
