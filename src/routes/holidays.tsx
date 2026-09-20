@@ -6,6 +6,8 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight, Globe2, MapPinned } from "lucide-react";
 import holidaysHero from "@/assets/holidays-hero.jpg";
+import kashmir from "@/assets/kashmir.jpg";
+import maldives from "@/assets/maldives.jpg";
 
 export const Route = createFileRoute("/holidays")({
   head: () => ({
