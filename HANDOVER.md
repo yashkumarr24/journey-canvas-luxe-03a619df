@@ -492,3 +492,7 @@ provider, register it in `_build_registry()` behind the matching
 `NOTIFICATIONS_*_PROVIDER` value, mirror the same swap in
 `src/lib/notifications/providers.ts` (which then routes through the backend), and
 schedule `dispatch_pending()` from a worker or cron endpoint.
+
+## Phase 13 addendum — Resend email provider
+
+Real email sends through `backend/app/integrations/email/resend_provider.py`, selected in `_build_registry()` only when `NOTIFICATIONS_EMAIL_PROVIDER=resend` and both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set. Missing values keep the demo provider (nothing is sent). Recipient is the booking `contact_email`, resolved at delivery time and never stored on the notification row. Keys are backend-only; never `VITE_`.
