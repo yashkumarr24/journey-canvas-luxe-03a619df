@@ -6,8 +6,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 const links = [
   { label: "Home", to: "/" },
-  { label: "Flights", to: "/flights" },
-  { label: "Hotels", to: "/hotels" },
   { label: "Domestic", to: "/domestic" },
   { label: "International", to: "/international" },
   { label: "About", to: "/about" },
@@ -48,13 +46,13 @@ export function Nav() {
         </Link>
 
 
-        <ul className="hidden min-w-0 items-center gap-5 text-sm text-muted-foreground lg:flex xl:gap-8">
+        <ul className="hidden min-w-0 items-center gap-6 lg:flex xl:gap-9">
           {links.map((l) => (
             <li key={l.label}>
               <Link
                 to={l.to}
-                className="relative whitespace-nowrap transition-colors hover:text-foreground"
-                activeProps={{ className: "text-foreground" }}
+                className="relative whitespace-nowrap font-sans text-xs font-medium uppercase tracking-[0.1em] text-foreground/70 transition-colors hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-full after:bg-gold after:opacity-0 after:transition-opacity"
+                activeProps={{ className: "text-foreground after:opacity-100" }}
               >
                 {l.label}
               </Link>
@@ -71,14 +69,14 @@ export function Nav() {
           </Link>
           <Link
             to="/contact"
-            className="hidden whitespace-nowrap rounded-full bg-gold px-4 py-2 text-xs font-medium text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 sm:text-sm md:inline-block"
+            className="hidden whitespace-nowrap rounded-sm bg-gold px-4 py-2 font-sans text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 md:inline-block"
           >
             Plan a Journey
           </Link>
           <button
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-9 place-items-center rounded-full border border-foreground/15 text-foreground sm:size-10 lg:hidden"
+            className="grid size-9 place-items-center rounded-sm border border-foreground/15 text-foreground sm:size-10 lg:hidden"
           >
             <span className="relative block size-4">
               <span className={`absolute left-0 top-1 h-px w-full bg-current transition-transform ${open ? "translate-y-[6px] rotate-45" : ""}`} />
@@ -97,10 +95,10 @@ export function Nav() {
             transition={{ duration: 0.3 }}
             className="glass absolute inset-x-0 top-[68px] border-b border-foreground/10 p-6 lg:hidden"
           >
-            <ul className="flex flex-col gap-4 font-display text-2xl">
+            <ul className="flex flex-col gap-4 font-sans text-sm font-medium uppercase tracking-[0.08em] text-foreground/80">
               {links.map((l) => (
                 <li key={l.label}>
-                  <Link onClick={() => setOpen(false)} to={l.to} className="block">
+                  <Link onClick={() => setOpen(false)} to={l.to} className="block transition-colors hover:text-foreground">
                     {l.label}
                   </Link>
                 </li>
