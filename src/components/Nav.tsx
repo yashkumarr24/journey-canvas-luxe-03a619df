@@ -31,11 +31,11 @@ export function Nav() {
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-0 z-50 flex justify-center"
+      className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 sm:px-6 lg:px-10"
     >
       <nav
-        style={{ borderRadius: 0 }}
-        className={`flex w-full items-center justify-between gap-4 rounded-full border-b border-foreground/10 bg-[#F8F8F6] px-4 py-2 transition-all duration-500 sm:px-6 sm:py-2.5 lg:px-10 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
+        style={{ borderRadius: "0 0 6px 6px" }}
+        className={`flex w-full max-w-[1400px] items-center justify-between gap-4 rounded-full border border-t-0 border-foreground/10 bg-[#F8F8F6] px-4 py-2 transition-all duration-500 sm:px-6 sm:py-2.5 lg:px-8 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
       >
         <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
           <img
