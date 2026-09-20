@@ -63,6 +63,10 @@ function HolidaysPage() {
               <img
                 src={image}
                 alt=""
+                loading="lazy"
+                decoding="async"
+                width={1200}
+                height={800}
                 className="absolute inset-0 -z-20 size-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
               />
               <span className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/55 to-transparent/5" />
