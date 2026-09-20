@@ -94,6 +94,8 @@ class NotificationMessage:
     body: str
     booking_reference: Optional[str] = None
     support_request_id: Optional[str] = None
+    # Recipient address for address-based channels (email). Never persisted.
+    to_email: Optional[str] = None
 
 
 @dataclass
@@ -155,8 +157,28 @@ def _build_registry(settings: Settings) -> dict[str, ChannelProvider]:
     """
 
     registry: dict[str, ChannelProvider] = {"in_app": InAppProvider()}
-    for channel in ("email", "sms", "whatsapp"):
-        # No live implementation is wired in this phase by design.
+
+    # -- email: demo by default, Resend when explicitly switched on -----------
+    email_provider: ChannelProvider = DemoProvider("email")
+    if settings.notifications_email_provider.strip().lower() == "resend":
+        api_key = settings.resend_api_key or settings.notifications_email_api_key
+        from_email = settings.resend_from_email or settings.notifications_email_from
+        if api_key and from_email:
+            from app.integrations.email.resend_provider import ResendEmailProvider
+
+            email_provider = ResendEmailProvider(  # type: ignore[assignment]
+                api_key=api_key,
+                from_email=from_email,
+                account_url=f"{settings.frontend_url.rstrip('/')}/account/notifications",
+            )
+        else:
+            # Missing credential must never crash the app or reveal the secret:
+            # stay on demo so nothing is sent by accident.
+            logger.warning("notification_email_provider_unconfigured")
+
+    registry["email"] = email_provider
+    for channel in ("sms", "whatsapp"):
+        # No live implementation is wired for these channels by design.
         registry[channel] = DemoProvider(channel)
     return registry
 
@@ -239,6 +261,22 @@ class NotificationService:
         for channel in channels:
             await self._deliver(row, channel, attempts=0)
 
+    async def _recipient_email(self, channel: str, reference: Optional[str]) -> Optional[str]:
+        """Resolve the contact email already stored on the booking.
+
+        Nothing new is stored: the address is read at delivery time and stays out
+        of the notification row and out of every API response.
+        """
+
+        if channel != "email" or not reference:
+            return None
+        try:
+            booking = await self._repo.get_booking_admin(reference)
+        except Exception:  # noqa: BLE001
+            return None
+        value = (booking or {}).get("contact_email")
+        return str(value) if value else None
+
     async def _deliver(self, row: dict[str, Any], channel: str, *, attempts: int) -> None:
         notification_id = str(row.get("id"))
         provider = self._providers.get(channel)
@@ -256,14 +294,16 @@ class NotificationService:
             )
             return
 
+        reference = (row.get("payload") or {}).get("booking_reference")
         message = NotificationMessage(
             notification_id=notification_id,
             channel=channel,
             event_type=str(row.get("event_type")),
             title=str(row.get("title") or ""),
             body=str(row.get("body") or ""),
-            booking_reference=(row.get("payload") or {}).get("booking_reference"),
+            booking_reference=reference,
             support_request_id=row.get("request_id"),
+            to_email=await self._recipient_email(channel, reference),
         )
 
         next_attempt = attempts + 1
