@@ -12,6 +12,7 @@ from app.api.v1 import (
     analytics,
     assistant,
     flights,
+    hotels,
     notifications,
     operations,
     review,
@@ -21,6 +22,7 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(flights.router)
 api_router.include_router(review.router)
+api_router.include_router(hotels.router)
 api_router.include_router(analytics.router)
 api_router.include_router(admin.router)
 api_router.include_router(operations.router)

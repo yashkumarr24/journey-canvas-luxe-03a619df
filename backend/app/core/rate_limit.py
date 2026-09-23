@@ -88,3 +88,10 @@ def client_identity(request: Request, user_id: str | None) -> str:
 # Tuned so a real customer refining a search is never blocked, while scripted
 # flooding is stopped quickly.
 flight_search_limiter = SlidingWindowLimiter(limit=12, window_seconds=60.0)
+
+# Hotel search is the other provider-quota-spending call.
+hotel_search_limiter = SlidingWindowLimiter(limit=12, window_seconds=60.0)
+
+# Detail / re-price / guest submission: cheaper than search but still provider
+# backed, so a higher ceiling with the same window.
+hotel_session_limiter = SlidingWindowLimiter(limit=40, window_seconds=60.0)
