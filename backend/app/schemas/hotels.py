@@ -532,6 +532,7 @@ __all__ = [
     "HotelImage",
     "HotelLocation",
     "HotelOccupancy",
+    "HotelRatePlan",
     "HotelRateSummary",
     "HotelResult",
     "HotelReviewResponse",
