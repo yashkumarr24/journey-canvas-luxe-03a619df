@@ -133,6 +133,6 @@ async def submit_hotel_guests(
     auth: AuthContext = Depends(optional_user),
     settings: Settings = Depends(get_settings),
 ) -> HotelGuestDetailsResponse:
-    return hotel_service.submit_guests(
+    return await hotel_service.submit_guests(
         request=request, payload=payload, auth=auth, settings=settings
     )
