@@ -144,6 +144,34 @@ class TripJackClient:
         assert last_error is not None
         raise last_error
 
+    async def get(
+        self,
+        path: str,
+        params: Mapping[str, Any] | None = None,
+        *,
+        retries: int = 0,
+        operation: str = "request",
+    ) -> dict[str, Any]:
+        """GET for read-only static content. Same auth, error mapping and
+        transient-only retry policy as `post`."""
+        if not self._config.is_configured:
+            raise TripJackNotConfiguredError("TRIPJACK_HOTEL_BASE_URL/TRIPJACK_API_KEY not set")
+        url = "/" + path.strip("/")
+        headers = {API_KEY_HEADER: self._config.api_key, "X-Request-ID": request_id_ctx.get()}
+        last_error: Exception | None = None
+        for attempt in range(retries + 1):
+            try:
+                return await self._attempt(
+                    url, {}, headers, operation, attempt, method="GET", params=params
+                )
+            except (TripJackTimeoutError, TripJackNetworkError, TripJackUpstreamError) as exc:
+                last_error = exc
+                if attempt >= retries:
+                    break
+                await asyncio.sleep(RETRY_BACKOFF_SECONDS[min(attempt, len(RETRY_BACKOFF_SECONDS) - 1)])
+        assert last_error is not None
+        raise last_error
+
     async def _attempt(
         self,
         url: str,
@@ -151,13 +179,18 @@ class TripJackClient:
         headers: dict[str, str],
         operation: str,
         attempt: int,
+        method: str = "POST",
+        params: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         client = await self._ensure_client()
 
         try:
             # NOTE: neither `headers` (contains the API key) nor `payload`
             # is ever logged. Only the operation name and outcome are.
-            response = await client.post(url, json=payload, headers=headers)
+            if method == "GET":
+                response = await client.get(url, params=params, headers=headers)
+            else:
+                response = await client.post(url, json=payload, headers=headers)
         except httpx.TimeoutException as exc:
             logger.warning("tripjack_timeout", extra=log_extra(operation=operation, attempt=attempt))
             raise TripJackTimeoutError(f"{operation} timed out") from exc
