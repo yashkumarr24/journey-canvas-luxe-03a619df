@@ -26,9 +26,10 @@ from app.core.rate_limit import (
     hotel_search_limiter,
     hotel_session_limiter,
 )
+from app.integrations.tripjack import hotel_directory
 from app.integrations.tripjack import hotels as tripjack_hotels
-from app.integrations.tripjack.client import get_client
-from app.integrations.tripjack.config import build_config
+from app.integrations.tripjack.client import get_hotel_client
+from app.integrations.tripjack.config import build_hotel_config
 from app.integrations.tripjack.exceptions import (
     TripJackAuthError,
     TripJackBadRequestError,
