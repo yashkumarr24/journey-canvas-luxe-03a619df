@@ -128,6 +128,8 @@ class HotelResult(HotelSummary):
     review_score: Optional[float] = None
     review_count: Optional[int] = None
     rate: Optional[HotelRateSummary] = None
+    # All v3 rate plan types the provider returned, not only the cheapest.
+    rate_plans: Optional[List[HotelRatePlan]] = None
 
 
 class HotelCancellationRule(CamelModel):
