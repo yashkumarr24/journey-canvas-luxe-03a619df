@@ -125,8 +125,15 @@ class HotelGuestDetailsIncompleteError(AppError):
     message = "Some guest details are missing or do not match the rooms you selected."
 
 
+class HotelDestinationUnsupportedError(AppError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "SEARCH_REJECTED"
+    message = "We don't cover hotels in that destination yet. Please try a nearby city."
+
+
 def _provider(settings: Settings):
-    config = build_config(settings)
+    """Hotel API v3 client. Hotels run on their OWN host, not the flight host."""
+    config = build_hotel_config(settings)
     if not config.is_configured:
         logger.error("tripjack_hotels_not_configured")
         raise HotelSearchNotConfiguredError()
@@ -134,7 +141,7 @@ def _provider(settings: Settings):
         # Guard rail: a non-production deployment must never bill live inventory.
         logger.error("tripjack_hotel_production_url_in_non_production")
         raise HotelSearchNotConfiguredError()
-    return get_client(config), config
+    return get_hotel_client(config), config
 
 
 def _map_provider_error(exc: Exception) -> AppError:
