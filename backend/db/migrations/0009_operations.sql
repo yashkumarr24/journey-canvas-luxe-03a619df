@@ -41,6 +41,23 @@ do $$ begin
   );
 exception when duplicate_object then null; end $$;
 
+-- ---- compatibility helper -------------------------------------------------
+-- 0008 defines has_admin_level(uuid, smallint). The policies below call the
+-- short form for the CURRENT user; this thin overload keeps both call styles
+-- valid without changing any authorization logic.
+create or replace function public.has_admin_level(_minimum integer)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.has_admin_level(auth.uid(), _minimum::smallint)
+$$;
+
+revoke all on function public.has_admin_level(integer) from public;
+grant execute on function public.has_admin_level(integer) to authenticated, service_role;
+
 -- ---- cancellation_requests ------------------------------------------------
 create table if not exists public.cancellation_requests (
   id              uuid primary key default gen_random_uuid(),
