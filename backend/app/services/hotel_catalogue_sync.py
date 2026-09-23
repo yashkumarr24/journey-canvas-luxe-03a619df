@@ -122,7 +122,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
             })
             if done:
                 # First incremental run starts from the moment the full sync finished.
-                watermark = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+                watermark = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
                 for t in ("incremental_new", "incremental_update", "incremental_delete"):
                     if not (await repo.get_state(t) or {}).get("last_update_time"):
                         await repo.put_state(t, {"status": "idle", "last_update_time": watermark})
@@ -150,7 +150,7 @@ async def run_incremental_sync(settings: Optional[Settings] = None) -> dict:
                 summary[key] = "skipped: run a full sync first"
                 continue
             run_started = now_iso()
-            new_watermark = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+            new_watermark = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             cursor = (state.get("cursor") or {}).get("cursor") if state.get("status") == "failed" else None
             processed = failed = 0
             await repo.put_state(key, {"status": "running", "started_at": run_started, "error_summary": None})

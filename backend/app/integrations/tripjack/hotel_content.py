@@ -26,58 +26,43 @@ MAX_IMAGES = 30
 
 
 # ------------------------------ helpers -------------------------------------
+# Parsers follow the VPS-verified UAT response wrappers exactly:
+#   fetch-countries            -> hotelCountries[]
+#   fetch-city-regionIds       -> hotelCityRegionIds[], nextCursor, hasMore
+#   fetch-hotel-mapping(-sync) -> hotels[], pageable{pageNumber,totalPages,...}
+#   fetch-deleted-hotel-mapping-> hotels[], pageable{...}
+#   fetch-hotel-content        -> hotels[]
 
-def _s(raw: Any, *keys: str) -> Optional[str]:
-    if not isinstance(raw, dict):
-        return None
-    for key in keys:
-        value = raw.get(key)
-        if isinstance(value, (str, int, float)) and not isinstance(value, bool):
-            text = str(value).strip()
-            if text:
-                return text
-        if isinstance(value, dict):
-            nested = _s(value, "name", "value")
-            if nested:
-                return nested
+
+def _str(value: Any) -> Optional[str]:
+    if isinstance(value, (str, int, float)) and not isinstance(value, bool):
+        text = str(value).strip()
+        return text or None
     return None
 
 
-def _n(raw: Any, *keys: str) -> Optional[float]:
-    if not isinstance(raw, dict):
-        return None
-    for key in keys:
-        try:
-            if raw.get(key) is not None and not isinstance(raw.get(key), bool):
-                return float(raw[key])
-        except (TypeError, ValueError):
-            continue
-    return None
+def _list(body: Any, key: str) -> list:
+    value = body.get(key) if isinstance(body, dict) else None
+    return value if isinstance(value, list) else []
 
 
-def _rows(body: Any, *keys: str) -> list:
-    if isinstance(body, list):
-        return body
-    if not isinstance(body, dict):
-        return []
-    for key in keys + ("data", "results", "items"):
-        value = body.get(key)
-        if isinstance(value, list):
-            return value
-        if isinstance(value, dict):
-            inner = _rows(value, *keys)
-            if inner:
-                return inner
-    return []
-
-
-def _paging(body: Any) -> tuple[Optional[str], bool]:
+def _cursor_paging(body: Any) -> tuple[Optional[str], bool]:
     block = body if isinstance(body, dict) else {}
-    for scope in (block, block.get("data") if isinstance(block.get("data"), dict) else {}):
-        if "hasMore" in scope or "nextCursor" in scope:
-            cursor = scope.get("nextCursor")
-            return (str(cursor) if cursor else None), bool(scope.get("hasMore")) and bool(cursor)
-    return None, False
+    cursor = _str(block.get("nextCursor"))
+    return cursor, block.get("hasMore") is True and cursor is not None
+
+
+def _page_paging(body: Any, requested_page: int) -> bool:
+    """pageable.pageNumber / pageable.totalPages -> more pages remain?"""
+    pageable = body.get("pageable") if isinstance(body, dict) else None
+    if not isinstance(pageable, dict):
+        return False
+    number = pageable.get("pageNumber")
+    total = pageable.get("totalPages")
+    if not isinstance(total, int) or isinstance(total, bool):
+        return False
+    current = number if isinstance(number, int) and not isinstance(number, bool) else requested_page
+    return current + 1 < total
 
 
 # ------------------------------ calls ---------------------------------------
@@ -85,8 +70,8 @@ def _paging(body: Any) -> tuple[Optional[str], bool]:
 async def fetch_countries(client: TripJackClient) -> list[str]:
     body = await client.get(COUNTRIES_PATH, retries=RETRIES, operation="hotel_content_countries")
     names: list[str] = []
-    for item in _rows(body, "countries", "countryList"):
-        name = item.strip() if isinstance(item, str) else _s(item, "countryName", "name")
+    for item in _list(body, "hotelCountries"):
+        name = _str(item) if not isinstance(item, dict) else _str(item.get("countryName"))
         if name and name not in names:
             names.append(name)
     return names
@@ -100,32 +85,39 @@ async def fetch_regions_page(
         params["cursor"] = cursor
     body = await client.get(REGIONS_PATH, params, retries=RETRIES, operation="hotel_content_regions")
     rows = []
-    for raw in _rows(body, "regions", "cityRegionIds", "cities"):
-        region_id = _s(raw, "cityRegionId", "regionId", "id")
+    for raw in _list(body, "hotelCityRegionIds"):
+        if not isinstance(raw, dict):
+            continue
+        region_id = _str(raw.get("cityRegionId"))
         if not region_id:
             continue
         rows.append({
             "city_region_id": region_id,
-            "city_name": _s(raw, "cityName", "city"),
-            "region_name": _s(raw, "regionName"),
-            "country_name": _s(raw, "countryName", "country"),
-            "region_type": _s(raw, "regionType", "type"),
-            "full_region_name": _s(raw, "fullRegionName"),
+            "city_name": _str(raw.get("cityName")),
+            "region_name": _str(raw.get("regionName")),
+            "country_name": _str(raw.get("countryName")),
+            "region_type": _str(raw.get("regionType")),
+            "full_region_name": _str(raw.get("fullRegionName")),
         })
-    next_cursor, has_more = _paging(body)
+    next_cursor, has_more = _cursor_paging(body)
     return rows, next_cursor, has_more
 
 
-def _mapping_row(raw: Any, fallback_country: Optional[str] = None) -> Optional[dict]:
-    hotel_id = _s(raw, "tjHotelId", "hotelId", "id")
-    if not hotel_id:
-        return None
-    return {
-        "tj_hotel_id": hotel_id,
-        "unica_id": _s(raw, "unicaId"),
-        "region_id": _s(raw, "cityRegionId", "regionId"),
-        "country_name": _s(raw, "countryName") or fallback_country,
-    }
+def _mapping_rows(body: Any, country_name: Optional[str] = None) -> list[dict]:
+    """hotels[] -> {tjHotelId, unicaId}. Only verified keys are written, so an
+    upsert never blanks columns the response does not carry (e.g. region_id)."""
+    out: dict[str, dict] = {}
+    for raw in _list(body, "hotels"):
+        if not isinstance(raw, dict):
+            continue
+        hotel_id = _str(raw.get("tjHotelId"))
+        if not hotel_id:
+            continue
+        row: dict[str, Any] = {"tj_hotel_id": hotel_id, "unica_id": _str(raw.get("unicaId"))}
+        if country_name:
+            row["country_name"] = country_name
+        out[hotel_id] = row
+    return list(out.values())
 
 
 async def fetch_mapping_page(
@@ -142,29 +134,29 @@ async def fetch_mapping_page(
     if region_ids:
         payload["regionIds"] = region_ids
     body = await client.post(MAPPING_PATH, payload, retries=RETRIES, operation="hotel_content_mapping")
-    raw_rows = _rows(body, "hotelMappings", "mappings", "hotels")
-    rows = [r for r in (_mapping_row(x, country_name) for x in raw_rows) if r]
-    block = body if isinstance(body, dict) else {}
-    total_pages = block.get("totalPages")
-    if isinstance(total_pages, int):
-        has_more = page + 1 < total_pages if block.get("page", page) == page else page < total_pages
-    else:
-        has_more = len(raw_rows) >= payload["size"]
-    return rows, has_more
+    return _mapping_rows(body, country_name), _page_paging(body, page)
 
 
 async def fetch_mapping_changes(
     client: TripJackClient, *, change_type: str, last_update_time: str, cursor: Optional[str]
 ) -> tuple[list[dict], Optional[str], bool]:
-    """NEW / UPDATE via mapping-sync, DELETE via deleted-hotel-mapping."""
+    """NEW / UPDATE via mapping-sync, DELETE via deleted-hotel-mapping.
+
+    Verified request: {"type", "lastUpdateTime" (ISO-8601 OffsetDateTime)}.
+    Paging is page-based (pageable); `cursor` carries the next page number as a
+    string so the existing resumable state shape is unchanged.
+    """
+    if change_type not in ("NEW", "UPDATE", "DELETE"):
+        raise ValueError("change_type must be NEW, UPDATE or DELETE")
     path = DELETED_MAPPING_PATH if change_type == "DELETE" else MAPPING_SYNC_PATH
+    page = int(cursor) if cursor and str(cursor).isdigit() else 0
     payload: dict[str, Any] = {"type": change_type, "lastUpdateTime": last_update_time}
-    if cursor:
-        payload["cursor"] = cursor
+    if page:
+        payload["page"] = page
     body = await client.post(path, payload, retries=RETRIES, operation=f"hotel_content_{change_type.lower()}")
-    rows = [r for r in (_mapping_row(x) for x in _rows(body, "hotelMappings", "mappings", "hotels")) if r]
-    next_cursor, has_more = _paging(body)
-    return rows, next_cursor, has_more
+    rows = _mapping_rows(body)
+    has_more = _page_paging(body, page) and bool(rows)
+    return rows, (str(page + 1) if has_more else None), has_more
 
 
 async def fetch_content(client: TripJackClient, hotel_ids: list[str]) -> list[dict]:
@@ -173,7 +165,7 @@ async def fetch_content(client: TripJackClient, hotel_ids: list[str]) -> list[di
     body = await client.post(
         CONTENT_PATH, {"hotelIds": hotel_ids}, retries=RETRIES, operation="hotel_content_details"
     )
-    return [x for x in _rows(body, "hotels", "hotelContent", "hotelContents") if isinstance(x, dict)]
+    return [x for x in _list(body, "hotels") if isinstance(x, dict)]
 
 
 # ------------------------------ normalisation -------------------------------
