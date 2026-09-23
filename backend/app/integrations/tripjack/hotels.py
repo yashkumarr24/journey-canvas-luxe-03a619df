@@ -59,6 +59,12 @@ from app.schemas.hotels import (
 
 logger = get_logger(__name__)
 
+# Set by the search service with names from the local static catalogue so a
+# v3 listing that omits static fields is still renderable. Static only.
+from contextvars import ContextVar as _ContextVar
+
+STATIC_NAMES: "_ContextVar[dict[str, str] | None]" = _ContextVar("hotel_static_names", default=None)
+
 MAX_RESULTS = 240
 MAX_ROOMS_PER_HOTEL = 60
 MAX_IMAGES = 12
@@ -200,6 +206,9 @@ def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
 
     provider_id = get_str(raw, "id", "hotelId", "hid", "code")
     name = get_str(raw, "name", "hotelName")
+    if provider_id and not name:
+        # v3 listing may omit static fields; use the local catalogue name.
+        name = (STATIC_NAMES.get() or {}).get(provider_id)
     if not (provider_id and name):
         # Without an id we could never re-price it; without a name we could
         # not honestly render it.

@@ -26,7 +26,9 @@ from app.core.admin_auth import AdminContext, current_admin, require_admin
 from app.core.logging import get_logger
 from app.repositories.analytics import AnalyticsRepository
 from app.schemas.analytics import ActivityRow, AdminIdentityOut, FunnelRowOut, OverviewOut
-from app.services import analytics_admin
+from app.core.config import Settings, get_settings
+from app.services import analytics_admin, hotel_catalogue_sync
+import asyncio
 
 logger = get_logger(__name__)
 
@@ -133,3 +135,38 @@ async def live(
             await websocket.send_json({"type": "changed"})
     except WebSocketDisconnect:
         return
+
+
+# ---------------- TripJack hotel static catalogue (owner-controlled) ----------------
+
+_sync_tasks: set = set()
+
+
+@router.get("/hotel-catalogue/status", summary="Hotel catalogue sync status")
+async def hotel_catalogue_status(
+    admin: AdminContext = Depends(require_admin(1)),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    return await hotel_catalogue_sync.status(settings)
+
+
+@router.post("/hotel-catalogue/sync", status_code=202, summary="Start a hotel catalogue sync")
+async def hotel_catalogue_start(
+    mode: str = Query(default="incremental", pattern="^(full|incremental)$"),
+    admin: AdminContext = Depends(require_admin(3)),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    if hotel_catalogue_sync.is_running():
+        return {"started": False, "reason": "already_running"}
+    runner = hotel_catalogue_sync.run_full_sync if mode == "full" else hotel_catalogue_sync.run_incremental_sync
+
+    async def _run() -> None:
+        try:
+            await runner(settings)
+        except Exception:
+            logger.error("hotel_catalogue_sync_task_failed")
+
+    task = asyncio.create_task(_run())
+    _sync_tasks.add(task)
+    task.add_done_callback(_sync_tasks.discard)
+    return {"started": True, "mode": mode}
