@@ -161,9 +161,22 @@ class HotelRoomOption(CamelModel):
     base_price: Optional[Money] = None
     taxes: Optional[Money] = None
     fees_and_charges: Optional[Money] = None
+    # v3 management fee and its tax. Both are part of `total_price`.
+    management_fee: Optional[Money] = None
+    management_fee_tax: Optional[Money] = None
     total_price: Money
     rooms_available: Optional[int] = None
     payment_policy: Optional[str] = None
+    # v3 option metadata.
+    option_type: Optional[str] = None
+    option_type_label: Optional[str] = None
+    rate_plan_type: Optional[str] = None
+    rate_plan_label: Optional[str] = None
+    # Provider-declared guest requirements for THIS rate.
+    pan_required: Optional[bool] = None
+    passport_required: Optional[bool] = None
+    gst_inclusive: Optional[bool] = None
+    breakfast_included: Optional[bool] = None
 
 
 class HotelDetail(HotelResult):
