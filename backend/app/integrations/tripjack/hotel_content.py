@@ -108,8 +108,11 @@ def _mapping_rows(
     country_name: Optional[str] = None,
     region_id: Optional[str] = None,
 ) -> list[dict]:
-    """hotels[] -> {tjHotelId, unicaId}. Only verified keys are written, so an
-    upsert never blanks columns the response does not carry (e.g. region_id)."""
+    """Map verified hotel IDs plus authoritative request scope metadata.
+
+    TripJack's mapping rows do not repeat their requested country/region, so
+    those values come only from the request that produced the response.
+    """
     out: dict[str, dict] = {}
     for raw in _list(body, "hotels"):
         if not isinstance(raw, dict):
