@@ -173,24 +173,40 @@ async def search_hotels(
     hotel_search_limiter.check(client_identity(request, auth.user_id))
     client, config = _provider(settings)
 
+    # Hotel API v3 searches by hotel ids (hids); cityCode no longer exists. We
+    # resolve the destination server-side and never invent an id.
+    entry = hotel_directory.resolve(
+        payload.destination, directory_path=settings.tripjack_hotel_directory_path
+    )
+    if entry is None or not entry.hids:
+        logger.warning("hotel_destination_unresolved")
+        raise HotelDestinationUnsupportedError()
+
     logger.info(
         "hotel_search_started",
         extra=log_extra(
             nights=payload.nights,
             rooms=len(payload.rooms),
+            hotel_ids=len(entry.hids),
             authenticated=auth.is_authenticated,
         ),
     )
 
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
-            client, config, payload
+            client, config, payload, hids=entry.hids
         )
     except Exception as exc:  # narrowed inside _map_provider_error
         raise _map_provider_error(exc) from None
 
-    session = sessions.create_search_session(
-        request=payload,
+    session = await sessions.create_search_session(
+        settings=settings,
+        destination=payload.destination,
+        check_in=payload.check_in.isoformat(),
+        check_out=payload.check_out.isoformat(),
+        nights=payload.nights,
+        rooms=list(payload.rooms),
+        nationality=payload.nationality,
         results=results,
         provider_search_id=provider_search_id,
         currency=currency,
