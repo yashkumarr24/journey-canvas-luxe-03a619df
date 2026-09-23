@@ -241,7 +241,9 @@ async def hotel_detail(
 ) -> HotelDetailResponse:
     hotel_session_limiter.check(client_identity(request, auth.user_id))
 
-    session = sessions.get_search_session(payload.search_id)
+    session = await sessions.get_search_session(
+        settings=settings, search_id=payload.search_id
+    )
     if session is None:
         raise HotelSearchExpiredError()
 
@@ -249,15 +251,45 @@ async def hotel_detail(
     if summary is None:
         raise HotelNotFoundError()
 
+    detail = await _priced_hotel(
+        settings=settings,
+        session=session,
+        provider_hotel_id=payload.hotel_id,
+        fallback=summary,
+    )
+
+    return HotelDetailResponse(
+        search_id=session.id,
+        hotel=detail,
+        check_in=session.check_in,
+        check_out=session.check_out,
+        nights=session.nights,
+        currency=session.currency,
+        expires_at=sessions.expires_at_iso(session),
+    )
+
+
+async def _priced_hotel(
+    *,
+    settings: Settings,
+    session: sessions.SearchSession,
+    provider_hotel_id: str,
+    fallback,
+):
+    """/hms/v3/hotel/pricing for one hotel inside this searchId."""
+    if not session.provider_search_id:
+        # v3 pricing is only meaningful inside a live searchId.
+        raise HotelSearchExpiredError()
+
     client, config = _provider(settings)
     try:
-        detail = await tripjack_hotels.hotel_detail(
+        detail = await tripjack_hotels.hotel_pricing(
             client,
             config,
-            provider_hotel_id=payload.hotel_id,
-            provider_search_id=session.provider_search_id,
+            search_id=session.provider_search_id,
+            provider_hotel_id=provider_hotel_id,
             currency=session.currency,
-            fallback=summary,
+            fallback=fallback,
         )
     except ValueError:
         raise HotelNotFoundError() from None
@@ -266,16 +298,7 @@ async def hotel_detail(
 
     if not detail.rooms:
         raise HotelRoomUnavailableError()
-
-    return HotelDetailResponse(
-        search_id=session.id,
-        hotel=detail,
-        check_in=session.request.check_in.isoformat(),
-        check_out=session.request.check_out.isoformat(),
-        nights=session.request.nights,
-        currency=session.currency,
-        expires_at=sessions.expires_at_iso(session),
-    )
+    return detail
 
 
 # ========================= select / review =================================
@@ -290,7 +313,9 @@ async def select_room(
 ) -> HotelReviewResponse:
     hotel_session_limiter.check(client_identity(request, auth.user_id))
 
-    session = sessions.get_search_session(payload.search_id)
+    session = await sessions.get_search_session(
+        settings=settings, search_id=payload.search_id
+    )
     if session is None:
         raise HotelSearchExpiredError()
 
@@ -298,23 +323,14 @@ async def select_room(
     if summary is None:
         raise HotelNotFoundError()
 
-    client, config = _provider(settings)
-
-    # Re-read the rooms so the rate we price is one the provider still sells,
-    # not one the browser claims exists.
-    try:
-        detail = await tripjack_hotels.hotel_detail(
-            client,
-            config,
-            provider_hotel_id=payload.hotel_id,
-            provider_search_id=session.provider_search_id,
-            currency=session.currency,
-            fallback=summary,
-        )
-    except ValueError:
-        raise HotelNotFoundError() from None
-    except Exception as exc:
-        raise _map_provider_error(exc) from None
+    # Re-price so the option we sell is one the provider still sells, not one
+    # the browser claims exists.
+    detail = await _priced_hotel(
+        settings=settings,
+        session=session,
+        provider_hotel_id=payload.hotel_id,
+        fallback=summary,
+    )
 
     selected = next((room for room in detail.rooms if room.id == payload.rate_id), None)
     if selected is None:
@@ -322,14 +338,16 @@ async def select_room(
 
     previous_total = selected.total_price.amount
 
-    # Final provider re-price. If it produces nothing usable we treat the rate
-    # as gone rather than selling the older, cheaper quote.
+    # Final v3 review. If it produces nothing usable we treat the rate as gone
+    # rather than selling the older, cheaper quote.
+    client, config = _provider(settings)
     try:
-        repriced = await tripjack_hotels.review_rate(
+        repriced, review_hash = await tripjack_hotels.review_option(
             client,
             config,
-            provider_rate_id=payload.rate_id,
+            search_id=session.provider_search_id or "",
             provider_hotel_id=payload.hotel_id,
+            option_id=payload.rate_id,
             currency=session.currency,
         )
     except Exception as exc:
@@ -338,10 +356,10 @@ async def select_room(
     room = repriced or selected
 
     stay = HotelStay(
-        check_in=session.request.check_in.isoformat(),
-        check_out=session.request.check_out.isoformat(),
-        nights=session.request.nights,
-        rooms=list(session.request.rooms),
+        check_in=session.check_in,
+        check_out=session.check_out,
+        nights=session.nights,
+        rooms=list(session.rooms),
     )
 
     hotel_summary = HotelSummary(
@@ -354,39 +372,49 @@ async def select_room(
         images=detail.images,
     )
 
-    review_session, guest_token = sessions.create_review_session(
-        search_id=session.id,
+    requirements = _requirements_for(room, hotel_summary)
+
+    review_session, guest_token = await sessions.create_review_session(
+        settings=settings,
+        search=session,
         hotel=hotel_summary,
         room=room,
         stay=stay,
         currency=session.currency,
         provider_hotel_id=payload.hotel_id,
-        provider_rate_id=room.id,
+        provider_option_id=room.id,
+        provider_review_hash=review_hash,
+        requirements=requirements.model_dump(by_alias=True),
         user_id=auth.user_id,
-        # Guests get a continuity token; signed-in users are identified by token.
+        # Resume an existing guest session in the same browser when offered.
+        guest_token=payload.guest_token if not auth.is_authenticated else None,
         issue_guest_token=not auth.is_authenticated and payload.guest_token is None,
         previous_total=previous_total,
     )
-    if auth.is_authenticated is False and payload.guest_token:
-        # Resume an existing guest session in the same browser.
-        review_session.guest_token = payload.guest_token
-        guest_token = None
 
     logger.info(
         "hotel_room_selected",
-        extra=log_extra(price_changed=previous_total != room.total_price.amount),
+        extra=log_extra(
+            price_changed=previous_total != room.total_price.amount,
+            rate_plan=room.rate_plan_type,
+            option_type=room.option_type,
+            review_hash_present=bool(review_hash),
+        ),
     )
 
     return _review_response(review_session, guest_token=guest_token)
 
 
-def get_review(
+async def get_review(
     *,
     review_token: str,
     guest_token: Optional[str],
     auth: AuthContext,
+    settings: Settings,
 ) -> HotelReviewResponse:
-    session = sessions.get_review_session(review_token)
+    session = await sessions.get_review_session(
+        settings=settings, review_token=review_token
+    )
     if session is None:
         raise HotelReviewExpiredError()
     if not sessions.owns(session, user_id=auth.user_id, guest_token=guest_token):
@@ -406,23 +434,47 @@ def _breakdown(room: HotelRoomOption, currency: str) -> list[FareBreakdownLine]:
         lines.append(
             FareBreakdownLine(label="Fees and charges", amount=room.fees_and_charges, kind="fee")
         )
+    # v3 management fee + its tax are payable, so the customer sees them itemised.
+    if room.management_fee:
+        lines.append(
+            FareBreakdownLine(label="Service fee", amount=room.management_fee, kind="fee")
+        )
+    if room.management_fee_tax:
+        lines.append(
+            FareBreakdownLine(label="Service fee tax", amount=room.management_fee_tax, kind="tax")
+        )
     if not lines:
         lines.append(FareBreakdownLine(label="Stay total", amount=room.total_price, kind="base"))
     return lines
 
 
-def _requirements(session: sessions.ReviewSession) -> HotelGuestRequirements:
-    country = (session.hotel.location.country if session.hotel.location else None) or ""
+def _requirements_for(
+    room: HotelRoomOption, hotel: HotelSummary
+) -> HotelGuestRequirements:
+    """Driven by the provider's flags on THIS rate plan, never inferred.
+
+    A rate plan tagged PAN_NOT_REQUIRED sets pan_required False; otherwise we
+    only ask for PAN/passport when TripJack says the rate needs it.
+    """
+    country = (hotel.location.country if hotel.location else None) or ""
     international = bool(country) and country.strip().lower() not in {"india", "in"}
+    passport_required = bool(room.passport_required)
     return HotelGuestRequirements(
-        # Provider-driven flags are only set when the provider actually says so.
-        pan_required=False,
-        passport_required=international,
-        nationality_required=international,
+        pan_required=bool(room.pan_required),
+        passport_required=passport_required,
+        nationality_required=passport_required or international,
         date_of_birth_required=False,
         all_guest_names_required=True,
         international=international,
     )
+
+
+def _requirements(session: sessions.ReviewSession) -> HotelGuestRequirements:
+    """Requirements captured at review time, replayed exactly."""
+    try:
+        return HotelGuestRequirements.model_validate(session.requirements or {})
+    except Exception:  # noqa: BLE001
+        return _requirements_for(session.room, session.hotel)
 
 
 def _review_response(
@@ -459,7 +511,7 @@ def _review_response(
 # ============================ guest details ================================
 
 
-def submit_guests(
+async def submit_guests(
     *,
     request: Request,
     payload: HotelGuestDetailsRequest,
@@ -468,7 +520,9 @@ def submit_guests(
 ) -> HotelGuestDetailsResponse:
     hotel_session_limiter.check(client_identity(request, auth.user_id))
 
-    session = sessions.get_review_session(payload.review_token)
+    session = await sessions.get_review_session(
+        settings=settings, review_token=payload.review_token
+    )
     if session is None:
         raise HotelReviewExpiredError()
     if not sessions.owns(session, user_id=auth.user_id, guest_token=payload.guest_token):
@@ -480,10 +534,14 @@ def submit_guests(
 
     _validate_guests(payload, session)
 
-    if session.booking_reference is None:
-        session.booking_reference = sessions.new_booking_reference()
-    session.guest_count = len(payload.guests)
-    session.contact_email = payload.contact.email
+    booking_reference = session.booking_reference or sessions.new_booking_reference()
+    await sessions.record_guest_details(
+        settings=settings,
+        session=session,
+        booking_reference=booking_reference,
+        guest_count=len(payload.guests),
+        contact_email=payload.contact.email,
+    )
 
     logger.info(
         "hotel_guests_submitted",
@@ -491,7 +549,7 @@ def submit_guests(
     )
 
     return HotelGuestDetailsResponse(
-        booking_reference=session.booking_reference,
+        booking_reference=booking_reference,
         status="awaiting_payment",
         total_price=session.room.total_price,
         guest_count=len(payload.guests),
@@ -513,7 +571,7 @@ def _validate_guests(payload: HotelGuestDetailsRequest, session: sessions.Review
     if len(leads) != 1:
         raise HotelGuestDetailsIncompleteError()
 
-    for index, guest in enumerate(payload.guests):
+    for guest in payload.guests:
         if guest.room_index > len(rooms):
             raise HotelGuestDetailsIncompleteError()
 
@@ -529,4 +587,6 @@ def _validate_guests(payload: HotelGuestDetailsRequest, session: sessions.Review
     if requirements.passport_required and not lead.passport_number:
         raise HotelGuestDetailsIncompleteError()
     if requirements.nationality_required and not lead.nationality:
+        raise HotelGuestDetailsIncompleteError()
+    if requirements.pan_required and not getattr(lead, "pan_number", None):
         raise HotelGuestDetailsIncompleteError()
