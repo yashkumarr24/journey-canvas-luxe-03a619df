@@ -56,6 +56,16 @@ class Settings(BaseSettings):
     # Staging/UAT: https://apitest.tripjack.com  (production uses its own host
     # AND its own key; the two are never mixed).
     tripjack_base_url: str = Field(default="", alias="TRIPJACK_BASE_URL")
+    # Hotel API v3 lives on its OWN host (UAT: https://apitest-hms.tripjack.com).
+    # Same API key; different base URL. Flights keep TRIPJACK_BASE_URL.
+    tripjack_hotel_base_url: str = Field(default="", alias="TRIPJACK_HOTEL_BASE_URL")
+    # Hotel API v3 searches by hotel ids (hids); cityCode was removed. This file
+    # maps our destination text -> TripJack hotel ids, exported from TripJack's
+    # static hotel content. JSON: {"city": {"hids": [...], "city": "...", "country": "..."}}
+    tripjack_hotel_directory_path: str = Field(
+        default="", alias="TRIPJACK_HOTEL_DIRECTORY_PATH"
+    )
+    tripjack_hotel_max_pages: int = Field(default=3, alias="TRIPJACK_HOTEL_MAX_PAGES")
     tripjack_api_key: str = Field(default="", alias="TRIPJACK_API_KEY")
     tripjack_connect_timeout: float = Field(default=5.0, alias="TRIPJACK_CONNECT_TIMEOUT")
     tripjack_read_timeout: float = Field(default=40.0, alias="TRIPJACK_READ_TIMEOUT")
