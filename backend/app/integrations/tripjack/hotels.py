@@ -1,14 +1,17 @@
-"""TripJack hotel adapter: our request -> TripJack -> our normalized response.
+"""TripJack Hotel API v3 adapter: our request -> TripJack -> our normalized types.
 
 Route handlers and services never touch TripJack HTTP or TripJack field names.
-They call `search_hotels()`, `hotel_detail()` and `review_rate()` here and get
-fully normalized domain objects back.
+They call `search_hotels()`, `hotel_pricing()` and `review_option()` here and
+get fully normalized domain objects back.
 
 Normalization rules (identical to the flight adapter):
   * A field the provider omits stays `None` — nothing is invented, no price is
-    defaulted, no image or rating is substituted.
-  * A single malformed hotel/room is skipped, not allowed to fail the request.
-  * Anything we cannot price is dropped: a room without a total cannot be sold.
+    defaulted, no image, rating or policy is substituted.
+  * A single malformed hotel/option is skipped, not allowed to fail the request.
+  * Anything we cannot price is dropped: an option without a total is not
+    sellable, so it is never shown.
+  * `mf` (management fee) and `mft` (its tax) are ADDED into the payable total
+    and also itemised, so the customer sees what they are paying.
 """
 
 from __future__ import annotations
@@ -20,12 +23,16 @@ from app.integrations.tripjack.client import TripJackClient
 from app.integrations.tripjack.config import TripJackConfig
 from app.integrations.tripjack.hotel_wire import (
     DEFAULT_CURRENCY,
-    HOTEL_DETAIL_PATH,
-    HOTEL_RATE_REVIEW_PATH,
-    HOTEL_SEARCH_PATH,
-    build_detail_payload,
-    build_rate_review_payload,
-    build_search_payload,
+    HOTEL_LISTING_PATH,
+    HOTEL_PRICING_PATH,
+    HOTEL_REVIEW_PATH,
+    OPTION_TYPES,
+    RATE_PLAN_TYPES,
+    build_listing_continuation_payload,
+    build_listing_payload,
+    build_pricing_payload,
+    build_review_payload,
+    normalise_rate_plan,
     refundable_flag,
 )
 from app.integrations.tripjack.schemas import (
@@ -43,6 +50,7 @@ from app.schemas.hotels import (
     HotelImage,
     HotelLocation,
     HotelOccupancy,
+    HotelRatePlan,
     HotelRateSummary,
     HotelResult,
     HotelRoomOption,
@@ -51,22 +59,49 @@ from app.schemas.hotels import (
 
 logger = get_logger(__name__)
 
-MAX_RESULTS = 120
-MAX_ROOMS_PER_HOTEL = 40
+MAX_RESULTS = 240
+MAX_ROOMS_PER_HOTEL = 60
 MAX_IMAGES = 12
 
 
-# ============================== search =====================================
+class HotelSearchPage:
+    """One page of v3 listing plus the handles needed to continue."""
+
+    __slots__ = ("results", "search_id", "next_token", "has_more")
+
+    def __init__(
+        self,
+        results: list[HotelResult],
+        search_id: str | None,
+        next_token: str | None,
+        has_more: bool,
+    ) -> None:
+        self.results = results
+        self.search_id = search_id
+        self.next_token = next_token
+        self.has_more = has_more
+
+
+# ============================== listing ====================================
 
 
 async def search_hotels(
     client: TripJackClient,
     config: TripJackConfig,
     request: HotelSearchRequest,
+    *,
+    hids: list[str],
 ) -> tuple[list[HotelResult], str | None, str]:
-    """Returns (results, provider_search_id, currency)."""
-    payload = build_search_payload(
-        destination=request.destination,
+    """Run /hms/v3/hotel/listing, following searchId continuation.
+
+    Returns (results, searchId, currency). The searchId is the head of the
+    v3 identity chain (searchId -> optionId -> reviewHash) and is stored
+    server-side only.
+    """
+    currency = request.currency or DEFAULT_CURRENCY
+
+    payload = build_listing_payload(
+        hids=hids,
         check_in=request.check_in.isoformat(),
         check_out=request.check_out.isoformat(),
         rooms=[{"adults": r.adults, "childAges": r.child_ages} for r in request.rooms],
@@ -74,35 +109,79 @@ async def search_hotels(
         currency=request.currency,
     )
 
-    # Search is a pure read, so a small retry budget is safe.
+    # Listing is a pure read, so a small retry budget is safe.
     body = await client.post(
-        HOTEL_SEARCH_PATH,
+        HOTEL_LISTING_PATH,
         payload,
         retries=config.search_retries,
-        operation="hotel_search",
+        operation="hotel_listing",
     )
 
-    currency = request.currency or DEFAULT_CURRENCY
-    results = normalize_search_response(body, currency=currency)
-    provider_search_id = get_str(body, "searchId", "id") or get_str(
-        get_map(body, "searchResult"), "searchId", "id"
+    page = normalize_listing_response(body, currency=currency)
+    results = list(page.results)
+    search_id = page.search_id
+    seen = {result.id for result in results}
+    next_token = page.next_token
+    has_more = page.has_more
+
+    # v3 removed pageSize; continuation is driven by the searchId from page 1.
+    pages = 1
+    while has_more and search_id and pages < config.hotel_max_pages and len(results) < MAX_RESULTS:
+        try:
+            body = await client.post(
+                HOTEL_LISTING_PATH,
+                build_listing_continuation_payload(
+                    search_id=search_id, next_token=next_token
+                ),
+                retries=0,
+                operation="hotel_listing_page",
+            )
+        except Exception:  # noqa: BLE001
+            # Partial results beat no results: keep what page 1 gave us.
+            logger.warning("hotel_listing_page_failed", extra=log_extra(page=pages + 1))
+            break
+
+        page = normalize_listing_response(body, currency=currency)
+        added = 0
+        for result in page.results:
+            if result.id in seen:
+                continue
+            seen.add(result.id)
+            results.append(result)
+            added += 1
+        pages += 1
+        next_token = page.next_token
+        has_more = page.has_more and added > 0
+
+    logger.info(
+        "tripjack_hotel_listing_normalized",
+        extra=log_extra(result_count=len(results), pages=pages),
     )
-
-    logger.info("tripjack_hotel_search_normalized", extra=log_extra(result_count=len(results)))
-    return results, provider_search_id, currency
+    return results[:MAX_RESULTS], search_id, currency
 
 
-def normalize_search_response(body: dict[str, Any], *, currency: str) -> list[HotelResult]:
-    raw_hotels = _raw_hotel_list(body)
+def normalize_listing_response(body: dict[str, Any], *, currency: str) -> HotelSearchPage:
+    search_result = get_map(body, "searchResult")
+    search_id = (
+        get_str(body, "searchId")
+        or get_str(search_result, "searchId")
+        or get_str(body, "id")
+    )
+    next_token = get_str(body, "nextPageToken", "pageToken") or get_str(
+        search_result, "nextPageToken", "pageToken"
+    )
+    raw_more = body.get("hasMore", search_result.get("hasMore"))
+    has_more = bool(raw_more) if isinstance(raw_more, bool) else bool(next_token)
 
     results: list[HotelResult] = []
-    for raw in raw_hotels:
+    for raw in _raw_hotel_list(body):
         hotel = _hotel_result(raw, currency)
         if hotel is not None:
             results.append(hotel)
         if len(results) >= MAX_RESULTS:
             break
-    return results
+
+    return HotelSearchPage(results, search_id, next_token, has_more)
 
 
 def _raw_hotel_list(body: dict[str, Any]) -> list[Any]:
@@ -119,7 +198,7 @@ def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
     if not isinstance(raw, dict):
         return None
 
-    provider_id = get_str(raw, "id", "hotelId", "code")
+    provider_id = get_str(raw, "id", "hotelId", "hid", "code")
     name = get_str(raw, "name", "hotelName")
     if not (provider_id and name):
         # Without an id we could never re-price it; without a name we could
@@ -127,6 +206,7 @@ def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
         return None
 
     images = _images(raw)
+    rate_plans = _rate_plans(raw, currency)
     return HotelResult(
         id=provider_id,
         name=name,
@@ -135,10 +215,12 @@ def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
         location=_location(raw),
         thumbnail_url=images[0].url if images else None,
         images=images or None,
-        amenities=_string_list(raw, "fac", "facilities", "amenities"),
+        # v3 renamed amenitiesHighlight -> amenities.
+        amenities=_string_list(raw, "amenities"),
         review_score=get_number(raw, "reviewScore", "tripAdvisorRating"),
         review_count=get_int(raw, "reviewCount", "numberOfReviews"),
-        rate=_rate_summary(raw, currency),
+        rate=_rate_summary(rate_plans),
+        rate_plans=rate_plans or None,
     )
 
 
@@ -193,59 +275,144 @@ def _string_list(raw: dict[str, Any], *keys: str) -> list[str] | None:
     return None
 
 
-def _rate_summary(raw: dict[str, Any], currency: str) -> HotelRateSummary | None:
-    option = _cheapest_option(raw)
-    if option is None:
-        return None
-    total, base, taxes = _prices(option)
-    if total is None:
-        return None
+# --------------------------- options / pricing -----------------------------
 
-    nights = get_int(raw, "nights") or get_int(option, "nights")
-    per_night = round(total / nights, 2) if nights and nights > 0 else None
-    cancellation = _cancellation(option, currency)
 
+def _raw_options(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    for key in ("ops", "options", "ratePlans", "rates", "roomRates"):
+        options = [item for item in get_list(raw, key) if isinstance(item, dict)]
+        if options:
+            return options
+    return []
+
+
+def _prices(option: dict[str, Any]) -> dict[str, float | None]:
+    """Every amount the provider gave us. Nothing is defaulted or invented.
+
+    v3 pricing objects carry `mf` (management fee) and `mft` (its tax) in
+    addition to the room fare and taxes. Both are payable, so the total we
+    quote is provider total + mf + mft.
+    """
+    price_block = get_map(option, "tp", "totalPrice", "price", "fare") or option
+
+    provider_total = get_number(
+        price_block, "TF", "total", "totalFare", "amount", "publishedPrice"
+    )
+    if provider_total is None:
+        provider_total = get_number(option, "tp", "totalPrice", "price")
+
+    management_fee = get_number(price_block, "mf") or get_number(option, "mf")
+    management_fee_tax = get_number(price_block, "mft") or get_number(option, "mft")
+
+    total = provider_total
+    if total is not None:
+        total += management_fee or 0.0
+        total += management_fee_tax or 0.0
+
+    return {
+        "total": total,
+        "base": get_number(price_block, "BF", "base", "baseFare", "roomRate"),
+        "taxes": get_number(price_block, "TAF", "tax", "taxes", "totalTax"),
+        "fees": get_number(price_block, "OT", "fees", "otherCharges"),
+        "mf": management_fee,
+        "mft": management_fee_tax,
+    }
+
+
+def _flag(option: dict[str, Any], *keys: str) -> bool | None:
+    for key in keys:
+        if key in option:
+            value = refundable_flag(option.get(key))
+            if value is not None:
+                return value
+    return None
+
+
+def _rate_plan_type(option: dict[str, Any]) -> str | None:
+    for key in ("ratePlanType", "rpt", "planType", "tag", "rateType"):
+        mapped = normalise_rate_plan(option.get(key))
+        if mapped:
+            return mapped
+    # Some payloads mark the plan with booleans rather than a type string.
+    if _flag(option, "isPanNotRequired") is True:
+        return "PAN_NOT_REQUIRED"
+    if _flag(option, "isBreakfastIncluded", "breakfastIncluded") is True:
+        return "BREAKFAST_INCLUSIVE"
+    if _flag(option, "isGstInclusive", "gstInclusive") is True:
+        return "GST_INCLUSIVE"
+    return None
+
+
+def _rate_plans(raw: dict[str, Any], currency: str) -> list[HotelRatePlan]:
+    """Keep ALL v3 rate plan types, not only the cheapest."""
+    plans: list[HotelRatePlan] = []
+    nights = get_int(raw, "nights")
+
+    for option in _raw_options(raw):
+        option_id = get_str(option, "id", "optionId", "rateId")
+        prices = _prices(option)
+        total = prices["total"]
+        if not option_id or total is None:
+            continue
+
+        plan_type = _rate_plan_type(option) or ("CHEAPEST" if not plans else None)
+        if plan_type is None:
+            continue
+        if any(plan.type == plan_type for plan in plans):
+            continue
+
+        cancellation = _cancellation(option, currency)
+        option_nights = nights or get_int(option, "nights")
+        per_night = round(total / option_nights, 2) if option_nights else None
+
+        plans.append(
+            HotelRatePlan(
+                type=plan_type,
+                label=RATE_PLAN_TYPES.get(plan_type, plan_type.replace("_", " ").title()),
+                option_id=option_id,
+                total_price=Money(amount=round(total, 2), currency=currency),
+                per_night_price=Money(amount=per_night, currency=currency)
+                if per_night
+                else None,
+                meal_plan=get_str(option, "mb", "mealPlan", "boardType"),
+                refundable=cancellation.refundable if cancellation else None,
+                free_cancellation_until=cancellation.free_cancellation_until
+                if cancellation
+                else None,
+                room_name=get_str(option, "rc", "roomName", "name"),
+                pan_required=_flag(option, "panRequired", "isPanRequired"),
+                breakfast_included=_flag(
+                    option, "isBreakfastIncluded", "breakfastIncluded"
+                ),
+                gst_inclusive=_flag(option, "isGstInclusive", "gstInclusive"),
+            )
+        )
+
+    # Cheapest first, then the remaining plan types in documented order.
+    order = list(RATE_PLAN_TYPES)
+    plans.sort(key=lambda plan: order.index(plan.type) if plan.type in order else 99)
+    return plans
+
+
+def _rate_summary(plans: list[HotelRatePlan]) -> HotelRateSummary | None:
+    """Headline rate = cheapest priced plan. The rest travel in `rate_plans`."""
+    if not plans:
+        return None
+    cheapest = min(plans, key=lambda plan: plan.total_price.amount)
     return HotelRateSummary(
-        total_price=Money(amount=round(total, 2), currency=currency),
-        per_night_price=Money(amount=per_night, currency=currency) if per_night else None,
-        meal_plan=get_str(option, "mb", "mealPlan", "boardType"),
-        refundable=cancellation.refundable if cancellation else None,
-        free_cancellation_until=cancellation.free_cancellation_until if cancellation else None,
-        room_name=get_str(option, "rc", "roomName", "name"),
-        rooms_available=get_int(option, "ra", "roomsAvailable", "availableRooms"),
+        total_price=cheapest.total_price,
+        per_night_price=cheapest.per_night_price,
+        meal_plan=cheapest.meal_plan,
+        refundable=cheapest.refundable,
+        free_cancellation_until=cheapest.free_cancellation_until,
+        room_name=cheapest.room_name,
+        rate_plan_type=cheapest.type,
+        rate_plan_label=cheapest.label,
     )
 
 
-def _cheapest_option(raw: dict[str, Any]) -> dict[str, Any] | None:
-    candidates: list[dict[str, Any]] = []
-    for key in ("ops", "options", "rates", "roomRates", "totalPriceList"):
-        candidates.extend(item for item in get_list(raw, key) if isinstance(item, dict))
-        if candidates:
-            break
-    if not candidates:
-        # Some listings carry a single flattened rate on the hotel itself.
-        if get_number(get_map(raw, "tp", "totalPrice", "price"), "TF", "total", "amount") is not None:
-            return raw
-        return None
-    priced = [(c, _prices(c)[0]) for c in candidates]
-    priced = [(c, total) for c, total in priced if total is not None]
-    if not priced:
-        return None
-    return min(priced, key=lambda pair: pair[1])[0]
-
-
-def _prices(option: dict[str, Any]) -> tuple[float | None, float | None, float | None]:
-    """(total, base, taxes) — all optional, none of them ever invented."""
-    price_block = get_map(option, "tp", "totalPrice", "price", "fare") or option
-    total = get_number(price_block, "TF", "total", "totalFare", "amount", "tp", "publishedPrice")
-    if total is None:
-        total = get_number(option, "tp", "totalPrice", "price")
-    base = get_number(price_block, "BF", "base", "baseFare", "roomRate")
-    taxes = get_number(price_block, "TAF", "tax", "taxes", "totalTax")
-    return total, base, taxes
-
-
 def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPolicy | None:
+    """v3 embeds the policy inside every option; there is no separate call."""
     raw_policy = get_map(option, "cnp", "cancellationPolicy", "cancelPolicy")
     raw_rules = get_list(raw_policy, "pd", "policies", "rules") or get_list(
         option, "cancellationPolicies"
@@ -254,7 +421,7 @@ def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPol
     refundable = refundable_flag(
         raw_policy.get("ifra")
         if "ifra" in raw_policy
-        else option.get("refundable", option.get("isRefundable", option.get("rt")))
+        else option.get("refundable", option.get("isRefundable"))
     )
 
     rules: list[HotelCancellationRule] = []
@@ -289,28 +456,26 @@ def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPol
     )
 
 
-# ============================== detail =====================================
+# ============================== pricing ====================================
 
 
-async def hotel_detail(
+async def hotel_pricing(
     client: TripJackClient,
     config: TripJackConfig,
     *,
+    search_id: str,
     provider_hotel_id: str,
-    provider_search_id: str | None,
     currency: str,
     fallback: HotelResult | None = None,
 ) -> HotelDetail:
+    """/hms/v3/hotel/pricing — static detail plus every sellable option."""
     body = await client.post(
-        HOTEL_DETAIL_PATH,
-        build_detail_payload(
-            provider_hotel_id=provider_hotel_id,
-            provider_search_id=provider_search_id,
-        ),
+        HOTEL_PRICING_PATH,
+        build_pricing_payload(search_id=search_id, hotel_id=provider_hotel_id),
         retries=config.search_retries,
-        operation="hotel_detail",
+        operation="hotel_pricing",
     )
-    return normalize_detail_response(
+    return normalize_pricing_response(
         body,
         provider_hotel_id=provider_hotel_id,
         currency=currency,
@@ -318,17 +483,18 @@ async def hotel_detail(
     )
 
 
-def normalize_detail_response(
+def normalize_pricing_response(
     body: dict[str, Any],
     *,
     provider_hotel_id: str,
     currency: str,
     fallback: HotelResult | None = None,
 ) -> HotelDetail:
+    listed = _raw_hotel_list(body)
     raw = (
         get_map(body, "hotel")
         or get_map(get_map(body, "searchResult"), "hotel")
-        or (_raw_hotel_list(body)[0] if _raw_hotel_list(body) else {})
+        or (listed[0] if listed else {})
         or body
     )
     if not isinstance(raw, dict):
@@ -337,7 +503,7 @@ def normalize_detail_response(
     base = _hotel_result(raw, currency) or fallback
     if base is None:
         # Nothing renderable came back; surfacing a blank hotel would be worse.
-        raise ValueError("hotel_detail_unusable")
+        raise ValueError("hotel_pricing_unusable")
 
     return HotelDetail(
         id=provider_hotel_id,
@@ -351,24 +517,19 @@ def normalize_detail_response(
         review_score=base.review_score,
         review_count=base.review_count,
         rate=base.rate,
+        rate_plans=base.rate_plans,
         description=get_str(raw, "desc", "description", "hotelDescription"),
         check_in_time=get_str(raw, "checkInTime", "cit", "checkin"),
         check_out_time=get_str(raw, "checkOutTime", "cot", "checkout"),
-        facilities=_string_list(raw, "fac", "facilities", "amenities"),
+        facilities=_string_list(raw, "amenities", "facilities"),
         policies=_string_list(raw, "pol", "policies", "instructions", "hotelPolicy"),
         rooms=_rooms(raw, currency),
     )
 
 
 def _rooms(raw: dict[str, Any], currency: str) -> list[HotelRoomOption]:
-    options: list[dict[str, Any]] = []
-    for key in ("ops", "options", "rates", "roomRates", "roomOptions"):
-        options = [item for item in get_list(raw, key) if isinstance(item, dict)]
-        if options:
-            break
-
     rooms: list[HotelRoomOption] = []
-    for option in options:
+    for option in _raw_options(raw):
         room = _room_option(option, currency)
         if room is not None:
             rooms.append(room)
@@ -378,10 +539,11 @@ def _rooms(raw: dict[str, Any], currency: str) -> list[HotelRoomOption]:
 
 
 def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | None:
-    rate_id = get_str(option, "id", "rateId", "bookingCode")
-    total, base, taxes = _prices(option)
-    if not rate_id or total is None:
-        # An unpriced or unbookable rate must never be shown as sellable.
+    option_id = get_str(option, "id", "optionId", "rateId", "bookingCode")
+    prices = _prices(option)
+    total = prices["total"]
+    if not option_id or total is None:
+        # An unpriced or unbookable option must never be shown as sellable.
         return None
 
     room_block = option
@@ -396,10 +558,14 @@ def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | Non
         if isinstance(age, (int, float)) and not isinstance(age, bool) and 0 <= int(age) <= 17
     ]
 
-    fees = get_number(get_map(option, "tp", "totalPrice", "price"), "OT", "fees", "otherCharges")
+    option_type = (get_str(option, "optionType", "ot") or "").upper() or None
+    plan_type = _rate_plan_type(option)
+
+    def money(value: float | None) -> Money | None:
+        return Money(amount=round(value, 2), currency=currency) if value is not None else None
 
     return HotelRoomOption(
-        id=rate_id,
+        id=option_id,
         room_name=get_str(room_block, "rc", "roomName", "name", "roomType") or "Room",
         room_type=get_str(room_block, "roomType", "rt"),
         bed_type=get_str(room_block, "bedType", "bt"),
@@ -408,49 +574,68 @@ def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | Non
         meal_plan=get_str(option, "mb", "mealPlan", "boardType") or get_str(room_block, "mb"),
         inclusions=_string_list(option, "inc", "inclusions") or _string_list(room_block, "inc", "inclusions"),
         cancellation=_cancellation(option, currency) or HotelCancellationPolicy(refundable=False),
-        base_price=Money(amount=round(base, 2), currency=currency) if base is not None else None,
-        taxes=Money(amount=round(taxes, 2), currency=currency) if taxes is not None else None,
-        fees_and_charges=Money(amount=round(fees, 2), currency=currency) if fees is not None else None,
+        base_price=money(prices["base"]),
+        taxes=money(prices["taxes"]),
+        fees_and_charges=money(prices["fees"]),
+        management_fee=money(prices["mf"]),
+        management_fee_tax=money(prices["mft"]),
         total_price=Money(amount=round(total, 2), currency=currency),
         rooms_available=get_int(option, "ra", "roomsAvailable", "availableRooms"),
         payment_policy=get_str(option, "pt", "paymentPolicy", "payAt"),
+        option_type=option_type if option_type in OPTION_TYPES else option_type,
+        option_type_label=OPTION_TYPES.get(option_type or ""),
+        rate_plan_type=plan_type,
+        rate_plan_label=RATE_PLAN_TYPES.get(plan_type or ""),
+        # Provider-declared requirements for this rate — never inferred.
+        pan_required=_flag(option, "panRequired", "isPanRequired")
+        if plan_type != "PAN_NOT_REQUIRED"
+        else False,
+        passport_required=_flag(option, "passportRequired", "isPassportRequired"),
+        gst_inclusive=_flag(option, "isGstInclusive", "gstInclusive"),
+        breakfast_included=_flag(option, "isBreakfastIncluded", "breakfastIncluded"),
     )
 
 
-# ============================== re-price ===================================
+# =============================== review ====================================
 
 
-async def review_rate(
+async def review_option(
     client: TripJackClient,
     config: TripJackConfig,
     *,
-    provider_rate_id: str,
-    provider_hotel_id: str | None,
+    search_id: str,
+    provider_hotel_id: str,
+    option_id: str,
     currency: str,
-) -> HotelRoomOption | None:
-    """Re-price one rate with the provider.
+) -> tuple[HotelRoomOption | None, str | None]:
+    """/hms/v3/hotel/review — authoritative re-price of one optionId.
 
-    Returns the re-priced room, or `None` when the provider gives no usable
-    quote back (the caller then treats the rate as unavailable — it never
-    falls back to the older, cheaper price).
+    Returns (repriced room, reviewHash). `None` means the provider gave no
+    usable quote back: the caller treats the option as gone rather than selling
+    the older, cheaper price. The reviewHash is the handle the booking phase
+    will need and is stored server-side only.
     """
     body = await client.post(
-        HOTEL_RATE_REVIEW_PATH,
-        build_rate_review_payload(
-            provider_rate_id=provider_rate_id,
-            provider_hotel_id=provider_hotel_id,
+        HOTEL_REVIEW_PATH,
+        build_review_payload(
+            search_id=search_id, hotel_id=provider_hotel_id, option_id=option_id
         ),
         retries=0,  # transactional-adjacent: never retried
-        operation="hotel_rate_review",
+        operation="hotel_review",
+    )
+
+    review_hash = (
+        get_str(body, "reviewHash")
+        or get_str(get_map(body, "reviewResult"), "reviewHash")
+        or get_str(get_map(body, "hotel"), "reviewHash")
     )
 
     candidate = (
         get_map(body, "hotel")
-        or get_map(get_map(body, "searchResult"), "hotel")
+        or get_map(get_map(body, "reviewResult"), "hotel")
+        or get_map(body, "reviewResult")
         or body
     )
-    for option in _rooms(candidate, currency) or []:
-        if option.id == provider_rate_id:
-            return option
     rooms = _rooms(candidate, currency)
-    return rooms[0] if rooms else None
+    exact = next((room for room in rooms if room.id == option_id), None)
+    return (exact or (rooms[0] if rooms else None)), review_hash
