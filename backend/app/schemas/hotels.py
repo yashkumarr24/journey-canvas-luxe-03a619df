@@ -87,6 +87,30 @@ class HotelRateSummary(CamelModel):
     free_cancellation_until: Optional[str] = None
     room_name: Optional[str] = None
     rooms_available: Optional[int] = None
+    # v3 rate plan type this rate came from (CHEAPEST, FREE_CANCELLATION, ...).
+    rate_plan_type: Optional[str] = None
+    rate_plan_label: Optional[str] = None
+
+
+class HotelRatePlan(CamelModel):
+    """One of the five Hotel API v3 rate plan types offered for a hotel.
+
+    `option_id` is the provider's opaque handle. It is never a price and is
+    always re-priced server-side before anyone can pay.
+    """
+
+    type: str
+    label: str
+    option_id: str
+    total_price: Money
+    per_night_price: Optional[Money] = None
+    meal_plan: Optional[str] = None
+    refundable: Optional[bool] = None
+    free_cancellation_until: Optional[str] = None
+    room_name: Optional[str] = None
+    pan_required: Optional[bool] = None
+    breakfast_included: Optional[bool] = None
+    gst_inclusive: Optional[bool] = None
 
 
 class HotelSummary(CamelModel):
