@@ -1,59 +1,103 @@
-"""TripJack HOTEL wire format: paths + request builders + field mapping notes.
+"""TripJack HOTEL API v3.0 wire format: paths, request builders, field keys.
 
-IMPORTANT — verification status
--------------------------------
-The flight mapping in `schemas.py` is written against the published TripJack
-Flights API v2.0 reference. TripJack's Hotel (HMS) reference is issued per
-agency account, so the paths and response keys below are declared in ONE place
-and treated as configuration, not as facts scattered through the code:
+Reference: https://tripjack.com/page/api-doc  (Hotels API v3.0, host
+apitest-hms.tripjack.com for UAT). v3 differences this module encodes:
 
-  * `HOTEL_SEARCH_PATH`, `HOTEL_DETAIL_PATH`, `HOTEL_RATE_REVIEW_PATH` MUST be
-    confirmed against the HMS reference for this account before the first UAT
-    call. If TripJack documents different paths, change them here only.
-  * The normalizer in `hotels.py` reads SEVERAL plausible key spellings per
-    field via the defensive accessors and leaves anything it cannot find as
-    `None`. It never invents a value, never defaults a price, and never
-    fabricates an image, rating or policy.
-  * Booking / voucher paths are intentionally ABSENT. They are added only once
-    the exact request/response contract is confirmed (see PENDING below).
+  * `apikey` header auth (same key as Flights v2) — handled by the client.
+  * `correlationId` is REQUIRED on every request: a client-generated tracing id.
+    We reuse the per-request id from `request_id_ctx`, so a customer complaint
+    can be traced from our logs to TripJack's. It carries no user data.
+  * Listing takes `hids` (hotel ids). `cityCode` was removed, so free-text
+    destinations MUST be resolved to hotel ids first (`hotel_directory.py`).
+  * `pageSize` was removed; page size is fixed server-side and continuation is
+    driven by the `searchId` returned with the first page.
+  * Listing returns FIVE rate plan types per hotel (cheapest, free
+    cancellation, GST inclusive, PAN not required, breakfast inclusive) instead
+    of only the cheapest.
+  * `mf` / `mft` (management fee + its tax) appear on every pricing object and
+    are part of the payable total.
+  * `optionType` is a four-code system: SRSM / SRCM / CRSM / CRCM.
+  * Cancellation policy is EMBEDDED in every option; the separate
+    cancel-policy endpoint is gone.
 
-PENDING (not implemented on purpose)
-  * hotel booking (hold/confirm) call
-  * voucher / invoice retrieval
-  * cancellation with the provider
+Identity chain carried through our own session store:
+    searchId -> optionId -> reviewHash   (-> bookingId, booking phase, PENDING)
+
+PENDING (not implemented on purpose — booking phase)
+  * /oms/v3/hotel/book, /confirm-book, /booking-details,
+    /cancel-booking/{bookingId}
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-# --- paths (single source of truth; verify against the HMS reference) -------
-HOTEL_SEARCH_PATH = "hms/v1/hotel-searchquery-list"
-HOTEL_DETAIL_PATH = "hms/v1/hotel-searchquery-details"
-HOTEL_RATE_REVIEW_PATH = "hms/v1/hotel-price-validate"
+from app.core.logging import request_id_ctx
+
+# --- v3 paths (single source of truth) --------------------------------------
+HOTEL_LISTING_PATH = "hms/v3/hotel/listing"
+HOTEL_PRICING_PATH = "hms/v3/hotel/pricing"
+HOTEL_REVIEW_PATH = "hms/v3/hotel/review"
+
+# Booking-phase paths, declared for documentation only. NOT called anywhere.
+PENDING_BOOKING_PATHS = (
+    "oms/v3/hotel/book",
+    "oms/v3/hotel/confirm-book",
+    "oms/v3/hotel/booking-details",
+    "oms/v3/hotel/cancel-booking/{bookingId}",
+)
 
 DEFAULT_CURRENCY = "INR"
 DEFAULT_NATIONALITY = "IN"
 
-# Room/rate refundability flags seen across TripJack responses.
+# v3 rate plan types, in the order we present them.
+RATE_PLAN_TYPES: dict[str, str] = {
+    "CHEAPEST": "Cheapest",
+    "FREE_CANCELLATION": "Free cancellation",
+    "GST_INCLUSIVE": "GST inclusive",
+    "PAN_NOT_REQUIRED": "PAN not required",
+    "BREAKFAST_INCLUSIVE": "Breakfast included",
+}
+
+# v3 optionType: (same|cross) room x (same|cross) mealplan.
+OPTION_TYPES: dict[str, str] = {
+    "SRSM": "Same room, same meal plan",
+    "SRCM": "Same room, different meal plans",
+    "CRSM": "Different rooms, same meal plan",
+    "CRCM": "Different rooms, different meal plans",
+}
+
 REFUNDABLE_TRUE = {"refundable", "free_cancellation", "true", "1", "yes"}
 REFUNDABLE_FALSE = {"non_refundable", "nonrefundable", "false", "0", "no"}
 
 
-def build_search_payload(
-    *,
-    destination: str,
-    check_in: str,
-    check_out: str,
-    rooms: list[dict[str, Any]],
-    nationality: str | None,
-    currency: str | None,
-) -> dict[str, Any]:
-    """Map OUR normalized hotel search into a TripJack HMS search body.
+def correlation_id() -> str:
+    """Per-request tracing id required by v3. Opaque, no user data."""
+    value = request_id_ctx.get()
+    return value if value and value != "-" else "fnf-untraced"
 
-    `rooms` is a list of {"adults": int, "childAges": [int]} — one entry per
-    physical room, exactly as the customer asked for it.
-    """
+
+def normalise_rate_plan(raw: Any) -> str | None:
+    """Map a provider rate-plan marker onto one of the five v3 types."""
+    if not isinstance(raw, str):
+        return None
+    token = raw.strip().upper().replace(" ", "_").replace("-", "_")
+    if token in RATE_PLAN_TYPES:
+        return token
+    aliases = {
+        "FREECANCELLATION": "FREE_CANCELLATION",
+        "FREE_CANCEL": "FREE_CANCELLATION",
+        "GSTINCLUSIVE": "GST_INCLUSIVE",
+        "PANNOTREQUIRED": "PAN_NOT_REQUIRED",
+        "NO_PAN": "PAN_NOT_REQUIRED",
+        "BREAKFASTINCLUSIVE": "BREAKFAST_INCLUSIVE",
+        "BREAKFAST": "BREAKFAST_INCLUSIVE",
+    }
+    return aliases.get(token)
+
+
+def _room_info(rooms: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One entry per physical room, exactly as the customer asked for it."""
     room_info: list[dict[str, Any]] = []
     for room in rooms:
         entry: dict[str, Any] = {"numberOfAdults": int(room.get("adults") or 1)}
@@ -62,32 +106,71 @@ def build_search_payload(
             entry["numberOfChild"] = len(ages)
             entry["childAge"] = ages
         room_info.append(entry)
+    return room_info
 
-    search_query: dict[str, Any] = {
-        "checkinDate": check_in,
-        "checkoutDate": check_out,
-        "roomInfo": room_info,
-        "searchCriteria": {
-            "city": destination,
-            "nationality": (nationality or DEFAULT_NATIONALITY).upper(),
-            "currency": (currency or DEFAULT_CURRENCY).upper(),
+
+def build_listing_payload(
+    *,
+    hids: list[str],
+    check_in: str,
+    check_out: str,
+    rooms: list[dict[str, Any]],
+    nationality: str | None,
+    currency: str | None,
+) -> dict[str, Any]:
+    """First page of /hms/v3/hotel/listing. `hids` is mandatory in v3."""
+    return {
+        "correlationId": correlation_id(),
+        "searchQuery": {
+            "checkinDate": check_in,
+            "checkoutDate": check_out,
+            "roomInfo": _room_info(rooms),
+            "searchCriteria": {
+                # v3: hotel ids only. cityCode was removed from the contract.
+                "hids": hids,
+                "nationality": (nationality or DEFAULT_NATIONALITY).upper(),
+                "currency": (currency or DEFAULT_CURRENCY).upper(),
+            },
         },
     }
-    return {"searchQuery": search_query}
 
 
-def build_detail_payload(*, provider_hotel_id: str, provider_search_id: str | None) -> dict[str, Any]:
-    payload: dict[str, Any] = {"id": provider_hotel_id}
-    if provider_search_id:
-        payload["searchId"] = provider_search_id
+def build_listing_continuation_payload(
+    *, search_id: str, next_token: str | None
+) -> dict[str, Any]:
+    """Subsequent pages. Page size is fixed server-side in v3.
+
+    Continuation is keyed on the `searchId` from the first page; when the
+    provider also returns an explicit continuation token we echo it back.
+    """
+    payload: dict[str, Any] = {
+        "correlationId": correlation_id(),
+        "searchId": search_id,
+    }
+    if next_token:
+        payload["nextPageToken"] = next_token
     return payload
 
 
-def build_rate_review_payload(*, provider_rate_id: str, provider_hotel_id: str | None) -> dict[str, Any]:
-    payload: dict[str, Any] = {"id": provider_rate_id}
-    if provider_hotel_id:
-        payload["hotelId"] = provider_hotel_id
-    return payload
+def build_pricing_payload(*, search_id: str, hotel_id: str) -> dict[str, Any]:
+    """/hms/v3/hotel/pricing — full rate plans for one hotel in this search."""
+    return {
+        "correlationId": correlation_id(),
+        "searchId": search_id,
+        "hotelId": hotel_id,
+    }
+
+
+def build_review_payload(
+    *, search_id: str, hotel_id: str, option_id: str
+) -> dict[str, Any]:
+    """/hms/v3/hotel/review — server-authoritative re-price of one optionId."""
+    return {
+        "correlationId": correlation_id(),
+        "searchId": search_id,
+        "hotelId": hotel_id,
+        "optionId": option_id,
+    }
 
 
 def refundable_flag(raw: Any) -> bool | None:
