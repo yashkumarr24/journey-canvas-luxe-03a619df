@@ -12,6 +12,7 @@ from app.api.v1 import (
     analytics,
     assistant,
     flights,
+    hotels,
     notifications,
     operations,
     review,
