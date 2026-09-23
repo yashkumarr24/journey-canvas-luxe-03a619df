@@ -178,108 +178,120 @@ async def fetch_content(client: TripJackClient, hotel_ids: list[str]) -> list[di
 
 # ------------------------------ normalisation -------------------------------
 
+IMAGE_SIZES = ("XXL", "XL", "L", "M")  # verified: images[].links.XXL.href
+
+
 def _images(raw: Any) -> list[dict]:
-    out: list[dict] = []
-    if not isinstance(raw, dict):
-        return out
-    for key in ("images", "img", "hotelImages"):
-        items = raw.get(key)
-        if not isinstance(items, list):
+    """Verified shape: images[] -> {links: {XXL: {href}}, is_hero_image, caption}.
+    Hero image first; https only; deduped; capped."""
+    items = raw.get("images") if isinstance(raw, dict) else None
+    if not isinstance(items, list):
+        return []
+    found: list[tuple[bool, dict]] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
             continue
-        for item in items:
-            url = item if isinstance(item, str) else _s(item, "url", "imageUrl", "link", "l", "m")
-            if url and url.startswith("https://") and all(i["url"] != url for i in out):
-                out.append({"url": url, "caption": _s(item, "caption", "title", "type")})
-            if len(out) >= MAX_IMAGES:
-                return out
-    return out
+        links = item.get("links") if isinstance(item.get("links"), dict) else {}
+        url = None
+        for size in IMAGE_SIZES:
+            link = links.get(size)
+            href = link.get("href") if isinstance(link, dict) else None
+            if isinstance(href, str) and href.startswith("https://"):
+                url = href.strip()
+                break
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        caption = item.get("caption")
+        found.append((
+            item.get("is_hero_image") is True,
+            {"url": url, "caption": caption.strip()[:200] if isinstance(caption, str) and caption.strip() else None},
+        ))
+    found.sort(key=lambda pair: not pair[0])  # stable: hero first
+    return [img for _, img in found[:MAX_IMAGES]]
 
 
-def _names(raw: Any, *keys: str) -> list[str]:
+def _amenities(raw: Any) -> list[str]:
+    """Verified shape: amenities is an indexed object {key: {id, name}}."""
+    block = raw.get("amenities") if isinstance(raw, dict) else None
+    values = block.values() if isinstance(block, dict) else block if isinstance(block, list) else []
     out: list[str] = []
-    if not isinstance(raw, dict):
-        return out
-    for key in keys:
-        items = raw.get(key)
-        if not isinstance(items, list):
-            continue
-        for item in items:
-            name = item.strip() if isinstance(item, str) else _s(item, "name", "title", "value")
-            if name and name not in out:
-                out.append(name[:120])
+    for item in values:
+        name = item.get("name") if isinstance(item, dict) else None
+        if isinstance(name, str) and name.strip() and name.strip()[:120] not in out:
+            out.append(name.strip()[:120])
     return out[:80]
 
 
-def _json(raw: Any, *keys: str) -> Any:
-    if not isinstance(raw, dict):
-        return None
-    for key in keys:
-        value = raw.get(key)
-        if value not in (None, "", [], {}):
-            return value
+def _named(value: Any) -> Optional[str]:
+    """{id, name} object -> name."""
+    if isinstance(value, dict) and isinstance(value.get("name"), str) and value["name"].strip():
+        return value["name"].strip()
     return None
 
 
+def _num(value: Any) -> Optional[float]:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _text(value: Any) -> Optional[str]:
+    if isinstance(value, (str, int, float)) and not isinstance(value, bool):
+        text = str(value).strip()
+        return text or None
+    return _named(value)
+
+
 def normalise_content(raw: dict) -> Optional[dict]:
-    """-> {hotel, images, amenities, rooms} or None when unusable."""
-    hotel_id = _s(raw, "tjHotelId", "hotelId", "id")
+    """Verified TripJack v3 fetch-hotel-content hotel -> {hotel, images, amenities, rooms}."""
+    hotel_id = _text(raw.get("tjHotelId")) if isinstance(raw, dict) else None
     if not hotel_id:
         return None
-    address = raw.get("address") if isinstance(raw.get("address"), dict) else {}
-    geo = next(
-        (raw[k] for k in ("geolocation", "geoLocation", "location", "gl") if isinstance(raw.get(k), dict)),
-        {},
-    )
-    active_raw = raw.get("isActive", raw.get("active", raw.get("status")))
-    is_active = (
-        active_raw if isinstance(active_raw, bool)
-        else str(active_raw).strip().lower() not in {"inactive", "false", "0", "deleted"}
-        if active_raw is not None else True
-    )
-    contact = _json(raw, "contact", "contactInfo")
-    if isinstance(contact, dict):
-        contact = {k: contact[k] for k in ("phone", "email", "website", "fax") if contact.get(k)}
+    locale = raw.get("locale") if isinstance(raw.get("locale"), dict) else {}
+    address = locale.get("address") if isinstance(locale.get("address"), dict) else {}
+    coords = locale.get("coordinates") if isinstance(locale.get("coordinates"), dict) else {}
+    phones = [p.strip() for p in (locale.get("phone") or []) if isinstance(p, str) and p.strip()]
+    chain = _named(raw.get("chain"))
+    contact = {k: v for k, v in (("phone", phones or None), ("chain", chain)) if v} or None
 
-    rooms = []
-    for index, room in enumerate(raw.get("rooms") or raw.get("roomInfo") or []):
-        if not isinstance(room, dict):
-            continue
-        rooms.append({
-            "tj_hotel_id": hotel_id,
-            "room_key": _s(room, "id", "roomId", "code") or f"room-{index}",
-            "name": _s(room, "name", "roomName"),
-            "description": _s(room, "description"),
-            "amenities": _names(room, "amenities", "facilities") or None,
-            "images": [i["url"] for i in _images(room)] or None,
-        })
+    line = " ".join(
+        t for t in (_text(address.get("line_1")), _text(address.get("line_2"))) if t
+    ) or _text(address.get("line1")) or _text(address.get("address"))
+
+    policies = raw.get("policies")
+    descriptions = raw.get("descriptions")
 
     return {
         "hotel": {
             "tj_hotel_id": hotel_id,
-            "unica_id": _s(raw, "unicaId"),
-            "name": _s(raw, "name", "hotelName"),
-            "is_active": bool(is_active),
-            "star_rating": _n(raw, "starRating", "rating", "rt"),
-            "property_type": _s(raw, "propertyType", "pt", "category"),
-            "address": _s(address, "line1", "addressLine1", "adr", "address") or _s(raw, "addressLine"),
-            "city": _s(address, "city", "cityName") or _s(raw, "cityName"),
-            "state": _s(address, "state", "stateName"),
-            "country": _s(address, "country", "countryName") or _s(raw, "countryName"),
-            "postal_code": _s(address, "postalCode", "zipCode", "postal"),
-            "latitude": _n(geo, "lat", "latitude", "ln"),
-            "longitude": _n(geo, "lng", "lon", "longitude", "lt"),
-            "descriptions": _json(raw, "descriptions", "description", "des"),
-            "policies": _json(raw, "policies", "policy", "hotelPolicies"),
-            "contact": contact or None,
+            "unica_id": _text(raw.get("unicaId")),
+            "name": _text(raw.get("name")),
+            "is_active": raw.get("is_active") is not False,
+            "star_rating": _num(raw.get("star_rating")),
+            "property_type": _named(raw.get("property_type")),
+            "address": line,
+            "city": _text(address.get("city")),
+            "state": _text(address.get("state_province_name")) or _text(address.get("state")),
+            "country": _text(address.get("country")) or _text(address.get("country_code")),
+            "postal_code": _text(address.get("postal_code")),
+            "latitude": _num(coords.get("lat")),
+            "longitude": _num(coords.get("long")),
+            "descriptions": descriptions if descriptions not in (None, "", [], {}) else None,
+            "policies": policies if policies not in (None, "", [], {}) else None,
+            "contact": contact,
             "deleted_at": None,
         },
         "images": [
             {"tj_hotel_id": hotel_id, "position": i, "url": img["url"], "caption": img["caption"]}
             for i, img in enumerate(_images(raw))
         ],
-        "amenities": [
-            {"tj_hotel_id": hotel_id, "name": name}
-            for name in _names(raw, "amenities", "facilities", "hotelFacilities")
-        ],
-        "rooms": rooms,
+        "amenities": [{"tj_hotel_id": hotel_id, "name": n} for n in _amenities(raw)],
+        # Room content was not part of the verified sample; rooms stay empty
+        # until a real room payload is confirmed (live Pricing supplies rooms).
+        "rooms": [],
     }
