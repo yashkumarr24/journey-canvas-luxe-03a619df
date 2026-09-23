@@ -106,15 +106,17 @@ async def review_hotel(
 async def get_hotel_review(
     review_token: str,
     auth: AuthContext = Depends(optional_user),
+    settings: Settings = Depends(get_settings),
     guest_token: Optional[str] = Header(default=None, alias="X-Guest-Token"),
     guest_token_query: Optional[str] = Query(
         default=None, include_in_schema=False, alias="guestToken"
     ),
 ) -> HotelReviewResponse:
-    return hotel_service.get_review(
+    return await hotel_service.get_review(
         review_token=review_token,
         guest_token=guest_token or guest_token_query,
         auth=auth,
+        settings=settings,
     )
 
 
