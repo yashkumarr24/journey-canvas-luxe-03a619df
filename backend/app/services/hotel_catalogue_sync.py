@@ -89,6 +89,30 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 while True:
                     rows, nxt, more = await content.fetch_regions_page(client, cursor.get("region_cursor"))
                     await repo.upsert_regions(rows)
+                    # The mapping response does not repeat its region. Request
+                    # each authoritative cityRegionId separately and attach that
+                    # exact relationship before persisting each hotel mapping.
+                    for region_index, region in enumerate(rows):
+                        region_id = region["city_region_id"]
+                        page = 0
+                        while True:
+                            mappings, mapping_more = await content.fetch_mapping_page(
+                                client,
+                                page=page,
+                                country_name=region.get("country_name"),
+                                region_ids=[region_id],
+                            )
+                            await repo.upsert_mappings(mappings)
+                            cursor["region_mapping"] = {
+                                "region_index": region_index,
+                                "region_id": region_id,
+                                "page": page,
+                            }
+                            await repo.put_state("full", {"cursor": cursor})
+                            if not mapping_more or not mappings:
+                                break
+                            page += 1
+                    cursor.pop("region_mapping", None)
                     if not more:
                         break
                     cursor["region_cursor"] = nxt
