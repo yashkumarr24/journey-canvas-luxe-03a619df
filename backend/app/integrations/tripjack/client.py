@@ -226,6 +226,9 @@ class TripJackClient:
 
 
 _client: TripJackClient | None = None
+# Hotels (HMS v3) live on a different host, so they need their own pool. The
+# flight client is never reused for hotels and vice versa.
+_hotel_client: TripJackClient | None = None
 
 
 def get_client(config: TripJackConfig) -> TripJackClient:
@@ -236,8 +239,19 @@ def get_client(config: TripJackConfig) -> TripJackClient:
     return _client
 
 
+def get_hotel_client(config: TripJackConfig) -> TripJackClient:
+    """Separate pooled client bound to the HMS (hotel) base URL."""
+    global _hotel_client
+    if _hotel_client is None:
+        _hotel_client = TripJackClient(config)
+    return _hotel_client
+
+
 async def close_client() -> None:
-    global _client
+    global _client, _hotel_client
     if _client is not None:
         await _client.aclose()
         _client = None
+    if _hotel_client is not None:
+        await _hotel_client.aclose()
+        _hotel_client = None

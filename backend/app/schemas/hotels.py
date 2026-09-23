@@ -87,6 +87,30 @@ class HotelRateSummary(CamelModel):
     free_cancellation_until: Optional[str] = None
     room_name: Optional[str] = None
     rooms_available: Optional[int] = None
+    # v3 rate plan type this rate came from (CHEAPEST, FREE_CANCELLATION, ...).
+    rate_plan_type: Optional[str] = None
+    rate_plan_label: Optional[str] = None
+
+
+class HotelRatePlan(CamelModel):
+    """One of the five Hotel API v3 rate plan types offered for a hotel.
+
+    `option_id` is the provider's opaque handle. It is never a price and is
+    always re-priced server-side before anyone can pay.
+    """
+
+    type: str
+    label: str
+    option_id: str
+    total_price: Money
+    per_night_price: Optional[Money] = None
+    meal_plan: Optional[str] = None
+    refundable: Optional[bool] = None
+    free_cancellation_until: Optional[str] = None
+    room_name: Optional[str] = None
+    pan_required: Optional[bool] = None
+    breakfast_included: Optional[bool] = None
+    gst_inclusive: Optional[bool] = None
 
 
 class HotelSummary(CamelModel):
@@ -104,6 +128,8 @@ class HotelResult(HotelSummary):
     review_score: Optional[float] = None
     review_count: Optional[int] = None
     rate: Optional[HotelRateSummary] = None
+    # All v3 rate plan types the provider returned, not only the cheapest.
+    rate_plans: Optional[List[HotelRatePlan]] = None
 
 
 class HotelCancellationRule(CamelModel):
@@ -135,9 +161,22 @@ class HotelRoomOption(CamelModel):
     base_price: Optional[Money] = None
     taxes: Optional[Money] = None
     fees_and_charges: Optional[Money] = None
+    # v3 management fee and its tax. Both are part of `total_price`.
+    management_fee: Optional[Money] = None
+    management_fee_tax: Optional[Money] = None
     total_price: Money
     rooms_available: Optional[int] = None
     payment_policy: Optional[str] = None
+    # v3 option metadata.
+    option_type: Optional[str] = None
+    option_type_label: Optional[str] = None
+    rate_plan_type: Optional[str] = None
+    rate_plan_label: Optional[str] = None
+    # Provider-declared guest requirements for THIS rate.
+    pan_required: Optional[bool] = None
+    passport_required: Optional[bool] = None
+    gst_inclusive: Optional[bool] = None
+    breakfast_included: Optional[bool] = None
 
 
 class HotelDetail(HotelResult):
@@ -493,6 +532,7 @@ __all__ = [
     "HotelImage",
     "HotelLocation",
     "HotelOccupancy",
+    "HotelRatePlan",
     "HotelRateSummary",
     "HotelResult",
     "HotelReviewResponse",
