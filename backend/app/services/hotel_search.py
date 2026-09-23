@@ -58,6 +58,31 @@ from app.schemas.hotels import (
 )
 from app.schemas.review import PriceChange
 from app.services import hotel_sessions as sessions
+from app.repositories.hotel_catalogue import HotelCatalogueRepository
+from app.schemas.hotels import HotelImage, HotelLocation
+
+
+def _merge_static(result, row):
+    """Fill static gaps only. Live listing values (and all prices) win."""
+    if not row:
+        return result
+    updates: dict = {}
+    if result.star_rating is None and row.get("star_rating") is not None:
+        updates["star_rating"] = float(row["star_rating"])
+    if not result.property_type and row.get("property_type"):
+        updates["property_type"] = row["property_type"]
+    imgs = sorted(row.get("hotel_images") or [], key=lambda i: i.get("position", 0))
+    if not result.images and imgs:
+        updates["images"] = [HotelImage(url=i["url"], caption=i.get("caption")) for i in imgs[:15]]
+        updates["thumbnail_url"] = result.thumbnail_url or imgs[0]["url"]
+    if not result.amenities and row.get("hotel_amenities"):
+        updates["amenities"] = [a["name"] for a in row["hotel_amenities"]][:40]
+    loc = result.location or HotelLocation()
+    loc_updates = {k: row.get(s) for k, s in (("address", "address"), ("city", "city"), ("country", "country"),
+                   ("latitude", "latitude"), ("longitude", "longitude")) if getattr(loc, k) is None and row.get(s) is not None}
+    if loc_updates:
+        updates["location"] = loc.model_copy(update=loc_updates)
+    return result.model_copy(update=updates) if updates else result
 
 logger = get_logger(__name__)
 
@@ -175,29 +200,53 @@ async def search_hotels(
 
     # Hotel API v3 searches by hotel ids (hids); cityCode no longer exists. We
     # resolve the destination server-side and never invent an id.
-    entry = hotel_directory.resolve(
-        payload.destination, directory_path=settings.tripjack_hotel_directory_path
-    )
-    if entry is None or not entry.hids:
+    # Primary: local TripJack static catalogue (migration 0012). Fallback: the
+    # legacy directory file. Static data only picks ids; price/availability
+    # always come from the live v3 listing below.
+    catalogue = HotelCatalogueRepository(settings)
+    hids: list[str] = []
+    if catalogue.enabled:
+        try:
+            hids = await catalogue.resolve_hids(payload.destination)
+        except Exception:
+            logger.warning("hotel_catalogue_lookup_failed")
+    if not hids:
+        entry = hotel_directory.resolve(
+            payload.destination, directory_path=settings.tripjack_hotel_directory_path
+        )
+        hids = list(entry.hids) if entry else []
+    if not hids:
         logger.warning("hotel_destination_unresolved")
         raise HotelDestinationUnsupportedError()
+    static: dict = {}
+    if catalogue.enabled:
+        try:
+            static = await catalogue.static_for(hids)
+        except Exception:
+            logger.warning("hotel_catalogue_static_failed")
+    names_token = tripjack_hotels.STATIC_NAMES.set(
+        {k: v["name"] for k, v in static.items() if v.get("name")}
+    )
 
     logger.info(
         "hotel_search_started",
         extra=log_extra(
             nights=payload.nights,
             rooms=len(payload.rooms),
-            hotel_ids=len(entry.hids),
+            hotel_ids=len(hids),
             authenticated=auth.is_authenticated,
         ),
     )
 
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
-            client, config, payload, hids=entry.hids
+            client, config, payload, hids=hids
         )
     except Exception as exc:  # narrowed inside _map_provider_error
         raise _map_provider_error(exc) from None
+    finally:
+        tripjack_hotels.STATIC_NAMES.reset(names_token)
+    results = [_merge_static(r, static.get(r.id)) for r in results]
 
     session = await sessions.create_search_session(
         settings=settings,
