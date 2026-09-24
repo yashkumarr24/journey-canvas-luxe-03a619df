@@ -264,5 +264,10 @@ async def status(settings: Settings) -> dict:
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "incremental"
-    runner = run_full_sync if mode == "full" else run_incremental_sync
-    print(asyncio.run(runner()))
+    if mode == "test-region":
+        if len(sys.argv) < 3:
+            raise SystemExit("usage: python -m app.services.hotel_catalogue_sync test-region <cityRegionId>")
+        print(asyncio.run(run_test_region(int(sys.argv[2]))))
+    else:
+        runner = run_full_sync if mode == "full" else run_incremental_sync
+        print(asyncio.run(runner()))
