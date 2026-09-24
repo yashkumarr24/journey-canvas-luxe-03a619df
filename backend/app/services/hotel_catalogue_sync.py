@@ -221,13 +221,33 @@ async def run_test_region(region_id: int, settings: Optional[Settings] = None) -
     repo = HotelCatalogueRepository(settings)
     if not repo.enabled:
         raise RuntimeError("database not configured")
-    summary = {"region_id": region_id, "mappings": 0, "content": 0, "failures": 0}
+    target = str(region_id).strip()
+    summary = {"region_id": target, "region_saved": False, "mappings": 0, "content": 0, "failures": 0}
     async with _lock:
         client = _client(settings)
+        # 1. Locate the exact cityRegionId via the existing cursor flow and persist it.
+        region: Optional[dict] = None
+        region_cursor: Optional[str] = None
+        while region is None:
+            rows, nxt, more = await content.fetch_regions_page(client, region_cursor)
+            region = next((r for r in rows if r["city_region_id"] == target), None)
+            if region is not None or not more or not nxt:
+                break
+            region_cursor = nxt
+        if region is None:
+            summary["error"] = "cityRegionId not returned by fetch-city-regionIds"
+            return summary
+        await repo.upsert_regions([region])
+        summary["region_saved"] = True
+        # 2. Mappings for exactly this region (region_id attached to every row).
         page = 0
         first_ids: list[str] = []
         while True:
-            mappings, more = await content.fetch_mapping_page(client, page=page, region_ids=[region_id])
+            mappings, more = await content.fetch_mapping_page(
+                client, page=page, country_name=region.get("country_name"), region_ids=[target]
+            )
+            for m in mappings:
+                m["region_id"] = target
             await repo.upsert_mappings(mappings)
             summary["mappings"] += len(mappings)
             for m in mappings:
