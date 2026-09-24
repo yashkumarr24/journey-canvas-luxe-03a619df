@@ -211,6 +211,49 @@ async def run_incremental_sync(settings: Optional[Settings] = None) -> dict:
     return summary
 
 
+TEST_REGION_MAX_CONTENT = 5
+
+
+async def run_test_region(region_id: int, settings: Optional[Settings] = None) -> dict:
+    """Safe single-region test: mappings for one cityRegionId + content for the
+    first <=5 hotels. Does not touch sync state, full sync, or incremental sync."""
+    settings = settings or get_settings()
+    repo = HotelCatalogueRepository(settings)
+    if not repo.enabled:
+        raise RuntimeError("database not configured")
+    summary = {"region_id": region_id, "mappings": 0, "content": 0, "failures": 0}
+    async with _lock:
+        client = _client(settings)
+        page = 0
+        first_ids: list[str] = []
+        while True:
+            mappings, more = await content.fetch_mapping_page(client, page=page, region_ids=[region_id])
+            await repo.upsert_mappings(mappings)
+            summary["mappings"] += len(mappings)
+            for m in mappings:
+                if len(first_ids) < TEST_REGION_MAX_CONTENT:
+                    first_ids.append(m["tj_hotel_id"])
+            if not more or not mappings:
+                break
+            page += 1
+        if first_ids:
+            try:
+                raw = await content.fetch_content(client, first_ids)
+                items = [i for i in (content.normalise_content(r) for r in raw) if i]
+                saved = set(await repo.save_content(items))
+                summary["content"] = len(saved)
+                summary["failures"] = len(first_ids) - len(saved)
+                missing = [i for i in first_ids if i not in saved]
+                if missing:
+                    await repo.mark_content_failed(missing)
+            except Exception as exc:
+                logger.warning("hotel_test_region_content_failed",
+                               extra=log_extra(kind=type(exc).__name__, size=len(first_ids)))
+                await repo.mark_content_failed(first_ids)
+                summary["failures"] = len(first_ids)
+    return summary
+
+
 async def status(settings: Settings) -> dict:
     repo = HotelCatalogueRepository(settings)
     if not repo.enabled:
@@ -221,5 +264,10 @@ async def status(settings: Settings) -> dict:
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "incremental"
-    runner = run_full_sync if mode == "full" else run_incremental_sync
-    print(asyncio.run(runner()))
+    if mode == "test-region":
+        if len(sys.argv) < 3:
+            raise SystemExit("usage: python -m app.services.hotel_catalogue_sync test-region <cityRegionId>")
+        print(asyncio.run(run_test_region(int(sys.argv[2]))))
+    else:
+        runner = run_full_sync if mode == "full" else run_incremental_sync
+        print(asyncio.run(runner()))
