@@ -126,21 +126,14 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                         break
                     cursor["region_cursor"] = nxt
                     await repo.put_state("full", {"cursor": cursor})
-                cursor = {"stage": "mapping", "countries": cursor["countries"], "country_index": 0, "page": 0}
+                # The authoritative region-based mapping is sufficient; there is
+                # no second country-wide mapping pass.
+                cursor = {"stage": "content"}
                 await repo.put_state("full", {"cursor": cursor})
 
             if cursor["stage"] == "mapping":
-                countries = cursor["countries"]
-                while cursor["country_index"] < len(countries):
-                    name = countries[cursor["country_index"]]
-                    rows, more = await content.fetch_mapping_page(client, page=cursor["page"], country_name=name)
-                    await repo.upsert_mappings(rows)
-                    if more and rows:
-                        cursor["page"] += 1
-                    else:
-                        cursor["country_index"] += 1
-                        cursor["page"] = 0
-                    await repo.put_state("full", {"cursor": cursor})
+                # Legacy resume state from before the duplicate country-wide
+                # mapping stage was removed: skip straight to content.
                 cursor = {"stage": "content"}
                 await repo.put_state("full", {"cursor": cursor})
 
