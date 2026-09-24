@@ -112,7 +112,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
         run_started = now_iso()
         processed = int(state.get("processed_count") or 0) if resume else 0
         failed = 0
-        await repo.put_state("full", {
+        await _put_state_full(repo, {
             "status": "running", "started_at": state.get("started_at") if resume else run_started,
             "completed_at": None, "error_summary": None, "cursor": cursor,
             "processed_count": processed, "failed_count": 0,
@@ -122,7 +122,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 countries = await content.fetch_countries(client)
                 await repo.upsert_countries(countries)
                 cursor = {"stage": "regions", "countries": countries, "region_cursor": None}
-                await repo.put_state("full", {"cursor": cursor})
+                await _put_state_full(repo, {"cursor": cursor})
 
             if cursor["stage"] == "regions":
                 while True:
@@ -153,32 +153,32 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                                 "region_id": region_id,
                                 "page": page + 1 if mapping_more and mappings else page,
                             }
-                            await repo.put_state("full", {"cursor": cursor})
+                            await _put_state_full(repo, {"cursor": cursor})
                             if not mapping_more or not mappings:
                                 break
                             page += 1
                         saved_mapping = {}
                         cursor["region_mapping"] = {"region_index": region_index + 1, "page": 0}
-                        await repo.put_state("full", {"cursor": cursor})
+                        await _put_state_full(repo, {"cursor": cursor})
                     cursor.pop("region_mapping", None)
                     if not more:
                         break
                     cursor["region_cursor"] = nxt
-                    await repo.put_state("full", {"cursor": cursor})
+                    await _put_state_full(repo, {"cursor": cursor})
                 # The authoritative region-based mapping is sufficient; there is
                 # no second country-wide mapping pass.
                 cursor = {"stage": "content"}
-                await repo.put_state("full", {"cursor": cursor})
+                await _put_state_full(repo, {"cursor": cursor})
 
             if cursor["stage"] == "mapping":
                 # Legacy resume state from before the duplicate country-wide
                 # mapping stage was removed: skip straight to content.
                 cursor = {"stage": "content"}
-                await repo.put_state("full", {"cursor": cursor})
+                await _put_state_full(repo, {"cursor": cursor})
 
             processed, failed = await _content_phase(repo, client, run_started, "full", processed, failed)
             done = failed == 0
-            await repo.put_state("full", {
+            await _put_state_full(repo, {
                 "status": "completed" if done else "partial",
                 "completed_at": now_iso() if done else None,
                 "last_success_at": now_iso() if done else state.get("last_success_at"),
@@ -194,8 +194,14 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
             return {"status": "completed" if done else "partial", "processed": processed, "failed": failed}
         except Exception as exc:
             logger.error("hotel_full_sync_failed", extra=log_extra(kind=type(exc).__name__))
-            await repo.put_state("full", {"status": "failed", "cursor": cursor,
-                                          "error_summary": f"{type(exc).__name__} during {cursor.get('stage')}"})
+            # Mark the run failed, but never let this state write mask the
+            # original error or crash while the sync is already stopping.
+            try:
+                await _put_state_full(repo, {"status": "failed", "cursor": cursor,
+                                             "error_summary": f"{type(exc).__name__} during {cursor.get('stage')}"})
+            except StatePersistenceError:
+                logger.error("hotel_full_sync_failed_state_unsaved",
+                             extra=log_extra(original=type(exc).__name__))
             raise
 
 
