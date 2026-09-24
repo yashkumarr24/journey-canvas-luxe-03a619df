@@ -29,8 +29,8 @@ MAX_IMAGES = 30
 # Parsers follow the VPS-verified UAT response wrappers exactly:
 #   fetch-countries            -> hotelCountries[]
 #   fetch-city-regionIds       -> hotelCityRegionIds[], nextCursor, hasMore
-#   fetch-hotel-mapping(-sync) -> hotels[], pageable{pageNumber,totalPages,...}
-#   fetch-deleted-hotel-mapping-> hotels[], pageable{...}
+#   fetch-hotel-mapping        -> hotels[], pageable{pageNumber,totalPages,...}
+#   mapping-sync / deleted     -> hotels[], nextCursor, hasMore
 #   fetch-hotel-content        -> hotels[]
 
 
@@ -71,7 +71,7 @@ async def fetch_countries(client: TripJackClient) -> list[str]:
     body = await client.get(COUNTRIES_PATH, retries=RETRIES, operation="hotel_content_countries")
     names: list[str] = []
     for item in _list(body, "hotelCountries"):
-        name = _str(item) if not isinstance(item, dict) else _str(item.get("countryName"))
+        name = item.strip() if isinstance(item, str) else None
         if name and name not in names:
             names.append(name)
     return names
@@ -103,9 +103,16 @@ async def fetch_regions_page(
     return rows, next_cursor, has_more
 
 
-def _mapping_rows(body: Any, country_name: Optional[str] = None) -> list[dict]:
-    """hotels[] -> {tjHotelId, unicaId}. Only verified keys are written, so an
-    upsert never blanks columns the response does not carry (e.g. region_id)."""
+def _mapping_rows(
+    body: Any,
+    country_name: Optional[str] = None,
+    region_id: Optional[str] = None,
+) -> list[dict]:
+    """Map verified hotel IDs plus authoritative request scope metadata.
+
+    TripJack's mapping rows do not repeat their requested country/region, so
+    those values come only from the request that produced the response.
+    """
     out: dict[str, dict] = {}
     for raw in _list(body, "hotels"):
         if not isinstance(raw, dict):
@@ -116,6 +123,8 @@ def _mapping_rows(body: Any, country_name: Optional[str] = None) -> list[dict]:
         row: dict[str, Any] = {"tj_hotel_id": hotel_id, "unica_id": _str(raw.get("unicaId"))}
         if country_name:
             row["country_name"] = country_name
+        if region_id:
+            row["region_id"] = region_id
         out[hotel_id] = row
     return list(out.values())
 
@@ -134,7 +143,8 @@ async def fetch_mapping_page(
     if region_ids:
         payload["regionIds"] = region_ids
     body = await client.post(MAPPING_PATH, payload, retries=RETRIES, operation="hotel_content_mapping")
-    return _mapping_rows(body, country_name), _page_paging(body, page)
+    authoritative_region = region_ids[0] if region_ids and len(region_ids) == 1 else None
+    return _mapping_rows(body, country_name, authoritative_region), _page_paging(body, page)
 
 
 async def fetch_mapping_changes(
@@ -143,20 +153,18 @@ async def fetch_mapping_changes(
     """NEW / UPDATE via mapping-sync, DELETE via deleted-hotel-mapping.
 
     Verified request: {"type", "lastUpdateTime" (ISO-8601 OffsetDateTime)}.
-    Paging is page-based (pageable); `cursor` carries the next page number as a
-    string so the existing resumable state shape is unchanged.
+    Subsequent pages use TripJack's opaque cursor and response nextCursor.
     """
     if change_type not in ("NEW", "UPDATE", "DELETE"):
         raise ValueError("change_type must be NEW, UPDATE or DELETE")
     path = DELETED_MAPPING_PATH if change_type == "DELETE" else MAPPING_SYNC_PATH
-    page = int(cursor) if cursor and str(cursor).isdigit() else 0
     payload: dict[str, Any] = {"type": change_type, "lastUpdateTime": last_update_time}
-    if page:
-        payload["page"] = page
+    if cursor:
+        payload["cursor"] = cursor
     body = await client.post(path, payload, retries=RETRIES, operation=f"hotel_content_{change_type.lower()}")
     rows = _mapping_rows(body)
-    has_more = _page_paging(body, page) and bool(rows)
-    return rows, (str(page + 1) if has_more else None), has_more
+    next_cursor, has_more = _cursor_paging(body)
+    return rows, next_cursor, has_more
 
 
 async def fetch_content(client: TripJackClient, hotel_ids: list[str]) -> list[dict]:

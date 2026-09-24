@@ -89,6 +89,39 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 while True:
                     rows, nxt, more = await content.fetch_regions_page(client, cursor.get("region_cursor"))
                     await repo.upsert_regions(rows)
+                    # The mapping response does not repeat its region. Request
+                    # each authoritative cityRegionId separately and attach that
+                    # exact relationship before persisting each hotel mapping.
+                    saved_mapping = cursor.get("region_mapping") or {}
+                    start_index = int(saved_mapping.get("region_index") or 0)
+                    for region_index, region in enumerate(rows[start_index:], start=start_index):
+                        region_id = region["city_region_id"]
+                        page = (
+                            int(saved_mapping.get("page") or 0)
+                            if saved_mapping.get("region_id") == region_id
+                            else 0
+                        )
+                        while True:
+                            mappings, mapping_more = await content.fetch_mapping_page(
+                                client,
+                                page=page,
+                                country_name=region.get("country_name"),
+                                region_ids=[region_id],
+                            )
+                            await repo.upsert_mappings(mappings)
+                            cursor["region_mapping"] = {
+                                "region_index": region_index,
+                                "region_id": region_id,
+                                "page": page + 1 if mapping_more and mappings else page,
+                            }
+                            await repo.put_state("full", {"cursor": cursor})
+                            if not mapping_more or not mappings:
+                                break
+                            page += 1
+                        saved_mapping = {}
+                        cursor["region_mapping"] = {"region_index": region_index + 1, "page": 0}
+                        await repo.put_state("full", {"cursor": cursor})
+                    cursor.pop("region_mapping", None)
                     if not more:
                         break
                     cursor["region_cursor"] = nxt
