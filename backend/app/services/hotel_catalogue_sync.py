@@ -17,17 +17,26 @@ import sys
 from datetime import datetime, timezone
 from typing import Optional
 
+import httpx
+
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger, log_extra
 from app.integrations.tripjack import hotel_content as content
 from app.integrations.tripjack.client import get_hotel_client
 from app.integrations.tripjack.config import build_hotel_config
 from app.repositories.hotel_catalogue import HotelCatalogueRepository, now_iso
+from app.repositories.supabase_rest import SupabaseUnavailableError
 
 logger = get_logger(__name__)
 
 _lock = asyncio.Lock()
 MAX_CONTENT_BATCHES_PER_RUN = 100_000
+STATE_WRITE_ATTEMPTS = 5
+STATE_WRITE_BACKOFF_S = 0.5
+
+
+class StatePersistenceError(RuntimeError):
+    """The sync-state row could not be written after bounded retries."""
 
 
 def is_running() -> bool:
@@ -36,6 +45,36 @@ def is_running() -> bool:
 
 def _client(settings: Settings):
     return get_hotel_client(build_hotel_config(settings))
+
+
+async def _put_state_full(repo: HotelCatalogueRepository, fields: dict) -> None:
+    """Persist full-sync state with bounded retries + exponential backoff.
+
+    A transient Supabase timeout while saving the resume cursor must not kill
+    the whole full sync. If every attempt fails, raise StatePersistenceError:
+    the sync stops safely instead of running on with an unsaved cursor (the
+    outer handler marks the run failed; nothing is ever falsely completed).
+    """
+    delay = STATE_WRITE_BACKOFF_S
+    last: Optional[BaseException] = None
+    for attempt in range(1, STATE_WRITE_ATTEMPTS + 1):
+        try:
+            await repo.put_state("full", fields)
+            return
+        except (SupabaseUnavailableError, httpx.HTTPError, asyncio.TimeoutError, OSError) as exc:
+            last = exc
+            logger.warning(
+                "hotel_full_sync_state_write_retry",
+                extra=log_extra(kind=type(exc).__name__, attempt=attempt, max_attempts=STATE_WRITE_ATTEMPTS),
+            )
+            if attempt < STATE_WRITE_ATTEMPTS:
+                await asyncio.sleep(delay)
+                delay *= 2
+    logger.error(
+        "hotel_full_sync_state_write_failed",
+        extra=log_extra(kind=type(last).__name__ if last else "unknown", attempts=STATE_WRITE_ATTEMPTS),
+    )
+    raise StatePersistenceError("full-sync state could not be persisted; stopping safely") from last
 
 
 async def _content_phase(repo: HotelCatalogueRepository, client, run_started: str, sync_type: str,
