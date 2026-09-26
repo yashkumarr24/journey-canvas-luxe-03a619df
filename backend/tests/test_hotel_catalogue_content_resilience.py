@@ -34,7 +34,7 @@ class Repo:
             raise SupabaseUnavailableError("supabase_unreachable")
         return self.batches.pop(0) if self.batches else []
 
-    async def save_content(self, items):
+    async def save_content_batch(self, items):
         self.save_calls += 1
         if self.save_calls <= self.save_fail:
             raise self.save_exc
@@ -81,3 +81,52 @@ def test_permanent_error_not_retried():
     with pytest.raises(SupabaseUnavailableError):
         run(repo)
     assert repo.save_calls == 1 and repo.states == []
+
+
+class AtomicRepo(Repo):
+    """Simulates the single-transaction RPC: all-or-nothing, idempotent."""
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.db: dict[str, dict] = {}
+        self.batches = [[f"h{i}" for i in range(100)]]
+
+    async def save_content_batch(self, items):
+        self.save_calls += 1
+        if self.save_calls <= self.save_fail:
+            raise SupabaseUnavailableError("supabase_503")  # rollback: nothing written
+        for i in items:
+            self.db[i["id"]] = i  # upsert semantics
+        return [i["id"] for i in items]
+
+
+def test_100_hotel_batch_is_one_db_call():
+    repo = AtomicRepo()
+    assert run(repo) == (100, 0)
+    assert repo.save_calls == 1
+
+
+def test_503_then_success():
+    repo = AtomicRepo(save_fail=1)
+    assert run(repo) == (100, 0) and repo.save_calls == 2
+
+
+def test_persistent_503_stops_after_5_without_partial_data_or_progress():
+    repo = AtomicRepo(save_fail=99)
+    with pytest.raises(sync.StatePersistenceError):
+        run(repo)
+    assert repo.save_calls == 5 and repo.db == {} and repo.states == []
+
+
+def test_retry_same_batch_idempotent():
+    repo = AtomicRepo()
+    items = [{"id": "x"}, {"id": "x"}]
+    asyncio.run(repo.save_content_batch(items))
+    asyncio.run(repo.save_content_batch(items))
+    assert list(repo.db) == ["x"]
+
+
+def test_incremental_path_still_uses_legacy_save_content():
+    import inspect
+    assert "repo.save_content(items)" in inspect.getsource(sync._content_phase)
+    assert "save_content_batch" in inspect.getsource(sync._content_phase_full)
