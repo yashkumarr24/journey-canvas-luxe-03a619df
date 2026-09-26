@@ -180,7 +180,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                                 country_name=region.get("country_name"),
                                 region_ids=[region_id],
                             )
-                            await repo.upsert_mappings(mappings)
+                            await _upsert_mappings_full(repo, mappings)
                             cursor["region_mapping"] = {
                                 "region_index": region_index,
                                 "region_id": region_id,
