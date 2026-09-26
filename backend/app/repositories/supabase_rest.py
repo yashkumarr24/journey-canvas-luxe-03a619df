@@ -34,6 +34,12 @@ class SupabaseRest:
     def enabled(self) -> bool:
         return bool(self._settings.supabase_url and self._settings.supabase_service_role_key)
 
+    @property
+    def _timeout(self) -> float:
+        """Configured REST/RPC timeout, falling back to the legacy default."""
+        timeout = getattr(self._settings, "supabase_rest_timeout", None)
+        return float(timeout) if timeout else DEFAULT_TIMEOUT
+
     def _url(self, table: str) -> str:
         return f"{self._settings.supabase_url.rstrip('/')}/rest/v1/{table}"
 
