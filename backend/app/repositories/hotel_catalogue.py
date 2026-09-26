@@ -99,6 +99,25 @@ class HotelCatalogueRepository:
         )
         return ids
 
+    async def save_content_batch(self, items: list[dict]) -> list[str]:
+        """Full-sync write path: ONE atomic RPC per batch (migration 0013).
+
+        Same rows as save_content(), but hotels + children + mapping flag are
+        written in a single Postgres transaction; failure rolls back entirely.
+        """
+        if not items:
+            return []
+        body = await self._db.rpc(
+            "hotel_catalogue_save_content_batch",
+            {
+                "p_hotels": [i["hotel"] for i in items],
+                "p_images": [r for i in items for r in i["images"]],
+                "p_amenities": [r for i in items for r in i["amenities"]],
+                "p_rooms": [r for i in items for r in i["rooms"]],
+            },
+        )
+        return [str(x) for x in (body or []) if isinstance(x, str)]
+
     async def mark_content_failed(self, ids: list[str]) -> None:
         if ids:
             await self._db.update(

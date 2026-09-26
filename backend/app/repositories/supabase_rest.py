@@ -150,3 +150,7 @@ class SupabaseRest:
 
     async def delete(self, table: str, *, filters: Mapping[str, str]) -> None:
         await self._send("DELETE", table, params=dict(filters), prefer="return=minimal")
+
+    async def rpc(self, function: str, args: Mapping[str, Any]) -> Any:
+        """Call a Postgres function via POST /rest/v1/rpc/<function> (one request)."""
+        return await self._send("POST", f"rpc/{function}", json=dict(args))
