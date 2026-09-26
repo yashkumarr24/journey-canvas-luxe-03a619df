@@ -19,7 +19,7 @@ from app.core.logging import get_logger, log_extra
 
 logger = get_logger(__name__)
 
-TIMEOUT = 8.0
+DEFAULT_TIMEOUT = 8.0  # legacy fallback; superseded by Settings.supabase_rest_timeout
 
 
 class SupabaseUnavailableError(RuntimeError):
@@ -61,7 +61,7 @@ class SupabaseRest:
             raise SupabaseUnavailableError("supabase_not_configured")
 
         try:
-            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.request(
                     method,
                     self._url(table),

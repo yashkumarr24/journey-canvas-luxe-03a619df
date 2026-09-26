@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     supabase_anon_key: str = Field(default="", alias="SUPABASE_ANON_KEY")
     supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
+    # Timeout in seconds for Supabase REST/RPC (PostgREST) HTTP requests from the
+    # backend. Hotel content batches are large, so the default is generous.
+    # BACKEND ONLY — never exposed to the frontend.
+    supabase_rest_timeout: float = Field(default=60.0, alias="SUPABASE_REST_TIMEOUT")
 
     # ---- TripJack (BACKEND ONLY — never exposed to the browser) ------------
     # Staging/UAT: https://apitest.tripjack.com  (production uses its own host
