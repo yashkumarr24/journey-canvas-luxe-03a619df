@@ -77,6 +77,39 @@ async def _put_state_full(repo: HotelCatalogueRepository, fields: dict) -> None:
     raise StatePersistenceError("full-sync state could not be persisted; stopping safely") from last
 
 
+async def _upsert_mappings_full(repo: HotelCatalogueRepository, mappings: list[dict]) -> None:
+    """Persist one full-sync mapping batch with bounded retries + backoff.
+
+    Retries only transient Supabase/network/timeout failures; validation or
+    schema errors surface immediately. The exact same batch is retried, so the
+    cursor is never advanced past mappings that were never persisted. If every
+    attempt fails, raise StatePersistenceError so the sync stops safely with
+    the last successfully saved cursor intact.
+    """
+    delay = STATE_WRITE_BACKOFF_S
+    last: Optional[BaseException] = None
+    for attempt in range(1, STATE_WRITE_ATTEMPTS + 1):
+        try:
+            await repo.upsert_mappings(mappings)
+            return
+        except (SupabaseUnavailableError, httpx.HTTPError, asyncio.TimeoutError, OSError) as exc:
+            last = exc
+            logger.warning(
+                "hotel_full_sync_mapping_write_retry",
+                extra=log_extra(kind=type(exc).__name__, attempt=attempt,
+                                max_attempts=STATE_WRITE_ATTEMPTS, size=len(mappings)),
+            )
+            if attempt < STATE_WRITE_ATTEMPTS:
+                await asyncio.sleep(delay)
+                delay *= 2
+    logger.error(
+        "hotel_full_sync_mapping_write_failed",
+        extra=log_extra(kind=type(last).__name__ if last else "unknown",
+                        attempts=STATE_WRITE_ATTEMPTS, size=len(mappings)),
+    )
+    raise StatePersistenceError("mapping batch could not be persisted; stopping safely") from last
+
+
 async def _content_phase(repo: HotelCatalogueRepository, client, run_started: str, sync_type: str,
                          processed: int, failed: int) -> tuple[int, int]:
     for _ in range(MAX_CONTENT_BATCHES_PER_RUN):
@@ -147,7 +180,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                                 country_name=region.get("country_name"),
                                 region_ids=[region_id],
                             )
-                            await repo.upsert_mappings(mappings)
+                            await _upsert_mappings_full(repo, mappings)
                             cursor["region_mapping"] = {
                                 "region_index": region_index,
                                 "region_id": region_id,
