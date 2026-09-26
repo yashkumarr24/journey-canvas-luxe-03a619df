@@ -110,6 +110,93 @@ async def _upsert_mappings_full(repo: HotelCatalogueRepository, mappings: list[d
     raise StatePersistenceError("mapping batch could not be persisted; stopping safely") from last
 
 
+def _is_transient_db_error(exc: BaseException) -> bool:
+    """Transient = network/timeout/unreachable or a 5xx/408/429 from Supabase.
+
+    Other SupabaseUnavailableError codes (4xx: validation, schema, constraint)
+    are permanent and must never be retried.
+    """
+    if isinstance(exc, (httpx.HTTPError, asyncio.TimeoutError, OSError)):
+        return True
+    if isinstance(exc, SupabaseUnavailableError):
+        code = str(exc)
+        if code in ("supabase_unreachable", "supabase_not_configured"):
+            return code == "supabase_unreachable"
+        if code.startswith("supabase_"):
+            try:
+                status_code = int(code.split("_", 1)[1])
+            except ValueError:
+                return False
+            return status_code >= 500 or status_code in (408, 429)
+    return False
+
+
+async def _retry_full_db(op: str, fn, *, size: int = 0):
+    """Full-sync content-phase DB call with 5 attempts, 0.5s→8s backoff.
+
+    Only transient errors are retried; permanent errors propagate immediately.
+    After the final failure StatePersistenceError is raised so the sync stops
+    safely with the last persisted state/cursor intact.
+    """
+    delay = STATE_WRITE_BACKOFF_S
+    last: Optional[BaseException] = None
+    for attempt in range(1, STATE_WRITE_ATTEMPTS + 1):
+        try:
+            return await fn()
+        except Exception as exc:
+            if not _is_transient_db_error(exc):
+                raise
+            last = exc
+            logger.warning(
+                "hotel_full_sync_content_db_retry",
+                extra=log_extra(op=op, kind=type(exc).__name__, attempt=attempt,
+                                max_attempts=STATE_WRITE_ATTEMPTS, size=size),
+            )
+            if attempt < STATE_WRITE_ATTEMPTS:
+                await asyncio.sleep(delay)
+                delay *= 2
+    logger.error(
+        "hotel_full_sync_content_db_failed",
+        extra=log_extra(op=op, kind=type(last).__name__ if last else "unknown",
+                        attempts=STATE_WRITE_ATTEMPTS, size=size),
+    )
+    raise StatePersistenceError(f"{op} failed after retries; stopping safely") from last
+
+
+async def _content_phase_full(repo: HotelCatalogueRepository, client, run_started: str,
+                              processed: int, failed: int) -> tuple[int, int]:
+    """Full-sync content phase with resilient DB operations.
+
+    TripJack fetch failures stay isolated per batch (marked failed, continue).
+    DB failures are retried; if persistence ultimately fails the sync stops
+    before any progress for that batch is recorded.
+    """
+    for _ in range(MAX_CONTENT_BATCHES_PER_RUN):
+        ids = await _retry_full_db(
+            "pending_content_ids",
+            lambda: repo.pending_content_ids(run_started, content.CONTENT_BATCH),
+        )
+        if not ids:
+            break
+        try:
+            raw = await content.fetch_content(client, ids)
+            items = [i for i in (content.normalise_content(r) for r in raw) if i]
+        except Exception as exc:  # provider batch failure: isolate, keep going
+            logger.warning("hotel_content_batch_failed", extra=log_extra(kind=type(exc).__name__, size=len(ids)))
+            await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(ids), size=len(ids))
+            failed += len(ids)
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
+            continue
+        saved = set(await _retry_full_db("save_content", lambda: repo.save_content(items), size=len(items)))
+        missing = [i for i in ids if i not in saved]
+        if missing:
+            await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(missing), size=len(missing))
+        processed += len(saved)
+        failed += len(missing)
+        await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
+    return processed, failed
+
+
 async def _content_phase(repo: HotelCatalogueRepository, client, run_started: str, sync_type: str,
                          processed: int, failed: int) -> tuple[int, int]:
     for _ in range(MAX_CONTENT_BATCHES_PER_RUN):
@@ -209,7 +296,7 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 cursor = {"stage": "content"}
                 await _put_state_full(repo, {"cursor": cursor})
 
-            processed, failed = await _content_phase(repo, client, run_started, "full", processed, failed)
+            processed, failed = await _content_phase_full(repo, client, run_started, processed, failed)
             done = failed == 0
             await _put_state_full(repo, {
                 "status": "completed" if done else "partial",
