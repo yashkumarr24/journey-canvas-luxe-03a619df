@@ -187,7 +187,7 @@ async def _content_phase_full(repo: HotelCatalogueRepository, client, run_starte
             failed += len(ids)
             await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
             continue
-        saved = set(await _retry_full_db("save_content", lambda: repo.save_content(items), size=len(items)))
+        saved = set(await _retry_full_db("save_content_batch", lambda: repo.save_content_batch(items), size=len(items)))
         missing = [i for i in ids if i not in saved]
         if missing:
             await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(missing), size=len(missing))
