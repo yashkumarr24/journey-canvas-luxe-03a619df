@@ -33,6 +33,12 @@ _lock = asyncio.Lock()
 MAX_CONTENT_BATCHES_PER_RUN = 100_000
 STATE_WRITE_ATTEMPTS = 5
 STATE_WRITE_BACKOFF_S = 0.5
+# Full-sync DB persistence chunk size (TripJack fetch stays at 100 per request).
+CONTENT_DB_CHUNK = 20
+
+
+def _chunks(items: list, size: int) -> list[list]:
+    return [items[i:i + size] for i in range(0, len(items), size)]
 
 
 class StatePersistenceError(RuntimeError):
@@ -187,13 +193,23 @@ async def _content_phase_full(repo: HotelCatalogueRepository, client, run_starte
             failed += len(ids)
             await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
             continue
-        saved = set(await _retry_full_db("save_content_batch", lambda: repo.save_content_batch(items), size=len(items)))
+        # Persist in smaller atomic RPC chunks: one TripJack fetch (≤100), many
+        # short DB transactions. A failing chunk is retried alone; chunks that
+        # already committed stay saved (their mappings are marked synced, so a
+        # resumed run will not return them from pending_content_ids again).
+        saved: set[str] = set()
+        for chunk in _chunks(items, CONTENT_DB_CHUNK):
+            chunk_saved = await _retry_full_db(
+                "save_content_batch", lambda c=chunk: repo.save_content_batch(c), size=len(chunk)
+            )
+            saved.update(chunk_saved)
+            processed += len(chunk_saved)
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
         missing = [i for i in ids if i not in saved]
         if missing:
             await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(missing), size=len(missing))
-        processed += len(saved)
-        failed += len(missing)
-        await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
+            failed += len(missing)
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
     return processed, failed
 
 
