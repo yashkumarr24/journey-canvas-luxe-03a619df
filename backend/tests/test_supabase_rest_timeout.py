@@ -113,3 +113,101 @@ def test_settings_has_supabase_rest_timeout_field():
     # Default value: instantiate without the env var set.
     s = Settings(_env_file=None, SUPABASE_REST_TIMEOUT=None)  # type: ignore[call-arg]
     assert s.supabase_rest_timeout == 60.0
+
+
+def test_error_body_logged_truncated_and_redacted(monkeypatch, caplog):
+    """On a >=300 response, the body is logged truncated to 2000 chars and
+    sensitive fields are redacted; the caller still gets the same exception."""
+    import logging
+
+    from app.repositories import supabase_rest as mod
+
+    secret_value = "super-secret-key-value"
+    long_body = ("x" * 5000)  # well over 2000 chars
+    # A JSON body that echoes a sensitive field — must be redacted.
+    json_body = '{"hint": "some hint", "passport": "' + secret_value + '"}'
+
+    class _FakeResponse:
+        def __init__(self, text):
+            self.status_code = 503
+            self.text = text
+
+        def json(self):
+            raise ValueError("not json in error path")
+
+    class _FakeClient:
+        def __init__(self, *, timeout=None, **kw):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def request(self, *a, **kw):
+            return _FakeResponse(json_body)
+
+    monkeypatch.setattr(mod.httpx, "AsyncClient", _FakeClient)
+
+    rest = mod.SupabaseRest(_make_settings(60.0))
+
+    with caplog.at_level(logging.WARNING, logger="app.repositories.supabase_rest"):
+        with pytest.raises(mod.SupabaseUnavailableError):
+            asyncio.run(rest.rpc("hotel_catalogue_save_content_batch", args={"p": 1}))
+
+    assert any("supabase_error" in r.message for r in caplog.records)
+    rec = next(r for r in caplog.records if "supabase_error" in r.message)
+    extra = rec.extra_fields if hasattr(rec, "extra_fields") else {}
+    # Status and table/method are logged.
+    assert extra.get("status") == 503
+    assert extra.get("table") == "rpc/hotel_catalogue_save_content_batch"
+    assert extra.get("method") == "POST"
+    # Sensitive field redacted.
+    body = extra.get("body", "")
+    assert secret_value not in body
+    assert "passport" in body  # key retained, value redacted
+    # Body is JSON-serializable & truncated to <= 2000 chars.
+    assert len(body) <= 2000
+
+
+def test_error_body_truncated_when_very_long(monkeypatch, caplog):
+    """A very long non-JSON body is truncated to 2000 characters."""
+    import logging
+
+    from app.repositories import supabase_rest as mod
+
+    long_body = "B" * 6000
+
+    class _FakeResponse:
+        status_code = 500
+        text = long_body
+
+        def json(self):
+            raise ValueError("nope")
+
+    class _FakeClient:
+        def __init__(self, *, timeout=None, **kw):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def request(self, *a, **kw):
+            return _FakeResponse()
+
+    monkeypatch.setattr(mod.httpx, "AsyncClient", _FakeClient)
+    rest = mod.SupabaseRest(_make_settings(60.0))
+
+    with caplog.at_level(logging.WARNING, logger="app.repositories.supabase_rest"):
+        with pytest.raises(mod.SupabaseUnavailableError):
+            asyncio.run(rest.select("hotels", filters={"id": "eq.1"}))
+
+    rec = next(r for r in caplog.records if "supabase_error" in r.message)
+    extra = rec.extra_fields if hasattr(rec, "extra_fields") else {}
+    body = extra.get("body", "")
+    assert len(body) <= 2000
+    assert body == "B" * 2000

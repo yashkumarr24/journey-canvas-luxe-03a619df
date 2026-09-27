@@ -79,8 +79,14 @@ def configure_logging(level: str = "INFO") -> None:
         logger.propagate = False
 
 
-def get_logger(name: str) -> logging.LoggerAdapter:
-    return logging.LoggerAdapter(logging.getLogger(name), {})
+def get_logger(name: str) -> logging.Logger:
+    # A plain Logger (not LoggerAdapter) is used so that per-call
+    # extra=log_extra(...) fields are attached to the LogRecord. On Python
+    # 3.13 the default LoggerAdapter.process overwrites the caller's `extra`
+    # kwarg with the adapter's own (empty) extra unless merge_extra=True, and
+    # that flag does not exist on older Pythons — so a plain Logger is the
+    # version-safe choice that keeps structured extra fields intact.
+    return logging.getLogger(name)
 
 
 def log_extra(**fields: Any) -> dict[str, Any]:
