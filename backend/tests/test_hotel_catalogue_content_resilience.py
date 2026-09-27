@@ -100,15 +100,19 @@ class AtomicRepo(Repo):
         return [i["id"] for i in items]
 
 
-def test_100_hotel_batch_is_one_db_call():
+def test_100_hotel_batch_is_five_db_chunks():
+    """TripJack fetches 100 hotels once; the batch is split into five
+    20-hotel DB chunks, each with its own save/retry lifecycle."""
     repo = AtomicRepo()
     assert run(repo) == (100, 0)
-    assert repo.save_calls == 1
+    assert repo.save_calls == 5
 
 
 def test_503_then_success():
+    """The first chunk retries once after a 503 and succeeds; the remaining
+    four chunks save on the first attempt (1 retry + 4 chunks = 6 calls)."""
     repo = AtomicRepo(save_fail=1)
-    assert run(repo) == (100, 0) and repo.save_calls == 2
+    assert run(repo) == (100, 0) and repo.save_calls == 6
 
 
 def test_persistent_503_stops_after_5_without_partial_data_or_progress():
