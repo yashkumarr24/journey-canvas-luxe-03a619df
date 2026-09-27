@@ -64,18 +64,37 @@ class HotelCatalogueRepository:
         await self._db.upsert("hotel_mappings", payload, on_conflict="tj_hotel_id")
 
     async def pending_content_ids(self, run_started_at: str, limit: int = 100) -> list[str]:
-        rows = await self._db.select(
+        """Next hotel IDs needing static content, ordered by tj_hotel_id.
+
+        Two targeted queries instead of one OR query, each matching a
+        dedicated partial index (migrations 0014/0015):
+        1. normal pending rows  (content_error_at IS NULL  -> 0015 index)
+        2. retryable rows       (content_error_at < run_started_at -> 0014 index)
+        Results are merged, de-duplicated and truncated to `limit`.
+        """
+        base_filters: dict[str, str] = {
+            "content_synced_at": "is.null",
+            "is_deleted": "is.false",
+        }
+        normal = await self._db.select(
             "hotel_mappings",
             columns="tj_hotel_id",
-            filters={
-                "content_synced_at": "is.null",
-                "is_deleted": "is.false",
-                "or": f"(content_error_at.is.null,content_error_at.lt.{run_started_at})",
-            },
+            filters={**base_filters, "content_error_at": "is.null"},
             limit=limit,
             order="tj_hotel_id",
         )
-        return [r["tj_hotel_id"] for r in rows]
+        ids: list[str] = [r["tj_hotel_id"] for r in normal]
+        if len(ids) >= limit:
+            return ids[:limit]
+        retryable = await self._db.select(
+            "hotel_mappings",
+            columns="tj_hotel_id",
+            filters={**base_filters, "content_error_at": f"lt.{run_started_at}"},
+            limit=limit - len(ids),
+            order="tj_hotel_id",
+        )
+        ids.extend(r["tj_hotel_id"] for r in retryable if r["tj_hotel_id"] not in ids)
+        return sorted(ids)[:limit]
 
     async def save_content(self, items: list[dict]) -> list[str]:
         if not items:
