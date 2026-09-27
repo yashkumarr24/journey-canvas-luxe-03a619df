@@ -10,7 +10,7 @@ the HTTP status. Traveller and passport values never reach a log record.
 
 from __future__ import annotations
 
-import json
+import json as _json
 from typing import Any, Mapping, Sequence
 
 import httpx
