@@ -81,9 +81,29 @@ class SupabaseRest:
 
         if response.status_code >= 300:
             # Database detail stays server-side; callers get a generic failure.
+            # The response body is logged (truncated) only to diagnose failures
+            # like the hotel_catalogue_save_content_batch RPC. Secrets are never
+            # sent here — request payloads and auth headers are not logged.
+            body_text = response.text or ""
+            # Best-effort redaction: if the error body echoes a rejected row,
+            # scrub sensitive fields. Falls back to truncated raw text.
+            try:
+                parsed = json.loads(body_text)
+            except ValueError:
+                parsed = None
+            safe_body = (
+                json.dumps(redact(parsed), ensure_ascii=False)
+                if parsed is not None
+                else body_text
+            )[:2000]
             logger.warning(
                 "supabase_error",
-                extra=log_extra(table=table, method=method, status=response.status_code),
+                extra=log_extra(
+                    table=table,
+                    method=method,
+                    status=response.status_code,
+                    body=safe_body,
+                ),
             )
             raise SupabaseUnavailableError(f"supabase_{response.status_code}")
 
