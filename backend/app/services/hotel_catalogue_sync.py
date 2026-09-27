@@ -528,6 +528,12 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             raise SystemExit("usage: python -m app.services.hotel_catalogue_sync test-region <cityRegionId>")
         print(asyncio.run(run_test_region(int(sys.argv[2]))))
+    elif mode == "test-rpc-region":
+        if len(sys.argv) < 3:
+            raise SystemExit(
+                "usage: python -m app.services.hotel_catalogue_sync test-rpc-region <cityRegionId>"
+            )
+        print(asyncio.run(run_test_rpc_region(int(sys.argv[2]))))
     else:
         runner = run_full_sync if mode == "full" else run_incremental_sync
         print(asyncio.run(runner()))
