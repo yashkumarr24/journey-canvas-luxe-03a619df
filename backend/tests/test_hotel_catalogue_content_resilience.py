@@ -136,6 +136,7 @@ class RpcRegionRepo:
     """Minimal stand-in for the repository surface used by run_test_rpc_region."""
 
     def __init__(self, *, save_fail=0, save_exc=None):
+        self.enabled = True
         self.save_fail = save_fail
         self.save_exc = save_exc or httpx.ReadTimeout("t")
         self.save_calls = 0
