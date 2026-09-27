@@ -89,11 +89,11 @@ class SupabaseRest:
             # Best-effort redaction: if the error body echoes a rejected row,
             # scrub sensitive fields. Falls back to truncated raw text.
             try:
-                parsed = json.loads(body_text)
+                parsed = _json.loads(body_text)
             except ValueError:
                 parsed = None
             safe_body = (
-                json.dumps(redact(parsed), ensure_ascii=False)
+                _json.dumps(redact(parsed), ensure_ascii=False)
                 if parsed is not None
                 else body_text
             )[:2000]
