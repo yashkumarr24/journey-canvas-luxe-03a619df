@@ -523,6 +523,8 @@ async def status(settings: Settings) -> dict:
 
 
 if __name__ == "__main__":
+    _settings = get_settings()
+    configure_logging(_settings.log_level)
     mode = sys.argv[1] if len(sys.argv) > 1 else "incremental"
     if mode == "test-region":
         if len(sys.argv) < 3:
