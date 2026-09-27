@@ -242,7 +242,12 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
         raise RuntimeError("database not configured")
     async with _lock:
         client = _client(settings)
-        state = await repo.get_state("full") or {}
+        # Initial state read is protected too: a transient Supabase timeout at
+        # startup must not kill the sync or touch the saved cursor. Retries
+        # only transient errors; after 5 attempts it raises
+        # StatePersistenceError and the sync stops safely with the existing
+        # saved state (855K hotels with content, pending mappings) untouched.
+        state = await _retry_full_db("get_state_full", lambda: repo.get_state("full")) or {}
         resume = state.get("status") in ("running", "failed", "partial") and isinstance(state.get("cursor"), dict)
         cursor: dict = state["cursor"] if resume else {"stage": "countries"}
         run_started = now_iso()
