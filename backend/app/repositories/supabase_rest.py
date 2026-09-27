@@ -10,12 +10,13 @@ the HTTP status. Traveller and passport values never reach a log record.
 
 from __future__ import annotations
 
+import json
 from typing import Any, Mapping, Sequence
 
 import httpx
 
 from app.core.config import Settings
-from app.core.logging import get_logger, log_extra
+from app.core.logging import get_logger, log_extra, redact
 
 logger = get_logger(__name__)
 
