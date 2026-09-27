@@ -130,3 +130,92 @@ def test_incremental_path_still_uses_legacy_save_content():
     import inspect
     assert "repo.save_content(items)" in inspect.getsource(sync._content_phase)
     assert "save_content_batch" in inspect.getsource(sync._content_phase_full)
+
+
+class RpcRegionRepo:
+    """Minimal stand-in for the repository surface used by run_test_rpc_region."""
+
+    def __init__(self, *, save_fail=0, save_exc=None):
+        self.enabled = True
+        self.save_fail = save_fail
+        self.save_exc = save_exc or httpx.ReadTimeout("t")
+        self.save_calls = 0
+        self.saved_ids: list[str] = []
+
+    async def upsert_regions(self, rows):
+        return None
+
+    async def upsert_mappings(self, rows):
+        return None
+
+    async def save_content_batch(self, items):
+        self.save_calls += 1
+        if self.save_calls <= self.save_fail:
+            raise self.save_exc
+        ids = [i["id"] for i in items]
+        self.saved_ids.extend(ids)
+        return ids
+
+
+def _patch_test_rpc_region(monkeypatch, repo, *, region_found=True, mappings=("h1",)):
+    async def fetch_regions_page(_client, _cursor):
+        if region_found:
+            return [{"city_region_id": "42", "country_name": "India"}], None, False
+        return [], None, False
+
+    async def fetch_mapping_page(_client, **_kw):
+        return ([{"tj_hotel_id": hid, "region_id": "42"} for hid in mappings], False)
+
+    async def fetch_content(_client, ids):
+        return [{"id": i} for i in ids]
+
+    monkeypatch.setattr(sync.content, "fetch_regions_page", fetch_regions_page)
+    monkeypatch.setattr(sync.content, "fetch_mapping_page", fetch_mapping_page)
+    monkeypatch.setattr(sync.content, "fetch_content", fetch_content)
+    monkeypatch.setattr(sync.content, "normalise_content", lambda r: r)
+    monkeypatch.setattr(sync, "HotelCatalogueRepository", lambda _s: repo)
+    monkeypatch.setattr(sync, "get_settings", lambda: object())
+
+
+def test_test_rpc_region_saves_one_hotel_via_rpc(monkeypatch):
+    repo = RpcRegionRepo()
+    _patch_test_rpc_region(monkeypatch, repo)
+    summary = asyncio.run(sync.run_test_rpc_region(42))
+    assert summary == {
+        "region_id": "42", "region_saved": True, "mappings": 1,
+        "hotel_id": "h1", "rpc_saved": True, "error": None,
+    }
+    assert repo.save_calls == 1
+    assert repo.saved_ids == ["h1"]
+
+
+def test_test_rpc_region_rpc_failure_is_reported(monkeypatch):
+    """The diagnostic command does not retry; a single RPC failure is caught
+    and reported in the summary (region/mapping already persisted)."""
+    repo = RpcRegionRepo(save_fail=1, save_exc=SupabaseUnavailableError("supabase_503"))
+    _patch_test_rpc_region(monkeypatch, repo)
+    summary = asyncio.run(sync.run_test_rpc_region(42))
+    assert summary["rpc_saved"] is False
+    assert summary["hotel_id"] == "h1"
+    assert summary["region_saved"] is True
+    assert summary["mappings"] == 1
+    assert summary["error"] and "supabase_503" in summary["error"]
+    assert repo.save_calls == 1
+
+
+def test_test_rpc_region_region_not_found(monkeypatch):
+    repo = RpcRegionRepo()
+    _patch_test_rpc_region(monkeypatch, repo, region_found=False, mappings=())
+    summary = asyncio.run(sync.run_test_rpc_region(42))
+    assert summary["region_saved"] is False
+    assert "cityRegionId not returned" in summary["error"]
+    assert repo.save_calls == 0
+
+
+def test_test_rpc_region_no_mappings(monkeypatch):
+    repo = RpcRegionRepo()
+    _patch_test_rpc_region(monkeypatch, repo, mappings=())
+    summary = asyncio.run(sync.run_test_rpc_region(42))
+    assert summary["hotel_id"] is None
+    assert "no hotel mappings" in summary["error"]
+    assert repo.save_calls == 0

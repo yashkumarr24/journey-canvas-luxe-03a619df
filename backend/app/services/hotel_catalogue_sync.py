@@ -439,6 +439,81 @@ async def run_test_region(region_id: int, settings: Optional[Settings] = None) -
     return summary
 
 
+TEST_RPC_REGION_MAX_CONTENT = 1
+
+
+async def run_test_rpc_region(region_id: int, settings: Optional[Settings] = None) -> dict:
+    """Diagnostic single-region test of the save_content_batch RPC path.
+
+    Reuses the existing region/mapping flow and content normaliser, but
+    fetches exactly 1 hotel content item and persists it through
+    repo.save_content_batch([...]) — the single-transaction RPC. Never calls
+    repo.save_content(). Does not read or write sync state, so full sync,
+    incremental sync and test-region are completely unaffected.
+    """
+    settings = settings or get_settings()
+    repo = HotelCatalogueRepository(settings)
+    if not repo.enabled:
+        raise RuntimeError("database not configured")
+    target = str(region_id).strip()
+    summary = {
+        "region_id": target, "region_saved": False,
+        "mappings": 0, "hotel_id": None, "rpc_saved": False, "error": None,
+    }
+    async with _lock:
+        client = _client(settings)
+        # 1. Locate the exact cityRegionId via the existing cursor flow and persist it.
+        region: Optional[dict] = None
+        region_cursor: Optional[str] = None
+        while region is None:
+            rows, nxt, more = await content.fetch_regions_page(client, region_cursor)
+            region = next((r for r in rows if r["city_region_id"] == target), None)
+            if region is not None or not more or not nxt:
+                break
+            region_cursor = nxt
+        if region is None:
+            summary["error"] = "cityRegionId not returned by fetch-city-regionIds"
+            return summary
+        await repo.upsert_regions([region])
+        summary["region_saved"] = True
+        # 2. Mappings for exactly this region (region_id attached to every row).
+        page = 0
+        first_id: Optional[str] = None
+        while True:
+            mappings, more = await content.fetch_mapping_page(
+                client, page=page, country_name=region.get("country_name"), region_ids=[target]
+            )
+            for m in mappings:
+                m["region_id"] = target
+            await repo.upsert_mappings(mappings)
+            summary["mappings"] += len(mappings)
+            if first_id is None:
+                for m in mappings:
+                    first_id = m["tj_hotel_id"]
+                    break
+            if not more or not mappings or first_id is not None:
+                break
+            page += 1
+        if first_id is None:
+            summary["error"] = "region returned no hotel mappings"
+            return summary
+        summary["hotel_id"] = first_id
+        # 3. Fetch exactly 1 hotel content item and persist via the RPC batch path.
+        try:
+            raw = await content.fetch_content(client, [first_id])
+            items = [i for i in (content.normalise_content(r) for r in raw) if i]
+            if not items:
+                summary["error"] = "content fetch returned no normalisable item"
+                return summary
+            saved = await repo.save_content_batch(items[:TEST_RPC_REGION_MAX_CONTENT])
+            summary["rpc_saved"] = first_id in set(saved)
+        except Exception as exc:
+            logger.warning("hotel_test_rpc_region_failed",
+                           extra=log_extra(kind=type(exc).__name__, hotel_id=first_id))
+            summary["error"] = f"{type(exc).__name__}: {exc}"
+    return summary
+
+
 async def status(settings: Settings) -> dict:
     repo = HotelCatalogueRepository(settings)
     if not repo.enabled:
@@ -453,6 +528,12 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             raise SystemExit("usage: python -m app.services.hotel_catalogue_sync test-region <cityRegionId>")
         print(asyncio.run(run_test_region(int(sys.argv[2]))))
+    elif mode == "test-rpc-region":
+        if len(sys.argv) < 3:
+            raise SystemExit(
+                "usage: python -m app.services.hotel_catalogue_sync test-rpc-region <cityRegionId>"
+            )
+        print(asyncio.run(run_test_rpc_region(int(sys.argv[2]))))
     else:
         runner = run_full_sync if mode == "full" else run_incremental_sync
         print(asyncio.run(runner()))
