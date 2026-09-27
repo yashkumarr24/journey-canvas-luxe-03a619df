@@ -20,7 +20,7 @@ from typing import Optional
 import httpx
 
 from app.core.config import Settings, get_settings
-from app.core.logging import get_logger, log_extra
+from app.core.logging import configure_logging, get_logger, log_extra
 from app.integrations.tripjack import hotel_content as content
 from app.integrations.tripjack.client import get_hotel_client
 from app.integrations.tripjack.config import build_hotel_config
