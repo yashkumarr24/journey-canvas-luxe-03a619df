@@ -145,9 +145,10 @@ class FullSyncStartupRepo:
         self.states: list[dict] = []
 
     async def get_state(self, sync_type):
-        self.get_state_calls += 1
-        if sync_type == "full" and self.get_state_calls <= self.state_failures:
-            raise SupabaseUnavailableError("supabase_unreachable")
+        if sync_type == "full":
+            self.get_state_calls += 1
+            if self.get_state_calls <= self.state_failures:
+                raise SupabaseUnavailableError("supabase_unreachable")
         return {
             "status": "running", "cursor": {"stage": "content"},
             "processed_count": 10,
