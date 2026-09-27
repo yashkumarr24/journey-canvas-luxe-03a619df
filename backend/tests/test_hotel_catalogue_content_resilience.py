@@ -130,6 +130,64 @@ def test_retry_same_batch_idempotent():
     assert list(repo.db) == ["x"]
 
 
+class FullSyncStartupRepo:
+    """Stand-in for the repository surface run_full_sync() touches at startup.
+
+    get_state("full") fails transiently N times (Supabase unreachable) before
+    returning the saved state; pending_content_ids returns nothing so the run
+    completes immediately after startup.
+    """
+
+    def __init__(self, state_failures: int = 0):
+        self.enabled = True
+        self.state_failures = state_failures
+        self.get_state_calls = 0
+        self.states: list[dict] = []
+
+    async def get_state(self, sync_type):
+        self.get_state_calls += 1
+        if sync_type == "full" and self.get_state_calls <= self.state_failures:
+            raise SupabaseUnavailableError("supabase_unreachable")
+        return {
+            "status": "running", "cursor": {"stage": "content"},
+            "processed_count": 10,
+        }
+
+    async def pending_content_ids(self, _started, _limit):
+        return []
+
+    async def put_state(self, _sync_type, fields):
+        self.states.append(dict(fields))
+
+
+def _run_full_sync_with_repo(monkeypatch, repo):
+    monkeypatch.setattr(sync, "HotelCatalogueRepository", lambda _s: repo)
+    monkeypatch.setattr(sync, "_client", lambda _s: object())
+    return asyncio.run(sync.run_full_sync(settings=object()))
+
+
+def test_full_sync_initial_state_read_succeeds_after_transient_failure(monkeypatch):
+    """A transient Supabase timeout on the very first get_state("full") is
+    retried with the existing policy; the saved cursor is honoured and the
+    run completes instead of the process exiting."""
+    repo = FullSyncStartupRepo(state_failures=2)
+    summary = _run_full_sync_with_repo(monkeypatch, repo)
+    assert summary == {"status": "completed", "processed": 10, "failed": 0}
+    assert repo.get_state_calls == 3  # 2 transient failures + 1 success
+    statuses = [s["status"] for s in repo.states if "status" in s]
+    assert statuses[0] == "running" and statuses[-1] == "completed"
+
+
+def test_full_sync_initial_state_read_persistent_failure_stops_safely(monkeypatch):
+    """After all retries fail, StatePersistenceError is raised and NO state
+    write happens — the saved cursor/progress is untouched (no new run, no
+    progress reset)."""
+    repo = FullSyncStartupRepo(state_failures=99)
+    with pytest.raises(sync.StatePersistenceError):
+        _run_full_sync_with_repo(monkeypatch, repo)
+    assert repo.get_state_calls == 5 and repo.states == []
+
+
 def test_incremental_path_still_uses_legacy_save_content():
     import inspect
     assert "repo.save_content(items)" in inspect.getsource(sync._content_phase)
