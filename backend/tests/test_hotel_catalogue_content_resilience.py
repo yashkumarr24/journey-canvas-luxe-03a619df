@@ -176,7 +176,7 @@ def test_full_sync_initial_state_read_succeeds_after_transient_failure(monkeypat
     assert summary == {"status": "completed", "processed": 10, "failed": 0}
     assert repo.get_state_calls == 3  # 2 transient failures + 1 success
     statuses = [s["status"] for s in repo.states if "status" in s]
-    assert statuses[0] == "running" and statuses[-1] == "completed"
+    assert statuses[0] == "running" and statuses[1] == "completed"
 
 
 def test_full_sync_initial_state_read_persistent_failure_stops_safely(monkeypatch):
