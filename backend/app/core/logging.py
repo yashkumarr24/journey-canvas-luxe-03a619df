@@ -80,7 +80,10 @@ def configure_logging(level: str = "INFO") -> None:
 
 
 def get_logger(name: str) -> logging.LoggerAdapter:
-    return logging.LoggerAdapter(logging.getLogger(name), {})
+    # merge_extra=True is required so per-call extra=log_extra(...) fields are
+    # merged onto the LogRecord instead of being replaced by the adapter's own
+    # (empty) extra dict. Without this, structured extra fields are dropped.
+    return logging.LoggerAdapter(logging.getLogger(name), {}, merge_extra=True)
 
 
 def log_extra(**fields: Any) -> dict[str, Any]:
