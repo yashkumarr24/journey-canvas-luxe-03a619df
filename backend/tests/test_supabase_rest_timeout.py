@@ -110,8 +110,10 @@ def test_settings_has_supabase_rest_timeout_field():
     assert "supabase_rest_timeout" in src
     assert "SUPABASE_REST_TIMEOUT" in src
 
-    # Default value: instantiate without the env var set.
-    s = Settings(_env_file=None, SUPABASE_REST_TIMEOUT=None)  # type: ignore[call-arg]
+    # Default value: instantiate without the env var set so the documented
+    # default applies (do not pass None to a float field — that raises
+    # Pydantic ValidationError).
+    s = Settings(_env_file=None)  # type: ignore[call-arg]
     assert s.supabase_rest_timeout == 60.0
 
 
