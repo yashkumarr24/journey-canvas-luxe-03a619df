@@ -189,26 +189,18 @@ def test_test_rpc_region_saves_one_hotel_via_rpc(monkeypatch):
     assert repo.saved_ids == ["h1"]
 
 
-def test_test_rpc_region_transient_rpc_failure_recovers(monkeypatch):
-    async def no_sleep(_):
-        return None
-    monkeypatch.setattr(sync.asyncio, "sleep", no_sleep)
-    repo = RpcRegionRepo(save_fail=2)  # 503s twice, succeeds on 3rd
-    _patch_test_rpc_region(monkeypatch, repo)
-    summary = asyncio.run(sync.run_test_rpc_region(42))
-    assert summary["rpc_saved"] is True and repo.save_calls == 3
-
-
-def test_test_rpc_region_persistent_rpc_failure_reports_error(monkeypatch):
-    async def no_sleep(_):
-        return None
-    monkeypatch.setattr(sync.asyncio, "sleep", no_sleep)
-    repo = RpcRegionRepo(save_fail=99, save_exc=SupabaseUnavailableError("supabase_503"))
+def test_test_rpc_region_rpc_failure_is_reported(monkeypatch):
+    """The diagnostic command does not retry; a single RPC failure is caught
+    and reported in the summary (region/mapping already persisted)."""
+    repo = RpcRegionRepo(save_fail=1, save_exc=SupabaseUnavailableError("supabase_503"))
     _patch_test_rpc_region(monkeypatch, repo)
     summary = asyncio.run(sync.run_test_rpc_region(42))
     assert summary["rpc_saved"] is False
     assert summary["hotel_id"] == "h1"
+    assert summary["region_saved"] is True
+    assert summary["mappings"] == 1
     assert summary["error"] and "supabase_503" in summary["error"]
+    assert repo.save_calls == 1
 
 
 def test_test_rpc_region_region_not_found(monkeypatch):
