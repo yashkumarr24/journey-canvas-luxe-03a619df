@@ -175,6 +175,9 @@ def _patch_test_rpc_region(monkeypatch, repo, *, region_found=True, mappings=("h
     monkeypatch.setattr(sync.content, "normalise_content", lambda r: r)
     monkeypatch.setattr(sync, "HotelCatalogueRepository", lambda _s: repo)
     monkeypatch.setattr(sync, "get_settings", lambda: object())
+    # run_test_rpc_region() calls _client(settings); the fake Settings above
+    # has no TripJack attributes, so stub the client factory itself.
+    monkeypatch.setattr(sync, "_client", lambda _s: object())
 
 
 def test_test_rpc_region_saves_one_hotel_via_rpc(monkeypatch):
