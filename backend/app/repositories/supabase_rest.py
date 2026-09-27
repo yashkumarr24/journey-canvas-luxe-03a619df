@@ -19,7 +19,7 @@ from app.core.logging import get_logger, log_extra
 
 logger = get_logger(__name__)
 
-TIMEOUT = 8.0
+DEFAULT_TIMEOUT = 8.0  # legacy fallback; superseded by Settings.supabase_rest_timeout
 
 
 class SupabaseUnavailableError(RuntimeError):
@@ -33,6 +33,12 @@ class SupabaseRest:
     @property
     def enabled(self) -> bool:
         return bool(self._settings.supabase_url and self._settings.supabase_service_role_key)
+
+    @property
+    def _timeout(self) -> float:
+        """Configured REST/RPC timeout, falling back to the legacy default."""
+        timeout = getattr(self._settings, "supabase_rest_timeout", None)
+        return float(timeout) if timeout else DEFAULT_TIMEOUT
 
     def _url(self, table: str) -> str:
         return f"{self._settings.supabase_url.rstrip('/')}/rest/v1/{table}"
@@ -61,7 +67,7 @@ class SupabaseRest:
             raise SupabaseUnavailableError("supabase_not_configured")
 
         try:
-            async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.request(
                     method,
                     self._url(table),
