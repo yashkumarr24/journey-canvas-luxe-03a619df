@@ -194,8 +194,7 @@ def test_test_rpc_region_transient_rpc_failure_recovers(monkeypatch):
         return None
     monkeypatch.setattr(sync.asyncio, "sleep", no_sleep)
     repo = RpcRegionRepo(save_fail=2)  # 503s twice, succeeds on 3rd
-    _patch_test_rpc_region(monkeypatch, repo, save_fail=2) if False else _patch_test_rpc_region(monkeypatch, repo)
-    repo.save_fail = 2
+    _patch_test_rpc_region(monkeypatch, repo)
     summary = asyncio.run(sync.run_test_rpc_region(42))
     assert summary["rpc_saved"] is True and repo.save_calls == 3
 
@@ -206,8 +205,6 @@ def test_test_rpc_region_persistent_rpc_failure_reports_error(monkeypatch):
     monkeypatch.setattr(sync.asyncio, "sleep", no_sleep)
     repo = RpcRegionRepo(save_fail=99, save_exc=SupabaseUnavailableError("supabase_503"))
     _patch_test_rpc_region(monkeypatch, repo)
-    repo.save_fail = 99
-    repo.save_exc = SupabaseUnavailableError("supabase_503")
     summary = asyncio.run(sync.run_test_rpc_region(42))
     assert summary["rpc_saved"] is False
     assert summary["hotel_id"] == "h1"
