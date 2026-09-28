@@ -170,7 +170,7 @@ def test_pan_required_blocks_execute_without_pan(wired, monkeypatch):
     monkeypatch.setattr(diag, "_raw_post", fake_post)
     with pytest.raises(SystemExit, match="PAN"):
         asyncio.run(diag.run_book(_args(execute_uat_hold=True, confirm=diag.BOOK_CONFIRM_PHRASE,
-                                        contact_email="e", contact_phone="1")))
+                                        contact_email="ops@secret.test", contact_phone="9876500000")))
 
 
 def test_failed_review_stops_before_book(wired, monkeypatch):
@@ -185,3 +185,89 @@ def test_failed_review_stops_before_book(wired, monkeypatch):
     with pytest.raises(SystemExit, match="Review failed"):
         asyncio.run(diag.run_book(_args()))
     assert booker == []
+
+
+def _valid():
+    rooms = [{"adults": 2, "childAges": [5]}, {"adults": 1}]
+    return diag.build_uat_book_payload(booking_id="B1", rooms=rooms, email="ops@secret.test",
+                                       phone="9876500000"), rooms
+
+
+def test_preflight_ok_for_valid_payload():
+    p, rooms = _valid()
+    assert diag.validate_book_payload(p, rooms) == []
+
+
+@pytest.mark.parametrize("mutate,expect", [
+    (lambda p: p.update(bookingId=""), "bookingId"),
+    (lambda p: p.update(type="FLIGHT"), "type"),
+    (lambda p: p.update(paymentInfos=[{"amount": 1}]), "paymentInfos"),
+    (lambda p: p["deliveryInfo"].update(emails=["not-an-email"]), "deliveryInfo.emails"),
+    (lambda p: p["deliveryInfo"].update(emails=["uat@example.invalid"]), "placeholder"),
+    (lambda p: p["deliveryInfo"].update(contacts=["+919876500000"]), "deliveryInfo.contacts"),
+    (lambda p: p["deliveryInfo"].update(contacts=["12345"]), "10 digits"),
+    (lambda p: p["deliveryInfo"].update(code=["91"]), "deliveryInfo.code"),
+    (lambda p: p.pop("deliveryInfo"), "deliveryInfo: missing"),
+    (lambda p: p["roomTravellerInfo"].pop(), "room count"),
+    (lambda p: p["roomTravellerInfo"][0]["travellerInfo"].pop(), "counts differ"),
+    (lambda p: p["roomTravellerInfo"][0]["travellerInfo"][0].update(fN="A1"), ".fN"),
+    (lambda p: p["roomTravellerInfo"][0]["travellerInfo"][2].update(ti="Mr"), ".ti"),
+    (lambda p: p["roomTravellerInfo"][0]["travellerInfo"][0].update(pan="bad"), ".pan"),
+    (lambda p: p["roomTravellerInfo"][1]["travellerInfo"][0].update(
+        fN=p["roomTravellerInfo"][0]["travellerInfo"][0]["fN"]), "unique"),
+])
+def test_preflight_reports_each_failure_without_values(mutate, expect):
+    p, rooms = _valid()
+    mutate(p)
+    fails = diag.validate_book_payload(p, rooms)
+    assert any(expect in f for f in fails), fails
+    text = json.dumps(fails)
+    for secret in ("ops@secret.test", "9876500000", "+919876500000", "not-an-email", "B1"):
+        assert secret not in text
+
+
+def test_preflight_pan_and_passport_required():
+    p, rooms = _valid()
+    fails = diag.validate_book_payload(p, rooms, pan_required=True, passport_required=True)
+    assert any(".pan: required" in f for f in fails) and any(".pNum: required" in f for f in fails)
+
+
+def test_book_created_rules():
+    ok = {"bookingId": "X", "status": {"success": True}}
+    assert diag.book_created(200, ok) is True
+    assert diag.book_created(400, ok) is False
+    assert diag.book_created(200, {"bookingId": "X", "status": {"success": False}}) is False
+    assert diag.book_created(200, {"status": {"success": True}}) is False
+    assert diag.book_created(200, None) is False
+
+
+@pytest.mark.parametrize("status,body", [
+    (400, {"status": {"success": False}, "errors": [{"errCode": "810", "message": "invalid/bad data"}]}),
+    (200, {"status": {"success": False}, "errors": [{"errCode": "810"}]}),
+    (200, {"status": {"success": True}}),
+])
+def test_failed_book_never_polls_or_cancels(wired, monkeypatch, capsys, status, body):
+    _, booker = wired
+
+    async def fake_booker(config, path, payload):
+        booker.append((path, payload))
+        return status, body, 0.1
+
+    monkeypatch.setattr(diag, "_booker_post", fake_booker)
+    with pytest.raises(SystemExit, match="rejected"):
+        asyncio.run(diag.run_book(_args(execute_uat_hold=True, confirm=diag.BOOK_CONFIRM_PHRASE,
+                                        contact_email="ops@secret.test", contact_phone="9876500000",
+                                        cancel_after=True)))
+    assert [b[0] for b in booker] == [diag.HOTEL_BOOK_PATH]
+    out = capsys.readouterr().out
+    assert "BOOK FAILED" in out and "BOOKING DETAILS" not in out and "CANCEL" not in out.replace("not cancelling", "")
+
+
+def test_preflight_failure_blocks_book(wired, capsys):
+    _, booker = wired
+    with pytest.raises(SystemExit, match="pre-flight"):
+        asyncio.run(diag.run_book(_args(execute_uat_hold=True, confirm=diag.BOOK_CONFIRM_PHRASE,
+                                        contact_email="ops@secret.test", contact_phone="12345")))
+    assert booker == []
+    out = capsys.readouterr().out
+    assert "PRE-FLIGHT VALIDATION: FAILED" in out and "10 digits" in out and "12345" not in out
