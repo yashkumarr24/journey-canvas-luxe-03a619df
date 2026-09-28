@@ -44,6 +44,10 @@ def configured_env(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "")
+    # Pin CORS to the development defaults so the suite is independent of the
+    # host environment (the VPS runs with production CORS_ALLOWED_ORIGINS).
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "")
     get_settings.cache_clear()
     tj_client._client = None
     flight_search_limiter._buckets.clear()
