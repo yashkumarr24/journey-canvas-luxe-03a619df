@@ -1105,15 +1105,29 @@ async def run_book(args) -> None:
     if not reqs["booking_id_present"]:
         raise SystemExit("Review returned no bookingId; Book cannot be built.")
     if reqs["pan_required"] and execute and not args.pan:
-        raise SystemExit("Review says PAN is required: pass --pan (a UAT test PAN).")
+        raise SystemExit("Review says PAN is required: pass --pan (UAT test PANs, comma-separated per traveller).")
     if reqs["passport_required"] and execute and not args.passport:
         raise SystemExit("Review says passport is required: pass --passport.")
     if reqs["gst_info_needed"] and execute:
         raise SystemExit("Review needs gstInfo (GST passthrough/reseller); not supported by this diagnostic.")
+    pan_values = [v.strip() for v in args.pan.split(",") if v.strip()] if args.pan else []
+    rooms = _rooms_from_session(session)
+    total_travellers = sum(
+        int(r.get("adults") or 0) + len(r.get("childAges") or r.get("childAge") or [])
+        for r in rooms
+    )
+    if reqs["pan_required"] and pan_values and len(pan_values) not in (1, total_travellers):
+        raise SystemExit(
+            f"--pan takes either 1 value (applied to every traveller) or exactly "
+            f"{total_travellers} comma-separated values (one per traveller, search order); got {len(pan_values)}."
+        )
+    per_traveller_pans = pan_values if len(pan_values) > 1 else None
     payload = build_uat_book_payload(
-        booking_id=str(review["bookingId"]), rooms=_rooms_from_session(session),
+        booking_id=str(review["bookingId"]), rooms=rooms,
         email=args.contact_email or "uat@example.invalid", phone=args.contact_phone or "9000000000",
-        pan=args.pan if reqs["pan_required"] else "", passport=args.passport if reqs["passport_required"] else "",
+        pan=pan_values[0] if (reqs["pan_required"] and len(pan_values) == 1) else "",
+        passport=args.passport if reqs["passport_required"] else "",
+        pans=per_traveller_pans if reqs["pan_required"] else None,
     )
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
     print("paymentInfos included:", "paymentInfos" in payload)
