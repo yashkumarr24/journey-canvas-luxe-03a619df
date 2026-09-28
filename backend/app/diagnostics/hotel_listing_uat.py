@@ -7,6 +7,10 @@ Run on the VPS (whitelisted IP), from `backend/`:
     python -m app.diagnostics.hotel_listing_uat probe-limit --destination Goa --sizes 5,25,50,100,200
     python -m app.diagnostics.hotel_listing_uat endpoint --destination Goa
     python -m app.diagnostics.hotel_listing_uat detail --destination Goa [--hotel-id ID]
+    python -m app.diagnostics.hotel_listing_uat review --destination Goa [--hotel-id ID] [--option-id ID]
+
+The `review` mode is READ-ONLY re-pricing: search -> detail -> review. It never
+calls Book, never makes a payment and never writes review/booking records.
 
 Guarantees:
   * Uses the existing hotel config/client (same host, `apikey` header, timeouts).
@@ -34,8 +38,10 @@ from app.integrations.tripjack.config import build_hotel_config
 from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
     HOTEL_PRICING_PATH,
+    HOTEL_REVIEW_PATH,
     build_listing_continuation_payload,
     build_pricing_payload,
+    build_review_payload,
     correlation_id,
 )
 from app.repositories.hotel_catalogue import HotelCatalogueRepository, _in
@@ -580,9 +586,204 @@ async def run_detail(args) -> None:
     print("DETAIL SUMMARY:", json.dumps(detail_summary(body, hid), indent=1, default=str))
 
 
+# ------------------------------ review (re-price) ---------------------------
+#
+# Documented /hms/v3/hotel/review body (TripJack v3 docs, "Review API"):
+#   {"correlationId": <listing correlationId>, "optionId": <from detail>,
+#    "reviewHash": <from detail>, "hid": <hotel id string>}
+# Dates/rooms/currency/nationality are NOT part of the documented review body;
+# TripJack ties them to the correlationId from listing/detail. The optional
+# "with-context" variant adds them only to test whether UAT demands them.
+# Reply: correlationId, tjHotelId, hotelName, bookingId, option{...}, onholdAllowed,
+# status{success}; errors use {"status":{"success":false},"error":{code,message,requestId}}.
+
+REVIEW_PROVIDER_ONLY_FIELDS = (
+    "correlationId", "reviewHash", "bookingId", "optionId", "commercial",
+    "compliance.gstType", "pricing.gstClaimableAmount", "error.requestId", "onholdAllowed",
+)
+
+
+def build_uat_review_payload(
+    *,
+    listing_correlation_id: str,
+    hid: str,
+    option_id: str,
+    review_hash: str,
+    variant: str = "documented",
+    check_in: str = "",
+    check_out: str = "",
+    rooms: list[dict[str, Any]] | None = None,
+    currency: str = "INR",
+    nationality: str = UAT_NATIONALITY_INDIA,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "correlationId": listing_correlation_id,
+        "optionId": str(option_id),
+        "reviewHash": review_hash,
+        "hid": str(hid),
+    }
+    if variant == "with-context":
+        ctx = build_uat_pricing_payload(
+            listing_correlation_id=listing_correlation_id, hid=hid, check_in=check_in,
+            check_out=check_out, rooms=rooms or [], currency=currency,
+            nationality=nationality, timeout_ms=None,
+        )
+        for k in ("checkIn", "checkOut", "rooms", "currency", "nationality"):
+            payload[k] = ctx[k]
+    return payload
+
+
+def _num(v: Any) -> float | None:
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+def select_detail_option(body: Any, wanted: str = "") -> dict[str, Any] | None:
+    """Pick the requested option (or the cheapest priced one) from a detail reply."""
+    if not isinstance(body, dict) or not isinstance(body.get("options"), list):
+        return None
+    opts = [o for o in body["options"] if isinstance(o, dict) and o.get("optionId")
+            and isinstance(o.get("pricing"), dict) and _num(o["pricing"].get("totalPrice")) is not None]
+    if wanted:
+        return next((o for o in opts if str(o["optionId"]) == wanted), None)
+    return min(opts, key=lambda o: _num(o["pricing"]["totalPrice"])) if opts else None
+
+
+def _error_summary(body: Any) -> list[dict[str, str]]:
+    if not isinstance(body, dict):
+        return []
+    raw = body.get("errors") or body.get("error")
+    errs = raw if isinstance(raw, list) else [raw] if raw else []
+    return [{k: str(v)[:160] for k, v in e.items() if k in ("errCode", "code", "message")}
+            for e in errs if isinstance(e, dict)][:5]
+
+
+def review_summary(body: Any, requested_hid: str, detail_option: dict[str, Any] | None) -> dict[str, Any]:
+    """Sanitised review reply. Never names, option ids, reviewHash, bookingId,
+    correlation ids, booking notes, headers or keys."""
+    if not isinstance(body, dict):
+        return {"json_object": False}
+    opt = body.get("option") if isinstance(body.get("option"), dict) else {}
+    if not opt and isinstance(body.get("options"), list) and body["options"] and isinstance(body["options"][0], dict):
+        opt = body["options"][0]
+    pricing = opt.get("pricing") if isinstance(opt.get("pricing"), dict) else {}
+    rinfo = [r for r in opt.get("roomInfo") or [] if isinstance(r, dict)] if isinstance(opt.get("roomInfo"), list) else []
+    canc = opt.get("cancellation") if isinstance(opt.get("cancellation"), dict) else {}
+    status = body.get("status") if isinstance(body.get("status"), dict) else {}
+    returned = next((str(body[k]) for k in ("tjHotelId", "hotelId", "hid") if body.get(k) not in (None, "")), None)
+    arith = None
+    if all(_num(pricing.get(k)) is not None for k in ("totalPrice", "basePrice", "taxes", "mf", "mft")):
+        arith = round(pricing["basePrice"] + pricing["taxes"] + pricing["mf"] + pricing["mft"] - pricing["totalPrice"], 2)
+    d_total = _num(((detail_option or {}).get("pricing") or {}).get("totalPrice"))
+    r_total = _num(pricing.get("totalPrice"))
+    penalties = canc.get("penalties") if isinstance(canc.get("penalties"), list) else []
+    return {
+        "top_level_keys": sorted(body.keys()),
+        "status_success": status.get("success"),
+        "errors": _error_summary(body),
+        "requested_hid": str(requested_hid),
+        "returned_hid": returned,
+        "hid_matches": returned == str(requested_hid) if returned else None,
+        "correlation_id_present": bool(body.get("correlationId")),
+        "review_hash_present": bool(body.get("reviewHash") or opt.get("reviewHash")),
+        "booking_id_present": bool(body.get("bookingId")),
+        "onhold_allowed_type": type(body["onholdAllowed"]).__name__ if "onholdAllowed" in body else "absent",
+        "option_container": "option" if isinstance(body.get("option"), dict) else ("options[]" if opt else "absent"),
+        "option_keys": sorted(opt.keys()),
+        "option_id_matches_selected": (str(opt.get("optionId")) == str(detail_option.get("optionId"))
+                                       if opt.get("optionId") and detail_option else None),
+        "option_type": opt.get("optionType"),
+        "roominfo_count": len(rinfo),
+        "roominfo_keys": sorted(rinfo[0].keys()) if rinfo else [],
+        "meal_basis_type": type(opt.get("mealBasis")).__name__ if opt else None,
+        "inclusions_count": len(opt["inclusions"]) if isinstance(opt.get("inclusions"), list) else None,
+        "booking_notes_present": bool(opt.get("bookingNotes")),
+        "pricing_keys": sorted(pricing.keys()),
+        "price_fields": {k: _type_value(pricing[k]) if k in pricing else "absent"
+                         for k in ("totalPrice", "basePrice", "discount", "taxes", "mf", "mft",
+                                   "gstClaimableAmount", "strikethrough", "currency")},
+        "base_plus_taxes_mf_mft_minus_total": arith,
+        "detail_total_price": d_total,
+        "review_total_price": r_total,
+        "review_total_matches_detail": (round(r_total - d_total, 2) == 0) if None not in (r_total, d_total) else None,
+        "review_minus_detail_total": round(r_total - d_total, 2) if None not in (r_total, d_total) else None,
+        "cancellation_keys": sorted(canc.keys()),
+        "cancellation_is_refundable": canc.get("isRefundable"),
+        "cancellation_penalties_count": len(penalties),
+        "cancellation_penalty_keys": sorted(penalties[0].keys()) if penalties and isinstance(penalties[0], dict) else [],
+        "cancellation_penalty_amounts": [_num(p.get("amount")) for p in penalties if isinstance(p, dict)][:10],
+        "deadline_present": bool(canc.get("deadlineDateTime") or opt.get("deadlineDateTime")),
+        "compliance_keys": sorted(opt["compliance"].keys()) if isinstance(opt.get("compliance"), dict) else [],
+        "commercial_keys": sorted(opt["commercial"].keys()) if isinstance(opt.get("commercial"), dict) else [],
+        "provider_only_fields_never_to_browser": list(REVIEW_PROVIDER_ONLY_FIELDS),
+    }
+
+
+def compare_review_with_production(documented: dict[str, Any], hid: str, option_id: str, search_id: str) -> dict[str, Any]:
+    prod = build_review_payload(search_id=search_id, hotel_id=hid, option_id=option_id)
+    return {
+        "production_keys": sorted(prod.keys()),
+        "documented_keys": sorted(documented.keys()),
+        "missing_in_production": sorted(set(documented) - set(prod)),
+        "extra_in_production": sorted(set(prod) - set(documented)),
+        "production_reuses_listing_correlation_id": prod.get("correlationId") == documented.get("correlationId"),
+    }
+
+
+async def run_review(args) -> None:
+    """READ-ONLY: search session -> detail -> review. Never books or pays."""
+    settings, config = _config()
+    if args.search_id:
+        from app.services import hotel_sessions as sessions
+        session = await sessions.get_search_session(settings=settings, search_id=args.search_id)
+        if session is None:
+            raise SystemExit("Search session not found or expired.")
+    else:
+        session = await _session_via_search(args, settings)
+    if not session.provider_search_id:
+        raise SystemExit("Session has no listing correlationId; cannot drive review.")
+    hid = pick_hotel(session, args.hotel_id)
+    if not hid:
+        raise SystemExit("No hotel id from this search session (or --hotel-id not in it).")
+    rooms = _rooms_from_session(session)
+    detail_payload = build_uat_pricing_payload(
+        listing_correlation_id=session.provider_search_id, hid=hid, check_in=session.check_in,
+        check_out=session.check_out, rooms=rooms, currency=session.currency,
+    )
+    print("session: results=", len(session.results), "check_in:", session.check_in,
+          "check_out:", session.check_out, "rooms:", len(session.rooms), "currency:", session.currency)
+    status, detail, elapsed = await _raw_post(config, detail_payload, HOTEL_PRICING_PATH)
+    print("DETAIL HTTP status:", status, "elapsed_s:", elapsed)
+    if status >= 400 or not isinstance(detail, dict):
+        print("detail errors:", _error_summary(detail))
+        raise SystemExit("Detail call failed; cannot review.")
+    option = select_detail_option(detail, getattr(args, "option_id", ""))
+    review_hash = detail.get("reviewHash")
+    print("detail options:", len(detail.get("options") or []), "option_selected:", bool(option),
+          "review_hash_present:", bool(review_hash))
+    if not option:
+        raise SystemExit("No priced option in detail (or --option-id not found).")
+    if not review_hash:
+        raise SystemExit("Detail returned no reviewHash; review requires it.")
+    variant = getattr(args, "review_variant", "documented") or "documented"
+    payload = build_uat_review_payload(
+        listing_correlation_id=session.provider_search_id, hid=hid, option_id=str(option["optionId"]),
+        review_hash=str(review_hash), variant=variant, check_in=session.check_in,
+        check_out=session.check_out, rooms=rooms, currency=session.currency,
+    )
+    print("REVIEW variant:", variant)
+    print("REVIEW REQUEST (keys/types only):", json.dumps(shape(payload), indent=1))
+    print("PRODUCTION vs DOCS:", json.dumps(
+        compare_review_with_production(payload, hid, str(option["optionId"]), session.provider_search_id), indent=1))
+    await asyncio.sleep(1.0)
+    status, body, elapsed = await _raw_post(config, payload, HOTEL_REVIEW_PATH)
+    print("REVIEW HTTP status:", status, "elapsed_s:", elapsed)
+    print("REVIEW SUMMARY:", json.dumps(review_summary(body, hid, option), indent=1, default=str))
+    print("NOTE: no booking was created and no payment was made.")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="hotel_listing_uat")
-    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint", "detail"])
+    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint", "detail", "review"])
     p.add_argument("--destination", default="Goa")
     p.add_argument("--hids", default="")
     p.add_argument("--count", type=int, default=5)
@@ -595,8 +796,11 @@ def main() -> None:
     p.add_argument("--hids-file", default="", help="listing: read comma-separated ids from this file")
     p.add_argument("--hotel-id", default="", help="detail: hotel id from the search session (default: first priced)")
     p.add_argument("--search-id", default="", help="detail: reuse an existing saved search session token")
+    p.add_argument("--option-id", default="", help="review: optionId from detail (default: cheapest)")
+    p.add_argument("--review-variant", choices=["documented", "with-context"], default="documented",
+                   help="review: documented 4-field body, or add dates/rooms/currency/nationality")
     args = p.parse_args()
-    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail}[args.mode]
+    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail, "review": run_review}[args.mode]
     asyncio.run(runner(args))
 
 
