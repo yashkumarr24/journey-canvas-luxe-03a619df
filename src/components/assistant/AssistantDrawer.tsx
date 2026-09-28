@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bot, Compass, Search } from "lucide-react";
+import { Compass, Search } from "lucide-react";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useAssistant } from "@/lib/assistant/use-assistant";
 
 const drawerPrompts = [
@@ -42,7 +41,7 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
         </div>
         <div className="border-t border-border bg-card p-4">
           <Button asChild className="w-full" disabled={!assistant.ready}>
-            <Link to="/assistant" onClick={() => setOpen(false)}>
+            <Link to="/assistant" onClick={() => onOpenChange(false)}>
               <Search className="size-4" />
               {assistant.ready ? "Review trip & search results" : "Add trip details to continue"}
             </Link>
