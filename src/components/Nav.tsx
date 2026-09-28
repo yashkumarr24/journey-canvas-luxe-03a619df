@@ -54,6 +54,7 @@ export function Nav() {
               <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="Hotel search lets you select a quote currency"><Coins className="size-4 shrink-0" />Currency <span className="ml-auto text-foreground">INR</span></div>
               <Link to="/contact" onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium hover:border-gold hover:bg-secondary"><MessageSquare className="size-4 shrink-0 text-gold" />Feedback</Link>
             </div>
+            </div>
           </SheetContent>
         </Sheet>
         <div className="flex min-w-0 items-center gap-3 sm:gap-6">
