@@ -865,8 +865,9 @@ def build_uat_book_payload(
             travellers.append({"ti": "Master", "pt": "CHILD", "fN": _test_name(n), "lN": "Diagnostic"})
             n += 1
         for t in travellers:
-            if pan:
-                t["pan"] = pan
+            own_pan = pans[n - (len(travellers) - travellers.index(t))] if pans else pan
+            if own_pan:
+                t["pan"] = own_pan
             if passport:
                 t["pNum"] = passport
         room_info.append({"travellerInfo": travellers})
