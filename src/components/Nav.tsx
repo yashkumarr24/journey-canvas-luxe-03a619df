@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble, ArrowUpRight } from "lucide-react";
 import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const close = () => setOpen(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = html.style.overflow;
+    document.body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevBody;
+      html.style.overflow = prevHtml;
+    };
+  }, [open]);
   const entries = [
     { label: "Flights", to: "/flights" as const, icon: PlaneTakeoff },
     { label: "Hotels", to: "/hotels" as const, icon: BedDouble },
@@ -33,11 +48,11 @@ export function Nav() {
             <SheetContent
               side="left"
               overlayClassName="bg-foreground/40"
-              className="bottom-0 left-0 top-16 h-auto w-[min(86vw,330px)] overflow-hidden border-r border-foreground/10 bg-background px-0 shadow-[var(--shadow-luxe)] sm:top-20"
+              className="bottom-0 left-0 top-16 flex h-[calc(100dvh-4rem)] w-[min(86vw,330px)] flex-col gap-0 overflow-hidden border-r border-foreground/10 bg-background px-0 shadow-[var(--shadow-luxe)] sm:top-20 sm:h-[calc(100dvh-5rem)]"
             >
               <SheetTitle className="sr-only">Navigation menu</SheetTitle>
               <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
-              <div className="h-full overflow-y-auto overscroll-contain pb-6 pt-4 [scrollbar-width:thin]">
+              <div data-nav-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 pt-4 [scrollbar-width:thin]" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
               <div className="space-y-1 px-3">
                 {entries.slice(0, 4).map(({ label, to, icon: Icon }) => (
                   <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
@@ -59,9 +74,11 @@ export function Nav() {
             </SheetContent>
           </Sheet>
           <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0"><img src={logo} alt="Fly n Feel Holidays" width={560} height={200} loading="eager" decoding="async" className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px]" /></Link>
-          <button type="button" onClick={() => setOpen(true)} aria-label="Open Ask AI menu" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</button>
+          <button type="button" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Open Ask AI travel assistant" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</button>
+          <AssistantDrawer open={aiOpen} onOpenChange={setAiOpen} />
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Button type="button" variant="ghost" size="icon" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Ask AI" className="size-9 border border-foreground/15 text-gold hover:text-gold md:hidden"><Bot className="size-5" /></Button>
           <Button asChild className="hidden rounded-none bg-gold px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-px hover:bg-primary hover:shadow-[var(--shadow-luxe)] sm:inline-flex"><Link to="/contact">Plan a Journey</Link></Button>
           <Button asChild variant="ghost" size="icon" className="size-9 border border-foreground/15 text-gold hover:text-gold sm:hidden"><Link to="/contact" aria-label="Plan a Journey" title="Plan a Journey"><ArrowUpRight className="size-5" /></Link></Button>
           <Link to={isAuthenticated ? "/account" : "/auth/login"} aria-label={isAuthenticated ? "My account" : "Sign in or sign up"} className="grid size-10 shrink-0 place-items-center border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold"><UserRound className="size-5" /></Link>

@@ -11,7 +11,6 @@ import { Testimonials } from "@/components/Testimonials";
 import { Footer } from "@/components/Footer";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { SectionTitle } from "@/components/Section";
-import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
 import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { posts } from "@/data/posts";
 import heroImage from "@/assets/hero.webp";
@@ -132,7 +131,6 @@ function Index() {
       <SmoothScroll />
       <Cursor />
       <Nav />
-      <AssistantDrawer />
       <Hero />
       <Marquee />
       <ValueProps />
