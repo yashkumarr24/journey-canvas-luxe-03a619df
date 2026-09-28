@@ -717,10 +717,14 @@ def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | Non
         rate_plan_type=plan_type,
         rate_plan_label=RATE_PLAN_TYPES.get(plan_type or ""),
         # Provider-declared requirements for this rate — never inferred.
-        pan_required=_flag(option, "panRequired", "isPanRequired")
+        pan_required=(_flag(get_map(option, "compliance"), "panRequired")
+                      if _flag(get_map(option, "compliance"), "panRequired") is not None
+                      else _flag(option, "panRequired", "isPanRequired"))
         if plan_type != "PAN_NOT_REQUIRED"
         else False,
-        passport_required=_flag(option, "passportRequired", "isPassportRequired"),
+        passport_required=(_flag(get_map(option, "compliance"), "passportRequired")
+                           if _flag(get_map(option, "compliance"), "passportRequired") is not None
+                           else _flag(option, "passportRequired", "isPassportRequired")),
         gst_inclusive=_flag(option, "isGstInclusive", "gstInclusive"),
         breakfast_included=_flag(option, "isBreakfastIncluded", "breakfastIncluded"),
     )

@@ -300,7 +300,7 @@ async def hotel_detail(
     if summary is None:
         raise HotelNotFoundError()
 
-    detail = await _priced_hotel(
+    detail, _review_hash = await _priced_hotel(
         settings=settings,
         session=session,
         provider_hotel_id=payload.hotel_id,
@@ -318,6 +318,11 @@ async def hotel_detail(
     )
 
 
+def _session_rooms(session: sessions.SearchSession) -> list[dict]:
+    """Exactly the listing's rooms (same count and order)."""
+    return [{"adults": r.adults, "childAges": list(r.child_ages)} for r in session.rooms]
+
+
 async def _priced_hotel(
     *,
     settings: Settings,
@@ -325,18 +330,26 @@ async def _priced_hotel(
     provider_hotel_id: str,
     fallback,
 ):
-    """/hms/v3/hotel/pricing for one hotel inside this searchId."""
+    """/hms/v3/hotel/pricing for one hotel, driven by the saved listing.
+
+    Returns (detail, review_hash). review_hash is provider-only and never
+    leaves the server.
+    """
     if not session.provider_search_id:
-        # v3 pricing is only meaningful inside a live searchId.
+        # v3 pricing must reuse the listing correlationId.
         raise HotelSearchExpiredError()
 
     client, config = _provider(settings)
     try:
-        detail = await tripjack_hotels.hotel_pricing(
+        priced = await tripjack_hotels.hotel_pricing(
             client,
             config,
-            search_id=session.provider_search_id,
+            listing_correlation_id=session.provider_search_id,
             provider_hotel_id=provider_hotel_id,
+            check_in=session.check_in,
+            check_out=session.check_out,
+            rooms=_session_rooms(session),
+            nationality=session.nationality,
             currency=session.currency,
             fallback=fallback,
         )
@@ -345,9 +358,9 @@ async def _priced_hotel(
     except Exception as exc:
         raise _map_provider_error(exc) from None
 
-    if not detail.rooms:
+    if not priced.detail.rooms:
         raise HotelRoomUnavailableError()
-    return detail
+    return priced.detail, priced.review_hash
 
 
 # ========================= select / review =================================
@@ -374,7 +387,7 @@ async def select_room(
 
     # Re-price so the option we sell is one the provider still sells, not one
     # the browser claims exists.
-    detail = await _priced_hotel(
+    detail, pricing_review_hash = await _priced_hotel(
         settings=settings,
         session=session,
         provider_hotel_id=payload.hotel_id,
@@ -432,7 +445,9 @@ async def select_room(
         currency=session.currency,
         provider_hotel_id=payload.hotel_id,
         provider_option_id=room.id,
-        provider_review_hash=review_hash,
+        # Review's hash wins; the pricing reviewHash is the documented input
+        # for the review step, so keep it when review returns none.
+        provider_review_hash=review_hash or pricing_review_hash,
         requirements=requirements.model_dump(by_alias=True),
         user_id=auth.user_id,
         # Resume an existing guest session in the same browser when offered.

@@ -498,13 +498,19 @@ def detail_summary(body: Any, requested_hid: str) -> dict[str, Any]:
 
 def compare_with_production(documented: dict[str, Any], hid: str, search_id: str) -> dict[str, Any]:
     """Key-level diff between what production would send and the docs."""
-    prod = build_pricing_payload(search_id=search_id, hotel_id=hid)
+    prod = build_pricing_payload(
+        listing_correlation_id=search_id, hid=hid,
+        check_in=documented["checkIn"], check_out=documented["checkOut"],
+        rooms=[{"adults": r.get("adults"), "childAges": r.get("childAge") or []} for r in documented["rooms"]],
+        nationality=documented.get("nationality"), currency=documented.get("currency"),
+    )
     return {
         "production_keys": sorted(prod.keys()),
         "documented_keys": sorted(documented.keys()),
         "missing_in_production": sorted(set(documented) - set(prod)),
         "extra_in_production": sorted(set(prod) - set(documented)),
         "production_reuses_listing_correlation_id": prod.get("correlationId") == documented.get("correlationId"),
+        "payloads_identical": prod == documented,
     }
 
 
