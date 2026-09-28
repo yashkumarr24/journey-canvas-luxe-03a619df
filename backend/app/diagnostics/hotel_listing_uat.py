@@ -33,7 +33,7 @@ from app.integrations.tripjack.config import build_hotel_config
 from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
     build_listing_continuation_payload,
-    build_listing_payload,
+    correlation_id,
 )
 from app.repositories.hotel_catalogue import HotelCatalogueRepository, _in
 
@@ -215,14 +215,55 @@ def dates(days_ahead: int, nights: int) -> tuple[str, str]:
     return ci.isoformat(), (ci + timedelta(days=nights)).isoformat()
 
 
+def build_uat_listing_payload(
+    *,
+    hids: list[str],
+    check_in: str,
+    check_out: str,
+    rooms: list[dict[str, Any]],
+    nationality: str = "IN",
+    currency: str = "INR",
+) -> dict[str, Any]:
+    """Diagnostic-only listing payload matching the REAL TripJack V3 schema.
+
+    UAT errCode 6521 proved the production builder's field names are wrong:
+    TripJack requires `checkIn` / `checkOut` / `currency` (camelCase dates,
+    currency at searchQuery level). The roomInfo / searchCriteria nesting was
+    NOT flagged by TripJack, so it is kept identical to production. Do not
+    merge this back into hotel_wire.py until production is deliberately
+    migrated.
+    """
+    room_info: list[dict[str, Any]] = []
+    for room in rooms:
+        entry: dict[str, Any] = {"numberOfAdults": int(room.get("adults") or 1)}
+        ages = [int(a) for a in room.get("childAges") or []]
+        if ages:
+            entry["numberOfChild"] = len(ages)
+            entry["childAge"] = ages
+        room_info.append(entry)
+    return {
+        "correlationId": correlation_id(),
+        "searchQuery": {
+            "checkIn": check_in,
+            "checkOut": check_out,
+            "currency": currency.upper(),
+            "roomInfo": room_info,
+            "searchCriteria": {
+                "hids": hids,
+                "nationality": nationality.upper(),
+            },
+        },
+    }
+
+
 async def run_listing(args) -> None:
     _, config = _config()
     ids = args.hids.split(",") if args.hids else (await select_ids(args.destination, args.count))[0]
     if not ids:
         raise SystemExit("No hotel ids to test.")
     ci, co = dates(args.days_ahead, args.nights)
-    payload = build_listing_payload(hids=ids, check_in=ci, check_out=co,
-                                    rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+    payload = build_uat_listing_payload(hids=ids, check_in=ci, check_out=co,
+                                        rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
     print("REQUEST (keys only):", json.dumps(shape(payload), indent=1))
     print("requested_hids:", len(ids), "check_in:", ci, "check_out:", co)
     status, body, elapsed = await _raw_post(config, payload)
@@ -265,8 +306,8 @@ async def run_probe(args) -> None:
         if n > len(ids):
             print(f"size {n}: only {len(ids)} ids available; stopping.")
             break
-        payload = build_listing_payload(hids=ids[:n], check_in=ci, check_out=co,
-                                        rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+        payload = build_uat_listing_payload(hids=ids[:n], check_in=ci, check_out=co,
+                                            rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
         status, body, elapsed = await _raw_post(config, payload)
         ok = status < 400 and isinstance(body, dict) and not body.get("errors") and \
             (body.get("status") or {}).get("success") is not False
