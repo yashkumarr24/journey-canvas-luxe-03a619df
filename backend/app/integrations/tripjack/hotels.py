@@ -733,43 +733,83 @@ def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | Non
 # =============================== review ====================================
 
 
+class HotelReviewResult:
+    """Normalised review. Everything except `room` is provider-only and must
+    stay server-side (bookingId, returned optionId)."""
+
+    __slots__ = ("room", "booking_id", "returned_option_id", "option_id_changed")
+
+    def __init__(self, room: HotelRoomOption, booking_id: str | None,
+                 returned_option_id: str | None, option_id_changed: bool) -> None:
+        self.room = room
+        self.booking_id = booking_id
+        self.returned_option_id = returned_option_id
+        self.option_id_changed = option_id_changed
+
+
 async def review_option(
     client: TripJackClient,
     config: TripJackConfig,
     *,
-    search_id: str,
+    listing_correlation_id: str,
     provider_hotel_id: str,
-    option_id: str,
+    selected: HotelRoomOption,
+    review_hash: str,
     currency: str,
-) -> tuple[HotelRoomOption | None, str | None]:
-    """/hms/v3/hotel/review — authoritative re-price of one optionId.
-
-    Returns (repriced room, reviewHash). `None` means the provider gave no
-    usable quote back: the caller treats the option as gone rather than selling
-    the older, cheaper price. The reviewHash is the handle the booking phase
-    will need and is stored server-side only.
-    """
+) -> HotelReviewResult:
+    """/hms/v3/hotel/review — authoritative re-price of the selected option."""
     body = await client.post(
         HOTEL_REVIEW_PATH,
         build_review_payload(
-            search_id=search_id, hotel_id=provider_hotel_id, option_id=option_id
+            listing_correlation_id=listing_correlation_id,
+            hid=provider_hotel_id,
+            option_id=selected.id,
+            review_hash=review_hash,
         ),
         retries=0,  # transactional-adjacent: never retried
         operation="hotel_review",
     )
-
-    review_hash = (
-        get_str(body, "reviewHash")
-        or get_str(get_map(body, "reviewResult"), "reviewHash")
-        or get_str(get_map(body, "hotel"), "reviewHash")
+    return normalize_review_response(
+        body, provider_hotel_id=provider_hotel_id, selected=selected, currency=currency
     )
 
-    candidate = (
-        get_map(body, "hotel")
-        or get_map(get_map(body, "reviewResult"), "hotel")
-        or get_map(body, "reviewResult")
-        or body
-    )
-    rooms = _rooms(candidate, currency)
-    exact = next((room for room in rooms if room.id == option_id), None)
-    return (exact or (rooms[0] if rooms else None)), review_hash
+
+def normalize_review_response(
+    body: Any, *, provider_hotel_id: str, selected: HotelRoomOption, currency: str
+) -> HotelReviewResult:
+    """Confirmed reply: correlationId, tjHotelId, hotelName, bookingId,
+    option{...}, onholdAllowed, status{success}.
+
+    Raises ValueError when unusable: failed status, another hotel, no priced
+    option, or a returned option that is not recognisably the selected one.
+    """
+    if not isinstance(body, dict):
+        raise ValueError("hotel_review_unusable")
+    status = get_map(body, "status")
+    if status and status.get("success") is False:
+        raise ValueError("hotel_review_unusable")
+    returned_hid = get_str(body, "tjHotelId", "hotelId", "hid")
+    if returned_hid and returned_hid != str(provider_hotel_id):
+        raise ValueError("hotel_review_mismatch")
+
+    option = get_map(body, "option")
+    if not option:
+        listed = [o for o in get_list(body, "options") if isinstance(o, dict)]
+        option = listed[0] if len(listed) == 1 else {}
+    room = _room_option(option, currency) if option else None
+    if room is None:
+        raise ValueError("hotel_review_no_option")
+
+    returned_id = get_str(option, "optionId", "id")
+    changed = bool(returned_id) and returned_id != selected.id
+    if changed:
+        # TripJack may re-issue the optionId at review. Accept only when the
+        # reviewed option is structurally the same product we selected.
+        if (room.option_type and selected.option_type and room.option_type != selected.option_type) \
+                or room.room_count != selected.room_count:
+            raise ValueError("hotel_review_option_mismatch")
+
+    # Keep the customer-facing rate id stable (the one the browser selected);
+    # the provider's returned optionId stays server-side.
+    room = room.model_copy(update={"id": selected.id})
+    return HotelReviewResult(room, get_str(body, "bookingId"), returned_id, changed)

@@ -692,6 +692,10 @@ def review_summary(body: Any, requested_hid: str, detail_option: dict[str, Any] 
         "option_id_matches_selected": (str(opt.get("optionId")) == str(detail_option.get("optionId"))
                                        if opt.get("optionId") and detail_option else None),
         "option_type": opt.get("optionType"),
+        "option_type_matches_selected": (opt.get("optionType") == detail_option.get("optionType")
+                                         if opt.get("optionType") and detail_option and detail_option.get("optionType") else None),
+        "roominfo_count_matches_selected": (len(rinfo) == len(detail_option.get("roomInfo") or [])
+                                            if detail_option and isinstance(detail_option.get("roomInfo"), list) else None),
         "roominfo_count": len(rinfo),
         "roominfo_keys": sorted(rinfo[0].keys()) if rinfo else [],
         "meal_basis_type": type(opt.get("mealBasis")).__name__ if opt else None,
@@ -719,13 +723,15 @@ def review_summary(body: Any, requested_hid: str, detail_option: dict[str, Any] 
 
 
 def compare_review_with_production(documented: dict[str, Any], hid: str, option_id: str, search_id: str) -> dict[str, Any]:
-    prod = build_review_payload(search_id=search_id, hotel_id=hid, option_id=option_id)
+    prod = build_review_payload(listing_correlation_id=search_id, hid=hid, option_id=option_id,
+                                review_hash=documented.get("reviewHash") or "")
     return {
         "production_keys": sorted(prod.keys()),
         "documented_keys": sorted(documented.keys()),
         "missing_in_production": sorted(set(documented) - set(prod)),
         "extra_in_production": sorted(set(prod) - set(documented)),
         "production_reuses_listing_correlation_id": prod.get("correlationId") == documented.get("correlationId"),
+        "payloads_identical": prod == documented,
     }
 
 
