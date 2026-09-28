@@ -179,3 +179,26 @@ def test_uat_diagnostic_payload_optional_timeout_and_minimal_room():
         hids=["1"], check_in="2026-10-01", check_out="2026-10-02", rooms=[{"adults": 1}], timeout_ms=13000,
     )
     assert p["rooms"] == [{"adults": 1}] and p["timeoutMs"] == 13000 and p["hids"] == [1]
+
+
+def test_probe_summary_reports_ids_keys_and_price_types_only():
+    b = {"hotels": [{"tjHotelId": "100000224831", "name": "Secret Name",
+                     "options": [{"optionId": "o1", "pricing": {"totalPrice": 5059.5, "mf": 50, "mft": 9.0,
+                                                               "currency": "INR"}}]}],
+         "status": {"success": True}}
+    s = diag.probe_summary(b, ["100000224831", "2"])
+    assert s["requested_count"] == 2 and s["returned_count"] == 1
+    assert s["returned_hids"] == ["100000224831"] and s["returned_not_requested"] == []
+    assert s["first_hotel_keys"] == ["name", "options", "tjHotelId"]
+    assert s["first_option_keys"] == ["optionId", "pricing"]
+    assert s["first_option_pricing_keys"] == ["currency", "mf", "mft", "totalPrice"]
+    assert s["first_option_price_fields"]["totalPrice"] == {"type": "float", "value": 5059.5}
+    assert s["first_option_price_fields"]["mf"] == {"type": "int", "value": 50}
+    assert "Secret Name" not in str(s) and "o1" not in str(s)
+
+
+def test_probe_summary_empty_and_missing_pricing():
+    s = diag.probe_summary({"hotels": [{"tjHotelId": 1, "options": [{"pricing": {"totalPrice": "x"}}]}]}, ["1"])
+    assert s["first_option_price_fields"] == {"totalPrice": {"type": "str", "value": None},
+                                              "mf": "absent", "mft": "absent"}
+    assert diag.probe_summary({}, ["1"])["returned_count"] == 0
