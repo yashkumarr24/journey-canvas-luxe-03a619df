@@ -1,8 +1,11 @@
-"""Hotel V3 Listing: parser, pagination, errors, static merge, sanitiser.
+"""Hotel V3 Listing: flat request, <=100-hid batching, confirmed hotels[]
+parser, static merge, sanitiser.
 
-Mocked only — no TripJack or Supabase call. Fixture shapes follow the v3
-documentation used by the current parser; they are NOT yet confirmed against
-a real UAT response (see app/diagnostics/hotel_listing_uat.py).
+Mocked only — no TripJack or Supabase call. Fixture shapes follow the
+response structure confirmed from live UAT on the VPS: top level
+correlationId / hotels[] / nationality / status / totalResults; hotel
+hotelId / name / options[]; option optionId / optionType / roomInfo[] /
+inclusions[] / mealBasis / pricing / commercial / compliance / cancellation.
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ import pytest
 
 from app.diagnostics import hotel_listing_uat as diag
 from app.integrations.tripjack import hotels as tj
+from app.integrations.tripjack import hotel_wire as wire
 from app.integrations.tripjack.exceptions import (
     TripJackTimeoutError,
     TripJackUpstreamError,
@@ -25,24 +29,31 @@ from app.services import hotel_search as svc
 CI = date.today() + timedelta(days=30)
 
 
-def hotel(hid, name="Sea View", total=5000.0, mf=50.0, mft=9.0):
+def option(oid, total=5000.0, mf=50.0, mft=9.0, meal="Room Only", refundable=False, pan=True):
     return {
-        "id": hid, "name": name, "rt": 4,
-        "ops": [{"id": f"{hid}-o1", "tp": {"TF": total, "mf": mf, "mft": mft}, "mb": "RO"}],
+        "optionId": oid, "optionType": "SRSM",
+        "roomInfo": [{"id": "r1", "name": "Deluxe Room", "adults": 2, "children": 0}],
+        "inclusions": [], "mealBasis": meal,
+        "pricing": {"totalPrice": total, "basePrice": total - 500, "discount": 0, "taxes": 500,
+                    "mf": mf, "mft": mft, "currency": "INR"},
+        "commercial": {"type": "NET", "commission": 0},
+        "compliance": {"gstType": "NA", "panRequired": pan, "passportRequired": False},
+        "cancellation": {"isRefundable": refundable, "penalties": []},
     }
 
 
-def body(hotels, search_id="S1", next_token=None, has_more=None):
-    b = {"searchResult": {"his": hotels, "searchId": search_id}, "status": {"success": True}}
-    if next_token:
-        b["searchResult"]["nextPageToken"] = next_token
-    if has_more is not None:
-        b["searchResult"]["hasMore"] = has_more
-    return b
+def hotel(hid, name="Sea View", **kw):
+    return {"hotelId": hid, "name": name, "options": [option(f"{hid}-o1", **kw)]}
 
 
-def req():
-    return HotelSearchRequest(destination="Goa", check_in=CI, check_out=CI + timedelta(days=2),
+def body(hotels, total=None, cid="C1"):
+    return {"correlationId": cid, "hotels": hotels, "nationality": "106",
+            "status": {"success": True, "httpStatus": 200},
+            "totalResults": len(hotels) if total is None else total}
+
+
+def req(nights=2):
+    return HotelSearchRequest(destination="Goa", check_in=CI, check_out=CI + timedelta(days=nights),
                               rooms=[{"adults": 2}])
 
 
@@ -64,13 +75,146 @@ class Cfg:
     hotel_max_pages = 3
 
 
-def test_listing_parses_hotel_id_and_price_including_mf_mft():
-    page = tj.normalize_listing_response(body([hotel("H1")]), currency="INR")
-    assert page.search_id == "S1"
+def ids(n, start=0):
+    return [str(100000000000 + i) for i in range(start, start + n)]
+
+
+# ------------------------------------------------------------------ request
+
+
+def test_listing_request_is_flat_v3_payload():
+    p = wire.build_listing_payload(hids=["100000224831", "H2"], check_in="2026-10-01",
+                                   check_out="2026-10-02", rooms=[{"adults": 2, "childAges": [3, 5]}],
+                                   nationality="IN", currency="inr")
+    assert p.pop("correlationId")
+    assert p == {"checkIn": "2026-10-01", "checkOut": "2026-10-02",
+                 "rooms": [{"adults": 2, "children": 2, "childAge": [3, 5]}],
+                 "currency": "INR", "nationality": "106", "hids": [100000224831, "H2"]}
+    for legacy in ("searchQuery", "roomInfo", "searchCriteria", "checkinDate", "checkoutDate"):
+        assert legacy not in p
+
+
+def test_listing_request_defaults_and_numeric_nationality():
+    p = wire.build_listing_payload(hids=["1"], check_in="a", check_out="b", rooms=[{"adults": 1}],
+                                   nationality=None, currency=None)
+    assert p["currency"] == "INR" and p["nationality"] == "106" and p["rooms"] == [{"adults": 1}]
+    assert wire.tripjack_nationality("106") == "106"
+
+
+def test_listing_request_rejects_more_than_100_hids():
+    wire.build_listing_payload(hids=ids(100), check_in="a", check_out="b", rooms=[{"adults": 1}],
+                               nationality="IN", currency="INR")
+    with pytest.raises(ValueError):
+        wire.build_listing_payload(hids=ids(101), check_in="a", check_out="b", rooms=[{"adults": 1}],
+                                   nationality="IN", currency="INR")
+
+
+# ------------------------------------------------------------------ batching
+
+
+def test_up_to_100_hids_is_one_request():
+    client = FakeClient([body([hotel("H1")])])
+    asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(100)))
+    assert len(client.calls) == 1 and len(client.calls[0]["hids"]) == 100
+
+
+def test_more_than_100_hids_batched_sequentially_and_merged():
+    client = FakeClient([body([hotel("H1"), hotel("H2")], total=2), body([hotel("H3")], total=1),
+                         body([], total=0)])
+    results, sid, cur = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(250)))
+    assert [len(c["hids"]) for c in client.calls] == [100, 100, 50]
+    sent = [h for c in client.calls for h in c["hids"]]
+    assert len(sent) == len(set(sent)) == 250
+    assert [r.id for r in results] == ["H1", "H2", "H3"] and sid == "C1" and cur == "INR"
+
+
+def test_duplicate_hids_are_removed_before_batching():
+    client = FakeClient([body([hotel("H1")])])
+    asyncio.run(tj.search_hotels(client, Cfg, req(), hids=["1", "1", "2", " 2 "]))
+    assert client.calls[0]["hids"] == [1, 2]
+
+
+def test_results_deduplicated_across_batches():
+    client = FakeClient([body([hotel("H1", total=4000)]), body([hotel("H1", total=9999), hotel("H2")])])
+    results, _, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(150)))
+    assert [r.id for r in results] == ["H1", "H2"]
+    assert results[0].rate.total_price.amount == 4059.0  # first occurrence kept
+
+
+def test_first_batch_failure_propagates():
+    client = FakeClient([TripJackUpstreamError("x")])
+    with pytest.raises(TripJackUpstreamError):
+        asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(150)))
+
+
+def test_later_batch_failure_keeps_earlier_results():
+    client = FakeClient([body([hotel("H1")]), TripJackTimeoutError("t")])
+    results, _, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(150)))
+    assert [r.id for r in results] == ["H1"]
+
+
+def test_no_pagination_calls_are_made():
+    client = FakeClient([{**body([hotel("H1")]), "searchId": "S", "nextPageToken": "T", "hasMore": True}])
+    asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(5)))
+    assert len(client.calls) == 1  # a single batch -> a single call, whatever the body says
+
+
+# ------------------------------------------------------------------ response
+
+
+def test_parses_hotels_options_pricing_including_mf_mft():
+    page = tj.normalize_listing_response(body([hotel("H1")]), currency="INR", nights=2)
     [r] = page.results
-    assert r.id == "H1" and r.star_rating == 4
-    assert r.rate.total_price.amount == 5059.0  # TF + mf + mft
-    assert r.rate_plans[0].option_id == "H1-o1"
+    assert r.id == "H1" and r.name == "Sea View"
+    assert r.rate.total_price.amount == 5059.0  # totalPrice + mf + mft
+    assert r.rate.per_night_price.amount == 2529.5
+    plan = r.rate_plans[0]
+    assert plan.option_id == "H1-o1" and plan.type == "CHEAPEST"
+    assert plan.meal_plan == "Room Only" and plan.room_name == "Deluxe Room"
+    assert plan.refundable is False and plan.pan_required is True
+
+
+def test_mf_mft_absent_uses_total_price_only():
+    page = tj.normalize_listing_response(body([hotel("H1", mf=None, mft=None)]), currency="INR")
+    assert page.results[0].rate.total_price.amount == 5000.0
+
+
+def test_multiple_options_become_rate_plans_cheapest_first():
+    h = {"hotelId": "H1", "name": "X", "options": [
+        option("exp", total=9000, meal="Breakfast", refundable=True, pan=False),
+        option("cheap", total=4000),
+        option("free", total=6000, refundable=True),
+    ]}
+    r = tj.normalize_listing_response(body([h]), currency="INR").results[0]
+    plans = {p.type: p.option_id for p in r.rate_plans}
+    assert plans == {"CHEAPEST": "cheap", "FREE_CANCELLATION": "free",
+                     "PAN_NOT_REQUIRED": "exp", "BREAKFAST_INCLUSIVE": "exp"}
+    assert r.rate.total_price.amount == 4059.0 and r.rate.rate_plan_type == "CHEAPEST"
+
+
+def test_hotel_with_no_options_has_no_price():
+    r = tj.normalize_listing_response(body([{"hotelId": "H1", "name": "X", "options": []}]),
+                                      currency="INR").results[0]
+    assert r.rate is None and r.rate_plans is None
+
+
+def test_option_without_total_price_or_id_is_skipped():
+    bad_price = option("o1"); bad_price["pricing"].pop("totalPrice")
+    no_id = option(None)
+    r = tj.normalize_listing_response(body([{"hotelId": "H1", "name": "X", "options": [bad_price, no_id]}]),
+                                      currency="INR").results[0]
+    assert r.rate_plans is None
+
+
+def test_total_results_and_no_pagination_fields():
+    page = tj.normalize_listing_response(body([hotel("H1")], total=7), currency="INR")
+    assert page.total_results == 7 and page.search_id == "C1"
+    assert page.next_token is None and page.has_more is False
+
+
+def test_legacy_shape_is_not_parsed():
+    legacy = {"searchResult": {"his": [{"id": "H1", "name": "X", "ops": [{"id": "o", "tp": {"TF": 1}}]}]}}
+    assert tj.normalize_listing_response(legacy, currency="INR").results == []
 
 
 def test_empty_listing():
@@ -79,40 +223,35 @@ def test_empty_listing():
 
 
 def test_malformed_items_dropped_not_invented():
-    raw = body(["junk", {"name": "No id"}, {"id": "H2"}, hotel("H3")])
-    ids = [r.id for r in tj.normalize_listing_response(raw, currency="INR").results]
-    assert ids == ["H3"]  # H2 has no name and no static name
+    raw = body(["junk", {"name": "No id"}, {"hotelId": "H2"}, hotel("H3")])
+    assert [r.id for r in tj.normalize_listing_response(raw, currency="INR").results] == ["H3"]
 
 
 def test_missing_name_filled_only_from_static_catalogue():
     token = tj.STATIC_NAMES.set({"H2": "Catalogue Name"})
     try:
-        r = tj.normalize_listing_response(body([{"id": "H2"}]), currency="INR").results
+        r = tj.normalize_listing_response(body([{"hotelId": "H2", "options": []}]), currency="INR").results
     finally:
         tj.STATIC_NAMES.reset(token)
-    assert r[0].name == "Catalogue Name" and r[0].rate is None  # no invented price
+    assert r[0].name == "Catalogue Name" and r[0].rate is None
 
 
-def test_option_without_price_is_skipped():
-    raw = body([{"id": "H1", "name": "X", "ops": [{"id": "o1"}]}])
-    assert tj.normalize_listing_response(raw, currency="INR").results[0].rate_plans is None
+def test_requested_hotels_absent_from_response_are_not_invented():
+    client = FakeClient([body([hotel("100000000001")])])
+    results, _, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(5)))
+    assert [r.id for r in results] == ["100000000001"]
 
 
-def test_pagination_follows_search_id_and_dedupes():
-    client = FakeClient([
-        body([hotel("H1")], next_token="T2"),
-        body([hotel("H1"), hotel("H2")], next_token=None, has_more=False),
-    ])
-    results, sid, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=["H1", "H2"]))
-    assert [r.id for r in results] == ["H1", "H2"] and sid == "S1"
-    assert client.calls[1] == {"correlationId": client.calls[1]["correlationId"], "searchId": "S1", "nextPageToken": "T2"}
-    assert client.calls[0]["searchQuery"]["searchCriteria"]["hids"] == ["H1", "H2"]
+def test_cancellation_penalties_parsed():
+    o = option("o1", refundable=True)
+    o["cancellation"]["penalties"] = [{"from": "2026-10-01", "to": "2026-10-05", "amount": 0},
+                                      {"from": "2026-10-05", "to": "2026-10-10", "amount": 1200}]
+    plan = tj.normalize_listing_response(body([{"hotelId": "H", "name": "X", "options": [o]}]),
+                                         currency="INR").results[0].rate_plans[0]
+    assert plan.refundable is True and plan.free_cancellation_until == "2026-10-05"
 
 
-def test_failed_continuation_keeps_first_page():
-    client = FakeClient([body([hotel("H1")], next_token="T2"), TripJackUpstreamError("x")])
-    results, _, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=["H1"]))
-    assert [r.id for r in results] == ["H1"]
+# ------------------------------------------------------------ service level
 
 
 @pytest.mark.parametrize("exc,expected", [
@@ -131,7 +270,7 @@ def test_static_merge_fills_gaps_but_live_price_wins():
            "latitude": 15.5, "longitude": 73.8, "hotel_images": [{"url": "https://i/1.jpg", "position": 0}],
            "hotel_amenities": [{"name": "Pool"}]}
     merged = svc._merge_static(live, row)
-    assert merged.star_rating == 4  # live wins
+    assert merged.star_rating == 2  # live listing carries no rating; catalogue fills the gap
     assert merged.property_type == "Resort" and merged.amenities == ["Pool"]
     assert merged.images[0].url == "https://i/1.jpg" and merged.location.latitude == 15.5
     assert merged.rate.total_price.amount == live.rate.total_price.amount
@@ -142,15 +281,21 @@ def test_unavailable_static_content_hotel_keeps_live_only():
     assert svc._merge_static(live, None) is live
 
 
+def test_public_result_has_no_raw_provider_keys():
+    r = tj.normalize_listing_response(body([hotel("H1")]), currency="INR").results[0]
+    dumped = json.dumps(r.model_dump(by_alias=True, mode="json"))
+    for k in ('"pricing"', '"compliance"', '"commercial"', '"correlationId"', '"hotels"'):
+        assert k not in dumped
+
+
 def test_diagnostic_sanitiser_never_emits_values():
-    secret_body = body([hotel("H1", name="SECRET-NAME")], search_id="SECRET-SID", next_token="SECRET-TOK")
+    secret_body = body([hotel("H1", name="SECRET-NAME")], cid="SECRET-CID")
     out = json.dumps([diag.shape(secret_body), diag.pagination_fields(secret_body), diag.find_lists(secret_body)])
     assert "SECRET" not in out
-    assert diag.price_fields(secret_body["searchResult"]["his"][0]) == {"ops[0].tp.TF": 5000.0, "ops[0].tp.mf": 50.0, "ops[0].tp.mft": 9.0}
 
 
 def test_diagnostic_parser_report_detects_mismatch():
-    rep = diag.parser_report(body([hotel("H1"), {"id": "HX"}]), ["H1", "H2"], "INR")
+    rep = diag.parser_report(body([hotel("H1"), {"hotelId": "HX"}]), ["H1", "H2"], "INR")
     assert rep["raw_hotel_items"] == 2 and rep["parsed_hotels"] == 1 and rep["dropped_by_parser"] == 1
     assert rep["returned_not_requested"] == ["HX"] and rep["requested_not_returned"] == 1
 
