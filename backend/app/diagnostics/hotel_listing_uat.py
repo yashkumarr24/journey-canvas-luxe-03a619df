@@ -33,7 +33,7 @@ from app.integrations.tripjack.config import build_hotel_config
 from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
     build_listing_continuation_payload,
-    build_listing_payload,
+    correlation_id,
 )
 from app.repositories.hotel_catalogue import HotelCatalogueRepository, _in
 
