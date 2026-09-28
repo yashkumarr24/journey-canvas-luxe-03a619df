@@ -75,11 +75,11 @@ def test_detail_summary_handles_errors_and_non_json():
     assert s["options_count"] == 0 and s["returned_hid"] is None and s["hid_matches"] is None
 
 
-def test_compare_flags_production_mismatch():
+def test_production_payload_now_matches_documented_shape():
     c = diag.compare_with_production(_payload(), "100000001897", "listing-corr")
-    assert "hid" in c["missing_in_production"] and "checkIn" in c["missing_in_production"]
-    assert set(c["extra_in_production"]) == {"searchId", "hotelId"}
-    assert c["production_reuses_listing_correlation_id"] is False
+    assert c["missing_in_production"] == [] and c["extra_in_production"] == []
+    assert c["production_reuses_listing_correlation_id"] is True
+    assert c["payloads_identical"] is True
 
 
 def _session(results):

@@ -138,7 +138,7 @@ def test_results_deduplicated_across_batches():
     client = FakeClient([body([hotel("H1", total=4000)]), body([hotel("H1", total=9999), hotel("H2")])])
     results, _, _ = asyncio.run(tj.search_hotels(client, Cfg, req(), hids=ids(150)))
     assert [r.id for r in results] == ["H1", "H2"]
-    assert results[0].rate.total_price.amount == 4059.0  # first occurrence kept
+    assert results[0].rate.total_price.amount == 4000.0  # first occurrence kept
 
 
 def test_first_batch_failure_propagates():
@@ -166,8 +166,8 @@ def test_parses_hotels_options_pricing_including_mf_mft():
     page = tj.normalize_listing_response(body([hotel("H1")]), currency="INR", nights=2)
     [r] = page.results
     assert r.id == "H1" and r.name == "Sea View"
-    assert r.rate.total_price.amount == 5059.0  # totalPrice + mf + mft
-    assert r.rate.per_night_price.amount == 2529.5
+    assert r.rate.total_price.amount == 5000.0  # totalPrice authoritative; mf/mft not re-added
+    assert r.rate.per_night_price.amount == 2500.0
     plan = r.rate_plans[0]
     assert plan.option_id == "H1-o1" and plan.type == "CHEAPEST"
     assert plan.meal_plan == "Room Only" and plan.room_name == "Deluxe Room"
@@ -189,7 +189,7 @@ def test_multiple_options_become_rate_plans_cheapest_first():
     plans = {p.type: p.option_id for p in r.rate_plans}
     assert plans == {"CHEAPEST": "cheap", "FREE_CANCELLATION": "free",
                      "PAN_NOT_REQUIRED": "exp", "BREAKFAST_INCLUSIVE": "exp"}
-    assert r.rate.total_price.amount == 4059.0 and r.rate.rate_plan_type == "CHEAPEST"
+    assert r.rate.total_price.amount == 4000.0 and r.rate.rate_plan_type == "CHEAPEST"
 
 
 def test_hotel_with_no_options_has_no_price():
