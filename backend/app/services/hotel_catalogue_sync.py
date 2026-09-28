@@ -578,7 +578,17 @@ async def status(settings: Settings) -> dict:
     if not repo.enabled:
         return {"configured": False}
     states = {s["sync_type"]: {k: v for k, v in s.items() if k != "cursor"} for s in await repo.all_states()}
-    return {"configured": True, "running": is_running(), "states": states, "counts": await repo.counts()}
+    counts = await repo.counts()
+    summary = {
+        "total_mappings": counts.get("mappings"),
+        "synced": counts.get("content_synced"),
+        "pending": counts.get("content_pending"),
+        "failed": counts.get("content_failed"),
+        "content_unavailable": counts.get("content_unavailable"),
+        "content_unavailable_label": "Static content unavailable from TripJack",
+    }
+    return {"configured": True, "running": is_running(), "states": states, "counts": counts,
+            "content_summary": summary}
 
 
 if __name__ == "__main__":
