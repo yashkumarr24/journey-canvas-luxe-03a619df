@@ -244,7 +244,8 @@ def test_select_room_propagates_pricing_review_hash(wired, monkeypatch):
         return session()
 
     async def fake_review(*a, **k):
-        return None, None  # review gave no hash -> pricing reviewHash kept
+        assert k["review_hash"] == "RH-secret" and k["listing_correlation_id"] == "LIST-CORR"
+        return tj.HotelReviewResult(k["selected"], "BK", None, False)
 
     async def fake_create(**kw):
         captured.update(kw)

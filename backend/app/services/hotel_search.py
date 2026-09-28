@@ -156,6 +156,11 @@ class HotelDestinationUnsupportedError(AppError):
     message = "We don't cover hotels in that destination yet. Please try a nearby city."
 
 
+# TripJack v3 review error codes (docs "Error Codes").
+REVIEW_UNAVAILABLE_CODES = {"OPTION_SOLD_OUT", "INVALID_HOTEL_ID"}
+REVIEW_EXPIRED_CODES = {"SEARCH_SESSION_EXPIRED", "INVALID_SEARCH_ID"}
+
+
 def _provider(settings: Settings):
     """Hotel API v3 client. Hotels run on their OWN host, not the flight host."""
     config = build_hotel_config(settings)
@@ -400,22 +405,36 @@ async def select_room(
 
     previous_total = selected.total_price.amount
 
-    # Final v3 review. If it produces nothing usable we treat the rate as gone
-    # rather than selling the older, cheaper quote.
+    if not pricing_review_hash or not session.provider_search_id:
+        # Review needs the detail reviewHash and the listing correlationId.
+        raise HotelRoomUnavailableError()
+
+    # Final v3 review. Anything unusable means the rate is gone — we never
+    # fall back to the older, cheaper detail quote.
     client, config = _provider(settings)
     try:
-        repriced, review_hash = await tripjack_hotels.review_option(
+        reviewed = await tripjack_hotels.review_option(
             client,
             config,
-            search_id=session.provider_search_id or "",
+            listing_correlation_id=session.provider_search_id,
             provider_hotel_id=payload.hotel_id,
-            option_id=payload.rate_id,
+            selected=selected,
+            review_hash=pricing_review_hash,
             currency=session.currency,
         )
+    except ValueError:
+        raise HotelRoomUnavailableError() from None
+    except TripJackBadRequestError as exc:
+        if exc.provider_code in REVIEW_EXPIRED_CODES:
+            raise HotelSearchExpiredError() from None
+        if exc.provider_code in REVIEW_UNAVAILABLE_CODES:
+            raise HotelRoomUnavailableError() from None
+        raise _map_provider_error(exc) from None
     except Exception as exc:
         raise _map_provider_error(exc) from None
 
-    room = repriced or selected
+    room = reviewed.room
+    review_hash = pricing_review_hash
 
     stay = HotelStay(
         check_in=session.check_in,
@@ -445,9 +464,9 @@ async def select_room(
         currency=session.currency,
         provider_hotel_id=payload.hotel_id,
         provider_option_id=room.id,
-        # Review's hash wins; the pricing reviewHash is the documented input
-        # for the review step, so keep it when review returns none.
-        provider_review_hash=review_hash or pricing_review_hash,
+        # The detail reviewHash is what TripJack review accepted. bookingId is
+        # NOT persisted: TripJack requires a fresh Review immediately before Book.
+        provider_review_hash=review_hash,
         requirements=requirements.model_dump(by_alias=True),
         user_id=auth.user_id,
         # Resume an existing guest session in the same browser when offered.
@@ -463,6 +482,8 @@ async def select_room(
             rate_plan=room.rate_plan_type,
             option_type=room.option_type,
             review_hash_present=bool(review_hash),
+            booking_id_present=bool(reviewed.booking_id),
+            option_id_changed=reviewed.option_id_changed,
         ),
     )
 

@@ -218,6 +218,11 @@ class TripJackClient:
         provider_code, provider_message = (None, "")
         if body.get("errors"):
             provider_code, provider_message = summarise_errors(body["errors"])
+        elif isinstance(body.get("error"), dict):
+            # Hotel v3 envelope: {"status":{"success":false},"error":{code,message,requestId}}
+            provider_code, provider_message = summarise_errors(
+                {k: v for k, v in body["error"].items() if k != "requestId"}
+            )
 
         # TripJack signals failure both via HTTP status and via
         # `status.success = false` + `errors[]` on a 200.

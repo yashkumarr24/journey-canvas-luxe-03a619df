@@ -220,14 +220,27 @@ def build_pricing_payload(
 
 
 def build_review_payload(
-    *, search_id: str, hotel_id: str, option_id: str
+    *, listing_correlation_id: str, hid: str, option_id: str, review_hash: str
 ) -> dict[str, Any]:
-    """/hms/v3/hotel/review — server-authoritative re-price of one optionId."""
+    """/hms/v3/hotel/review — confirmed on TripJack UAT (HTTP 200).
+
+    Exactly four fields: the listing's correlationId (reused, never new), the
+    optionId chosen from detail, the detail reviewHash and the hotel id as a
+    string. Dates/rooms/currency/nationality are NOT part of the contract.
+    """
+    if not listing_correlation_id:
+        raise ValueError("missing_correlation_id")
+    if not hid:
+        raise ValueError("missing_hid")
+    if not option_id:
+        raise ValueError("missing_option_id")
+    if not review_hash:
+        raise ValueError("missing_review_hash")
     return {
-        "correlationId": correlation_id(),
-        "searchId": search_id,
-        "hotelId": hotel_id,
-        "optionId": option_id,
+        "correlationId": listing_correlation_id,
+        "optionId": str(option_id),
+        "reviewHash": review_hash,
+        "hid": str(hid),
     }
 
 

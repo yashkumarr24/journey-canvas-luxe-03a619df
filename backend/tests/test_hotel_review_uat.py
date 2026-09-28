@@ -111,12 +111,20 @@ def test_review_summary_detects_price_change_and_errors():
     assert diag.review_summary(None, HID, None) == {"json_object": False}
 
 
-def test_production_review_payload_differs_from_docs():
+def test_production_review_payload_matches_confirmed_docs():
     doc = diag.build_uat_review_payload(listing_correlation_id="c", hid=HID, option_id="o", review_hash="h")
     c = diag.compare_review_with_production(doc, HID, "o", "c")
-    assert "reviewHash" in c["missing_in_production"] and "hid" in c["missing_in_production"]
-    assert set(c["extra_in_production"]) == {"searchId", "hotelId"}
-    assert c["production_reuses_listing_correlation_id"] is False
+    assert c["missing_in_production"] == [] and c["extra_in_production"] == []
+    assert c["production_reuses_listing_correlation_id"] is True and c["payloads_identical"] is True
+
+
+def test_review_summary_reports_option_id_change_structurally():
+    changed = json.loads(json.dumps(REVIEW_REPLY))
+    changed["option"]["optionId"] = "reissued-id"
+    s = diag.review_summary(changed, HID, diag.select_detail_option(DETAIL_REPLY))
+    assert s["option_id_matches_selected"] is False
+    assert s["option_type_matches_selected"] is True
+    assert "reissued-id" not in json.dumps(s)
 
 
 def _session():
