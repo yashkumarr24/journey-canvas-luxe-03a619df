@@ -29,7 +29,7 @@ export function Nav() {
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open menu" className="size-10 shrink-0 border border-foreground/10 hover:bg-secondary"><Menu className="size-5" /></Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)]">
+          <SheetContent side="left" overlayClassName="bg-foreground/40" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)]">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
             <div className="space-y-1 px-3">

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+// Keep this hook independent of the React global in automatic JSX projects.
+
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {

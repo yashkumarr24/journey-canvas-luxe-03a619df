@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BedDouble, Gift, PlaneTakeoff, Plus, Search, Trash2 } from "lucide-react";
@@ -40,7 +40,7 @@ export function HomeSearch() {
   const [holidaySearched, setHolidaySearched] = useState(false);
   const matchingHolidays = destinations.filter((item) => `${item.name} ${item.country} ${item.region}`.toLowerCase().includes(holidayDestination.trim().toLowerCase()));
   const patch = (next: Partial<FlightSearchFormValues>) => setValues((current) => ({ ...current, ...next }));
-  const submitFlight = (event: React.FormEvent) => {
+  const submitFlight = (event: FormEvent) => {
     event.preventDefault();
     const parsed = flightSearchSchema.safeParse({ ...values, tripType: mode === "multicity" ? "oneway" : mode, returnDate: mode === "roundtrip" ? values.returnDate : "" });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check your search details."); return; }
@@ -119,6 +119,6 @@ export function HomeSearch() {
   );
 }
 
-function SearchField({ label, children }: { label: string; children: React.ReactNode }) {
+function SearchField({ label, children }: { label: string; children: ReactNode }) {
   return <div className="min-w-0"><Label className="mb-2 block text-[11px] font-semibold uppercase text-muted-foreground">{label}</Label>{children}</div>;
 }
