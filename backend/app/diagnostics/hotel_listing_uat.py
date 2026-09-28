@@ -1196,7 +1196,7 @@ def main() -> None:
     p.add_argument("--confirm", default="", help=f"book: must be {BOOK_CONFIRM_PHRASE} with --execute-uat-hold")
     p.add_argument("--contact-email", default="", help="book: operator email for TripJack delivery (never printed)")
     p.add_argument("--contact-phone", default="", help="book: operator phone (never printed)")
-    p.add_argument("--pan", default="", help="book: UAT test PAN, only if Review requires it (never printed)")
+    p.add_argument("--pan", default="", help="book: UAT test PAN(s), only if Review requires it; one value applies to all travellers, or comma-separated one per traveller in search order (never printed)")
     p.add_argument("--passport", default="", help="book: passport, only if Review requires it (never printed)")
     p.add_argument("--poll-attempts", type=int, default=36, help="book: booking-details polls, 5s apart (36 = 180s)")
     p.add_argument("--cancel-after", action="store_true", help="book: cancel the UAT hold after polling")
