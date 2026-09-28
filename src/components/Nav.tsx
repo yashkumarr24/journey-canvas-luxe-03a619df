@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble } from "lucide-react";
+import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble, ArrowUpRight } from "lucide-react";
 import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ export function Nav() {
         <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           <Link to="/assistant" aria-label="Ask AI" className="grid size-9 place-items-center text-foreground hover:text-gold sm:hidden"><Bot className="size-5" /></Link>
           <Button asChild className="hidden bg-gold text-primary-foreground hover:bg-primary sm:inline-flex"><Link to="/contact">Plan a Journey</Link></Button>
+          <Button asChild variant="ghost" size="icon" className="size-9 border border-foreground/15 text-gold hover:text-gold sm:hidden"><Link to="/contact" aria-label="Plan a Journey" title="Plan a Journey"><ArrowUpRight className="size-5" /></Link></Button>
           <Link to={isAuthenticated ? "/account" : "/auth/login"} aria-label={isAuthenticated ? "My account" : "Sign in or sign up"} className="grid size-10 shrink-0 place-items-center border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold"><UserRound className="size-5" /></Link>
         </div>
       </nav>
