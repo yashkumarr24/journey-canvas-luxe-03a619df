@@ -49,6 +49,24 @@ def test_pan_passport_gst_only_when_given():
         diag.build_uat_book_payload(booking_id="", rooms=[], email="e", phone="1")
 
 
+def test_per_traveller_pans():
+    rooms = [{"adults": 2, "childAges": [5]}, {"adults": 1}]
+    pans = ["AAAAA0001A", "BBBBB0002B", "CCCCC0003C", "DDDDD0004D"]
+    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1", pans=pans)
+    got = [t["pan"] for r in p["roomTravellerInfo"] for t in r["travellerInfo"]]
+    assert got == pans  # one PAN per traveller, search room/guest order
+    assert len(set(got)) == 4
+    # count mismatch is rejected before anything is sent
+    with pytest.raises(ValueError, match="pans_count_mismatch"):
+        diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1", pans=pans[:3])
+    # single pan still applies to every traveller
+    p2 = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1", pan="AAAAA0001A")
+    assert all(t["pan"] == "AAAAA0001A" for r in p2["roomTravellerInfo"] for t in r["travellerInfo"])
+    # per-traveller pans pass pre-flight validation when Review requires PAN
+    fails = diag.validate_book_payload(p, rooms, pan_required=True)
+    assert not fails
+
+
 def test_requirements_from_review():
     r = diag.book_requirements(REVIEW_REPLY)
     assert r["booking_id_present"] is True and r["pan_required"] is False
