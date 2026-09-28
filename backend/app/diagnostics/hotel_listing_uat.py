@@ -271,7 +271,14 @@ def build_uat_listing_payload(
 
 async def run_listing(args) -> None:
     _, config = _config()
-    ids = args.hids.split(",") if args.hids else (await select_ids(args.destination, args.count))[0]
+    if args.hids_file:
+        with open(args.hids_file) as fh:
+            ids = [s.strip() for s in fh.read().split(",") if s.strip()]
+        print(f"using {len(ids)} ids from {args.hids_file}")
+    elif args.hids:
+        ids = [s.strip() for s in args.hids.split(",") if s.strip()]
+    else:
+        ids = (await select_ids(args.destination, args.count))[0]
     if not ids:
         raise SystemExit("No hotel ids to test.")
     ci, co = dates(args.days_ahead, args.nights)
@@ -310,11 +317,51 @@ def _print_response(status: int, body: Any, elapsed: float) -> None:
     print("RESPONSE SHAPE:", json.dumps(shape(body), indent=1)[:6000])
 
 
+def _type_value(v: Any) -> dict[str, Any]:
+    """Type + value only for numeric price fields; never strings/objects."""
+    if isinstance(v, bool) or v is None:
+        return {"type": type(v).__name__, "value": v}
+    if isinstance(v, (int, float)):
+        return {"type": type(v).__name__, "value": v}
+    return {"type": type(v).__name__, "value": None}
+
+
+def probe_summary(body: Any, requested: list[str]) -> dict[str, Any]:
+    """Sanitised per-probe summary: IDs, key names and price numbers only."""
+    items = [h for h in (tj_hotels._raw_hotel_list(body) if isinstance(body, dict) else [])  # noqa: SLF001
+             if isinstance(h, dict)]
+    returned: list[str] = []
+    for h in items:
+        for k in ("tjHotelId",) + ID_KEYS:
+            if h.get(k) not in (None, ""):
+                returned.append(str(h[k]))
+                break
+    first = items[0] if items else {}
+    options = first.get("options") if isinstance(first.get("options"), list) else []
+    opt = options[0] if options and isinstance(options[0], dict) else {}
+    pricing = opt.get("pricing") if isinstance(opt.get("pricing"), dict) else {}
+    req = {str(x) for x in requested}
+    return {
+        "requested_count": len(requested),
+        "returned_count": len(items),
+        "returned_hids": returned,
+        "returned_not_requested": [r for r in returned if r not in req],
+        "first_hotel_keys": sorted(first.keys()),
+        "first_hotel_options_count": len(options),
+        "first_option_keys": sorted(opt.keys()),
+        "first_option_pricing_keys": sorted(pricing.keys()),
+        "first_option_price_fields": {k: _type_value(pricing[k]) if k in pricing else "absent"
+                                      for k in ("totalPrice", "mf", "mft")},
+    }
+
+
 async def run_probe(args) -> None:
     _, config = _config()
     sizes = sorted(int(s) for s in args.sizes.split(","))
     ids, _ = await select_ids(args.destination, max(sizes))
     ci, co = dates(args.days_ahead, args.nights)
+    print("probe check_in:", ci, "check_out:", co)
+    last_ok: list[str] = []
     for n in sizes:
         if n > len(ids):
             print(f"size {n}: only {len(ids)} ids available; stopping.")
@@ -331,7 +378,13 @@ async def run_probe(args) -> None:
         if not ok:
             print("stopping at first rejection.")
             break
+        print(f"size {n} SUMMARY:", json.dumps(probe_summary(body, ids[:n]), indent=1, default=str))
+        last_ok = ids[:n]
         await asyncio.sleep(PROBE_PAUSE_SECONDS)
+    if args.save_ids and last_ok:
+        with open(args.save_ids, "w") as fh:
+            fh.write(",".join(last_ok))
+        print(f"saved {len(last_ok)} requested ids of the largest successful probe to {args.save_ids}")
 
 
 async def run_select(args) -> None:
@@ -380,6 +433,8 @@ def main() -> None:
     p.add_argument("--nights", type=int, default=1)
     p.add_argument("--adults", type=int, default=2)
     p.add_argument("--follow-page", action="store_true")
+    p.add_argument("--save-ids", default="", help="probe-limit: write requested ids of largest successful probe here")
+    p.add_argument("--hids-file", default="", help="listing: read comma-separated ids from this file")
     args = p.parse_args()
     runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint}[args.mode]
     asyncio.run(runner(args))
