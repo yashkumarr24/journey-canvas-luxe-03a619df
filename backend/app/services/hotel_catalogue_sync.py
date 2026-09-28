@@ -169,11 +169,25 @@ async def _retry_full_db(op: str, fn, *, size: int = 0):
     raise StatePersistenceError(f"{op} failed after retries; stopping safely") from last
 
 
+def _raw_hotel_id(raw: Any) -> Optional[str]:
+    if not isinstance(raw, dict):
+        return None
+    value = raw.get("tjHotelId", raw.get("id"))
+    text = str(value).strip() if value is not None else ""
+    return text or None
+
+
 async def _content_phase_full(repo: HotelCatalogueRepository, client, run_started: str,
-                              processed: int, failed: int) -> tuple[int, int]:
+                              processed: int, failed: int,
+                              unavailable: int = 0) -> tuple[int, int, int]:
     """Full-sync content phase with resilient DB operations.
 
-    TripJack fetch failures stay isolated per batch (marked failed, continue).
+    Outcomes per requested hotel ID:
+      * request failure (network/timeout/HTTP error) -> failed, retryable
+      * returned + saved                              -> synced
+      * returned but not normalisable/saved           -> failed, retryable
+      * HTTP 200 but ID absent from hotels[]          -> CONTENT_UNAVAILABLE
+        (never marked synced, never marked failed)
     DB failures are retried; if persistence ultimately fails the sync stops
     before any progress for that batch is recorded.
     """
@@ -191,7 +205,8 @@ async def _content_phase_full(repo: HotelCatalogueRepository, client, run_starte
             logger.warning("hotel_content_batch_failed", extra=log_extra(kind=type(exc).__name__, size=len(ids)))
             await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(ids), size=len(ids))
             failed += len(ids)
-            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed,
+                                         "unavailable_count": unavailable})
             continue
         # Persist in smaller atomic RPC chunks: one TripJack fetch (≤100), many
         # short DB transactions. A failing chunk is retried alone; chunks that
@@ -204,13 +219,30 @@ async def _content_phase_full(repo: HotelCatalogueRepository, client, run_starte
             )
             saved.update(chunk_saved)
             processed += len(chunk_saved)
-            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
-        missing = [i for i in ids if i not in saved]
-        if missing:
-            await _retry_full_db("mark_content_failed", lambda: repo.mark_content_failed(missing), size=len(missing))
-            failed += len(missing)
-            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed})
-    return processed, failed
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed,
+                                         "unavailable_count": unavailable})
+        returned_ids = [_raw_hotel_id(r) for r in raw]
+        identifiable = all(returned_ids)
+        returned = {i for i in returned_ids if i}
+        not_saved = [i for i in ids if i not in saved]
+        # Only classify as unavailable when every returned record is
+        # identifiable; otherwise we cannot prove an ID was truly absent.
+        absent = [i for i in not_saved if i not in returned] if identifiable else []
+        still_failed = [i for i in not_saved if i not in set(absent)]
+        if absent:
+            await _retry_full_db("mark_content_unavailable",
+                                 lambda: repo.mark_content_unavailable(absent), size=len(absent))
+            unavailable += len(absent)
+            logger.info("hotel_content_unavailable", extra=log_extra(size=len(absent), requested=len(ids)))
+        if still_failed:
+            await _retry_full_db("mark_content_failed",
+                                 lambda: repo.mark_content_failed(still_failed), size=len(still_failed))
+            failed += len(still_failed)
+        if absent or still_failed:
+            await _put_state_full(repo, {"processed_count": processed, "failed_count": failed,
+                                         "unavailable_count": unavailable})
+    return processed, failed, unavailable
+
 
 
 async def _content_phase(repo: HotelCatalogueRepository, client, run_started: str, sync_type: str,
