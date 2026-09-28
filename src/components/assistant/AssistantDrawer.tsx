@@ -13,23 +13,12 @@ const drawerPrompts = [
   "Plan my trip",
 ];
 
-export function AssistantDrawer() {
-  const [open, setOpen] = useState(false);
+export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const assistant = useAssistant();
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          size="lg"
-          className="fixed bottom-5 left-4 z-40 h-11 border border-primary bg-background px-4 text-foreground shadow-[var(--shadow-soft)] hover:bg-primary hover:text-primary-foreground sm:bottom-auto sm:left-5 sm:top-1/2 sm:-translate-y-1/2 sm:[writing-mode:vertical-rl] sm:h-auto sm:min-h-32 sm:w-12 sm:px-0 sm:py-4"
-          aria-label="Open Ask AI travel assistant"
-        >
-          <Bot className="size-4 sm:rotate-90" aria-hidden="true" />
-          <span>Ask AI</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="flex w-[min(100vw,460px)] max-w-none flex-col gap-0 p-0 sm:max-w-[460px]">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" overlayClassName="z-[65]" className="z-[70] flex w-[min(100vw,460px)] max-w-none flex-col gap-0 p-0 sm:max-w-[460px]">
         <div className="sr-only">
           <SheetTitle>Ask AI</SheetTitle>
           <SheetDescription>Describe your trip and continue to validated flight and hotel results.</SheetDescription>
