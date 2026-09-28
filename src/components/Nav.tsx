@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Globe2, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble, X } from "lucide-react";
+import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble } from "lucide-react";
 import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ export function Nav() {
     { label: "Help & Support", to: "/contact" as const, icon: CircleHelp },
     { label: "Trips / My Bookings", to: "/account/bookings" as const, icon: BriefcaseBusiness },
     { label: isAuthenticated ? "My Account" : "Sign In / Sign Up", to: (isAuthenticated ? "/account" : "/auth/login") as "/account" | "/auth/login", icon: UserRound },
-    { label: "Feedback", to: "/contact" as const, icon: MessageSquare },
   ];
 
   return (
@@ -30,10 +29,9 @@ export function Nav() {
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open menu" className="size-10 shrink-0 border border-foreground/10 hover:bg-secondary"><Menu className="size-5" /></Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)] [&>button]:hidden">
+          <SheetContent side="left" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)]">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
-            <Button type="button" variant="ghost" size="icon" aria-label="Close menu" onClick={close} className="absolute right-4 top-3 size-9"><X className="size-5" /></Button>
             <div className="space-y-1 px-3">
               {entries.slice(0, 4).map(({ label, to, icon: Icon }) => (
                 <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
