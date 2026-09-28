@@ -6,6 +6,7 @@ Run on the VPS (whitelisted IP), from `backend/`:
     python -m app.diagnostics.hotel_listing_uat listing --destination Goa --count 5 [--follow-page]
     python -m app.diagnostics.hotel_listing_uat probe-limit --destination Goa --sizes 5,25,50,100,200
     python -m app.diagnostics.hotel_listing_uat endpoint --destination Goa
+    python -m app.diagnostics.hotel_listing_uat detail --destination Goa [--hotel-id ID]
 
 Guarantees:
   * Uses the existing hotel config/client (same host, `apikey` header, timeouts).
@@ -32,7 +33,9 @@ from app.integrations.tripjack.client import API_KEY_HEADER, get_hotel_client
 from app.integrations.tripjack.config import build_hotel_config
 from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
+    HOTEL_PRICING_PATH,
     build_listing_continuation_payload,
+    build_pricing_payload,
     correlation_id,
 )
 from app.repositories.hotel_catalogue import HotelCatalogueRepository, _in
@@ -127,7 +130,7 @@ def _config():
     return settings, config
 
 
-async def _raw_post(config, payload: dict) -> tuple[int, Any, float]:
+async def _raw_post(config, payload: dict, path: str = HOTEL_LISTING_PATH) -> tuple[int, Any, float]:
     """Same client/host/headers/timeouts as production, but returns the status
     and decoded body even on errors so the structure can be inspected."""
     client = get_hotel_client(config)
@@ -135,7 +138,7 @@ async def _raw_post(config, payload: dict) -> tuple[int, Any, float]:
     headers = {API_KEY_HEADER: config.api_key, "Content-Type": "application/json"}
     loop = asyncio.get_running_loop()
     t0 = loop.time()
-    resp = await http.post("/" + HOTEL_LISTING_PATH, json=payload, headers=headers)
+    resp = await http.post("/" + path, json=payload, headers=headers)
     elapsed = round(loop.time() - t0, 2)
     try:
         body = resp.json()
@@ -422,9 +425,158 @@ async def run_endpoint(args) -> None:
     print("session_search_id_present:", bool(data.get("searchId")), "expires_at:", data.get("expiresAt"))
 
 
+# ------------------------------ detail (pricing) ----------------------------
+
+
+def build_uat_pricing_payload(
+    *,
+    listing_correlation_id: str,
+    hid: str,
+    check_in: str,
+    check_out: str,
+    rooms: list[dict[str, Any]],
+    currency: str,
+    nationality: str = UAT_NATIONALITY_INDIA,
+    timeout_ms: int | None = 13000,
+) -> dict[str, Any]:
+    """Documented /hms/v3/hotel/pricing body (FLAT). correlationId MUST be the
+    listing's; dates/rooms/currency must match the listing. Diagnostic only."""
+    payload = build_uat_listing_payload(
+        hids=[], check_in=check_in, check_out=check_out, rooms=rooms,
+        nationality=nationality, currency=currency, timeout_ms=timeout_ms,
+    )
+    payload.pop("hids")
+    payload["correlationId"] = listing_correlation_id
+    payload["hid"] = str(hid)
+    return payload
+
+
+def detail_summary(body: Any, requested_hid: str) -> dict[str, Any]:
+    """Sanitised pricing reply: keys, counts, ids, price TYPES/numbers only.
+    Never hotel/room names, option ids, reviewHash values or booking notes."""
+    if not isinstance(body, dict):
+        return {"json_object": False}
+    options = [o for o in body.get("options") or [] if isinstance(o, dict)] \
+        if isinstance(body.get("options"), list) else []
+    first = options[0] if options else {}
+    pricing = first.get("pricing") if isinstance(first.get("pricing"), dict) else {}
+    rinfo = [r for r in first.get("roomInfo") or [] if isinstance(r, dict)] \
+        if isinstance(first.get("roomInfo"), list) else []
+    canc = first.get("cancellation") if isinstance(first.get("cancellation"), dict) else {}
+    returned = next((str(body[k]) for k in ("tjHotelId", "hotelId", "hid") if body.get(k) not in (None, "")), None)
+    arith = None
+    if all(isinstance(pricing.get(k), (int, float)) for k in ("totalPrice", "basePrice", "taxes", "mf", "mft")):
+        arith = round(pricing["basePrice"] + pricing["taxes"] + pricing["mf"] + pricing["mft"] - pricing["totalPrice"], 2)
+    status = body.get("status") if isinstance(body.get("status"), dict) else {}
+    return {
+        "top_level_keys": sorted(body.keys()),
+        "status_success": status.get("success"),
+        "requested_hid": str(requested_hid),
+        "returned_hid": returned,
+        "hid_matches": returned == str(requested_hid) if returned else None,
+        "correlation_id_present": bool(body.get("correlationId")),
+        "review_hash_present": bool(body.get("reviewHash")),
+        "options_count": len(options),
+        "option_types": sorted({str(o.get("optionType")) for o in options if o.get("optionType")}),
+        "options_with_option_id": sum(1 for o in options if o.get("optionId")),
+        "options_with_pricing": sum(1 for o in options if isinstance(o.get("pricing"), dict)),
+        "first_option_keys": sorted(first.keys()),
+        "first_option_roominfo_count": len(rinfo),
+        "first_option_roominfo_keys": sorted(rinfo[0].keys()) if rinfo else [],
+        "first_option_meal_basis_type": type(first.get("mealBasis")).__name__ if first else None,
+        "first_option_inclusions_count": len(first.get("inclusions") or []) if isinstance(first.get("inclusions"), list) else None,
+        "first_option_pricing_keys": sorted(pricing.keys()),
+        "first_option_price_fields": {k: _type_value(pricing[k]) if k in pricing else "absent"
+                                      for k in ("totalPrice", "basePrice", "discount", "taxes", "mf", "mft", "strikethrough")},
+        "base_plus_taxes_mf_mft_minus_total": arith,
+        "first_option_cancellation_keys": sorted(canc.keys()),
+        "first_option_penalties_count": len(canc.get("penalties") or []) if isinstance(canc.get("penalties"), list) else None,
+        "first_option_compliance_keys": sorted(first["compliance"].keys()) if isinstance(first.get("compliance"), dict) else [],
+        "first_option_commercial_keys": sorted(first["commercial"].keys()) if isinstance(first.get("commercial"), dict) else [],
+    }
+
+
+def compare_with_production(documented: dict[str, Any], hid: str, search_id: str) -> dict[str, Any]:
+    """Key-level diff between what production would send and the docs."""
+    prod = build_pricing_payload(search_id=search_id, hotel_id=hid)
+    return {
+        "production_keys": sorted(prod.keys()),
+        "documented_keys": sorted(documented.keys()),
+        "missing_in_production": sorted(set(documented) - set(prod)),
+        "extra_in_production": sorted(set(prod) - set(documented)),
+        "production_reuses_listing_correlation_id": prod.get("correlationId") == documented.get("correlationId"),
+    }
+
+
+def _rooms_from_session(session) -> list[dict[str, Any]]:
+    return [{"adults": r.adults, "childAges": list(r.child_ages)} for r in session.rooms]
+
+
+async def _session_via_search(args, settings):
+    """Run a normal /api/v1/hotels/search in-process and load its saved session."""
+    import httpx
+    from app.main import create_app
+    from app.services import hotel_sessions as sessions
+
+    ci, co = dates(args.days_ahead, args.nights)
+    body = {"destination": args.destination, "checkIn": ci, "checkOut": co, "rooms": [{"adults": args.adults}]}
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://diag") as c:
+        r = await c.post("/api/v1/hotels/search", json=body)
+    print("search HTTP status:", r.status_code)
+    data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+    token = data.get("searchId") if isinstance(data, dict) else None
+    if r.status_code >= 400 or not token:
+        raise SystemExit("Search did not produce a session; cannot test detail.")
+    print("search results:", len(data.get("results") or []))
+    session = await sessions.get_search_session(settings=settings, search_id=token)
+    if session is None:
+        raise SystemExit("Saved search session could not be loaded.")
+    return session
+
+
+def pick_hotel(session, wanted: str = "") -> str | None:
+    if wanted:
+        return wanted if wanted in session.results else None
+    priced = [hid for hid, r in session.results.items() if getattr(r, "rate", None)]
+    return (priced or list(session.results))[0] if session.results else None
+
+
+async def run_detail(args) -> None:
+    settings, config = _config()
+    if args.search_id:
+        from app.services import hotel_sessions as sessions
+        session = await sessions.get_search_session(settings=settings, search_id=args.search_id)
+        if session is None:
+            raise SystemExit("Search session not found or expired.")
+    else:
+        session = await _session_via_search(args, settings)
+    if not session.provider_search_id:
+        raise SystemExit("Session has no listing correlationId; cannot drive pricing.")
+    hid = pick_hotel(session, args.hotel_id)
+    if not hid:
+        raise SystemExit("No hotel id from this search session (or --hotel-id not in it).")
+    payload = build_uat_pricing_payload(
+        listing_correlation_id=session.provider_search_id, hid=hid,
+        check_in=session.check_in, check_out=session.check_out,
+        rooms=_rooms_from_session(session), currency=session.currency,
+    )
+    print("session: results=", len(session.results), "check_in:", session.check_in,
+          "check_out:", session.check_out, "rooms:", len(session.rooms), "currency:", session.currency)
+    print("REQUEST (keys only):", json.dumps(shape(payload), indent=1))
+    print("PRODUCTION vs DOCS:", json.dumps(compare_with_production(payload, hid, session.provider_search_id), indent=1))
+    status, body, elapsed = await _raw_post(config, payload, HOTEL_PRICING_PATH)
+    print("HTTP status:", status, "elapsed_s:", elapsed)
+    if isinstance(body, dict) and body.get("errors"):
+        errs = body["errors"] if isinstance(body["errors"], list) else [body["errors"]]
+        print("errors:", [{k: str(v)[:160] for k, v in e.items() if k in ("errCode", "code", "message")}
+                          for e in errs if isinstance(e, dict)][:5])
+    print("DETAIL SUMMARY:", json.dumps(detail_summary(body, hid), indent=1, default=str))
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="hotel_listing_uat")
-    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint"])
+    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint", "detail"])
     p.add_argument("--destination", default="Goa")
     p.add_argument("--hids", default="")
     p.add_argument("--count", type=int, default=5)
@@ -435,8 +587,10 @@ def main() -> None:
     p.add_argument("--follow-page", action="store_true")
     p.add_argument("--save-ids", default="", help="probe-limit: write requested ids of largest successful probe here")
     p.add_argument("--hids-file", default="", help="listing: read comma-separated ids from this file")
+    p.add_argument("--hotel-id", default="", help="detail: hotel id from the search session (default: first priced)")
+    p.add_argument("--search-id", default="", help="detail: reuse an existing saved search session token")
     args = p.parse_args()
-    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint}[args.mode]
+    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail}[args.mode]
     asyncio.run(runner(args))
 
 
