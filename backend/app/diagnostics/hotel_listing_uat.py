@@ -262,8 +262,8 @@ async def run_listing(args) -> None:
     if not ids:
         raise SystemExit("No hotel ids to test.")
     ci, co = dates(args.days_ahead, args.nights)
-    payload = build_listing_payload(hids=ids, check_in=ci, check_out=co,
-                                    rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+    payload = build_uat_listing_payload(hids=ids, check_in=ci, check_out=co,
+                                        rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
     print("REQUEST (keys only):", json.dumps(shape(payload), indent=1))
     print("requested_hids:", len(ids), "check_in:", ci, "check_out:", co)
     status, body, elapsed = await _raw_post(config, payload)
@@ -306,8 +306,8 @@ async def run_probe(args) -> None:
         if n > len(ids):
             print(f"size {n}: only {len(ids)} ids available; stopping.")
             break
-        payload = build_listing_payload(hids=ids[:n], check_in=ci, check_out=co,
-                                        rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+        payload = build_uat_listing_payload(hids=ids[:n], check_in=ci, check_out=co,
+                                            rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
         status, body, elapsed = await _raw_post(config, payload)
         ok = status < 400 and isinstance(body, dict) and not body.get("errors") and \
             (body.get("status") or {}).get("success") is not False
