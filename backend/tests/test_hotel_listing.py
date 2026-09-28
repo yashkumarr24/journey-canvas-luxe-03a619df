@@ -155,25 +155,27 @@ def test_diagnostic_parser_report_detects_mismatch():
     assert rep["returned_not_requested"] == ["HX"] and rep["requested_not_returned"] == 1
 
 
-def test_uat_diagnostic_payload_uses_tripjack_v3_field_names():
+def test_uat_diagnostic_payload_matches_official_v3_flat_schema():
     p = diag.build_uat_listing_payload(
-        hids=["H1", "H2"], check_in="2026-10-01", check_out="2026-10-02",
-        rooms=[{"adults": 2, "childAges": [5]}], nationality="in", currency="inr",
+        hids=["100000224831", "100000363323"], check_in="2026-10-01", check_out="2026-10-02",
+        rooms=[{"adults": 2, "childAges": [3, 5]}, {"adults": 1}], currency="inr",
     )
-    sq = p["searchQuery"]
-    # errCode 6521 fix: mandatory fields must be checkIn / checkOut / currency
-    assert sq["checkIn"] == "2026-10-01" and sq["checkOut"] == "2026-10-02"
-    assert sq["currency"] == "INR"
-    assert "checkinDate" not in sq and "checkoutDate" not in sq
-    # roomInfo / searchCriteria nesting unchanged (not flagged by TripJack)
-    assert sq["roomInfo"] == [{"numberOfAdults": 2, "numberOfChild": 1, "childAge": [5]}]
-    assert sq["searchCriteria"] == {"hids": ["H1", "H2"], "nationality": "IN"}
-    assert p["correlationId"]
+    cid = p.pop("correlationId")
+    assert cid
+    assert p == {
+        "checkIn": "2026-10-01",
+        "checkOut": "2026-10-02",
+        "rooms": [{"adults": 2, "children": 2, "childAge": [3, 5]}, {"adults": 1}],
+        "currency": "INR",
+        "nationality": "106",
+        "hids": [100000224831, 100000363323],
+    }
+    for legacy in ("searchQuery", "roomInfo", "searchCriteria", "checkinDate", "checkoutDate"):
+        assert legacy not in p
 
 
-def test_uat_diagnostic_payload_minimal_room():
+def test_uat_diagnostic_payload_optional_timeout_and_minimal_room():
     p = diag.build_uat_listing_payload(
-        hids=["H1"], check_in="2026-10-01", check_out="2026-10-02", rooms=[{"adults": 1}],
+        hids=["1"], check_in="2026-10-01", check_out="2026-10-02", rooms=[{"adults": 1}], timeout_ms=13000,
     )
-    assert p["searchQuery"]["roomInfo"] == [{"numberOfAdults": 1}]
-    assert p["searchQuery"]["currency"] == "INR"
+    assert p["rooms"] == [{"adults": 1}] and p["timeoutMs"] == 13000 and p["hids"] == [1]
