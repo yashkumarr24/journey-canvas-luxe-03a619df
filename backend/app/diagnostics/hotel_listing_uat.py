@@ -9,6 +9,15 @@ Run on the VPS (whitelisted IP), from `backend/`:
     python -m app.diagnostics.hotel_listing_uat detail --destination Goa [--hotel-id ID]
     python -m app.diagnostics.hotel_listing_uat review --destination Goa [--hotel-id ID] [--option-id ID]
 
+    python -m app.diagnostics.hotel_listing_uat book --destination Goa          # DRY RUN (no Book call)
+    python -m app.diagnostics.hotel_listing_uat book --destination Goa --execute-uat-hold \
+        --confirm CREATE-UAT-HOLD --contact-email ops@... --contact-phone 9xxxxxxxxx [--cancel-after]
+
+`book` is a DRY RUN by default: search -> detail -> review, then it only BUILDS
+the documented Book body and prints its field names/types. With the explicit
+flags it sends a HOLD booking (never paymentInfos, never an instant booking)
+to the UAT booker host — this DOES create a real UAT hold booking.
+
 The `review` mode is READ-ONLY re-pricing: search -> detail -> review. It never
 calls Book, never makes a payment and never writes review/booking records.
 
@@ -787,9 +796,257 @@ async def run_review(args) -> None:
     print("NOTE: no booking was created and no payment was made.")
 
 
+# ------------------------------- book (UAT hold) ----------------------------
+#
+# Documented (TripJack v3 docs "Book API"), NOT yet confirmed live:
+#   POST https://apitest-hotel-booker.tripjack.com/oms/v3/hotel/book   (separate host!)
+#   {"bookingId": <Review bookingId>, "type": "HOTEL",
+#    "roomTravellerInfo": [{"travellerInfo": [{"ti","pt","fN","lN", "pan"?, "pNum"?}]}],  # one per room, search order
+#    "deliveryInfo": {"emails": [..], "contacts": [..], "code": ["+91"]},
+#    "gstInfo"?: {"gstNumber", "registeredName"},     # when detail/review gives reseller/passthrough GST
+#    "paymentInfos"?: [{"amount": <review totalPrice>}]}  # present = INSTANT (charges wallet); absent = HOLD
+# Reply: {"bookingId", "status": {"success"}, "metaInfo"} — async; poll
+#   /oms/v3/hotel/booking-details {"bookingId"} every 5s up to 180s for order.status
+#   (SUCCESS / ON_HOLD terminal ok; ABORTED / FAILED terminal fail).
+# Hold is auto-cancelled at cancellation.deadlineDateTime unless confirmed via
+# /oms/v3/hotel/confirm-book. Cancel: POST /oms/v3/hotel/cancel-booking/{bookingId}.
+
+UAT_BOOKER_BASE_URL = "https://apitest-hotel-booker.tripjack.com"
+HOTEL_BOOK_PATH = "oms/v3/hotel/book"
+HOTEL_BOOKING_DETAILS_PATH = "oms/v3/hotel/booking-details"
+HOTEL_CANCEL_BOOKING_PATH = "oms/v3/hotel/cancel-booking"
+BOOK_CONFIRM_PHRASE = "CREATE-UAT-HOLD"
+BOOKING_TERMINAL = {"SUCCESS", "ON_HOLD", "ABORTED", "FAILED", "CANCELLED"}
+BOOK_PROVIDER_ONLY_FIELDS = ("bookingId", "hotelConfirmationNumber", "metaInfo", "order.markup",
+                             "gstInfo", "deliveryInfo", "travellerInfo", "pan", "pNum")
+_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _test_name(i: int) -> str:
+    # Synthetic, alphabetic, unique per guest (lead pax must be unique across rooms).
+    return "Uat" + _LETTERS[i // 26 % 26].lower() + _LETTERS[i % 26].lower()
+
+
+def build_uat_book_payload(
+    *,
+    booking_id: str,
+    rooms: list[dict[str, Any]],
+    email: str,
+    phone: str,
+    dial_code: str = "+91",
+    pan: str = "",
+    passport: str = "",
+    gst_info: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Documented HOLD body. paymentInfos is NEVER included: this diagnostic
+    must not create an instant (wallet-charged) booking."""
+    if not booking_id:
+        raise ValueError("missing_booking_id")
+    room_info = []
+    n = 0
+    for r in rooms:
+        travellers = []
+        for _ in range(int(r.get("adults") or 0)):
+            travellers.append({"ti": "Mr", "pt": "ADULT", "fN": _test_name(n), "lN": "Diagnostic"})
+            n += 1
+        for _ in (r.get("childAges") or r.get("childAge") or []):
+            travellers.append({"ti": "Master", "pt": "CHILD", "fN": _test_name(n), "lN": "Diagnostic"})
+            n += 1
+        for t in travellers:
+            if pan:
+                t["pan"] = pan
+            if passport:
+                t["pNum"] = passport
+        room_info.append({"travellerInfo": travellers})
+    payload: dict[str, Any] = {
+        "bookingId": booking_id,
+        "roomTravellerInfo": room_info,
+        "deliveryInfo": {"emails": [email], "contacts": [phone], "code": [dial_code]},
+        "type": "HOTEL",
+    }
+    if gst_info:
+        payload["gstInfo"] = dict(gst_info)
+    assert "paymentInfos" not in payload
+    return payload
+
+
+def book_requirements(review_body: Any) -> dict[str, Any]:
+    """What the Book call will need, derived from the Review reply only."""
+    opt = review_body.get("option") if isinstance(review_body, dict) and isinstance(review_body.get("option"), dict) else {}
+    comp = opt.get("compliance") if isinstance(opt.get("compliance"), dict) else {}
+    canc = opt.get("cancellation") if isinstance(opt.get("cancellation"), dict) else {}
+    pricing = opt.get("pricing") if isinstance(opt.get("pricing"), dict) else {}
+    gst_type = comp.get("gstType")
+    return {
+        "booking_id_present": bool(isinstance(review_body, dict) and review_body.get("bookingId")),
+        "pan_required": comp.get("panRequired"),
+        "passport_required": comp.get("passportRequired"),
+        "gst_type": gst_type,
+        "gst_info_needed": gst_type in ("PASSTHROUGH", "RESELLER"),
+        "onhold_allowed": str(review_body.get("onholdAllowed")).lower() == "true" if isinstance(review_body, dict) and "onholdAllowed" in review_body else None,
+        "hold_deadline_present": bool(canc.get("deadlineDateTime")),
+        "is_refundable": canc.get("isRefundable"),
+        "review_total_price": _num(pricing.get("totalPrice")),
+        "instant_booking_would_send_amount": _num(pricing.get("totalPrice")),
+    }
+
+
+def book_summary(body: Any) -> dict[str, Any]:
+    if not isinstance(body, dict):
+        return {"json_object": False}
+    status = body.get("status") if isinstance(body.get("status"), dict) else {}
+    return {
+        "top_level_keys": sorted(body.keys()),
+        "status_success": status.get("success"),
+        "booking_id_present": bool(body.get("bookingId")),
+        "meta_info_keys": sorted(body["metaInfo"].keys()) if isinstance(body.get("metaInfo"), dict) else [],
+        "errors": _error_summary(body),
+    }
+
+
+def booking_details_summary(body: Any) -> dict[str, Any]:
+    if not isinstance(body, dict):
+        return {"json_object": False}
+    order = body.get("order") if isinstance(body.get("order"), dict) else {}
+    hotel = ((body.get("itemInfos") or {}).get("HOTEL") or {}) if isinstance(body.get("itemInfos"), dict) else {}
+    ops = (hotel.get("hInfo") or {}).get("ops") if isinstance(hotel.get("hInfo"), dict) else None
+    op = ops[0] if isinstance(ops, list) and ops and isinstance(ops[0], dict) else {}
+    cnp = op.get("cnp") if isinstance(op.get("cnp"), dict) else {}
+    status = body.get("status") if isinstance(body.get("status"), dict) else {}
+    return {
+        "top_level_keys": sorted(body.keys()),
+        "status_success": status.get("success"),
+        "order_status": order.get("status"),
+        "order_amount": _num(order.get("amount")),
+        "order_keys": sorted(order.keys()),
+        "option_total_price": _num(op.get("tp")),
+        "option_refundable": cnp.get("ifra"),
+        "option_penalties_count": len(cnp.get("pd") or []) if isinstance(cnp.get("pd"), list) else None,
+        "hold_deadline_present": bool(op.get("ddt")),
+        "pan_required": op.get("ipr"),
+        "passport_required": op.get("ipm"),
+        "hotel_confirmation_number_present": bool(body.get("hotelConfirmationNumber")),
+        "errors": _error_summary(body),
+    }
+
+
+def _booker_base() -> str:
+    import os
+    base = (os.environ.get("TRIPJACK_HOTEL_BOOKER_URL") or UAT_BOOKER_BASE_URL).rstrip("/")
+    host = base.split("//", 1)[-1].split("/", 1)[0].lower()
+    if not host.startswith("apitest"):
+        raise SystemExit("Refusing: booker host is not a TripJack UAT (apitest*) host.")
+    return base
+
+
+async def _booker_post(config, path: str, payload: dict | None) -> tuple[int, Any, float]:
+    import httpx
+    headers = {API_KEY_HEADER: config.api_key, "Content-Type": "application/json"}
+    loop = asyncio.get_running_loop()
+    async with httpx.AsyncClient(base_url=_booker_base(), timeout=httpx.Timeout(40.0, connect=5.0)) as http:
+        t0 = loop.time()
+        resp = await http.post("/" + path, json=payload, headers=headers) if payload is not None \
+            else await http.post("/" + path, headers=headers)
+        elapsed = round(loop.time() - t0, 2)
+    try:
+        body = resp.json()
+    except ValueError:
+        body = None
+    return resp.status_code, body, elapsed
+
+
+async def _fresh_review(args):
+    """search -> fresh detail -> review. Returns (config, session, detail_option, review_body)."""
+    settings, config = _config()
+    if args.search_id:
+        from app.services import hotel_sessions as sessions
+        session = await sessions.get_search_session(settings=settings, search_id=args.search_id)
+        if session is None:
+            raise SystemExit("Search session not found or expired.")
+    else:
+        session = await _session_via_search(args, settings)
+    if not session.provider_search_id:
+        raise SystemExit("Session has no listing correlationId.")
+    hid = pick_hotel(session, args.hotel_id)
+    if not hid:
+        raise SystemExit("No hotel id from this search session.")
+    status, detail, _ = await _raw_post(config, build_uat_pricing_payload(
+        listing_correlation_id=session.provider_search_id, hid=hid, check_in=session.check_in,
+        check_out=session.check_out, rooms=_rooms_from_session(session), currency=session.currency,
+    ), HOTEL_PRICING_PATH)
+    print("DETAIL HTTP status:", status)
+    option = select_detail_option(detail, getattr(args, "option_id", "")) if status < 400 else None
+    if not option or not isinstance(detail, dict) or not detail.get("reviewHash"):
+        raise SystemExit("Detail gave no priced option / reviewHash.")
+    status, review, _ = await _raw_post(config, build_uat_review_payload(
+        listing_correlation_id=session.provider_search_id, hid=hid,
+        option_id=str(option["optionId"]), review_hash=str(detail["reviewHash"]),
+    ), HOTEL_REVIEW_PATH)
+    rs = review_summary(review, hid, option)
+    print("REVIEW HTTP status:", status, "success:", rs.get("status_success"),
+          "total_matches_detail:", rs.get("review_total_matches_detail"))
+    if status >= 400 or rs.get("status_success") is False or not isinstance(review, dict):
+        raise SystemExit("Review failed; Book must not be attempted.")
+    return config, session, option, review
+
+
+async def run_book(args) -> None:
+    config, session, _option, review = await _fresh_review(args)
+    reqs = book_requirements(review)
+    print("BOOK REQUIREMENTS (from Review):", json.dumps(reqs, indent=1))
+    execute = bool(getattr(args, "execute_uat_hold", False))
+    if not reqs["booking_id_present"]:
+        raise SystemExit("Review returned no bookingId; Book cannot be built.")
+    if reqs["pan_required"] and execute and not args.pan:
+        raise SystemExit("Review says PAN is required: pass --pan (a UAT test PAN).")
+    if reqs["passport_required"] and execute and not args.passport:
+        raise SystemExit("Review says passport is required: pass --passport.")
+    if reqs["gst_info_needed"] and execute:
+        raise SystemExit("Review needs gstInfo (GST passthrough/reseller); not supported by this diagnostic.")
+    payload = build_uat_book_payload(
+        booking_id=str(review["bookingId"]), rooms=_rooms_from_session(session),
+        email=args.contact_email or "uat@example.invalid", phone=args.contact_phone or "9000000000",
+        pan=args.pan if reqs["pan_required"] else "", passport=args.passport if reqs["passport_required"] else "",
+    )
+    print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
+    print("paymentInfos included:", "paymentInfos" in payload)
+    if not execute:
+        print("DRY RUN: Book NOT called. No booking created. Re-run with --execute-uat-hold "
+              f"--confirm {BOOK_CONFIRM_PHRASE} --contact-email ... --contact-phone ... to place a UAT HOLD.")
+        return
+    if args.confirm != BOOK_CONFIRM_PHRASE:
+        raise SystemExit(f"Refusing: --confirm {BOOK_CONFIRM_PHRASE} is required to create a UAT hold booking.")
+    if not (args.contact_email and args.contact_phone):
+        raise SystemExit("Refusing: --contact-email and --contact-phone are required for a real UAT hold.")
+    if reqs["onhold_allowed"] is False:
+        raise SystemExit("Review says hold is not allowed for this option; refusing (would need instant/payment).")
+    print("WARNING: creating a REAL TripJack UAT HOLD booking (no payment).")
+    status, body, elapsed = await _booker_post(config, HOTEL_BOOK_PATH, payload)
+    print("BOOK HTTP status:", status, "elapsed_s:", elapsed)
+    print("BOOK SUMMARY:", json.dumps(book_summary(body), indent=1))
+    booking_id = body.get("bookingId") if isinstance(body, dict) else None
+    booking_id = booking_id or payload["bookingId"]
+    last: dict[str, Any] = {}
+    for attempt in range(max(1, args.poll_attempts)):
+        await asyncio.sleep(5.0)
+        st, det, _ = await _booker_post(config, HOTEL_BOOKING_DETAILS_PATH, {"bookingId": booking_id})
+        last = booking_details_summary(det)
+        print(f"BOOKING DETAILS poll {attempt + 1}: HTTP {st} order_status={last.get('order_status')}")
+        if last.get("order_status") in BOOKING_TERMINAL:
+            break
+    print("BOOKING DETAILS SUMMARY:", json.dumps(last, indent=1))
+    if getattr(args, "cancel_after", False):
+        st, cb, _ = await _booker_post(config, f"{HOTEL_CANCEL_BOOKING_PATH}/{booking_id}", None)
+        print("CANCEL HTTP status:", st, "summary:", json.dumps(book_summary(cb)))
+        await asyncio.sleep(5.0)
+        st, det, _ = await _booker_post(config, HOTEL_BOOKING_DETAILS_PATH, {"bookingId": booking_id})
+        print("POST-CANCEL order_status:", booking_details_summary(det).get("order_status"))
+    print("NOTE: no payment was made; no production booking record was saved.")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="hotel_listing_uat")
-    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint", "detail", "review"])
+    p.add_argument("mode", choices=["select", "listing", "probe-limit", "endpoint", "detail", "review", "book"])
     p.add_argument("--destination", default="Goa")
     p.add_argument("--hids", default="")
     p.add_argument("--count", type=int, default=5)
@@ -805,8 +1062,16 @@ def main() -> None:
     p.add_argument("--option-id", default="", help="review: optionId from detail (default: cheapest)")
     p.add_argument("--review-variant", choices=["documented", "with-context"], default="documented",
                    help="review: documented 4-field body, or add dates/rooms/currency/nationality")
+    p.add_argument("--execute-uat-hold", action="store_true", help="book: actually send a UAT HOLD booking")
+    p.add_argument("--confirm", default="", help=f"book: must be {BOOK_CONFIRM_PHRASE} with --execute-uat-hold")
+    p.add_argument("--contact-email", default="", help="book: operator email for TripJack delivery (never printed)")
+    p.add_argument("--contact-phone", default="", help="book: operator phone (never printed)")
+    p.add_argument("--pan", default="", help="book: UAT test PAN, only if Review requires it (never printed)")
+    p.add_argument("--passport", default="", help="book: passport, only if Review requires it (never printed)")
+    p.add_argument("--poll-attempts", type=int, default=36, help="book: booking-details polls, 5s apart (36 = 180s)")
+    p.add_argument("--cancel-after", action="store_true", help="book: cancel the UAT hold after polling")
     args = p.parse_args()
-    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail, "review": run_review}[args.mode]
+    runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail, "review": run_review, "book": run_book}[args.mode]
     asyncio.run(runner(args))
 
 
