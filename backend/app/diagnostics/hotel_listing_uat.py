@@ -215,45 +215,58 @@ def dates(days_ahead: int, nights: int) -> tuple[str, str]:
     return ci.isoformat(), (ci + timedelta(days=nights)).isoformat()
 
 
+UAT_NATIONALITY_INDIA = "106"  # TripJack countryId for India (Nationalities endpoint)
+UAT_MAX_HIDS = 100  # documented max hids per listing request
+
+
+def _hid(value: str) -> int | str:
+    s = str(value).strip()
+    return int(s) if s.isdigit() else s
+
+
 def build_uat_listing_payload(
     *,
     hids: list[str],
     check_in: str,
     check_out: str,
     rooms: list[dict[str, Any]],
-    nationality: str = "IN",
+    nationality: str = UAT_NATIONALITY_INDIA,
     currency: str = "INR",
+    timeout_ms: int | None = None,
 ) -> dict[str, Any]:
-    """Diagnostic-only listing payload matching the REAL TripJack V3 schema.
+    """Diagnostic-only listing payload per the official TripJack Hotel API v3
+    reference (tripjack.com/page/api-doc, POST /hms/v3/hotel/listing).
 
-    UAT errCode 6521 proved the production builder's field names are wrong:
-    TripJack requires `checkIn` / `checkOut` / `currency` (camelCase dates,
-    currency at searchQuery level). The roomInfo / searchCriteria nesting was
-    NOT flagged by TripJack, so it is kept identical to production. Do not
-    merge this back into hotel_wire.py until production is deliberately
-    migrated.
+    The v3 body is FLAT — no `searchQuery`, `roomInfo` or `searchCriteria`
+    wrappers (those belong to the older v1/v2 search shape still used by
+    production hotel_wire.py). errCode 6521 persisted because TripJack reads
+    checkIn/checkOut/currency from the top level only.
+
+    Documented fields: checkIn, checkOut, rooms[{adults, children, childAge}],
+    currency, correlationId, nationality (TripJack countryId, e.g. "106"),
+    hids (integer[], max 100), optional timeoutMs.
+    Do not merge into hotel_wire.py until production is deliberately migrated.
     """
-    room_info: list[dict[str, Any]] = []
+    room_list: list[dict[str, Any]] = []
     for room in rooms:
-        entry: dict[str, Any] = {"numberOfAdults": int(room.get("adults") or 1)}
+        entry: dict[str, Any] = {"adults": int(room.get("adults") or 1)}
         ages = [int(a) for a in room.get("childAges") or []]
         if ages:
-            entry["numberOfChild"] = len(ages)
+            entry["children"] = len(ages)
             entry["childAge"] = ages
-        room_info.append(entry)
-    return {
+        room_list.append(entry)
+    payload: dict[str, Any] = {
+        "checkIn": check_in,
+        "checkOut": check_out,
+        "rooms": room_list,
+        "currency": currency.upper(),
         "correlationId": correlation_id(),
-        "searchQuery": {
-            "checkIn": check_in,
-            "checkOut": check_out,
-            "currency": currency.upper(),
-            "roomInfo": room_info,
-            "searchCriteria": {
-                "hids": hids,
-                "nationality": nationality.upper(),
-            },
-        },
+        "nationality": str(nationality),
+        "hids": [_hid(h) for h in hids],
     }
+    if timeout_ms:
+        payload["timeoutMs"] = int(timeout_ms)
+    return payload
 
 
 async def run_listing(args) -> None:
@@ -263,7 +276,7 @@ async def run_listing(args) -> None:
         raise SystemExit("No hotel ids to test.")
     ci, co = dates(args.days_ahead, args.nights)
     payload = build_uat_listing_payload(hids=ids, check_in=ci, check_out=co,
-                                        rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+                                        rooms=[{"adults": args.adults, "childAges": []}], currency="INR")
     print("REQUEST (keys only):", json.dumps(shape(payload), indent=1))
     print("requested_hids:", len(ids), "check_in:", ci, "check_out:", co)
     status, body, elapsed = await _raw_post(config, payload)
@@ -307,7 +320,7 @@ async def run_probe(args) -> None:
             print(f"size {n}: only {len(ids)} ids available; stopping.")
             break
         payload = build_uat_listing_payload(hids=ids[:n], check_in=ci, check_out=co,
-                                            rooms=[{"adults": args.adults, "childAges": []}], nationality="IN", currency="INR")
+                                            rooms=[{"adults": args.adults, "childAges": []}], currency="INR")
         status, body, elapsed = await _raw_post(config, payload)
         ok = status < 400 and isinstance(body, dict) and not body.get("errors") and \
             (body.get("status") or {}).get("success") is not False
