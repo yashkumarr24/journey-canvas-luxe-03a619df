@@ -109,6 +109,39 @@ def _room_info(rooms: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return room_info
 
 
+# v3 listing accepts at most 100 hids per request (documented; UAT accepted 100).
+MAX_LISTING_HIDS = 100
+
+# v3 `nationality` is a TripJack countryId (Nationalities endpoint), not ISO.
+# Only India is confirmed (UAT succeeded with "106"). Other ISO codes are
+# passed through unchanged until their countryIds are confirmed.
+TRIPJACK_NATIONALITY_IDS: dict[str, str] = {"IN": "106"}
+
+
+def tripjack_nationality(value: str | None) -> str:
+    code = (value or DEFAULT_NATIONALITY).strip().upper()
+    if code.isdigit():
+        return code
+    return TRIPJACK_NATIONALITY_IDS.get(code, code)
+
+
+def _hid(value: Any) -> Any:
+    text = str(value).strip()
+    return int(text) if text.isdigit() else text
+
+
+def _v3_rooms(rooms: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for room in rooms:
+        entry: dict[str, Any] = {"adults": int(room.get("adults") or 1)}
+        ages = [int(age) for age in room.get("childAges") or []]
+        if ages:
+            entry["children"] = len(ages)
+            entry["childAge"] = ages
+        out.append(entry)
+    return out
+
+
 def build_listing_payload(
     *,
     hids: list[str],
@@ -118,31 +151,29 @@ def build_listing_payload(
     nationality: str | None,
     currency: str | None,
 ) -> dict[str, Any]:
-    """First page of /hms/v3/hotel/listing. `hids` is mandatory in v3."""
+    """/hms/v3/hotel/listing — FLAT body, confirmed against live UAT.
+
+    No searchQuery / roomInfo / searchCriteria wrappers. At most
+    MAX_LISTING_HIDS ids; callers batch larger lists.
+    """
+    if len(hids) > MAX_LISTING_HIDS:
+        raise ValueError("too_many_hids")
     return {
+        "checkIn": check_in,
+        "checkOut": check_out,
+        "rooms": _v3_rooms(rooms),
+        "currency": (currency or DEFAULT_CURRENCY).upper(),
         "correlationId": correlation_id(),
-        "searchQuery": {
-            "checkinDate": check_in,
-            "checkoutDate": check_out,
-            "roomInfo": _room_info(rooms),
-            "searchCriteria": {
-                # v3: hotel ids only. cityCode was removed from the contract.
-                "hids": hids,
-                "nationality": (nationality or DEFAULT_NATIONALITY).upper(),
-                "currency": (currency or DEFAULT_CURRENCY).upper(),
-            },
-        },
+        "nationality": tripjack_nationality(nationality),
+        "hids": [_hid(h) for h in hids],
     }
 
 
 def build_listing_continuation_payload(
     *, search_id: str, next_token: str | None
 ) -> dict[str, Any]:
-    """Subsequent pages. Page size is fixed server-side in v3.
-
-    Continuation is keyed on the `searchId` from the first page; when the
-    provider also returns an explicit continuation token we echo it back.
-    """
+    """Legacy continuation shape. NOT used: the confirmed v3 listing response
+    has no searchId / nextPageToken / hasMore. Kept only for the diagnostic."""
     payload: dict[str, Any] = {
         "correlationId": correlation_id(),
         "searchId": search_id,
