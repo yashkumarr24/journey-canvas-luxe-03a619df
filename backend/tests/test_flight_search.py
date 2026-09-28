@@ -24,7 +24,7 @@ from app.integrations.tripjack.exceptions import (
     TripJackTimeoutError,
     TripJackUpstreamError,
 )
-from app.main import create_app
+from app import main as app_main
 
 TOMORROW = (date.today() + timedelta(days=10)).isoformat()
 LATER = (date.today() + timedelta(days=17)).isoformat()
@@ -49,6 +49,7 @@ def configured_env(monkeypatch):
     monkeypatch.setenv("APP_ENV", "development")
     monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "")
     get_settings.cache_clear()
+    monkeypatch.setattr(app_main, "settings", get_settings())
     tj_client._client = None
     flight_search_limiter._buckets.clear()
     yield
@@ -58,7 +59,7 @@ def configured_env(monkeypatch):
 
 @pytest.fixture()
 def client():
-    with TestClient(create_app()) as test_client:
+    with TestClient(app_main.create_app()) as test_client:
         yield test_client
 
 
