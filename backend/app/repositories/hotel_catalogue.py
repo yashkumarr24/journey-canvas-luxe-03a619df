@@ -56,7 +56,10 @@ class HotelCatalogueRepository:
         unique = {r["tj_hotel_id"]: r for r in rows}
         payload = []
         for r in unique.values():
-            row = {**r, "is_deleted": False, "deleted_at": None, "last_synced_at": ts}
+            # A refreshed mapping (full/NEW/UPDATE) is re-eligible for content:
+            # any earlier "unavailable from TripJack" classification is cleared.
+            row = {**r, "is_deleted": False, "deleted_at": None, "last_synced_at": ts,
+                   "content_unavailable_at": None}
             if reset_content:
                 row["content_synced_at"] = None
                 row["content_error_at"] = None
@@ -96,7 +99,7 @@ class HotelCatalogueRepository:
                 await self._db.insert(table, rows, returning=False)
         await self._db.update(
             "hotel_mappings",
-            {"content_synced_at": ts, "content_error_at": None},
+            {"content_synced_at": ts, "content_error_at": None, "content_unavailable_at": None},
             filters={"tj_hotel_id": _in(ids)},
         )
         return ids
@@ -119,6 +122,19 @@ class HotelCatalogueRepository:
             },
         )
         return [str(x) for x in (body or []) if isinstance(x, str)]
+
+    async def mark_content_unavailable(self, ids: list[str]) -> None:
+        """TripJack answered HTTP 200 but returned no static content for these IDs.
+
+        Not synced (content_synced_at stays NULL) and not failed (error cleared);
+        excluded from pending_content_ids until the mapping is refreshed.
+        """
+        if ids:
+            await self._db.update(
+                "hotel_mappings",
+                {"content_unavailable_at": now_iso(), "content_error_at": None},
+                filters={"tj_hotel_id": _in(ids)},
+            )
 
     async def mark_content_failed(self, ids: list[str]) -> None:
         if ids:

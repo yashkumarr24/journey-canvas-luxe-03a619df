@@ -56,7 +56,7 @@ class Repo:
 
 
 def run(repo):
-    return asyncio.run(sync._content_phase_full(repo, None, "now", 0, 0))
+    return asyncio.run(sync._content_phase_full(repo, None, "now", 0, 0))[:2]
 
 
 def test_100_hotels_split_into_20_25_chunks(_fast):

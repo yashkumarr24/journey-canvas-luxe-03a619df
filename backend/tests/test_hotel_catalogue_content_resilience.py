@@ -48,7 +48,7 @@ class Repo:
 
 
 def run(repo):
-    return asyncio.run(sync._content_phase_full(repo, None, "now", 0, 0))
+    return asyncio.run(sync._content_phase_full(repo, None, "now", 0, 0))[:2]
 
 
 def test_pending_temporary_timeout_recovers():
@@ -173,7 +173,7 @@ def test_full_sync_initial_state_read_succeeds_after_transient_failure(monkeypat
     run completes instead of the process exiting."""
     repo = FullSyncStartupRepo(state_failures=2)
     summary = _run_full_sync_with_repo(monkeypatch, repo)
-    assert summary == {"status": "completed", "processed": 10, "failed": 0}
+    assert summary == {"status": "completed", "processed": 10, "failed": 0, "unavailable": 0}
     assert repo.get_state_calls == 3  # 2 transient failures + 1 success
     statuses = [s["status"] for s in repo.states if "status" in s]
     assert statuses[0] == "running" and statuses[1] == "completed"
