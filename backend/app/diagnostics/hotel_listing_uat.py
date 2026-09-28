@@ -837,11 +837,23 @@ def build_uat_book_payload(
     pan: str = "",
     passport: str = "",
     gst_info: dict[str, str] | None = None,
+    pans: list[str] | None = None,
 ) -> dict[str, Any]:
     """Documented HOLD body. paymentInfos is NEVER included: this diagnostic
-    must not create an instant (wallet-charged) booking."""
+    must not create an instant (wallet-charged) booking.
+
+    `pan` is a per-traveller field in the TripJack Book contract. Pass `pans`
+    (one value per traveller, in search room/guest order) to give each
+    traveller their own PAN; a single `pan` is applied to every traveller.
+    `pans` must match the total traveller count exactly."""
     if not booking_id:
         raise ValueError("missing_booking_id")
+    total_travellers = sum(
+        int(r.get("adults") or 0) + len(r.get("childAges") or r.get("childAge") or [])
+        for r in rooms
+    )
+    if pans is not None and len(pans) != total_travellers:
+        raise ValueError("pans_count_mismatch")
     room_info = []
     n = 0
     for r in rooms:
