@@ -864,8 +864,9 @@ def build_uat_book_payload(
         for _ in (r.get("childAges") or r.get("childAge") or []):
             travellers.append({"ti": "Master", "pt": "CHILD", "fN": _test_name(n), "lN": "Diagnostic"})
             n += 1
-        for t in travellers:
-            own_pan = pans[n - (len(travellers) - travellers.index(t))] if pans else pan
+        first_guest = n - len(travellers)
+        for gi, t in enumerate(travellers):
+            own_pan = pans[first_guest + gi] if pans else pan
             if own_pan:
                 t["pan"] = own_pan
             if passport:
