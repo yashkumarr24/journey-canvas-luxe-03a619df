@@ -26,6 +26,7 @@ from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
     HOTEL_PRICING_PATH,
     HOTEL_REVIEW_PATH,
+    MAX_LISTING_HIDS,
     OPTION_TYPES,
     RATE_PLAN_TYPES,
     build_listing_continuation_payload,
@@ -510,16 +511,18 @@ def _rate_summary(plans: list[HotelRatePlan]) -> HotelRateSummary | None:
 
 def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPolicy | None:
     """v3 embeds the policy inside every option; there is no separate call."""
-    raw_policy = get_map(option, "cnp", "cancellationPolicy", "cancelPolicy")
-    raw_rules = get_list(raw_policy, "pd", "policies", "rules") or get_list(
+    raw_policy = get_map(option, "cnp", "cancellationPolicy", "cancelPolicy", "cancellation")
+    raw_rules = get_list(raw_policy, "pd", "policies", "rules", "penalties") or get_list(
         option, "cancellationPolicies"
     )
 
-    refundable = refundable_flag(
-        raw_policy.get("ifra")
-        if "ifra" in raw_policy
-        else option.get("refundable", option.get("isRefundable"))
-    )
+    if "ifra" in raw_policy:
+        raw_refundable = raw_policy.get("ifra")
+    elif "isRefundable" in raw_policy:
+        raw_refundable = raw_policy.get("isRefundable")  # v3 cancellation.isRefundable
+    else:
+        raw_refundable = option.get("refundable", option.get("isRefundable"))
+    refundable = refundable_flag(raw_refundable)
 
     rules: list[HotelCancellationRule] = []
     free_until: str | None = None
