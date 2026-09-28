@@ -23,15 +23,20 @@ export function Nav() {
   ];
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/95 shadow-[var(--shadow-soft)] backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-[60] border-b border-foreground/10 bg-background/95 shadow-[var(--shadow-soft)] backdrop-blur-md">
       <nav aria-label="Main navigation" className="mx-auto grid h-20 w-full max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 sm:h-24 sm:gap-6 sm:px-6 lg:px-10">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open menu" className="size-10 shrink-0 border border-foreground/10 hover:bg-secondary"><Menu className="size-5" /></Button>
           </SheetTrigger>
-          <SheetContent side="left" overlayClassName="bg-foreground/40" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)]">
+          <SheetContent
+            side="left"
+            overlayClassName="bg-foreground/40"
+            className="bottom-0 left-0 top-20 h-auto w-[min(86vw,330px)] overflow-hidden border-r border-foreground/10 bg-background px-0 shadow-[var(--shadow-luxe)] sm:top-24"
+          >
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
+            <div className="h-full overflow-y-auto overscroll-contain pb-6 pt-4 [scrollbar-width:thin]">
             <div className="space-y-1 px-3">
               {entries.slice(0, 4).map(({ label, to, icon: Icon }) => (
                 <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
@@ -48,6 +53,7 @@ export function Nav() {
               <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="English is the current site language"><Languages className="size-4 shrink-0" />Language <span className="ml-auto text-foreground">English</span></div>
               <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="Hotel search lets you select a quote currency"><Coins className="size-4 shrink-0" />Currency <span className="ml-auto text-foreground">INR</span></div>
               <Link to="/contact" onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium hover:border-gold hover:bg-secondary"><MessageSquare className="size-4 shrink-0 text-gold" />Feedback</Link>
+            </div>
             </div>
           </SheetContent>
         </Sheet>
