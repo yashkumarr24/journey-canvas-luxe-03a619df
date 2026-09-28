@@ -26,6 +26,7 @@ from app.integrations.tripjack.hotel_wire import (
     HOTEL_LISTING_PATH,
     HOTEL_PRICING_PATH,
     HOTEL_REVIEW_PATH,
+    MAX_LISTING_HIDS,
     OPTION_TYPES,
     RATE_PLAN_TYPES,
     build_listing_continuation_payload,
@@ -71,24 +72,44 @@ MAX_IMAGES = 12
 
 
 class HotelSearchPage:
-    """One page of v3 listing plus the handles needed to continue."""
+    """One v3 listing response (one batch of <=100 hids).
 
-    __slots__ = ("results", "search_id", "next_token", "has_more")
+    Confirmed UAT response: correlationId, hotels[], nationality, status,
+    totalResults. There is NO searchId / nextPageToken / hasMore, so
+    `next_token` is always None and `has_more` always False. `search_id`
+    carries the response correlationId — the v3 tracing id that the docs say
+    must be reused on detail and review.
+    """
+
+    __slots__ = ("results", "search_id", "next_token", "has_more", "total_results")
 
     def __init__(
         self,
         results: list[HotelResult],
         search_id: str | None,
-        next_token: str | None,
-        has_more: bool,
+        next_token: str | None = None,
+        has_more: bool = False,
+        total_results: int | None = None,
     ) -> None:
         self.results = results
         self.search_id = search_id
         self.next_token = next_token
         self.has_more = has_more
+        self.total_results = total_results
 
 
 # ============================== listing ====================================
+
+
+def _batches(hids: list[str]) -> list[list[str]]:
+    unique: list[str] = []
+    seen: set[str] = set()
+    for hid in hids:
+        key = str(hid).strip()
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(key)
+    return [unique[i : i + MAX_LISTING_HIDS] for i in range(0, len(unique), MAX_LISTING_HIDS)]
 
 
 async def search_hotels(
@@ -98,113 +119,99 @@ async def search_hotels(
     *,
     hids: list[str],
 ) -> tuple[list[HotelResult], str | None, str]:
-    """Run /hms/v3/hotel/listing, following searchId continuation.
+    """Run /hms/v3/hotel/listing in sequential batches of <=100 hids.
 
-    Returns (results, searchId, currency). The searchId is the head of the
-    v3 identity chain (searchId -> optionId -> reviewHash) and is stored
-    server-side only.
+    Returns (results, correlationId, currency). No pagination is attempted:
+    the confirmed v3 listing has no continuation fields. The first batch's
+    failure propagates; a later batch failing keeps what earlier batches gave.
     """
     currency = request.currency or DEFAULT_CURRENCY
+    nights = (request.check_out - request.check_in).days or None
+    rooms = [{"adults": r.adults, "childAges": r.child_ages} for r in request.rooms]
 
-    payload = build_listing_payload(
-        hids=hids,
-        check_in=request.check_in.isoformat(),
-        check_out=request.check_out.isoformat(),
-        rooms=[{"adults": r.adults, "childAges": r.child_ages} for r in request.rooms],
-        nationality=request.nationality,
-        currency=request.currency,
-    )
+    results: list[HotelResult] = []
+    seen: set[str] = set()
+    search_id: str | None = None
+    total_results = 0
+    batches = _batches(hids)
+    done = 0
 
-    # Listing is a pure read, so a small retry budget is safe.
-    body = await client.post(
-        HOTEL_LISTING_PATH,
-        payload,
-        retries=config.search_retries,
-        operation="hotel_listing",
-    )
-
-    page = normalize_listing_response(body, currency=currency)
-    results = list(page.results)
-    search_id = page.search_id
-    seen = {result.id for result in results}
-    next_token = page.next_token
-    has_more = page.has_more
-
-    # v3 removed pageSize; continuation is driven by the searchId from page 1.
-    pages = 1
-    while has_more and search_id and pages < config.hotel_max_pages and len(results) < MAX_RESULTS:
+    for index, batch in enumerate(batches):
+        if len(results) >= MAX_RESULTS:
+            break
+        payload = build_listing_payload(
+            hids=batch,
+            check_in=request.check_in.isoformat(),
+            check_out=request.check_out.isoformat(),
+            rooms=rooms,
+            nationality=request.nationality,
+            currency=request.currency,
+        )
         try:
             body = await client.post(
                 HOTEL_LISTING_PATH,
-                build_listing_continuation_payload(
-                    search_id=search_id, next_token=next_token
-                ),
-                retries=0,
-                operation="hotel_listing_page",
+                payload,
+                retries=config.search_retries,  # listing is a pure read
+                operation="hotel_listing",
             )
         except Exception:  # noqa: BLE001
-            # Partial results beat no results: keep what page 1 gave us.
-            logger.warning("hotel_listing_page_failed", extra=log_extra(page=pages + 1))
+            if index == 0:
+                raise
+            logger.warning("hotel_listing_batch_failed", extra=log_extra(batch=index + 1))
             break
 
-        page = normalize_listing_response(body, currency=currency)
-        added = 0
+        page = normalize_listing_response(body, currency=currency, nights=nights)
+        search_id = search_id or page.search_id or payload["correlationId"]
+        total_results += page.total_results or 0
+        done += 1
         for result in page.results:
             if result.id in seen:
                 continue
             seen.add(result.id)
             results.append(result)
-            added += 1
-        pages += 1
-        next_token = page.next_token
-        has_more = page.has_more and added > 0
 
     logger.info(
         "tripjack_hotel_listing_normalized",
-        extra=log_extra(result_count=len(results), pages=pages),
+        extra=log_extra(
+            result_count=len(results),
+            batches=done,
+            batches_planned=len(batches),
+            provider_total_results=total_results,
+        ),
     )
     return results[:MAX_RESULTS], search_id, currency
 
 
-def normalize_listing_response(body: dict[str, Any], *, currency: str) -> HotelSearchPage:
-    search_result = get_map(body, "searchResult")
-    search_id = (
-        get_str(body, "searchId")
-        or get_str(search_result, "searchId")
-        or get_str(body, "id")
-    )
-    next_token = get_str(body, "nextPageToken", "pageToken") or get_str(
-        search_result, "nextPageToken", "pageToken"
-    )
-    raw_more = body.get("hasMore", search_result.get("hasMore"))
-    has_more = bool(raw_more) if isinstance(raw_more, bool) else bool(next_token)
-
+def normalize_listing_response(
+    body: dict[str, Any], *, currency: str, nights: int | None = None
+) -> HotelSearchPage:
+    """Confirmed v3 shape: hotels[] -> {hotelId, name, options[] -> pricing}."""
+    body = body if isinstance(body, dict) else {}
     results: list[HotelResult] = []
     for raw in _raw_hotel_list(body):
-        hotel = _hotel_result(raw, currency)
+        hotel = _hotel_result(raw, currency, nights=nights)
         if hotel is not None:
             results.append(hotel)
         if len(results) >= MAX_RESULTS:
             break
-
-    return HotelSearchPage(results, search_id, next_token, has_more)
+    return HotelSearchPage(
+        results,
+        get_str(body, "correlationId"),
+        None,
+        False,
+        get_int(body, "totalResults"),
+    )
 
 
 def _raw_hotel_list(body: dict[str, Any]) -> list[Any]:
-    search_result = get_map(body, "searchResult")
-    for source in (search_result, body):
-        for key in ("his", "hotels", "hotelList", "results"):
-            items = get_list(source, key)
-            if items:
-                return items
-    return []
+    return get_list(body, "hotels") if isinstance(body, dict) else []
 
 
-def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
+def _hotel_result(raw: Any, currency: str, *, nights: int | None = None) -> HotelResult | None:
     if not isinstance(raw, dict):
         return None
 
-    provider_id = get_str(raw, "id", "hotelId", "hid", "code")
+    provider_id = get_str(raw, "hotelId", "tjHotelId", "id", "hid", "code")
     name = get_str(raw, "name", "hotelName")
     if provider_id and not name:
         # v3 listing may omit static fields; use the local catalogue name.
@@ -215,7 +222,7 @@ def _hotel_result(raw: Any, currency: str) -> HotelResult | None:
         return None
 
     images = _images(raw)
-    rate_plans = _rate_plans(raw, currency)
+    rate_plans = _rate_plans(raw, currency, nights=nights)
     return HotelResult(
         id=provider_id,
         name=name,
@@ -352,10 +359,92 @@ def _rate_plan_type(option: dict[str, Any]) -> str | None:
     return None
 
 
-def _rate_plans(raw: dict[str, Any], currency: str) -> list[HotelRatePlan]:
-    """Keep ALL v3 rate plan types, not only the cheapest."""
+BREAKFAST_MEALS = ("breakfast", "half board", "full board", "all inclusive")
+
+
+def _v3_prices(option: dict[str, Any]) -> dict[str, float | None] | None:
+    """Confirmed v3 option.pricing: totalPrice, basePrice, discount, taxes,
+    mf, mft, currency. Payable total = totalPrice + mf + mft (same rule as
+    before: mf/mft are itemised and added)."""
+    pricing = option.get("pricing")
+    if not isinstance(pricing, dict):
+        return None
+    provider_total = get_number(pricing, "totalPrice")
+    mf = get_number(pricing, "mf")
+    mft = get_number(pricing, "mft")
+    total = None if provider_total is None else provider_total + (mf or 0.0) + (mft or 0.0)
+    return {"total": total, "mf": mf, "mft": mft}
+
+
+def _v3_option_plan(
+    option: dict[str, Any], plan_type: str, total: float, currency: str, nights: int | None
+) -> HotelRatePlan:
+    compliance = get_map(option, "compliance")
+    meal = get_str(option, "mealBasis")
+    rooms = [r for r in get_list(option, "roomInfo") if isinstance(r, dict)]
+    cancellation = _cancellation(option, currency)
+    per_night = round(total / nights, 2) if nights else None
+    return HotelRatePlan(
+        type=plan_type,
+        label=RATE_PLAN_TYPES.get(plan_type, plan_type.replace("_", " ").title()),
+        option_id=get_str(option, "optionId"),
+        total_price=Money(amount=round(total, 2), currency=currency),
+        per_night_price=Money(amount=per_night, currency=currency) if per_night else None,
+        meal_plan=meal,
+        refundable=cancellation.refundable if cancellation else None,
+        free_cancellation_until=cancellation.free_cancellation_until if cancellation else None,
+        room_name=get_str(rooms[0], "name") if rooms else None,
+        pan_required=_flag(compliance, "panRequired"),
+        breakfast_included=(any(m in meal.lower() for m in BREAKFAST_MEALS) if meal else None),
+        gst_inclusive=None,  # compliance.gstType semantics not confirmed
+    )
+
+
+def _v3_rate_plans(
+    options: list[dict[str, Any]], currency: str, nights: int | None
+) -> list[HotelRatePlan]:
+    """Derive plan types ONLY from confirmed provider flags; cheapest wins
+    per type. Options without optionId or totalPrice are not sellable."""
+    priced: list[tuple[float, dict[str, Any]]] = []
+    for option in options:
+        prices = _v3_prices(option)
+        if prices and prices["total"] is not None and get_str(option, "optionId"):
+            priced.append((prices["total"], option))
+    priced.sort(key=lambda item: item[0])
+    if not priced:
+        return []
+
+    def matches(plan_type: str, option: dict[str, Any]) -> bool:
+        if plan_type == "CHEAPEST":
+            return True
+        if plan_type == "FREE_CANCELLATION":
+            return refundable_flag(get_map(option, "cancellation").get("isRefundable")) is True
+        if plan_type == "PAN_NOT_REQUIRED":
+            return _flag(get_map(option, "compliance"), "panRequired") is False
+        if plan_type == "BREAKFAST_INCLUSIVE":
+            meal = (get_str(option, "mealBasis") or "").lower()
+            return any(m in meal for m in BREAKFAST_MEALS)
+        return False  # GST_INCLUSIVE: not derivable from confirmed fields
+
     plans: list[HotelRatePlan] = []
-    nights = get_int(raw, "nights")
+    for plan_type in RATE_PLAN_TYPES:
+        for total, option in priced:
+            if matches(plan_type, option):
+                plans.append(_v3_option_plan(option, plan_type, total, currency, nights))
+                break
+    return plans
+
+
+def _rate_plans(
+    raw: dict[str, Any], currency: str, *, nights: int | None = None
+) -> list[HotelRatePlan]:
+    """Keep ALL v3 rate plan types, not only the cheapest."""
+    v3_options = [o for o in get_list(raw, "options") if isinstance(o, dict) and "pricing" in o]
+    if v3_options:
+        return _v3_rate_plans(v3_options, currency, nights or get_int(raw, "nights"))
+
+    plans: list[HotelRatePlan] = []
+    nights = nights or get_int(raw, "nights")
 
     for option in _raw_options(raw):
         option_id = get_str(option, "id", "optionId", "rateId")
@@ -422,16 +511,18 @@ def _rate_summary(plans: list[HotelRatePlan]) -> HotelRateSummary | None:
 
 def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPolicy | None:
     """v3 embeds the policy inside every option; there is no separate call."""
-    raw_policy = get_map(option, "cnp", "cancellationPolicy", "cancelPolicy")
-    raw_rules = get_list(raw_policy, "pd", "policies", "rules") or get_list(
+    raw_policy = get_map(option, "cnp", "cancellationPolicy", "cancelPolicy", "cancellation")
+    raw_rules = get_list(raw_policy, "pd", "policies", "rules", "penalties") or get_list(
         option, "cancellationPolicies"
     )
 
-    refundable = refundable_flag(
-        raw_policy.get("ifra")
-        if "ifra" in raw_policy
-        else option.get("refundable", option.get("isRefundable"))
-    )
+    if "ifra" in raw_policy:
+        raw_refundable = raw_policy.get("ifra")
+    elif "isRefundable" in raw_policy:
+        raw_refundable = raw_policy.get("isRefundable")  # v3 cancellation.isRefundable
+    else:
+        raw_refundable = option.get("refundable", option.get("isRefundable"))
+    refundable = refundable_flag(raw_refundable)
 
     rules: list[HotelCancellationRule] = []
     free_until: str | None = None
