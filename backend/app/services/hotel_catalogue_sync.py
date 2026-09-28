@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -285,10 +285,11 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
         run_started = now_iso()
         processed = int(state.get("processed_count") or 0) if resume else 0
         failed = 0
+        unavailable = int(state.get("unavailable_count") or 0) if resume else 0
         await _put_state_full(repo, {
             "status": "running", "started_at": state.get("started_at") if resume else run_started,
             "completed_at": None, "error_summary": None, "cursor": cursor,
-            "processed_count": processed, "failed_count": 0,
+            "processed_count": processed, "failed_count": 0, "unavailable_count": unavailable,
         })
         try:
             if cursor["stage"] == "countries":
@@ -349,7 +350,11 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 cursor = {"stage": "content"}
                 await _put_state_full(repo, {"cursor": cursor})
 
-            processed, failed = await _content_phase_full(repo, client, run_started, processed, failed)
+            processed, failed, unavailable = await _content_phase_full(
+                repo, client, run_started, processed, failed, unavailable
+            )
+            # Unavailable hotels (HTTP 200, no static content) are a final,
+            # non-retryable classification: they never block completion.
             done = failed == 0
             await _put_state_full(repo, {
                 "status": "completed" if done else "partial",
@@ -364,7 +369,8 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                 for t in ("incremental_new", "incremental_update", "incremental_delete"):
                     if not (await repo.get_state(t) or {}).get("last_update_time"):
                         await repo.put_state(t, {"status": "idle", "last_update_time": watermark})
-            return {"status": "completed" if done else "partial", "processed": processed, "failed": failed}
+            return {"status": "completed" if done else "partial", "processed": processed,
+                    "failed": failed, "unavailable": unavailable}
         except Exception as exc:
             logger.error("hotel_full_sync_failed", extra=log_extra(kind=type(exc).__name__))
             # Mark the run failed, but never let this state write mask the
