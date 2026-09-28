@@ -52,7 +52,7 @@ def test_pan_passport_gst_only_when_given():
 def test_per_traveller_pans():
     rooms = [{"adults": 2, "childAges": [5]}, {"adults": 1}]
     pans = ["AAAAA0001A", "BBBBB0002B", "CCCCC0003C", "DDDDD0004D"]
-    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1", pans=pans)
+    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="ops@flyfeel.in", phone="9876543210", pans=pans)
     got = [t["pan"] for r in p["roomTravellerInfo"] for t in r["travellerInfo"]]
     assert got == pans  # one PAN per traveller, search room/guest order
     assert len(set(got)) == 4
