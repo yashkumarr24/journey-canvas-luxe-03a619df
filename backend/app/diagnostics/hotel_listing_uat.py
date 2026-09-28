@@ -870,6 +870,99 @@ def build_uat_book_payload(
     return payload
 
 
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
+_PAN_RE = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z ]{1,49}$")
+_DIAL_RE = re.compile(r"^\+[0-9]{1,4}$")
+ADULT_TITLES = {"Mr", "Mrs", "Ms"}
+CHILD_TITLES = {"Master", "Miss"}
+
+
+def validate_book_payload(
+    payload: dict[str, Any],
+    rooms: list[dict[str, Any]],
+    *,
+    pan_required: bool | None = None,
+    passport_required: bool | None = None,
+) -> list[str]:
+    """Local pre-flight checks against the documented Book contract. Returns
+    failure CODES only (never the offending values)."""
+    fails: list[str] = []
+    if not isinstance(payload.get("bookingId"), str) or not payload["bookingId"].strip():
+        fails.append("bookingId: missing or not a non-empty string")
+    if payload.get("type") != "HOTEL":
+        fails.append("type: must be 'HOTEL'")
+    if "paymentInfos" in payload:
+        fails.append("paymentInfos: must be absent for a HOLD")
+    d = payload.get("deliveryInfo")
+    if not isinstance(d, dict):
+        fails.append("deliveryInfo: missing")
+    else:
+        emails, contacts, codes = d.get("emails"), d.get("contacts"), d.get("code")
+        if not (isinstance(emails, list) and emails and all(isinstance(e, str) and _EMAIL_RE.match(e) for e in emails)):
+            fails.append("deliveryInfo.emails: must be a non-empty list of valid email addresses")
+        elif any(e.lower().endswith((".invalid", "example.com", "example.invalid")) for e in emails):
+            fails.append("deliveryInfo.emails: placeholder address; pass --contact-email")
+        if not (isinstance(contacts, list) and contacts and all(isinstance(c, str) and c.isdigit() for c in contacts)):
+            fails.append("deliveryInfo.contacts: must be a non-empty list of digit-only phone numbers")
+        if not (isinstance(codes, list) and codes and all(isinstance(c, str) and _DIAL_RE.match(c) for c in codes)):
+            fails.append("deliveryInfo.code: must be a list of dial codes like '+91'")
+        if isinstance(contacts, list) and isinstance(codes, list):
+            if len(contacts) != len(codes):
+                fails.append("deliveryInfo: contacts and code must have the same length")
+            for c, k in zip(contacts, codes):
+                if k == "+91" and isinstance(c, str) and not (len(c) == 10 and c[:1] in "6789"):
+                    fails.append("deliveryInfo.contacts: Indian (+91) number must be 10 digits starting 6-9, without +91/0")
+                    break
+    rti = payload.get("roomTravellerInfo")
+    if not isinstance(rti, list) or not rti:
+        fails.append("roomTravellerInfo: missing or empty")
+        return fails
+    if len(rti) != len(rooms):
+        fails.append("roomTravellerInfo: room count differs from the search rooms")
+    leads = []
+    for ri, (block, room) in enumerate(zip(rti, rooms)):
+        tis = block.get("travellerInfo") if isinstance(block, dict) else None
+        if not isinstance(tis, list) or not tis:
+            fails.append(f"room[{ri}].travellerInfo: missing or empty")
+            continue
+        adults = int(room.get("adults") or 0)
+        children = len(room.get("childAges") or room.get("childAge") or [])
+        pts = [t.get("pt") for t in tis if isinstance(t, dict)]
+        if pts.count("ADULT") != adults or pts.count("CHILD") != children or len(pts) != len(tis):
+            fails.append(f"room[{ri}].travellerInfo: ADULT/CHILD counts differ from the search occupancy")
+        for gi, t in enumerate(tis):
+            if not isinstance(t, dict):
+                continue
+            where = f"room[{ri}].guest[{gi}]"
+            titles = ADULT_TITLES if t.get("pt") == "ADULT" else CHILD_TITLES
+            if t.get("ti") not in titles:
+                fails.append(f"{where}.ti: title not valid for {t.get('pt')}")
+            for k in ("fN", "lN"):
+                if not (isinstance(t.get(k), str) and _NAME_RE.match(t[k])):
+                    fails.append(f"{where}.{k}: must be 2-50 letters/spaces")
+            if pan_required and not (isinstance(t.get("pan"), str) and _PAN_RE.match(t["pan"])):
+                fails.append(f"{where}.pan: required by Review and must match AAAAA9999A")
+            elif "pan" in t and not (isinstance(t["pan"], str) and _PAN_RE.match(t["pan"])):
+                fails.append(f"{where}.pan: present but not in AAAAA9999A format")
+            if passport_required and not (isinstance(t.get("pNum"), str) and t["pNum"].strip()):
+                fails.append(f"{where}.pNum: required by Review")
+        lead = tis[0]
+        if isinstance(lead, dict):
+            leads.append((str(lead.get("fN", "")).lower(), str(lead.get("lN", "")).lower()))
+    if len(set(leads)) != len(leads):
+        fails.append("roomTravellerInfo: lead guest name must be unique across rooms")
+    return fails
+
+
+def book_created(status: int, body: Any) -> bool:
+    """A booking exists only on 2xx + status.success true + a bookingId."""
+    if not (200 <= status < 300) or not isinstance(body, dict):
+        return False
+    st = body.get("status") if isinstance(body.get("status"), dict) else {}
+    return st.get("success") is True and bool(body.get("bookingId")) and not body.get("errors") and not body.get("error")
+
+
 def book_requirements(review_body: Any) -> dict[str, Any]:
     """What the Book call will need, derived from the Review reply only."""
     opt = review_body.get("option") if isinstance(review_body, dict) and isinstance(review_body.get("option"), dict) else {}
@@ -1010,6 +1103,11 @@ async def run_book(args) -> None:
     )
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
     print("paymentInfos included:", "paymentInfos" in payload)
+    failures = validate_book_payload(payload, _rooms_from_session(session),
+                                     pan_required=reqs["pan_required"], passport_required=reqs["passport_required"])
+    print("PRE-FLIGHT VALIDATION:", "OK" if not failures else "FAILED")
+    for f in failures:
+        print("  -", f)
     if not execute:
         print("DRY RUN: Book NOT called. No booking created. Re-run with --execute-uat-hold "
               f"--confirm {BOOK_CONFIRM_PHRASE} --contact-email ... --contact-phone ... to place a UAT HOLD.")
@@ -1020,12 +1118,16 @@ async def run_book(args) -> None:
         raise SystemExit("Refusing: --contact-email and --contact-phone are required for a real UAT hold.")
     if reqs["onhold_allowed"] is False:
         raise SystemExit("Review says hold is not allowed for this option; refusing (would need instant/payment).")
+    if failures:
+        raise SystemExit(f"Refusing: {len(failures)} pre-flight validation failure(s); Book NOT called.")
     print("WARNING: creating a REAL TripJack UAT HOLD booking (no payment).")
     status, body, elapsed = await _booker_post(config, HOTEL_BOOK_PATH, payload)
     print("BOOK HTTP status:", status, "elapsed_s:", elapsed)
     print("BOOK SUMMARY:", json.dumps(book_summary(body), indent=1))
-    booking_id = body.get("bookingId") if isinstance(body, dict) else None
-    booking_id = booking_id or payload["bookingId"]
+    if not book_created(status, body):
+        print("BOOK FAILED: no booking was created. Not polling booking-details, not cancelling.")
+        raise SystemExit("Book rejected by TripJack; stopped.")
+    booking_id = body["bookingId"]
     last: dict[str, Any] = {}
     for attempt in range(max(1, args.poll_attempts)):
         await asyncio.sleep(5.0)
