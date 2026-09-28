@@ -305,33 +305,32 @@ def _raw_options(raw: dict[str, Any]) -> list[dict[str, Any]]:
 def _prices(option: dict[str, Any]) -> dict[str, float | None]:
     """Every amount the provider gave us. Nothing is defaulted or invented.
 
-    v3 pricing objects carry `mf` (management fee) and `mft` (its tax) in
-    addition to the room fare and taxes. Both are payable, so the total we
-    quote is provider total + mf + mft.
+    Confirmed live (UAT): totalPrice = basePrice + taxes + mf + mft, so the
+    provider total is authoritative and mf/mft are itemised only — never
+    added on top again.
     """
+    pricing = option.get("pricing")
+    if isinstance(pricing, dict):
+        return {
+            "total": get_number(pricing, "totalPrice"),
+            "base": get_number(pricing, "basePrice"),
+            "taxes": get_number(pricing, "taxes"),
+            "fees": None,
+            "mf": get_number(pricing, "mf"),
+            "mft": get_number(pricing, "mft"),
+        }
+
     price_block = get_map(option, "tp", "totalPrice", "price", "fare") or option
-
-    provider_total = get_number(
-        price_block, "TF", "total", "totalFare", "amount", "publishedPrice"
-    )
-    if provider_total is None:
-        provider_total = get_number(option, "tp", "totalPrice", "price")
-
-    management_fee = get_number(price_block, "mf") or get_number(option, "mf")
-    management_fee_tax = get_number(price_block, "mft") or get_number(option, "mft")
-
-    total = provider_total
-    if total is not None:
-        total += management_fee or 0.0
-        total += management_fee_tax or 0.0
-
+    total = get_number(price_block, "TF", "total", "totalFare", "amount", "publishedPrice")
+    if total is None:
+        total = get_number(option, "tp", "totalPrice", "price")
     return {
         "total": total,
         "base": get_number(price_block, "BF", "base", "baseFare", "roomRate"),
         "taxes": get_number(price_block, "TAF", "tax", "taxes", "totalTax"),
         "fees": get_number(price_block, "OT", "fees", "otherCharges"),
-        "mf": management_fee,
-        "mft": management_fee_tax,
+        "mf": get_number(price_block, "mf") or get_number(option, "mf"),
+        "mft": get_number(price_block, "mft") or get_number(option, "mft"),
     }
 
 
@@ -363,17 +362,16 @@ BREAKFAST_MEALS = ("breakfast", "half board", "full board", "all inclusive")
 
 
 def _v3_prices(option: dict[str, Any]) -> dict[str, float | None] | None:
-    """Confirmed v3 option.pricing: totalPrice, basePrice, discount, taxes,
-    mf, mft, currency. Payable total = totalPrice + mf + mft (same rule as
-    before: mf/mft are itemised and added)."""
+    """Confirmed v3 option.pricing. totalPrice already includes mf + mft
+    (live UAT: base + taxes + mf + mft == totalPrice); it is authoritative."""
     pricing = option.get("pricing")
     if not isinstance(pricing, dict):
         return None
-    provider_total = get_number(pricing, "totalPrice")
-    mf = get_number(pricing, "mf")
-    mft = get_number(pricing, "mft")
-    total = None if provider_total is None else provider_total + (mf or 0.0) + (mft or 0.0)
-    return {"total": total, "mf": mf, "mft": mft}
+    return {
+        "total": get_number(pricing, "totalPrice"),
+        "mf": get_number(pricing, "mf"),
+        "mft": get_number(pricing, "mft"),
+    }
 
 
 def _v3_option_plan(
@@ -472,7 +470,7 @@ def _rate_plans(
                 per_night_price=Money(amount=per_night, currency=currency)
                 if per_night
                 else None,
-                meal_plan=get_str(option, "mb", "mealPlan", "boardType"),
+                meal_plan=get_str(option, "mealBasis", "mb", "mealPlan", "boardType"),
                 refundable=cancellation.refundable if cancellation else None,
                 free_cancellation_until=cancellation.free_cancellation_until
                 if cancellation
@@ -559,28 +557,51 @@ def _cancellation(option: dict[str, Any], currency: str) -> HotelCancellationPol
 # ============================== pricing ====================================
 
 
+class HotelPricingResult:
+    """Normalised detail + the provider-only reviewHash (server-side only)."""
+
+    __slots__ = ("detail", "review_hash")
+
+    def __init__(self, detail: HotelDetail, review_hash: str | None) -> None:
+        self.detail = detail
+        self.review_hash = review_hash
+
+
 async def hotel_pricing(
     client: TripJackClient,
     config: TripJackConfig,
     *,
-    search_id: str,
+    listing_correlation_id: str,
     provider_hotel_id: str,
+    check_in: str,
+    check_out: str,
+    rooms: list[dict[str, Any]],
+    nationality: str | None,
     currency: str,
     fallback: HotelResult | None = None,
-) -> HotelDetail:
-    """/hms/v3/hotel/pricing — static detail plus every sellable option."""
+) -> HotelPricingResult:
+    """/hms/v3/hotel/pricing — every sellable option for one listed hotel."""
     body = await client.post(
         HOTEL_PRICING_PATH,
-        build_pricing_payload(search_id=search_id, hotel_id=provider_hotel_id),
+        build_pricing_payload(
+            listing_correlation_id=listing_correlation_id,
+            hid=provider_hotel_id,
+            check_in=check_in,
+            check_out=check_out,
+            rooms=rooms,
+            nationality=nationality,
+            currency=currency,
+        ),
         retries=config.search_retries,
         operation="hotel_pricing",
     )
-    return normalize_pricing_response(
+    detail = normalize_pricing_response(
         body,
         provider_hotel_id=provider_hotel_id,
         currency=currency,
         fallback=fallback,
     )
+    return HotelPricingResult(detail, get_str(body, "reviewHash") if isinstance(body, dict) else None)
 
 
 def normalize_pricing_response(
@@ -590,24 +611,33 @@ def normalize_pricing_response(
     currency: str,
     fallback: HotelResult | None = None,
 ) -> HotelDetail:
-    listed = _raw_hotel_list(body)
-    raw = (
-        get_map(body, "hotel")
-        or get_map(get_map(body, "searchResult"), "hotel")
-        or (listed[0] if listed else {})
-        or body
-    )
-    if not isinstance(raw, dict):
-        raw = {}
-
-    base = _hotel_result(raw, currency) or fallback
-    if base is None:
-        # Nothing renderable came back; surfacing a blank hotel would be worse.
+    """Confirmed v3 reply: top-level hotelId, hotelName, options[], reviewHash,
+    status, correlationId. Live option prices win; catalogue data (via
+    `fallback`) only fills static gaps."""
+    if not isinstance(body, dict):
         raise ValueError("hotel_pricing_unusable")
+    status = get_map(body, "status")
+    if status and status.get("success") is False:
+        raise ValueError("hotel_pricing_unusable")
+
+    returned_id = get_str(body, "hotelId", "tjHotelId", "hid")
+    if returned_id and returned_id != str(provider_hotel_id):
+        # Never attach another hotel's options to this one.
+        raise ValueError("hotel_pricing_mismatch")
+
+    raw: dict[str, Any] = dict(body)
+    raw.setdefault("hotelId", provider_hotel_id)
+    live = _hotel_result(raw, currency)
+    base = fallback or live
+    if base is None:
+        raise ValueError("hotel_pricing_unusable")
+
+    rate_plans = (live.rate_plans if live else None) or None
+    rate = (live.rate if live else None)
 
     return HotelDetail(
         id=provider_hotel_id,
-        name=base.name,
+        name=(live.name if live else None) or base.name,
         star_rating=base.star_rating,
         property_type=base.property_type,
         location=base.location,
@@ -616,12 +646,12 @@ def normalize_pricing_response(
         amenities=base.amenities,
         review_score=base.review_score,
         review_count=base.review_count,
-        rate=base.rate,
-        rate_plans=base.rate_plans,
+        rate=rate,
+        rate_plans=rate_plans,
         description=get_str(raw, "desc", "description", "hotelDescription"),
         check_in_time=get_str(raw, "checkInTime", "cit", "checkin"),
         check_out_time=get_str(raw, "checkOutTime", "cot", "checkout"),
-        facilities=_string_list(raw, "amenities", "facilities"),
+        facilities=_string_list(raw, "facilities") or base.amenities,
         policies=_string_list(raw, "pol", "policies", "instructions", "hotelPolicy"),
         rooms=_rooms(raw, currency),
     )
@@ -671,7 +701,7 @@ def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | Non
         bed_type=get_str(room_block, "bedType", "bt"),
         occupancy=HotelOccupancy(adults=min(adults, 6), child_ages=child_ages[:4]),
         room_count=max(len(room_infos) or 1, 1),
-        meal_plan=get_str(option, "mb", "mealPlan", "boardType") or get_str(room_block, "mb"),
+        meal_plan=get_str(option, "mealBasis", "mb", "mealPlan", "boardType") or get_str(room_block, "mb"),
         inclusions=_string_list(option, "inc", "inclusions") or _string_list(room_block, "inc", "inclusions"),
         cancellation=_cancellation(option, currency) or HotelCancellationPolicy(refundable=False),
         base_price=money(prices["base"]),

@@ -183,13 +183,40 @@ def build_listing_continuation_payload(
     return payload
 
 
-def build_pricing_payload(*, search_id: str, hotel_id: str) -> dict[str, Any]:
-    """/hms/v3/hotel/pricing — full rate plans for one hotel in this search."""
-    return {
-        "correlationId": correlation_id(),
-        "searchId": search_id,
-        "hotelId": hotel_id,
+PRICING_TIMEOUT_MS = 13000
+
+
+def build_pricing_payload(
+    *,
+    listing_correlation_id: str,
+    hid: str,
+    check_in: str,
+    check_out: str,
+    rooms: list[dict[str, Any]],
+    nationality: str | None,
+    currency: str | None,
+    timeout_ms: int | None = PRICING_TIMEOUT_MS,
+) -> dict[str, Any]:
+    """/hms/v3/hotel/pricing — FLAT body, confirmed against live UAT.
+
+    correlationId MUST be the originating listing's; dates, rooms (same count
+    and order), currency and nationality must match the listing. `hid` is sent
+    as a string.
+    """
+    if not listing_correlation_id:
+        raise ValueError("missing_listing_correlation_id")
+    payload: dict[str, Any] = {
+        "checkIn": check_in,
+        "checkOut": check_out,
+        "correlationId": listing_correlation_id,
+        "currency": (currency or DEFAULT_CURRENCY).upper(),
+        "hid": str(hid).strip(),
+        "nationality": tripjack_nationality(nationality),
+        "rooms": _v3_rooms(rooms),
     }
+    if timeout_ms:
+        payload["timeoutMs"] = int(timeout_ms)
+    return payload
 
 
 def build_review_payload(
