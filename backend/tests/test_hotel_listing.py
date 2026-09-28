@@ -153,3 +153,27 @@ def test_diagnostic_parser_report_detects_mismatch():
     rep = diag.parser_report(body([hotel("H1"), {"id": "HX"}]), ["H1", "H2"], "INR")
     assert rep["raw_hotel_items"] == 2 and rep["parsed_hotels"] == 1 and rep["dropped_by_parser"] == 1
     assert rep["returned_not_requested"] == ["HX"] and rep["requested_not_returned"] == 1
+
+
+def test_uat_diagnostic_payload_uses_tripjack_v3_field_names():
+    p = diag.build_uat_listing_payload(
+        hids=["H1", "H2"], check_in="2026-10-01", check_out="2026-10-02",
+        rooms=[{"adults": 2, "childAges": [5]}], nationality="in", currency="inr",
+    )
+    sq = p["searchQuery"]
+    # errCode 6521 fix: mandatory fields must be checkIn / checkOut / currency
+    assert sq["checkIn"] == "2026-10-01" and sq["checkOut"] == "2026-10-02"
+    assert sq["currency"] == "INR"
+    assert "checkinDate" not in sq and "checkoutDate" not in sq
+    # roomInfo / searchCriteria nesting unchanged (not flagged by TripJack)
+    assert sq["roomInfo"] == [{"numberOfAdults": 2, "numberOfChild": 1, "childAge": [5]}]
+    assert sq["searchCriteria"] == {"hids": ["H1", "H2"], "nationality": "IN"}
+    assert p["correlationId"]
+
+
+def test_uat_diagnostic_payload_minimal_room():
+    p = diag.build_uat_listing_payload(
+        hids=["H1"], check_in="2026-10-01", check_out="2026-10-02", rooms=[{"adults": 1}],
+    )
+    assert p["searchQuery"]["roomInfo"] == [{"numberOfAdults": 1}]
+    assert p["searchQuery"]["currency"] == "INR"
