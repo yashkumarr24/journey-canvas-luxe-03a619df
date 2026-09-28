@@ -1,118 +1,67 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble, ArrowUpRight } from "lucide-react";
 import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
-
-const links = [
-  { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "Contact", to: "/contact" },
-];
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export function Nav() {
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const close = () => setOpen(false);
+  const entries = [
+    { label: "Flights", to: "/flights" as const, icon: PlaneTakeoff },
+    { label: "Hotels", to: "/hotels" as const, icon: BedDouble },
+    { label: "Holidays", to: "/holidays" as const, icon: Gift },
+    { label: "Plan with AI", to: "/assistant" as const, icon: Bot },
+    { label: "Destinations", to: "/domestic" as const, icon: Compass },
+    { label: "Offers", to: "/holidays" as const, icon: Gift },
+    { label: "Help & Support", to: "/contact" as const, icon: CircleHelp },
+    { label: "Trips / My Bookings", to: "/account/bookings" as const, icon: BriefcaseBusiness },
+    { label: isAuthenticated ? "My Account" : "Sign In / Sign Up", to: (isAuthenticated ? "/account" : "/auth/login") as "/account" | "/auth/login", icon: UserRound },
+  ];
 
   return (
-    <motion.header
-      initial={{ y: -40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 sm:px-6 lg:px-12"
-    >
-      <nav
-        style={{ borderRadius: "0 0 22px 22px" }}
-        className={`flex w-full max-w-[760px] items-center justify-between gap-4 rounded-full border border-t-0 border-foreground/10 bg-[#F8F8F6] px-4 py-1.5 transition-all duration-500 sm:px-6 sm:py-2 lg:px-8 ${scrolled ? "shadow-[var(--shadow-soft)]" : ""}`}
-      >
-        <Link to="/" aria-label="Fly n Feel Holidays — Home" className="flex shrink-0 items-center">
-          <img
-            src={logo}
-            alt="Fly n Feel Holidays"
-            width={560}
-            height={200}
-            fetchPriority="high"
-            className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
-            loading="eager"
-            decoding="async"
-          />
-        </Link>
-
-
-        <ul className="hidden min-w-0 items-center gap-6 lg:flex xl:gap-9">
-          {links.map((l) => (
-            <li key={l.label}>
-              <Link
-                to={l.to}
-                className="relative whitespace-nowrap font-sans text-xs font-medium uppercase tracking-[0.1em] text-foreground/70 transition-colors hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-[2px] after:w-full after:bg-gold after:opacity-0 after:transition-opacity"
-                activeProps={{ className: "text-foreground after:opacity-100" }}
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link
-            to={isAuthenticated ? "/account" : "/auth/login"}
-            className="hidden whitespace-nowrap font-sans text-xs font-medium uppercase tracking-[0.1em] text-foreground transition-colors hover:text-gold sm:inline-block"
-          >
-            {isAuthenticated ? "Account" : "Login / Sign Up"}
-          </Link>
-          <Link
-            to="/contact"
-            className="hidden whitespace-nowrap rounded-sm bg-gold px-4 py-2 font-sans text-xs font-medium uppercase tracking-[0.1em] text-primary-foreground transition-transform hover:scale-[1.03] sm:px-5 md:inline-block"
-          >
-            Plan a Journey
-          </Link>
-          <button
-            aria-label="Menu"
-            onClick={() => setOpen((v) => !v)}
-            className="grid size-9 place-items-center rounded-sm border border-foreground/15 text-foreground sm:size-10 lg:hidden"
-          >
-            <span className="relative block size-4">
-              <span className={`absolute left-0 top-1 h-px w-full bg-current transition-transform ${open ? "translate-y-[6px] rotate-45" : ""}`} />
-              <span className={`absolute left-0 top-[14px] h-px w-full bg-current transition-transform ${open ? "-translate-y-[6px] -rotate-45" : ""}`} />
-            </span>
-          </button>
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-foreground/10 bg-background/95 shadow-[var(--shadow-soft)] backdrop-blur-md">
+      <nav aria-label="Main navigation" className="mx-auto grid h-20 w-full max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 sm:h-24 sm:gap-6 sm:px-6 lg:px-10">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Open menu" className="size-10 shrink-0 border border-foreground/10 hover:bg-secondary"><Menu className="size-5" /></Button>
+          </SheetTrigger>
+          <SheetContent side="left" overlayClassName="bg-foreground/40" className="w-[min(88vw,340px)] overflow-y-auto border-r border-foreground/10 bg-background px-0 pb-6 pt-14 shadow-[var(--shadow-luxe)]">
+            <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+            <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
+            <div className="space-y-1 px-3">
+              {entries.slice(0, 4).map(({ label, to, icon: Icon }) => (
+                <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
+              ))}
+            </div>
+            <div className="mx-5 my-4 border-t border-border" />
+            <div className="space-y-1 px-3">
+              {entries.slice(4, 9).map(({ label, to, icon: Icon }) => (
+                <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
+              ))}
+            </div>
+            <div className="mx-5 my-4 border-t border-border" />
+            <div className="space-y-1 px-3">
+              <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="English is the current site language"><Languages className="size-4 shrink-0" />Language <span className="ml-auto text-foreground">English</span></div>
+              <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="Hotel search lets you select a quote currency"><Coins className="size-4 shrink-0" />Currency <span className="ml-auto text-foreground">INR</span></div>
+              <Link to="/contact" onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium hover:border-gold hover:bg-secondary"><MessageSquare className="size-4 shrink-0 text-gold" />Feedback</Link>
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0"><img src={logo} alt="Fly n Feel Holidays" width={560} height={200} loading="eager" decoding="async" className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px]" /></Link>
+          <Link to="/assistant" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase text-foreground transition-colors hover:text-gold sm:inline-flex"><Bot className="size-4 text-gold" />Ask AI</Link>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          <Link to="/assistant" aria-label="Ask AI" className="grid size-9 place-items-center text-foreground hover:text-gold sm:hidden"><Bot className="size-5" /></Link>
+          <Button asChild className="hidden bg-gold text-primary-foreground hover:bg-primary sm:inline-flex"><Link to="/contact">Plan a Journey</Link></Button>
+          <Button asChild variant="ghost" size="icon" className="size-9 border border-foreground/15 text-gold hover:text-gold sm:hidden"><Link to="/contact" aria-label="Plan a Journey" title="Plan a Journey"><ArrowUpRight className="size-5" /></Link></Button>
+          <Link to={isAuthenticated ? "/account" : "/auth/login"} aria-label={isAuthenticated ? "My account" : "Sign in or sign up"} className="grid size-10 shrink-0 place-items-center border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold"><UserRound className="size-5" /></Link>
         </div>
       </nav>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="glass absolute inset-x-0 top-[68px] border-b border-foreground/10 p-6 lg:hidden"
-          >
-            <ul className="flex flex-col gap-4 font-sans text-sm font-medium uppercase tracking-[0.08em] text-foreground/80">
-              {links.map((l) => (
-                <li key={l.label}>
-                  <Link onClick={() => setOpen(false)} to={l.to} className="block transition-colors hover:text-foreground">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link onClick={() => setOpen(false)} to={isAuthenticated ? "/account" : "/auth/login"} className="block font-sans text-sm font-medium uppercase tracking-[0.1em] text-gold">
-                  {isAuthenticated ? "Account" : "Login / Sign Up"}
-                </Link>
-              </li>
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+    </header>
   );
 }
