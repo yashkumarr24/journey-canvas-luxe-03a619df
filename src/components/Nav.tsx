@@ -59,10 +59,9 @@ export function Nav() {
             </SheetContent>
           </Sheet>
           <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0"><img src={logo} alt="Fly n Feel Holidays" width={560} height={200} loading="eager" decoding="async" className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px]" /></Link>
-          <Link to="/assistant" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</Link>
+          <button type="button" onClick={() => setOpen(true)} aria-label="Open Ask AI menu" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</button>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link to="/assistant" aria-label="Ask AI" className="grid size-9 place-items-center text-foreground hover:text-gold md:hidden"><Bot className="size-5" /></Link>
           <Button asChild className="hidden rounded-none bg-gold px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-px hover:bg-primary hover:shadow-[var(--shadow-luxe)] sm:inline-flex"><Link to="/contact">Plan a Journey</Link></Button>
           <Button asChild variant="ghost" size="icon" className="size-9 border border-foreground/15 text-gold hover:text-gold sm:hidden"><Link to="/contact" aria-label="Plan a Journey" title="Plan a Journey"><ArrowUpRight className="size-5" /></Link></Button>
           <Link to={isAuthenticated ? "/account" : "/auth/login"} aria-label={isAuthenticated ? "My account" : "Sign in or sign up"} className="grid size-10 shrink-0 place-items-center border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold"><UserRound className="size-5" /></Link>
