@@ -939,7 +939,21 @@ export const mockHotelProvider = {
     const booking = resolveBooking(payload.bookingReference);
     if (!booking) fail(HOTEL_BOOKING_NOT_FOUND);
 
-    if (payload.paymentId.toLowerCase().includes("fail")) {
+    if (payload.mode === "hold") {
+      // Demo only: a real hold deadline always comes from the hotel.
+      const held = putBooking({
+        ...booking,
+        status: "on_hold",
+        mode: "hold",
+        holdDeadline: new Date(Date.now() + 24 * 3600_000).toISOString(),
+        canConfirmHold: true,
+        canCancel: true,
+        statusMessage: "Demo hold — in live mode the hotel sets the deadline.",
+      });
+      return { status: "on_hold", booking: held, message: held.statusMessage };
+    }
+
+    if ((payload.paymentId ?? "").toLowerCase().includes("fail")) {
       const failed = putBooking({
         ...booking,
         status: "payment_failed",
@@ -978,8 +992,38 @@ export const mockHotelProvider = {
       voucherUrl: null,
       invoiceUrl: null,
       statusMessage: undefined,
+      canCancel: true,
     });
     return { status: "confirmed", booking: confirmed };
+  },
+
+  async confirmHold(reference: string): Promise<HotelBookingResult> {
+    await wait(1_200);
+    const booking = resolveBooking(reference);
+    if (!booking) fail(HOTEL_BOOKING_NOT_FOUND);
+    const confirmed = putBooking({
+      ...booking,
+      status: "confirmed",
+      canConfirmHold: false,
+      canCancel: true,
+      hotelConfirmationNumber: `CONF${token(6).toUpperCase()}`,
+      statusMessage: undefined,
+    });
+    return { status: "confirmed", booking: confirmed };
+  },
+
+  async cancel(reference: string): Promise<HotelBookingResult> {
+    await wait(900);
+    const booking = resolveBooking(reference);
+    if (!booking) fail(HOTEL_BOOKING_NOT_FOUND);
+    const cancelled = putBooking({
+      ...booking,
+      status: "cancelled",
+      canConfirmHold: false,
+      canCancel: false,
+      statusMessage: "This booking has been cancelled.",
+    });
+    return { status: "failed", booking: cancelled, message: cancelled.statusMessage };
   },
 
   async reportFailure(reference: string, reason: "cancelled" | "failed", message?: string) {

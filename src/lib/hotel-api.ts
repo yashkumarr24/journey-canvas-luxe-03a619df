@@ -184,6 +184,23 @@ export const hotelApi = {
     return guard(() => (useMockHotels ? mockHotelProvider.book(payload) : bookingApi.bookHotel(payload)));
   },
 
+  /** Confirm a held booking (server-held amount). */
+  confirmHold(bookingReference: string, guestToken?: string | null): Promise<HotelBookingResult> {
+    return guard(() =>
+      useMockHotels
+        ? mockHotelProvider.confirmHold(bookingReference)
+        : bookingApi.confirmHotelHold(bookingReference, guestToken),
+    );
+  },
+
+  cancel(bookingReference: string, guestToken?: string | null): Promise<HotelBookingResult> {
+    return guard(() =>
+      useMockHotels
+        ? mockHotelProvider.cancel(bookingReference)
+        : bookingApi.cancelHotelBooking(bookingReference, guestToken),
+    );
+  },
+
   reportFailure(payload: {
     bookingReference: string;
     guestToken?: string;

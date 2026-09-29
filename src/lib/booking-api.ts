@@ -422,6 +422,22 @@ export const bookingApi = {
    * Payment orders are created through the shared /api/v1/payments/order
    * endpoint, so hotels reuse one payment architecture with flights.
    */
+  /** Confirm a held hotel booking. The amount is the server's, never the browser's. */
+  confirmHotelHold: (bookingReference: string, guestToken?: string | null) =>
+    request<HotelBookingResult>(
+      "POST",
+      `/api/v1/hotels/bookings/${encodeURIComponent(bookingReference)}/confirm`,
+      { guestToken: guestToken ?? undefined },
+    ),
+
+  /** Cancel a confirmed or held hotel booking. */
+  cancelHotelBooking: (bookingReference: string, guestToken?: string | null) =>
+    request<HotelBookingResult>(
+      "POST",
+      `/api/v1/hotels/bookings/${encodeURIComponent(bookingReference)}/cancel`,
+      { guestToken: guestToken ?? undefined },
+    ),
+
   bookHotel: (payload: HotelBookingRequest, options?: RequestOptions) =>
     request<HotelBookingResult>("POST", "/api/v1/hotels/booking", payload, {
       timeoutMs: 90_000,
