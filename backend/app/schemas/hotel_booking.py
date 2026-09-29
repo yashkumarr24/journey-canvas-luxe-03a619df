@@ -7,7 +7,7 @@ from typing import Any, List, Literal, Optional
 
 from pydantic import Field, field_validator
 
-from app.schemas.common import CamelModel
+from app.schemas.flights import CamelModel
 from app.schemas.flights import Money
 
 TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
@@ -62,7 +62,14 @@ class HotelBookRequest(CamelModel):
 class HotelBookingActionRequest(CamelModel):
     guest_token: Optional[str] = None
 
-    _guest = field_validator("guest_token")(HotelBookRequest._guest.__func__)  # type: ignore[attr-defined]
+    @field_validator("guest_token")
+    @classmethod
+    def _guest(cls, v: Optional[str]) -> Optional[str]:
+        if v in (None, ""):
+            return None
+        if not TOKEN_RE.match(v or ""):
+            raise ValueError("invalid_guest_token")
+        return v
 
 
 class HotelGuestView(CamelModel):
