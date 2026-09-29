@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     tripjack_hotel_directory_path: str = Field(
         default="", alias="TRIPJACK_HOTEL_DIRECTORY_PATH"
     )
+    # Hotel booking (Book / Booking Details / Confirm / Cancel) host. Already
+    # read by the UAT diagnostic; UAT default https://apitest-hotel-booker.tripjack.com
+    tripjack_hotel_booker_url: str = Field(default="", alias="TRIPJACK_HOTEL_BOOKER_URL")
     tripjack_hotel_max_pages: int = Field(default=3, alias="TRIPJACK_HOTEL_MAX_PAGES")
     tripjack_api_key: str = Field(default="", alias="TRIPJACK_API_KEY")
     tripjack_connect_timeout: float = Field(default=5.0, alias="TRIPJACK_CONNECT_TIMEOUT")
