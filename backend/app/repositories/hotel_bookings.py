@@ -37,7 +37,8 @@ class HotelBookingRepository:
     async def transition(self, row_id: str, expected: str, values: dict[str, Any]) -> bool:
         """Compare-and-set on status: the row changes only if it is still `expected`."""
         rows = await self._db.update(
-            HOTEL_BOOKINGS, values, filters={"id": f"eq.{row_id}", "status": f"eq.{expected}"}
+            HOTEL_BOOKINGS, values, filters={"id": f"eq.{row_id}", "status": f"eq.{expected}"},
+            returning=True,
         )
         return bool(rows)
 
