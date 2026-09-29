@@ -172,7 +172,7 @@ def _view(b: booking_service.HotelBooking) -> HotelBookingView:
         guests=guests, contact={("dialCode" if k == "dial_code" else k): v for k, v in contact.items()},
         special_requests=b.special_requests, hold_deadline=b.hold_deadline,
         hotel_confirmation_number=b.hotel_confirmation_number,
-        provider_cancellation=b.cancellation, status_message=b.status_message,
+        cancellation_rules=b.cancellation, status_message=b.status_message,
         can_confirm_hold=hold_open,
         can_cancel=b.status in (booking_service.CONFIRMED, booking_service.ON_HOLD),
     )

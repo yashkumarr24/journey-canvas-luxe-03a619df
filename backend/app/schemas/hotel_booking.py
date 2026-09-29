@@ -106,7 +106,7 @@ class HotelBookingView(CamelModel):
     special_requests: Optional[str] = None
     hold_deadline: Optional[str] = None
     hotel_confirmation_number: Optional[str] = None
-    provider_cancellation: Optional[HotelCancellationView] = None
+    cancellation_rules: Optional[HotelCancellationView] = None
     status_message: Optional[str] = None
     can_confirm_hold: bool = False
     can_cancel: bool = False
