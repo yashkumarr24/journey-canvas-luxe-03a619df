@@ -541,7 +541,9 @@ async def _session_via_search(args, settings):
     from app.services import hotel_sessions as sessions
 
     ci, co = dates(args.days_ahead, args.nights)
-    body = {"destination": args.destination, "checkIn": ci, "checkOut": co, "rooms": [{"adults": args.adults}]}
+    # Optional fixed room layout (certification cases); default is unchanged.
+    rooms = getattr(args, "rooms", None) or [{"adults": args.adults}]
+    body = {"destination": args.destination, "checkIn": ci, "checkOut": co, "rooms": rooms}
     transport = httpx.ASGITransport(app=create_app())
     async with httpx.AsyncClient(transport=transport, base_url="http://diag") as c:
         r = await c.post("/api/v1/hotels/search", json=body)
