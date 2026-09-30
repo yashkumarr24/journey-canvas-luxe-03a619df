@@ -123,14 +123,75 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
         destination=ns.destination, days_ahead=ns.days_ahead, nights=TC2_NIGHTS, adults=4,
         rooms=copy.deepcopy(TC2_ROOMS), hotel_id=ns.hotel_id, search_id="", option_id="",
         require_hold=False, max_hold_candidates=1,
+        max_instant_candidates=ns.max_instant_candidates,
         execute_uat_book=ns.execute_uat_book, confirm=ns.confirm, confirm_hold=False,
         cancel_after=False, contact_email=ns.contact_email, contact_phone=ns.contact_phone,
         pan=ns.pan, passport="", lead_guest=ns.lead_guest, poll_attempts=36,
     )
 
 
+async def _fresh_instant_review(args: argparse.Namespace):
+    """search -> detail -> review, iterating hotels/options until one Review
+    explicitly says onholdAllowed=false (instant-eligible). Read-only: Book
+    never runs here. Returns (config, session, option, review)."""
+    settings, config = uat._config()
+    if args.search_id:
+        from app.services import hotel_sessions as sessions
+        session = await sessions.get_search_session(settings=settings, search_id=args.search_id)
+        if session is None:
+            raise SystemExit("Search session not found or expired.")
+    else:
+        session = await uat._session_via_search(args, settings)
+    if not session.provider_search_id:
+        raise SystemExit("Session has no listing correlationId.")
+    if args.hotel_id:
+        hotel_ids = [args.hotel_id] if args.hotel_id in session.results else []
+    else:
+        priced = [hid for hid, r in session.results.items() if getattr(r, "rate", None)]
+        hotel_ids = priced or list(session.results)
+    if not hotel_ids:
+        raise SystemExit("No hotel id from this search session.")
+    limit = max(1, int(getattr(args, "max_instant_candidates", 10) or 10))
+    tried = 0
+    for hid in hotel_ids:
+        status, detail, _ = await uat._raw_post(config, uat.build_uat_pricing_payload(
+            listing_correlation_id=session.provider_search_id, hid=hid, check_in=session.check_in,
+            check_out=session.check_out, rooms=uat._rooms_from_session(session), currency=session.currency,
+        ), uat.HOTEL_PRICING_PATH)
+        print("DETAIL HTTP status:", status)
+        candidates = uat._detail_candidates(detail, getattr(args, "option_id", "")) if status < 400 else []
+        if not candidates or not isinstance(detail, dict) or not detail.get("reviewHash"):
+            print("DETAIL: no priced option / reviewHash; trying next hotel.")
+            continue
+        for option in candidates:
+            if tried >= limit:
+                break
+            tried += 1
+            status, review, _ = await uat._raw_post(config, uat.build_uat_review_payload(
+                listing_correlation_id=session.provider_search_id, hid=hid,
+                option_id=str(option["optionId"]), review_hash=str(detail["reviewHash"]),
+            ), uat.HOTEL_REVIEW_PATH)
+            rs = uat.review_summary(review, hid, option)
+            print("REVIEW HTTP status:", status, "success:", rs.get("status_success"),
+                  "total_matches_detail:", rs.get("review_total_matches_detail"))
+            ok = status < 400 and rs.get("status_success") is not False and isinstance(review, dict)
+            if not ok:
+                print(f"CANDIDATE {tried}: review failed; skipping.")
+                continue
+            safe = uat.hold_candidate_summary(review, option)
+            print(f"CANDIDATE {tried}:", json.dumps(safe, default=str))
+            if review_hold_explicitly_false(review):
+                print("INSTANT-ELIGIBLE OPTION FOUND (onholdAllowed=false):", json.dumps(safe, default=str))
+                return config, session, option, review
+            print("HOLD-ELIGIBLE OPTION: not usable for Test Case 2; trying next.")
+        if tried >= limit:
+            break
+    raise SystemExit("NO INSTANT-ELIGIBLE OPTION: no reviewed option returned onholdAllowed=false. "
+                     "Book NOT called.")
+
+
 async def run_instant_book(args: argparse.Namespace) -> None:
-    config, session, _option, review = await uat._fresh_review(args)
+    config, session, _option, review = await _fresh_instant_review(args)
     reqs = uat.book_requirements(review)
     print("BOOK REQUIREMENTS (from Review):", json.dumps(reqs, indent=1))
     execute = bool(args.execute_uat_book)
@@ -241,6 +302,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     p.add_argument("--contact-phone", default="")
     p.add_argument("--pan", default="")
     p.add_argument("--lead-guest", default="")
+    p.add_argument("--max-instant-candidates", type=int, default=10)
     p.add_argument("--out-dir", default="certification")
     asyncio.run(run(p.parse_args(argv)))
 
