@@ -686,6 +686,13 @@ async def confirm_hold(
 ) -> HotelBooking:
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
+    return await confirm_loaded_hold(settings=settings, store=store, b=b, payment_verified=payment_verified)
+
+
+async def confirm_loaded_hold(
+    *, settings: Settings, store: BookingStore, b: HotelBooking, payment_verified: bool = False,
+) -> HotelBooking:
+    """Confirm an ON_HOLD booking already loaded (and authorised) by the caller."""
     if b.status in (CONFIRMING, CONFIRMED):
         raise HotelBookingDuplicateError()
     if b.status != ON_HOLD:
