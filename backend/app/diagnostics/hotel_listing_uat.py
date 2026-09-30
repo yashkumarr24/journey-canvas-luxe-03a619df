@@ -1062,8 +1062,67 @@ async def _booker_post(config, path: str, payload: dict | None) -> tuple[int, An
     return resp.status_code, body, elapsed
 
 
+def review_hold_allowed(review_body: Any) -> bool | None:
+    """Hold eligibility exactly as TripJack states it in the Review reply.
+
+    True only when `onholdAllowed` / `onHoldAllowed` (top level, or on the
+    reviewed option) is boolean True or the string "true". False when explicitly
+    false; None when absent. Price, refundability, option order or deadlines are
+    never used to infer hold eligibility."""
+    if not isinstance(review_body, dict):
+        return None
+    opt = review_body.get("option") if isinstance(review_body.get("option"), dict) else {}
+    seen: bool | None = None
+    for src in (review_body, opt):
+        for key in ("onholdAllowed", "onHoldAllowed"):
+            if key not in src:
+                continue
+            v = src[key]
+            if v is True or (isinstance(v, str) and v.strip().lower() == "true"):
+                return True
+            if v is False or (isinstance(v, str) and v.strip().lower() == "false"):
+                seen = False
+    return seen
+
+
+def hold_candidate_summary(review_body: Any, detail_option: dict[str, Any] | None) -> dict[str, Any]:
+    """Operator-safe facts for a reviewed option. Never ids, hashes, PAN, notes or payloads."""
+    body = review_body if isinstance(review_body, dict) else {}
+    opt = body.get("option") if isinstance(body.get("option"), dict) else {}
+    rinfo = opt.get("roomInfo") if isinstance(opt.get("roomInfo"), list) else []
+    pricing = opt.get("pricing") if isinstance(opt.get("pricing"), dict) else {}
+    canc = opt.get("cancellation") if isinstance(opt.get("cancellation"), dict) else {}
+    total = _num(pricing.get("totalPrice"))
+    if total is None:
+        total = _num(((detail_option or {}).get("pricing") or {}).get("totalPrice"))
+    return {
+        "hotel_name": body.get("hotelName"),
+        "option_type": opt.get("optionType") or (detail_option or {}).get("optionType"),
+        "room_name": ", ".join(str(r.get("name")) for r in rinfo if isinstance(r, dict) and r.get("name")) or None,
+        "total_price": total,
+        "hold_allowed": review_hold_allowed(body),
+        "is_refundable": canc.get("isRefundable"),
+    }
+
+
+def _detail_candidates(detail: Any, wanted: str = "") -> list[dict[str, Any]]:
+    """Priced detail options, cheapest first; only the requested one with --option-id."""
+    if wanted:
+        one = select_detail_option(detail, wanted)
+        return [one] if one else []
+    if not isinstance(detail, dict) or not isinstance(detail.get("options"), list):
+        return []
+    opts = [o for o in detail["options"] if isinstance(o, dict) and o.get("optionId")
+            and isinstance(o.get("pricing"), dict) and _num(o["pricing"].get("totalPrice")) is not None]
+    return sorted(opts, key=lambda o: _num(o["pricing"]["totalPrice"]))
+
+
 async def _fresh_review(args):
-    """search -> fresh detail -> review. Returns (config, session, detail_option, review_body)."""
+    """search -> fresh detail -> review. Returns (config, session, detail_option, review_body).
+
+    With --require-hold, reviews each priced option of the same hotel (cheapest
+    first, up to --max-hold-candidates) and returns the first whose Review
+    explicitly says onholdAllowed=true. Review is read-only; Book never runs here."""
     settings, config = _config()
     if args.search_id:
         from app.services import hotel_sessions as sessions
@@ -1082,19 +1141,37 @@ async def _fresh_review(args):
         check_out=session.check_out, rooms=_rooms_from_session(session), currency=session.currency,
     ), HOTEL_PRICING_PATH)
     print("DETAIL HTTP status:", status)
-    option = select_detail_option(detail, getattr(args, "option_id", "")) if status < 400 else None
-    if not option or not isinstance(detail, dict) or not detail.get("reviewHash"):
+    require_hold = bool(getattr(args, "require_hold", False))
+    candidates = _detail_candidates(detail, getattr(args, "option_id", "")) if status < 400 else []
+    limit = max(1, int(getattr(args, "max_hold_candidates", 5) or 5)) if require_hold else 1
+    candidates = candidates[:limit]
+    if not candidates or not isinstance(detail, dict) or not detail.get("reviewHash"):
         raise SystemExit("Detail gave no priced option / reviewHash.")
-    status, review, _ = await _raw_post(config, build_uat_review_payload(
-        listing_correlation_id=session.provider_search_id, hid=hid,
-        option_id=str(option["optionId"]), review_hash=str(detail["reviewHash"]),
-    ), HOTEL_REVIEW_PATH)
-    rs = review_summary(review, hid, option)
-    print("REVIEW HTTP status:", status, "success:", rs.get("status_success"),
-          "total_matches_detail:", rs.get("review_total_matches_detail"))
-    if status >= 400 or rs.get("status_success") is False or not isinstance(review, dict):
-        raise SystemExit("Review failed; Book must not be attempted.")
-    return config, session, option, review
+    for i, option in enumerate(candidates, 1):
+        status, review, _ = await _raw_post(config, build_uat_review_payload(
+            listing_correlation_id=session.provider_search_id, hid=hid,
+            option_id=str(option["optionId"]), review_hash=str(detail["reviewHash"]),
+        ), HOTEL_REVIEW_PATH)
+        rs = review_summary(review, hid, option)
+        print("REVIEW HTTP status:", status, "success:", rs.get("status_success"),
+              "total_matches_detail:", rs.get("review_total_matches_detail"))
+        ok = status < 400 and rs.get("status_success") is not False and isinstance(review, dict)
+        if not require_hold:
+            if not ok:
+                raise SystemExit("Review failed; Book must not be attempted.")
+            return config, session, option, review
+        if not ok:
+            print(f"CANDIDATE {i}/{len(candidates)}: review failed; skipping.")
+            continue
+        safe = hold_candidate_summary(review, option)
+        print(f"CANDIDATE {i}/{len(candidates)}:", json.dumps(safe, default=str))
+        if safe["hold_allowed"] is True:
+            print("HOLD-ELIGIBLE OPTION FOUND:", json.dumps(safe, default=str))
+            return config, session, option, review
+        print("HOLD NOT AVAILABLE FOR SELECTED OPTION"
+              + ("" if safe["hold_allowed"] is False else " (onholdAllowed absent)"))
+    print("NO HOLD-ELIGIBLE OPTION: no reviewed option returned onholdAllowed=true.")
+    raise SystemExit("Refusing: --require-hold set and no reviewed option supports Hold. Book NOT called.")
 
 
 async def run_book(args) -> None:
@@ -1144,8 +1221,9 @@ async def run_book(args) -> None:
         raise SystemExit(f"Refusing: --confirm {BOOK_CONFIRM_PHRASE} is required to create a UAT hold booking.")
     if not (args.contact_email and args.contact_phone):
         raise SystemExit("Refusing: --contact-email and --contact-phone are required for a real UAT hold.")
-    if reqs["onhold_allowed"] is False:
-        raise SystemExit("Review says hold is not allowed for this option; refusing (would need instant/payment).")
+    if review_hold_allowed(review) is not True:
+        raise SystemExit("HOLD NOT AVAILABLE FOR SELECTED OPTION: Review did not explicitly return "
+                         "onholdAllowed=true; refusing (would need instant/payment). Book NOT called.")
     if failures:
         raise SystemExit(f"Refusing: {len(failures)} pre-flight validation failure(s); Book NOT called.")
     print("WARNING: creating a REAL TripJack UAT HOLD booking (no payment).")
@@ -1193,6 +1271,10 @@ def main() -> None:
     p.add_argument("--review-variant", choices=["documented", "with-context"], default="documented",
                    help="review: documented 4-field body, or add dates/rooms/currency/nationality")
     p.add_argument("--execute-uat-hold", action="store_true", help="book: actually send a UAT HOLD booking")
+    p.add_argument("--require-hold", action="store_true",
+                   help="book: review options until one explicitly returns onholdAllowed=true; else stop")
+    p.add_argument("--max-hold-candidates", type=int, default=5,
+                   help="book --require-hold: max options of the hotel to review (cheapest first)")
     p.add_argument("--confirm", default="", help=f"book: must be {BOOK_CONFIRM_PHRASE} with --execute-uat-hold")
     p.add_argument("--contact-email", default="", help="book: operator email for TripJack delivery (never printed)")
     p.add_argument("--contact-phone", default="", help="book: operator phone (never printed)")
