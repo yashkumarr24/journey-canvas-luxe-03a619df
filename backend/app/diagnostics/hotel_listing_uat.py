@@ -1306,7 +1306,9 @@ async def run_confirm_hold(config, booking_id: str, amount: float, *, post=None,
     print("CONFIRM-HOLD REQUEST (keys/types only):", json.dumps(shape(payload)))
     st, body, _ = await post(config, HOTEL_CONFIRM_BOOK_PATH, payload)
     print("CONFIRM-HOLD HTTP status:", st, "summary:", json.dumps(book_summary(body)))
-    if not book_created(st, body):
+    ok = 200 <= st < 300 and isinstance(body, dict) and isinstance(body.get("status"), dict) \
+        and body["status"].get("success") is True and not body.get("errors") and not body.get("error")
+    if not ok:
         print("CONFIRM-HOLD REJECTED: hold left as-is; not polling.")
         return "REJECTED"
     attempts = max(1, int(max_seconds // interval))
