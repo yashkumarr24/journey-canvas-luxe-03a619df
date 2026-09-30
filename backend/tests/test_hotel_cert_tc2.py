@@ -32,6 +32,7 @@ def _full(status="PAYMENT_SUCCESS", pay=True):
 
 def _ns(**kw):
     base = dict(destination="Mumbai", days_ahead=30, hotel_id="", execute_uat_book=False, confirm="",
+                max_instant_candidates=10,
                 contact_email="", contact_phone="", pan="", lead_guest="", out_dir="x")
     base.update(kw)
     return argparse.Namespace(**base)
