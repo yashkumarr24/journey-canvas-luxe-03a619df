@@ -102,7 +102,7 @@ def test_booker_host_must_be_uat(monkeypatch):
 def _args(**kw):
     base = dict(search_id="tok", hotel_id="", option_id="", destination="Goa", days_ahead=30, nights=1,
                 adults=2, execute_uat_hold=False, confirm="", contact_email="", contact_phone="",
-                pan="", passport="", poll_attempts=2, cancel_after=False)
+                pan="", passport="", poll_attempts=2, cancel_after=False, lead_guest="")
     base.update(kw)
     return SimpleNamespace(**base)
 
@@ -417,8 +417,8 @@ def test_require_hold_true_dry_run_never_books(wired, monkeypatch, capsys):
 
 def test_lead_guest_replaces_only_first_traveller():
     rooms = [{"adults": 2, "childAges": [5]}, {"adults": 1}]
-    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e@x", phone="1",
-                                    lead_guest="Asha Verma")
+    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="ops@secret.test",
+                                    phone="9876500000", lead_guest="Asha Verma")
     ts = [t for r in p["roomTravellerInfo"] for t in r["travellerInfo"]]
     assert ts[0]["fN"] == "Asha" and ts[0]["lN"] == "Verma"
     # all other travellers keep the synthetic test names

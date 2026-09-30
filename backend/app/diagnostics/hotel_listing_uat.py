@@ -1262,7 +1262,7 @@ async def run_book(args) -> None:
         pan=pan_values[0] if (reqs["pan_required"] and len(pan_values) == 1) else "",
         passport=args.passport if reqs["passport_required"] else "",
         pans=per_traveller_pans if reqs["pan_required"] else None,
-        lead_guest=args.lead_guest.strip(),
+        lead_guest=(getattr(args, "lead_guest", "") or "").strip(),
     )
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(booking_identity_summary(
