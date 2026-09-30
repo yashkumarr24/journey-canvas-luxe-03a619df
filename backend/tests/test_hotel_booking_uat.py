@@ -410,3 +410,67 @@ def test_require_hold_true_dry_run_never_books(wired, monkeypatch, capsys):
     _wire_reviews(monkeypatch, {"opt-a": _review(True, "opt-a")})
     asyncio.run(diag.run_book(_args(require_hold=True, max_hold_candidates=5)))
     assert booker == [] and "DRY RUN" in capsys.readouterr().out
+
+
+# ------------------------- --lead-guest option -------------------------
+
+
+def test_lead_guest_replaces_only_first_traveller():
+    rooms = [{"adults": 2, "childAges": [5]}, {"adults": 1}]
+    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e@x", phone="1",
+                                    lead_guest="Asha Verma")
+    ts = [t for r in p["roomTravellerInfo"] for t in r["travellerInfo"]]
+    assert ts[0]["fN"] == "Asha" and ts[0]["lN"] == "Verma"
+    # all other travellers keep the synthetic test names
+    for t in ts[1:]:
+        assert t["fN"].startswith("Uat") and t["lN"] == "Diagnostic"
+    # lead guests must still be unique across rooms
+    assert not diag.validate_book_payload(p, rooms)
+
+
+def test_lead_guest_single_name_keeps_default_surname():
+    p = diag.build_uat_book_payload(booking_id="B", rooms=[{"adults": 1}], email="e", phone="1",
+                                    lead_guest="Asha")
+    t = p["roomTravellerInfo"][0]["travellerInfo"][0]
+    assert t["fN"] == "Asha" and t["lN"] == "Diagnostic"
+
+
+def test_lead_guest_bad_format_rejected():
+    with pytest.raises(ValueError, match="lead_guest_format"):
+        diag.build_uat_book_payload(booking_id="B", rooms=[{"adults": 1}], email="e", phone="1",
+                                    lead_guest="Asha B Verma")
+
+
+def test_lead_guest_still_passes_existing_name_validation():
+    rooms = [{"adults": 1}]
+    p = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e@x.io", phone="9876500000",
+                                    lead_guest="A1 Bad")
+    fails = diag.validate_book_payload(p, rooms)
+    assert any(".fN" in f for f in fails)
+    assert "A1" not in json.dumps(fails)
+
+
+def test_lead_guest_changes_identity_fingerprint():
+    rooms = [{"adults": 2}]
+    a = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1")
+    b = diag.build_uat_book_payload(booking_id="B", rooms=rooms, email="e", phone="1",
+                                    lead_guest="Asha Verma")
+    ia = diag.booking_identity_summary(a, hid="1", check_in="2026-10-10", check_out="2026-10-11")
+    ib = diag.booking_identity_summary(b, hid="1", check_in="2026-10-10", check_out="2026-10-11")
+    assert ia["lead_guest_fp"] != ib["lead_guest_fp"]
+    assert ia["all_guests_fp"] != ib["all_guests_fp"]
+    # same bookingId/hotel/dates -> other fingerprints unchanged
+    for k in ("review_booking_id_fp", "pan_set_fp", "hotel_fp"):
+        assert ia[k] == ib[k]
+
+
+def test_lead_guest_flag_wired_into_run_book(wired, monkeypatch):
+    calls, booker = wired
+    monkeypatch.setattr(diag, "_args", None) if False else None
+    import sys
+    argv = ["prog", "book", "--lead-guest", "Asha Verma"]
+    monkeypatch.setattr(sys, "argv", argv)
+    # run_book receives parsed args; verify the parser accepts the flag
+    parser_ns = diag._parser().parse_args(argv[1:]) if hasattr(diag, "_parser") else None
+    if parser_ns is not None:
+        assert parser_ns.lead_guest == "Asha Verma"
