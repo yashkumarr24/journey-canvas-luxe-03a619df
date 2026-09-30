@@ -208,10 +208,6 @@ def test_moves_to_next_hotel_when_first_has_no_options(monkeypatch):
     assert option["optionId"] == "h2-o1" and calls["pricing"] == 2
 
 
-class _Result:
-    rate = 1
-
-
 class _WideSession:
     """5 hotels, 1 option each — enough to exercise the candidate limit."""
     provider_search_id = "corr-w"
