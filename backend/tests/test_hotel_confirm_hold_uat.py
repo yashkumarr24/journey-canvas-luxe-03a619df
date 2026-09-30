@@ -84,6 +84,20 @@ def test_gates(monkeypatch):
     for bad in (_args(execute_uat_hold=False), _args(confirm="nope"), _args(cancel_after=True)):
         with pytest.raises(SystemExit):
             diag.check_confirm_hold_args(bad)
+
+
+def test_production_app_with_uat_endpoint_allowed(monkeypatch):
+    """VPS stays APP_ENV=production; the UAT booker URL is what gates the diagnostic."""
+    monkeypatch.setattr(diag, "_booker_base", lambda: diag.UAT_BOOKER_BASE_URL)
     monkeypatch.setattr(diag, "get_settings", lambda: SimpleNamespace(is_production=True))
-    with pytest.raises(SystemExit, match="production"):
+    diag.check_confirm_hold_args(_args())
+
+
+def test_production_endpoint_rejected(monkeypatch):
+    monkeypatch.setattr(diag, "_booker_base", lambda: "https://apitest-other.tripjack.com")
+    monkeypatch.setattr(diag, "get_settings", lambda: SimpleNamespace(is_production=True))
+    with pytest.raises(SystemExit, match="UAT"):
+        diag.check_confirm_hold_args(_args())
+    monkeypatch.setattr(diag, "_booker_base", lambda: "https://hotel-booker.tripjack.com")
+    with pytest.raises(SystemExit):
         diag.check_confirm_hold_args(_args())
