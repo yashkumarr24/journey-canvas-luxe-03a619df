@@ -104,6 +104,7 @@ def _patch(monkeypatch, booker_calls, statuses):
     monkeypatch.setattr(uat, "_booker_base", lambda: BASE)
 
     async def via_search(args, settings):
+        await uat._raw_post(None, {"rooms": []}, uat.HOTEL_LISTING_PATH)
         return _Session()
     monkeypatch.setattr(uat, "_session_via_search", via_search)
     monkeypatch.setattr(uat, "_rooms_from_session", lambda s: tc4.TC4_ROOMS)
