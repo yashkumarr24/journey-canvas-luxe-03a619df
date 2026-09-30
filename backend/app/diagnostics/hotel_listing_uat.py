@@ -847,6 +847,7 @@ def build_uat_book_payload(
     passport: str = "",
     gst_info: dict[str, str] | None = None,
     pans: list[str] | None = None,
+    lead_guest: str = "",
 ) -> dict[str, Any]:
     """Documented HOLD body. paymentInfos is NEVER included: this diagnostic
     must not create an instant (wallet-charged) booking.
@@ -863,6 +864,9 @@ def build_uat_book_payload(
     )
     if pans is not None and len(pans) != total_travellers:
         raise ValueError("pans_count_mismatch")
+    lead_parts = lead_guest.split()
+    if lead_guest and not (1 <= len(lead_parts) <= 2):
+        raise ValueError("lead_guest_format")
     room_info = []
     n = 0
     for r in rooms:
@@ -873,6 +877,10 @@ def build_uat_book_payload(
         for _ in (r.get("childAges") or r.get("childAge") or []):
             travellers.append({"ti": "Master", "pt": "CHILD", "fN": _test_name(n), "lN": "Diagnostic"})
             n += 1
+        if lead_parts and not room_info and travellers:
+            # Only the very first traveller (lead guest of room 1) is replaced.
+            travellers[0]["fN"] = lead_parts[0]
+            travellers[0]["lN"] = lead_parts[1] if len(lead_parts) == 2 else "Diagnostic"
         first_guest = n - len(travellers)
         for gi, t in enumerate(travellers):
             own_pan = pans[first_guest + gi] if pans else pan
