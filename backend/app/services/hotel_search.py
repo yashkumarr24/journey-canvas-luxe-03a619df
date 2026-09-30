@@ -628,6 +628,28 @@ async def submit_guests(
         contact_email=payload.contact.email,
     )
 
+    # Server-side booking draft for the Book lifecycle (services/hotel_booking.py).
+    try:
+        from app.services import hotel_booking as booking_service
+
+        nationality = None
+        if session.search_id:
+            search = await sessions.get_search_session(settings=settings, search_id=session.search_id)
+            nationality = search.nationality if search else None
+        elif session.row_id:
+            from app.repositories.hotel_bookings import HotelBookingRepository
+
+            repo = HotelBookingRepository(settings)
+            if repo.enabled:
+                nationality = await repo.search_nationality(session.row_id)
+        await booking_service.create_draft(
+            settings=settings, review_session=session, booking_reference=booking_reference,
+            guests=payload.guests, contact=payload.contact,
+            special_requests=payload.special_requests, nationality=nationality,
+        )
+    except Exception:  # noqa: BLE001 — draft failure must not break guest capture
+        logger.warning("hotel_booking_draft_failed")
+
     logger.info(
         "hotel_guests_submitted",
         extra=log_extra(guest_count=len(payload.guests), authenticated=auth.is_authenticated),

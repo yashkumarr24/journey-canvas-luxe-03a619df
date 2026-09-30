@@ -27,6 +27,8 @@ from app.core.config import Settings
 # fails towards staging rather than towards production.
 DEFAULT_UAT_BASE_URL = "https://apitest.tripjack.com"
 DEFAULT_UAT_HOTEL_BASE_URL = "https://apitest-hms.tripjack.com"
+# Hotel Book / Booking Details / Confirm / Cancel live on a THIRD host.
+DEFAULT_UAT_HOTEL_BOOKER_URL = "https://apitest-hotel-booker.tripjack.com"
 PRODUCTION_HOST = "tripjack.com"
 # Any UAT host is a subdomain starting with "apitest".
 UAT_HOST_PREFIX = "apitest"
@@ -83,3 +85,9 @@ def build_hotel_config(settings: Settings) -> TripJackConfig:
         settings.tripjack_hotel_base_url or DEFAULT_UAT_HOTEL_BASE_URL
     ).rstrip("/")
     return replace(build_config(settings), base_url=hotel_base)
+
+
+def build_hotel_booker_config(settings: Settings) -> TripJackConfig:
+    """Hotel booking (OMS v3) config: same credentials, dedicated booker host."""
+    base = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
+    return replace(build_config(settings), base_url=base)

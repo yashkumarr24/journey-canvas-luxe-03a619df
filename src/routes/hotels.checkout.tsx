@@ -148,6 +148,31 @@ function HotelCheckoutPage() {
     },
   });
 
+  // Hold: reserve the room without payment where the hotel allows it.
+  const hold = useMutation({
+    mutationFn: () =>
+      hotelApi.book({
+        bookingReference: ref as string,
+        guestToken: guestToken ?? undefined,
+        mode: "hold",
+        idempotencyKey,
+      }),
+    onSuccess: (result) => {
+      if (result.status === "failed") {
+        setStage("booking_failed");
+        setMessage(result.message ?? result.booking.statusMessage ?? null);
+        setIdempotencyKey(newIdempotencyKey());
+        return;
+      }
+      navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
+    },
+    onError: (error) => {
+      setStage("failed");
+      setMessage(toBookingError(error).message);
+      setIdempotencyKey(newIdempotencyKey());
+    },
+  });
+
   const reportFailure = (reason: "cancelled" | "failed", note?: string) => {
     if (!ref) return;
     hotelApi
@@ -435,6 +460,20 @@ function HotelCheckoutPage() {
                 : `Pay ${formatMoney(payable.amount, payable.currency)}`}
 
             </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="mt-3 w-full"
+              disabled={expired || hold.isPending || pay.isPending}
+              onClick={() => hold.mutate()}
+            >
+              {hold.isPending ? "Holding your room…" : "Hold room, pay later"}
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Only for rooms the hotel lets us hold. You confirm before the hotel's deadline.
+            </p>
 
             <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />

@@ -499,6 +499,11 @@ export type BookingStatus =
   | "payment_failed"
   | "booking_processing"
   | "confirmed"
+  /** Hotel room reserved without payment until the hotel's hold deadline. */
+  | "on_hold"
+  /** A held booking is being confirmed with the hotel. */
+  | "confirming"
+  | "cancellation_pending"
   | "failed"
   | "cancelled"
   | "expired";
@@ -754,6 +759,17 @@ export interface HotelBookingSummary {
   statusMessage?: string;
   /** True when the summary came from the local mock provider, not the backend. */
   isTestMode?: boolean;
+  /** "instant" or "hold" once a booking attempt has started. */
+  mode?: "instant" | "hold";
+  /** Hotel's own hold deadline (from the provider, never estimated). */
+  holdDeadline?: string;
+  /** Provider cancellation windows returned with the booking. */
+  cancellationRules?: {
+    refundable?: boolean;
+    penalties: { from?: string; to?: string; amount?: number }[];
+  };
+  canConfirmHold?: boolean;
+  canCancel?: boolean;
 }
 
 /**
@@ -763,9 +779,11 @@ export interface HotelBookingSummary {
 export interface HotelBookingRequest {
   bookingReference: string;
   guestToken?: string;
-  provider: PaymentProvider;
-  orderId: string;
-  paymentId: string;
+  /** "hold" reserves the room without payment where the hotel allows it. */
+  mode?: "instant" | "hold";
+  provider?: PaymentProvider;
+  orderId?: string;
+  paymentId?: string;
   /** Provider signature, verified server-side. */
   signature?: string;
   idempotencyKey?: string;
@@ -774,7 +792,15 @@ export interface HotelBookingRequest {
 export interface HotelBookingResult {
   status: Extract<
     BookingStatus,
-    "confirmed" | "booking_processing" | "payment_failed" | "failed"
+    | "confirmed"
+    | "booking_processing"
+    | "on_hold"
+    | "confirming"
+    | "cancellation_pending"
+    | "cancelled"
+    | "expired"
+    | "payment_failed"
+    | "failed"
   >;
   booking: HotelBookingSummary;
   message?: string;

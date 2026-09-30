@@ -144,6 +144,14 @@ class TripJackClient:
         assert last_error is not None
         raise last_error
 
+    async def post_no_body(self, path: str, *, operation: str = "request") -> dict[str, Any]:
+        """POST with no request body. Transactional: never retried."""
+        if not self._config.is_configured:
+            raise TripJackNotConfiguredError("TripJack booker host/API key not set")
+        url = "/" + path.strip("/")
+        headers = {API_KEY_HEADER: self._config.api_key, "X-Request-ID": request_id_ctx.get()}
+        return await self._attempt(url, {}, headers, operation, 0, method="POST_EMPTY")
+
     async def get(
         self,
         path: str,
@@ -189,6 +197,9 @@ class TripJackClient:
             # is ever logged. Only the operation name and outcome are.
             if method == "GET":
                 response = await client.get(url, params=params, headers=headers)
+            elif method == "POST_EMPTY":
+                # Endpoints documented with NO request body (e.g. hotel cancel).
+                response = await client.post(url, headers=headers)
             else:
                 response = await client.post(url, json=payload, headers=headers)
         except httpx.TimeoutException as exc:
@@ -285,8 +296,22 @@ def get_hotel_client(config: TripJackConfig) -> TripJackClient:
     return _hotel_client
 
 
+_hotel_booker_client: TripJackClient | None = None
+
+
+def get_hotel_booker_client(config: TripJackConfig) -> TripJackClient:
+    """Separate pooled client bound to the hotel BOOKER host (book/confirm/cancel)."""
+    global _hotel_booker_client
+    if _hotel_booker_client is None:
+        _hotel_booker_client = TripJackClient(config)
+    return _hotel_booker_client
+
+
 async def close_client() -> None:
-    global _client, _hotel_client
+    global _client, _hotel_client, _hotel_booker_client
+    if _hotel_booker_client is not None:
+        await _hotel_booker_client.aclose()
+        _hotel_booker_client = None
     if _client is not None:
         await _client.aclose()
         _client = None
