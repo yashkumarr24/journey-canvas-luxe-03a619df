@@ -464,13 +464,13 @@ def test_lead_guest_changes_identity_fingerprint():
         assert ia[k] == ib[k]
 
 
-def test_lead_guest_flag_wired_into_run_book(wired, monkeypatch):
-    calls, booker = wired
-    monkeypatch.setattr(diag, "_args", None) if False else None
-    import sys
-    argv = ["prog", "book", "--lead-guest", "Asha Verma"]
-    monkeypatch.setattr(sys, "argv", argv)
-    # run_book receives parsed args; verify the parser accepts the flag
-    parser_ns = diag._parser().parse_args(argv[1:]) if hasattr(diag, "_parser") else None
-    if parser_ns is not None:
-        assert parser_ns.lead_guest == "Asha Verma"
+def test_lead_guest_flag_flows_into_book_payload(wired, monkeypatch):
+    _, booker = wired
+    a = _args(execute_uat_hold=True, confirm=diag.BOOK_CONFIRM_PHRASE,
+              contact_email="ops@secret.test", contact_phone="9876500000", cancel_after=True)
+    a.lead_guest = "Asha Verma"
+    asyncio.run(diag.run_book(a))
+    book = [p for path, p in booker if path == diag.HOTEL_BOOK_PATH][0]
+    ts = [t for r in book["roomTravellerInfo"] for t in r["travellerInfo"]]
+    assert ts[0]["fN"] == "Asha" and ts[0]["lN"] == "Verma"
+    assert all(t["fN"].startswith("Uat") for t in ts[1:])
