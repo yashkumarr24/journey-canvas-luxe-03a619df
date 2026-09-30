@@ -149,12 +149,12 @@ class _SearchSession:
     results = {"h1": _Result(), "h2": _Result()}
 
 
-def _patch_search(monkeypatch, reviews, details=None):
+def _patch_search(monkeypatch, reviews, details=None, session=None):
     """reviews: list of review bodies returned in order; details: per-hotel detail bodies."""
     import app.diagnostics.hotel_listing_uat as uat
     monkeypatch.setattr(uat, "_config", lambda: (object(), object()))
     async def via_search(args, settings):
-        return _SearchSession()
+        return session or _SearchSession()
     monkeypatch.setattr(uat, "_session_via_search", via_search)
     monkeypatch.setattr(uat, "_rooms_from_session", lambda s: tc2.TC2_ROOMS)
     details = details or {}
@@ -206,6 +206,48 @@ def test_moves_to_next_hotel_when_first_has_no_options(monkeypatch):
     import asyncio
     _config, session, option, review = asyncio.run(tc2._fresh_instant_review(_iter_args()))
     assert option["optionId"] == "h2-o1" and calls["pricing"] == 2
+
+
+class _Result:
+    rate = 1
+
+
+class _WideSession:
+    """5 hotels, 1 option each — enough to exercise the candidate limit."""
+    provider_search_id = "corr-w"
+    check_in, check_out = "2026-06-15", "2026-06-16"
+    currency = "INR"
+    rooms = []
+    results = {f"h{i}": _Result() for i in range(1, 6)}
+
+
+def test_low_limit_stops_reviewing_early(monkeypatch):
+    """With a small limit, only that many options are reviewed before stopping."""
+    calls = _patch_search(monkeypatch, [_review(True)], session=_WideSession())
+    import asyncio
+    with pytest.raises(SystemExit, match="NO INSTANT-ELIGIBLE OPTION"):
+        asyncio.run(tc2._fresh_instant_review(_iter_args(max_instant_candidates=2)))
+    assert calls["review"] == 2
+
+
+def test_higher_default_limit_covers_all_candidates(monkeypatch):
+    """The raised default (30) sweeps every available option, not just the first few."""
+    calls = _patch_search(monkeypatch, [_review(True)], session=_WideSession())
+    import asyncio
+    with pytest.raises(SystemExit, match="limit 30"):
+        asyncio.run(tc2._fresh_instant_review(_iter_args(max_instant_candidates=30)))
+    assert calls["review"] == 5
+
+
+def test_missing_attr_falls_back_to_30(monkeypatch):
+    """A namespace without the flag (older callers) still gets the wider default."""
+    calls = _patch_search(monkeypatch, [_review(True)], session=_WideSession())
+    import asyncio
+    ns = _iter_args(max_instant_candidates=30)
+    del ns.max_instant_candidates
+    with pytest.raises(SystemExit, match="limit 30"):
+        asyncio.run(tc2._fresh_instant_review(ns))
+    assert calls["review"] == 5
 
 
 def test_refuses_wrong_phrase(monkeypatch):
