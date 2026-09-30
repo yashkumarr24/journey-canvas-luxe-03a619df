@@ -123,6 +123,7 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
         destination=ns.destination, days_ahead=ns.days_ahead, nights=TC2_NIGHTS, adults=4,
         rooms=copy.deepcopy(TC2_ROOMS), hotel_id=ns.hotel_id, search_id="", option_id="",
         require_hold=False, max_hold_candidates=1,
+        max_instant_candidates=ns.max_instant_candidates,
         execute_uat_book=ns.execute_uat_book, confirm=ns.confirm, confirm_hold=False,
         cancel_after=False, contact_email=ns.contact_email, contact_phone=ns.contact_phone,
         pan=ns.pan, passport="", lead_guest=ns.lead_guest, poll_attempts=36,
@@ -301,6 +302,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     p.add_argument("--contact-phone", default="")
     p.add_argument("--pan", default="")
     p.add_argument("--lead-guest", default="")
+    p.add_argument("--max-instant-candidates", type=int, default=10)
     p.add_argument("--out-dir", default="certification")
     asyncio.run(run(p.parse_args(argv)))
 
