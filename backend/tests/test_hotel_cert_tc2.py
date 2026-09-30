@@ -108,7 +108,7 @@ def _patch(monkeypatch, review, calls):
     async def booker(config, path, payload):
         calls.append(path)
         return 200, {"bookingId": "TGP1", "status": {"success": True}}, 0.1
-    monkeypatch.setattr(tc2.uat, "_fresh_review", fresh)
+    monkeypatch.setattr(tc2, "_fresh_instant_review", fresh)
     monkeypatch.setattr(tc2.uat, "_rooms_from_session", lambda s: tc2.TC2_ROOMS)
     monkeypatch.setattr(tc2.uat, "_booker_post", booker)
 
@@ -127,12 +127,84 @@ def test_dry_run_never_books(monkeypatch):
 
 
 def test_refuses_when_hold_allowed(monkeypatch):
+    """Defence in depth: even if the picker returned a holdable review, Book is refused."""
     calls = []
     _patch(monkeypatch, _review(True), calls)
     import asyncio
     with pytest.raises(SystemExit, match="onholdAllowed=false"):
         asyncio.run(tc2.run_instant_book(tc2.build_args(_ns(execute_uat_book=True, confirm="CREATE-UAT-BOOK"))))
     assert calls == []
+
+
+class _Result:
+    rate = 1
+
+
+class _SearchSession:
+    provider_search_id = "corr-1"
+    check_in, check_out = "2026-06-15", "2026-06-16"
+    currency = "INR"
+    rooms = []
+    results = {"h1": _Result(), "h2": _Result()}
+
+
+def _patch_search(monkeypatch, reviews, details=None):
+    """reviews: list of review bodies returned in order; details: per-hotel detail bodies."""
+    import app.diagnostics.hotel_listing_uat as uat
+    monkeypatch.setattr(uat, "_config", lambda: (object(), object()))
+    async def via_search(args, settings):
+        return _SearchSession()
+    monkeypatch.setattr(uat, "_session_via_search", via_search)
+    monkeypatch.setattr(uat, "_rooms_from_session", lambda s: tc2.TC2_ROOMS)
+    details = details or {}
+    calls = {"pricing": 0, "review": 0}
+
+    async def raw_post(config, payload, path):
+        if path == uat.HOTEL_PRICING_PATH:
+            calls["pricing"] += 1
+            hid = payload.get("hid")
+            opts = details.get(hid, [{"optionId": f"{hid}-o1", "pricing": {"totalPrice": 100.0}}])
+            return 200, {"reviewHash": "rh", "options": opts}, 0.1
+        if path == uat.HOTEL_REVIEW_PATH:
+            i = calls["review"]
+            calls["review"] += 1
+            return 200, reviews[min(i, len(reviews) - 1)], 0.1
+        raise AssertionError(f"unexpected path {path}")
+
+    monkeypatch.setattr(uat, "_raw_post", raw_post)
+    return calls
+
+
+def _iter_args(**kw):
+    base = dict(destination="Mumbai", days_ahead=30, nights=1, adults=4, rooms=tc2.TC2_ROOMS,
+                hotel_id="", search_id="", option_id="", max_instant_candidates=10)
+    base.update(kw)
+    return argparse.Namespace(**base)
+
+
+def test_first_option_holdable_next_instant_eligible(monkeypatch):
+    calls = _patch_search(monkeypatch, [_review(True), _review(False)])
+    import asyncio
+    _config, session, option, review = asyncio.run(tc2._fresh_instant_review(_iter_args()))
+    assert calls["review"] == 2  # first skipped, second used
+    assert review["onholdAllowed"] is False
+    assert option["optionId"] == "h1-o2" or option["optionId"].startswith("h")
+
+
+def test_no_instant_option_stops_safely(monkeypatch):
+    calls = _patch_search(monkeypatch, [_review(True)])
+    import asyncio
+    with pytest.raises(SystemExit, match="NO INSTANT-ELIGIBLE OPTION"):
+        asyncio.run(tc2._fresh_instant_review(_iter_args()))
+    assert calls["review"] >= 1  # reviewed, never booked
+
+
+def test_moves_to_next_hotel_when_first_has_no_options(monkeypatch):
+    calls = _patch_search(monkeypatch, [_review(False)],
+                          details={"h1": [], "h2": [{"optionId": "h2-o1", "pricing": {"totalPrice": 50.0}}]})
+    import asyncio
+    _config, session, option, review = asyncio.run(tc2._fresh_instant_review(_iter_args()))
+    assert option["optionId"] == "h2-o1" and calls["pricing"] == 2
 
 
 def test_refuses_wrong_phrase(monkeypatch):
