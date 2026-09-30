@@ -1016,14 +1016,13 @@ def _fp(*parts: Any) -> str:
 def booking_identity_summary(payload: dict[str, Any], *, hid: str, check_in: str, check_out: str,
                              hotel_name: str = "") -> dict[str, Any]:
     """Non-sensitive identity of a Book attempt, for comparing attempts (e.g. errCode 2502
-    duplicate). Dates/counts/hotel name in clear; hotel id, bookingId, guest names, PAN,
+    duplicate). Dates/counts in clear; hotel id, bookingId, guest names, PAN,
     email and phone only as short one-way fingerprints."""
     rooms = payload.get("roomTravellerInfo") or []
     travellers = [t for r in rooms for t in (r.get("travellerInfo") or [])]
     lead = travellers[0] if travellers else {}
     d = payload.get("deliveryInfo") or {}
     return {
-        "hotel_name": hotel_name or None,
         "hotel_fp": _fp("hid", hid),
         "check_in": check_in,
         "check_out": check_out,
@@ -1259,8 +1258,7 @@ async def run_book(args) -> None:
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(booking_identity_summary(
         payload, hid=str(review.get("tjHotelId") or pick_hotel(session, args.hotel_id) or ""),
-        check_in=session.check_in, check_out=session.check_out,
-        hotel_name=str(review.get("hotelName") or "")), indent=1))
+        check_in=session.check_in, check_out=session.check_out), indent=1))
     print("paymentInfos included:", "paymentInfos" in payload)
     failures = validate_book_payload(payload, _rooms_from_session(session),
                                      pan_required=reqs["pan_required"], passport_required=reqs["passport_required"])

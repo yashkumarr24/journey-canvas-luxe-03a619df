@@ -12,15 +12,14 @@ def _payload(booking_id="BID-1", pans=("ABCDE1234F", "PQRSX9876Z")):
 
 
 def _ident(p, hid="100001"):
-    return uat.booking_identity_summary(p, hid=hid, check_in="2026-10-10", check_out="2026-10-11",
-                                        hotel_name="Test Hotel")
+    return uat.booking_identity_summary(p, hid=hid, check_in="2026-10-10", check_out="2026-10-11")
 
 
 def test_identity_has_no_sensitive_values():
     text = json.dumps(_ident(_payload()))
     for s in SECRETS + ["BID-1", "100001"]:
         assert s not in text
-    assert "2026-10-10" in text and "Test Hotel" in text
+    assert "2026-10-10" in text
 
 
 def test_fresh_booking_id_changes_only_its_fingerprint():
