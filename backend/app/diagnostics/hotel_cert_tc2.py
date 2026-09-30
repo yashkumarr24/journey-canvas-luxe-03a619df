@@ -151,7 +151,8 @@ async def _fresh_instant_review(args: argparse.Namespace):
         hotel_ids = priced or list(session.results)
     if not hotel_ids:
         raise SystemExit("No hotel id from this search session.")
-    limit = max(1, int(getattr(args, "max_instant_candidates", 10) or 10))
+    # Wider sweep before giving up: default 30 reviewed options (configurable).
+    limit = max(1, int(getattr(args, "max_instant_candidates", 30) or 30))
     tried = 0
     for hid in hotel_ids:
         status, detail, _ = await uat._raw_post(config, uat.build_uat_pricing_payload(
@@ -186,8 +187,9 @@ async def _fresh_instant_review(args: argparse.Namespace):
             print("HOLD-ELIGIBLE OPTION: not usable for Test Case 2; trying next.")
         if tried >= limit:
             break
-    raise SystemExit("NO INSTANT-ELIGIBLE OPTION: no reviewed option returned onholdAllowed=false. "
-                     "Book NOT called.")
+    raise SystemExit(f"NO INSTANT-ELIGIBLE OPTION: reviewed {tried} option(s) (limit {limit}); "
+                     "none returned onholdAllowed=false. Book NOT called. "
+                     "Re-run with a higher --max-instant-candidates to widen the sweep.")
 
 
 async def run_instant_book(args: argparse.Namespace) -> None:
@@ -302,7 +304,8 @@ def main(argv: Optional[list[str]] = None) -> None:
     p.add_argument("--contact-phone", default="")
     p.add_argument("--pan", default="")
     p.add_argument("--lead-guest", default="")
-    p.add_argument("--max-instant-candidates", type=int, default=10)
+    p.add_argument("--max-instant-candidates", type=int, default=30,
+                   help="max options to review before giving up (higher = wider sweep)")
     p.add_argument("--out-dir", default="certification")
     asyncio.run(run(p.parse_args(argv)))
 
