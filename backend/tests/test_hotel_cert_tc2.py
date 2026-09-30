@@ -188,7 +188,7 @@ def test_first_option_holdable_next_instant_eligible(monkeypatch):
     _config, session, option, review = asyncio.run(tc2._fresh_instant_review(_iter_args()))
     assert calls["review"] == 2  # first skipped, second used
     assert review["onholdAllowed"] is False
-    assert option["optionId"] == "h1-o2" or option["optionId"].startswith("h")
+    assert option["optionId"] == "h2-o1"  # h1's only option was holdable; moved to h2
 
 
 def test_no_instant_option_stops_safely(monkeypatch):
