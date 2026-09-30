@@ -96,7 +96,7 @@ def test_production_app_with_uat_endpoint_allowed(monkeypatch):
 def test_production_endpoint_rejected(monkeypatch):
     monkeypatch.setattr(diag, "_booker_base", lambda: "https://apitest-other.tripjack.com")
     monkeypatch.setattr(diag, "get_settings", lambda: SimpleNamespace(is_production=True))
-    with pytest.raises(SystemExit, match="UAT"):
+    with pytest.raises(SystemExit, match="exactly"):
         diag.check_confirm_hold_args(_args())
     monkeypatch.setattr(diag, "_booker_base", lambda: "https://hotel-booker.tripjack.com")
     with pytest.raises(SystemExit):
