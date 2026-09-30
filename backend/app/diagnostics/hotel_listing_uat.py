@@ -657,12 +657,20 @@ def select_detail_option(body: Any, wanted: str = "") -> dict[str, Any] | None:
     return min(opts, key=lambda o: _num(o["pricing"]["totalPrice"])) if opts else None
 
 
+_TJ_ID_RE = re.compile(r"\bTJ[A-Z]?\d{6,}\b")
+
+
+def redact_provider_ids(text: str) -> str:
+    """Mask TripJack booking ids (e.g. TJP2002...) that appear inside error messages."""
+    return _TJ_ID_RE.sub("<TJ-ID>", text)
+
+
 def _error_summary(body: Any) -> list[dict[str, str]]:
     if not isinstance(body, dict):
         return []
     raw = body.get("errors") or body.get("error")
     errs = raw if isinstance(raw, list) else [raw] if raw else []
-    return [{k: str(v)[:160] for k, v in e.items() if k in ("errCode", "code", "message")}
+    return [{k: redact_provider_ids(str(v))[:160] for k, v in e.items() if k in ("errCode", "code", "message")}
             for e in errs if isinstance(e, dict)][:5]
 
 
@@ -998,6 +1006,46 @@ def book_requirements(review_body: Any) -> dict[str, Any]:
     }
 
 
+def _fp(*parts: Any) -> str:
+    """Short one-way fingerprint: equal inputs -> equal output, value not recoverable."""
+    raw = "|".join(str(p).strip().lower() for p in parts)
+    return hashlib.sha256(raw.encode()).hexdigest()[:10]
+
+
+def booking_identity_summary(payload: dict[str, Any], *, hid: str, check_in: str, check_out: str,
+                             hotel_name: str = "") -> dict[str, Any]:
+    """Non-sensitive identity of a Book attempt, for comparing attempts (e.g. errCode 2502
+    duplicate). Dates/counts/hotel name in clear; hotel id, bookingId, guest names, PAN,
+    email and phone only as short one-way fingerprints."""
+    rooms = payload.get("roomTravellerInfo") or []
+    travellers = [t for r in rooms for t in (r.get("travellerInfo") or [])]
+    lead = travellers[0] if travellers else {}
+    d = payload.get("deliveryInfo") or {}
+    return {
+        "hotel_name": hotel_name or None,
+        "hotel_fp": _fp("hid", hid),
+        "check_in": check_in,
+        "check_out": check_out,
+        "rooms": len(rooms),
+        "adults": sum(1 for t in travellers if t.get("pt") == "ADULT"),
+        "children": sum(1 for t in travellers if t.get("pt") == "CHILD"),
+        "review_booking_id_fp": _fp("bid", payload.get("bookingId", "")),
+        "lead_guest_fp": _fp("lead", lead.get("ti"), lead.get("fN"), lead.get("lN")),
+        "all_guests_fp": _fp("guests", *[f"{t.get('ti')} {t.get('fN')} {t.get('lN')}" for t in travellers]),
+        "pan_set_fp": _fp("pan", *[t.get("pan", "") for t in travellers]),
+        "email_fp": _fp("email", *(d.get("emails") or [])),
+        "phone_fp": _fp("phone", *(d.get("contacts") or [])),
+    }
+
+
+DUPLICATE_BOOKING_CODE = "2502"
+
+
+def is_duplicate_booking(body: Any) -> bool:
+    return any(str(e.get("errCode") or e.get("code") or "") == DUPLICATE_BOOKING_CODE
+               for e in _error_summary(body))
+
+
 def book_summary(body: Any) -> dict[str, Any]:
     if not isinstance(body, dict):
         return {"json_object": False}
@@ -1208,6 +1256,10 @@ async def run_book(args) -> None:
         pans=per_traveller_pans if reqs["pan_required"] else None,
     )
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
+    print("BOOK IDENTITY (compare across attempts):", json.dumps(booking_identity_summary(
+        payload, hid=str(review.get("tjHotelId") or pick_hotel(session, args.hotel_id) or ""),
+        check_in=session.check_in, check_out=session.check_out,
+        hotel_name=str(review.get("hotelName") or "")), indent=1))
     print("paymentInfos included:", "paymentInfos" in payload)
     failures = validate_book_payload(payload, _rooms_from_session(session),
                                      pan_required=reqs["pan_required"], passport_required=reqs["passport_required"])
@@ -1232,6 +1284,11 @@ async def run_book(args) -> None:
     print("BOOK HTTP status:", status, "elapsed_s:", elapsed)
     print("BOOK SUMMARY:", json.dumps(book_summary(body), indent=1))
     if not book_created(status, body):
+        if is_duplicate_booking(body):
+            print("DUPLICATE BOOKING (errCode 2502): TripJack matched this attempt to an existing booking. "
+                  "Compare BOOK IDENTITY with the earlier attempt: same hotel_fp + dates + lead_guest_fp/"
+                  "all_guests_fp while the earlier booking is still active is the expected trigger. "
+                  "Cancel/let the earlier hold expire or change dates/hotel before retrying.")
         print("BOOK FAILED: no booking was created. Not polling booking-details, not cancelling.")
         raise SystemExit("Book rejected by TripJack; stopped.")
     booking_id = body["bookingId"]
