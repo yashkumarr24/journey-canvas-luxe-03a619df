@@ -1175,6 +1175,7 @@ async def _fresh_review(args):
 
 
 async def run_book(args) -> None:
+    check_confirm_hold_args(args)
     config, session, _option, review = await _fresh_review(args)
     reqs = book_requirements(review)
     print("BOOK REQUIREMENTS (from Review):", json.dumps(reqs, indent=1))
@@ -1243,6 +1244,18 @@ async def run_book(args) -> None:
         if last.get("order_status") in BOOKING_TERMINAL:
             break
     print("BOOKING DETAILS SUMMARY:", json.dumps(last, indent=1))
+    if getattr(args, "confirm_hold", False):
+        if last.get("order_status") != "ON_HOLD":
+            print("CONFIRM-HOLD SKIPPED: booking did not reach ON_HOLD.")
+            return
+        amount = confirm_amount(last, review)
+        if amount is None:
+            print("CONFIRM-HOLD SKIPPED: no positive total from Booking Details or Review.")
+            return
+        print("WARNING: confirming the REAL TripJack UAT hold (debits the UAT wallet).")
+        await run_confirm_hold(config, booking_id, amount)
+        print("NOTE: UAT only; no production booking record was saved.")
+        return
     if getattr(args, "cancel_after", False):
         st, cb, _ = await _booker_post(config, f"{HOTEL_CANCEL_BOOKING_PATH}/{booking_id}", None)
         print("CANCEL HTTP status:", st, "summary:", json.dumps(book_summary(cb)))
@@ -1250,6 +1263,68 @@ async def run_book(args) -> None:
         st, det, _ = await _booker_post(config, HOTEL_BOOKING_DETAILS_PATH, {"bookingId": booking_id})
         print("POST-CANCEL order_status:", booking_details_summary(det).get("order_status"))
     print("NOTE: no payment was made; no production booking record was saved.")
+
+
+# ------------------------------------------------------ UAT confirm-hold (opt-in) --
+# POST /oms/v3/hotel/confirm-book {"bookingId", "paymentInfos": [{"amount"}]}, then
+# poll booking-details every 5s up to 180s. SUCCESS == CONFIRMED.
+HOTEL_CONFIRM_BOOK_PATH = "oms/v3/hotel/confirm-book"
+CONFIRM_TERMINAL_OK = {"SUCCESS"}
+CONFIRM_TERMINAL_FAIL = {"FAILED", "ABORTED", "CANCELLED"}
+
+
+def check_confirm_hold_args(args) -> None:
+    """Refuse --confirm-hold unless every UAT gate is present. Runs BEFORE Book."""
+    if not getattr(args, "confirm_hold", False):
+        return
+    if get_settings().is_production:
+        raise SystemExit("Refusing: APP_ENV is production. --confirm-hold is UAT only.")
+    if not getattr(args, "execute_uat_hold", False) or args.confirm != BOOK_CONFIRM_PHRASE:
+        raise SystemExit(f"Refusing: --confirm-hold requires --execute-uat-hold --confirm {BOOK_CONFIRM_PHRASE}.")
+    if getattr(args, "cancel_after", False):
+        raise SystemExit("Refusing: --confirm-hold and --cancel-after cannot be combined.")
+    _booker_base()  # refuses non-apitest hosts
+
+
+def confirm_amount(details: dict[str, Any], review_body: Any) -> float | None:
+    """Booking Details order amount first, else the Review totalPrice."""
+    amt = details.get("order_amount") or details.get("option_total_price")
+    if isinstance(amt, (int, float)) and amt > 0:
+        return round(float(amt), 2)
+    opt = review_body.get("option") if isinstance(review_body, dict) and isinstance(review_body.get("option"), dict) else {}
+    pricing = opt.get("pricing") if isinstance(opt.get("pricing"), dict) else {}
+    total = _num(pricing.get("totalPrice"))
+    return round(total, 2) if total and total > 0 else None
+
+
+async def run_confirm_hold(config, booking_id: str, amount: float, *, post=None, sleep=None,
+                           interval: float = 5.0, max_seconds: float = 180.0) -> str:
+    """Confirm an ON_HOLD UAT booking and poll. Returns CONFIRMED | FAILED | REJECTED | TIMEOUT."""
+    post = post or _booker_post
+    sleep = sleep or asyncio.sleep
+    payload = {"bookingId": booking_id, "paymentInfos": [{"amount": round(float(amount), 2)}]}
+    print("CONFIRM-HOLD REQUEST (keys/types only):", json.dumps(shape(payload)))
+    st, body, _ = await post(config, HOTEL_CONFIRM_BOOK_PATH, payload)
+    print("CONFIRM-HOLD HTTP status:", st, "summary:", json.dumps(book_summary(body)))
+    ok = 200 <= st < 300 and isinstance(body, dict) and isinstance(body.get("status"), dict) \
+        and body["status"].get("success") is True and not body.get("errors") and not body.get("error")
+    if not ok:
+        print("CONFIRM-HOLD REJECTED: hold left as-is; not polling.")
+        return "REJECTED"
+    attempts = max(1, int(max_seconds // interval))
+    for attempt in range(attempts):
+        await sleep(interval)
+        st, det, _ = await post(config, HOTEL_BOOKING_DETAILS_PATH, {"bookingId": booking_id})
+        status = booking_details_summary(det).get("order_status")
+        print(f"CONFIRM-HOLD poll {attempt + 1}: HTTP {st} order_status={status}")
+        if status in CONFIRM_TERMINAL_OK:
+            print("CONFIRM-HOLD RESULT: CONFIRMED")
+            return "CONFIRMED"
+        if status in CONFIRM_TERMINAL_FAIL:
+            print("CONFIRM-HOLD RESULT: FAILED")
+            return "FAILED"
+    print(f"CONFIRM-HOLD RESULT: TIMEOUT after {int(attempts * interval)}s (status unknown, not treated as success)")
+    return "TIMEOUT"
 
 
 def main() -> None:
@@ -1282,6 +1357,8 @@ def main() -> None:
     p.add_argument("--passport", default="", help="book: passport, only if Review requires it (never printed)")
     p.add_argument("--poll-attempts", type=int, default=36, help="book: booking-details polls, 5s apart (36 = 180s)")
     p.add_argument("--cancel-after", action="store_true", help="book: cancel the UAT hold after polling")
+    p.add_argument("--confirm-hold", action="store_true",
+                   help="book: UAT only; after ON_HOLD, call confirm-book and poll 5s/180s")
     args = p.parse_args()
     runner = {"select": run_select, "listing": run_listing, "probe-limit": run_probe, "endpoint": run_endpoint, "detail": run_detail, "review": run_review, "book": run_book}[args.mode]
     asyncio.run(runner(args))
