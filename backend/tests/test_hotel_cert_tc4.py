@@ -141,7 +141,7 @@ def test_wrong_phrase_refused(monkeypatch):
     _patch(monkeypatch, calls, [])
     with pytest.raises(SystemExit, match="CREATE-UAT-BOOK"):
         asyncio.run(tc4.run(_ns(execute_uat_book=True, confirm="NO", pan="ABCDE1234F",
-                                contact_email="uat@example.com", contact_phone="9000000000")))
+                                contact_email="ops@flynfeel.in", contact_phone="9000000000")))
     assert calls == []
 
 
@@ -149,7 +149,7 @@ def test_real_flow_books_cancels_and_exports(monkeypatch, tmp_path):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS", "CANCELLATION_PENDING"])
     z = asyncio.run(tc4.run(_ns(execute_uat_book=True, confirm="CREATE-UAT-BOOK", pan="ABCDE1234F",
-                                contact_email="uat@example.com", contact_phone="9000000000", out_dir=str(tmp_path))))
+                                contact_email="ops@flynfeel.in", contact_phone="9000000000", out_dir=str(tmp_path))))
     assert calls[0] == uat.HOTEL_BOOK_PATH and any(tc4.is_cancel_path(c) for c in calls)
     folder = tmp_path / "Test Case 4"
     book = json.loads((folder / "TJ test Hotel Book Request.json").read_text())
@@ -165,5 +165,5 @@ def test_no_cancel_when_booking_fails(monkeypatch):
     _patch(monkeypatch, calls, ["FAILED"])
     with pytest.raises(SystemExit, match="Cancel NOT called"):
         asyncio.run(tc4.run(_ns(execute_uat_book=True, confirm="CREATE-UAT-BOOK", pan="ABCDE1234F",
-                                contact_email="uat@example.com", contact_phone="9000000000")))
+                                contact_email="ops@flynfeel.in", contact_phone="9000000000")))
     assert not any(tc4.is_cancel_path(c) for c in calls)
