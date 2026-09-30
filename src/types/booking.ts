@@ -607,7 +607,7 @@ export interface PaymentFailureRequest {
 export interface PaymentResult {
   status: Extract<
     BookingStatus,
-    "confirmed" | "booking_processing" | "on_hold" | "payment_failed" | "failed"
+    "confirmed" | "booking_processing" | "payment_failed" | "failed"
   >;
   booking: BookingSummary;
   message?: string;
@@ -792,7 +792,15 @@ export interface HotelBookingRequest {
 export interface HotelBookingResult {
   status: Extract<
     BookingStatus,
-    "confirmed" | "booking_processing" | "payment_failed" | "failed"
+    | "confirmed"
+    | "booking_processing"
+    | "on_hold"
+    | "confirming"
+    | "cancellation_pending"
+    | "cancelled"
+    | "expired"
+    | "payment_failed"
+    | "failed"
   >;
   booking: HotelBookingSummary;
   message?: string;
