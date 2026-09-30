@@ -1277,13 +1277,15 @@ def check_confirm_hold_args(args) -> None:
     """Refuse --confirm-hold unless every UAT gate is present. Runs BEFORE Book."""
     if not getattr(args, "confirm_hold", False):
         return
-    if get_settings().is_production:
-        raise SystemExit("Refusing: APP_ENV is production. --confirm-hold is UAT only.")
+    # APP_ENV may legitimately stay production on the VPS; safety comes from the
+    # booker URL. The production app never calls this path, and the real
+    # production TripJack endpoint is rejected below regardless of APP_ENV.
     if not getattr(args, "execute_uat_hold", False) or args.confirm != BOOK_CONFIRM_PHRASE:
         raise SystemExit(f"Refusing: --confirm-hold requires --execute-uat-hold --confirm {BOOK_CONFIRM_PHRASE}.")
     if getattr(args, "cancel_after", False):
         raise SystemExit("Refusing: --confirm-hold and --cancel-after cannot be combined.")
-    _booker_base()  # refuses non-apitest hosts
+    if _booker_base() != UAT_BOOKER_BASE_URL:
+        raise SystemExit(f"Refusing: booker URL must be exactly {UAT_BOOKER_BASE_URL} for --confirm-hold.")
 
 
 def confirm_amount(details: dict[str, Any], review_body: Any) -> float | None:
