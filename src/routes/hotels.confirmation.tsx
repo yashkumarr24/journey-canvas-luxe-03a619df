@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CheckCircle2,
   Download,
   FileText,
+  Clock,
   Loader2,
   Mail,
   Ticket,
@@ -66,7 +68,10 @@ function HotelConfirmationPage() {
     retry: false,
     staleTime: 0,
     // Keep checking while the hotel is still confirming the room.
-    refetchInterval: (query) => (query.state.data?.status === "booking_processing" ? 5_000 : false),
+    refetchInterval: (query) => {
+      const s = query.state.data?.status;
+      return s === "booking_processing" || s === "confirming" ? 5_000 : false;
+    },
     queryFn: ({ signal }) => hotelApi.getBooking(ref as string, guestToken, signal),
   });
 
@@ -126,7 +131,9 @@ function HotelConfirmationPage() {
   }
 
   const data = booking.data;
-  const confirming = data.status === "booking_processing";
+  const confirming = data.status === "booking_processing" || data.status === "confirming";
+  const onHold = data.status === "on_hold";
+  const cancelPending = data.status === "cancellation_pending";
   const confirmed = data.status === "confirmed";
   const unpaid = data.status === "awaiting_payment" || data.status === "payment_failed";
   const failed = data.status === "failed" || data.status === "cancelled" || data.status === "expired";
@@ -158,6 +165,22 @@ function HotelConfirmationPage() {
           </p>
           <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
         </div>
+      )}
+
+      {onHold && <HoldPanel data={data} guestToken={guestToken} onDone={() => booking.refetch()} />}
+
+      {cancelPending && (
+        <Alert role="status">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          <AlertTitle>Cancellation in progress</AlertTitle>
+          <AlertDescription>
+            {data.statusMessage ?? "The hotel is processing your cancellation. We'll email you when it's final."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {confirmed && data.canCancel && (
+        <CancelButton data={data} guestToken={guestToken} onDone={() => booking.refetch()} />
       )}
 
       {unpaid && (
@@ -315,5 +338,91 @@ function Shell({ children }: { children: React.ReactNode }) {
       </section>
       <Footer />
     </main>
+  );
+}
+
+function formatDeadline(value?: string) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString("en-IN");
+}
+
+function HoldPanel({
+  data,
+  guestToken,
+  onDone,
+}: {
+  data: HotelBookingSummary;
+  guestToken: string | null;
+  onDone: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const confirm = useMutation({
+    mutationFn: () => hotelApi.confirmHold(data.bookingReference, guestToken),
+    onSuccess: (r) => {
+      setError(r.status === "on_hold" ? (r.message ?? null) : null);
+      onDone();
+    },
+    onError: (e) => setError(toBookingError(e).message),
+  });
+  const deadline = formatDeadline(data.holdDeadline);
+  return (
+    <div className="rounded-3xl border border-foreground/10 bg-card p-8 text-center">
+      <Clock className="mx-auto size-8 text-gold" aria-hidden="true" />
+      <h2 className="mt-4 font-display text-3xl">Your room is on hold</h2>
+      <p className="mt-2 text-muted-foreground">
+        {deadline
+          ? `Confirm before ${deadline}, or the hotel releases the room automatically.`
+          : "The hotel hasn't shared the hold deadline yet. This page updates on its own."}
+      </p>
+      <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button type="button" disabled={!data.canConfirmHold || confirm.isPending} onClick={() => confirm.mutate()}>
+          {confirm.isPending ? "Confirming…" : "Confirm booking"}
+        </Button>
+        {data.canCancel && <CancelButton data={data} guestToken={guestToken} onDone={onDone} inline />}
+      </div>
+    </div>
+  );
+}
+
+function CancelButton({
+  data,
+  guestToken,
+  onDone,
+  inline,
+}: {
+  data: HotelBookingSummary;
+  guestToken: string | null;
+  onDone: () => void;
+  inline?: boolean;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const cancel = useMutation({
+    mutationFn: () => hotelApi.cancel(data.bookingReference, guestToken),
+    onSuccess: () => onDone(),
+    onError: (e) => setError(toBookingError(e).message),
+  });
+  const button = (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={cancel.isPending}
+      onClick={() => {
+        if (window.confirm("Cancel this booking? Cancellation charges may apply as per the hotel's policy.")) {
+          cancel.mutate();
+        }
+      }}
+    >
+      {cancel.isPending ? "Cancelling…" : "Cancel booking"}
+    </Button>
+  );
+  if (inline) return button;
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {button}
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </div>
   );
 }
