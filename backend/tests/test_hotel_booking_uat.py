@@ -289,3 +289,124 @@ def test_preflight_failure_blocks_book(wired, capsys):
     assert booker == []
     out = capsys.readouterr().out
     assert "PRE-FLIGHT VALIDATION: FAILED" in out and "10 digits" in out and "12345" not in out
+
+
+# ------------------------- hold eligibility (--require-hold) -------------------------
+
+import copy
+
+
+def _review(hold, option_id="opt-cheap-secret", key="onholdAllowed", refundable=False):
+    r = copy.deepcopy(REVIEW_REPLY)
+    r.pop("onholdAllowed", None)
+    r["option"]["optionId"] = option_id
+    r["option"]["cancellation"]["isRefundable"] = refundable
+    if hold is not None:
+        r[key] = hold
+    return r
+
+
+@pytest.mark.parametrize("value,expect", [
+    (True, True), ("true", True), ("TRUE", True), (False, False), ("false", False),
+    (None, None), ("yes", None), (1, None),
+])
+def test_review_hold_allowed_is_explicit_only(value, expect):
+    assert diag.review_hold_allowed(_review(value)) is expect
+
+
+def test_hold_allowed_camel_case_and_option_level():
+    assert diag.review_hold_allowed(_review(True, key="onHoldAllowed")) is True
+    r = _review(None)
+    r["option"]["onholdAllowed"] = True
+    assert diag.review_hold_allowed(r) is True
+
+
+def test_refundable_never_implies_hold():
+    assert diag.review_hold_allowed(_review(None, refundable=True)) is None
+
+
+def test_candidate_summary_is_safe():
+    s = diag.hold_candidate_summary(_review(True), DETAIL_REPLY["options"][1])
+    assert set(s) == {"hotel_name", "option_type", "room_name", "total_price", "hold_allowed", "is_refundable"}
+    assert s["hold_allowed"] is True and s["total_price"] == 2136.07
+    dumped = json.dumps(s)
+    for bad in ("hash-secret", "TGS-SECRET-BOOKING", "opt-cheap-secret", "listing-corr", "private notes"):
+        assert bad not in dumped
+
+
+def _wire_reviews(monkeypatch, replies: dict, detail=None):
+    reviewed: list = []
+    det = detail or {**DETAIL_REPLY, "options": [
+        {"optionId": "opt-a", "optionType": "A", "pricing": {"totalPrice": 1000.0}},
+        {"optionId": "opt-b", "optionType": "B", "pricing": {"totalPrice": 2000.0}},
+        {"optionId": "opt-c", "optionType": "C", "pricing": {"totalPrice": 3000.0}},
+    ]}
+
+    async def fake_post(config, payload, path=diag.HOTEL_LISTING_PATH):
+        if path == diag.HOTEL_PRICING_PATH:
+            return 200, det, 0.1
+        reviewed.append(payload["optionId"])
+        return 200, replies[payload["optionId"]], 0.1
+
+    monkeypatch.setattr(diag, "_raw_post", fake_post)
+    return reviewed
+
+
+EXEC = dict(execute_uat_hold=True, confirm=diag.BOOK_CONFIRM_PHRASE,
+            contact_email="ops@secret.test", contact_phone="9876500000")
+
+
+def test_require_hold_picks_only_holdable_of_many(wired, monkeypatch, capsys):
+    _, booker = wired
+    reviewed = _wire_reviews(monkeypatch, {"opt-a": _review(False, "opt-a"), "opt-b": _review("true", "opt-b"),
+                                           "opt-c": _review(False, "opt-c")})
+    asyncio.run(diag.run_book(_args(require_hold=True, max_hold_candidates=5, **EXEC)))
+    assert reviewed == ["opt-a", "opt-b"]  # cheapest first, stops at first holdable
+    out = capsys.readouterr().out
+    assert "HOLD NOT AVAILABLE FOR SELECTED OPTION" in out and "HOLD-ELIGIBLE OPTION FOUND" in out
+    book = [p for path, p in booker if path == diag.HOTEL_BOOK_PATH]
+    assert len(book) == 1 and "paymentInfos" not in book[0]
+    for bad in ("hash-secret", "KEY-SECRET", "ABCPE1234F", "opt-b"):
+        assert bad not in out
+
+
+def test_require_hold_none_holdable_never_books(wired, monkeypatch, capsys):
+    _, booker = wired
+    reviewed = _wire_reviews(monkeypatch, {"opt-a": _review(False, "opt-a"), "opt-b": _review(None, "opt-b"),
+                                           "opt-c": _review(False, "opt-c", refundable=True)})
+    with pytest.raises(SystemExit, match="no reviewed option supports Hold"):
+        asyncio.run(diag.run_book(_args(require_hold=True, max_hold_candidates=5, **EXEC)))
+    assert reviewed == ["opt-a", "opt-b", "opt-c"]
+    assert booker == []
+    assert "NO HOLD-ELIGIBLE OPTION" in capsys.readouterr().out
+
+
+def test_require_hold_respects_max_candidates(wired, monkeypatch):
+    _, booker = wired
+    reviewed = _wire_reviews(monkeypatch, {"opt-a": _review(False, "opt-a"), "opt-b": _review(True, "opt-b")})
+    with pytest.raises(SystemExit):
+        asyncio.run(diag.run_book(_args(require_hold=True, max_hold_candidates=1, **EXEC)))
+    assert reviewed == ["opt-a"] and booker == []
+
+
+def test_hold_false_execute_without_flag_never_books(wired, monkeypatch):
+    _, booker = wired
+    _wire_reviews(monkeypatch, {"opt-a": _review(False, "opt-a")})
+    with pytest.raises(SystemExit, match="HOLD NOT AVAILABLE"):
+        asyncio.run(diag.run_book(_args(**EXEC)))
+    assert booker == []
+
+
+def test_hold_absent_execute_never_books(wired, monkeypatch):
+    _, booker = wired
+    _wire_reviews(monkeypatch, {"opt-a": _review(None, "opt-a")})
+    with pytest.raises(SystemExit, match="HOLD NOT AVAILABLE"):
+        asyncio.run(diag.run_book(_args(**EXEC)))
+    assert booker == []
+
+
+def test_require_hold_true_dry_run_never_books(wired, monkeypatch, capsys):
+    _, booker = wired
+    _wire_reviews(monkeypatch, {"opt-a": _review(True, "opt-a")})
+    asyncio.run(diag.run_book(_args(require_hold=True, max_hold_candidates=5)))
+    assert booker == [] and "DRY RUN" in capsys.readouterr().out
