@@ -847,6 +847,7 @@ def build_uat_book_payload(
     passport: str = "",
     gst_info: dict[str, str] | None = None,
     pans: list[str] | None = None,
+    lead_guest: str = "",
 ) -> dict[str, Any]:
     """Documented HOLD body. paymentInfos is NEVER included: this diagnostic
     must not create an instant (wallet-charged) booking.
@@ -863,6 +864,9 @@ def build_uat_book_payload(
     )
     if pans is not None and len(pans) != total_travellers:
         raise ValueError("pans_count_mismatch")
+    lead_parts = lead_guest.split()
+    if lead_guest and not (1 <= len(lead_parts) <= 2):
+        raise ValueError("lead_guest_format")
     room_info = []
     n = 0
     for r in rooms:
@@ -873,6 +877,10 @@ def build_uat_book_payload(
         for _ in (r.get("childAges") or r.get("childAge") or []):
             travellers.append({"ti": "Master", "pt": "CHILD", "fN": _test_name(n), "lN": "Diagnostic"})
             n += 1
+        if lead_parts and not room_info and travellers:
+            # Only the very first traveller (lead guest of room 1) is replaced.
+            travellers[0]["fN"] = lead_parts[0]
+            travellers[0]["lN"] = lead_parts[1] if len(lead_parts) == 2 else "Diagnostic"
         first_guest = n - len(travellers)
         for gi, t in enumerate(travellers):
             own_pan = pans[first_guest + gi] if pans else pan
@@ -1254,6 +1262,7 @@ async def run_book(args) -> None:
         pan=pan_values[0] if (reqs["pan_required"] and len(pan_values) == 1) else "",
         passport=args.passport if reqs["passport_required"] else "",
         pans=per_traveller_pans if reqs["pan_required"] else None,
+        lead_guest=(getattr(args, "lead_guest", "") or "").strip(),
     )
     print("BOOK REQUEST (HOLD, keys/types only):", json.dumps(shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(booking_identity_summary(
@@ -1413,6 +1422,8 @@ def main() -> None:
     p.add_argument("--contact-phone", default="", help="book: operator phone (never printed)")
     p.add_argument("--pan", default="", help="book: UAT test PAN(s), only if Review requires it; one value applies to all travellers, or comma-separated one per traveller in search order (never printed)")
     p.add_argument("--passport", default="", help="book: passport, only if Review requires it (never printed)")
+    p.add_argument("--lead-guest", default="", help="book: lead traveller name 'First [Last]' for the first "
+                   "traveller only; other test travellers stay synthetic (never printed)")
     p.add_argument("--poll-attempts", type=int, default=36, help="book: booking-details polls, 5s apart (36 = 180s)")
     p.add_argument("--cancel-after", action="store_true", help="book: cancel the UAT hold after polling")
     p.add_argument("--confirm-hold", action="store_true",
