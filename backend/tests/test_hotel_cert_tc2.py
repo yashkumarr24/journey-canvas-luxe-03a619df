@@ -98,6 +98,49 @@ def test_build_args_fixed_and_no_hold_flow():
     assert a.passport == "" and a.execute_uat_book is False
 
 
-def test_dry_run_default_and_phrase_required():
-    ns = tc2.main.__globals__["argparse"].ArgumentParser  # parser exists
-    assert ns and tc2.BOOK_CONFIRM_PHRASE == "CREATE-UAT-BOOK"
+class _Sess:
+    check_in, check_out = "2026-06-15", "2026-06-16"
+
+
+def _patch(monkeypatch, review, calls):
+    async def fresh(args):
+        return object(), _Sess(), {}, review
+    async def booker(config, path, payload):
+        calls.append(path)
+        return 200, {"bookingId": "TGP1", "status": {"success": True}}, 0.1
+    monkeypatch.setattr(tc2.uat, "_fresh_review", fresh)
+    monkeypatch.setattr(tc2.uat, "_rooms_from_session", lambda s: tc2.TC2_ROOMS)
+    monkeypatch.setattr(tc2.uat, "_booker_post", booker)
+
+
+def _review(hold=False):
+    r = json.loads(json.dumps(REVIEW_RESP)); r["onholdAllowed"] = hold
+    return r
+
+
+def test_dry_run_never_books(monkeypatch):
+    calls = []
+    _patch(monkeypatch, _review(), calls)
+    import asyncio
+    asyncio.run(tc2.run_instant_book(tc2.build_args(_ns(pan="ABCDE1234F"))))
+    assert calls == []
+
+
+def test_refuses_when_hold_allowed(monkeypatch):
+    calls = []
+    _patch(monkeypatch, _review(True), calls)
+    import asyncio
+    with pytest.raises(SystemExit, match="onholdAllowed=false"):
+        asyncio.run(tc2.run_instant_book(tc2.build_args(_ns(execute_uat_book=True, confirm="CREATE-UAT-BOOK"))))
+    assert calls == []
+
+
+def test_refuses_wrong_phrase(monkeypatch):
+    calls = []
+    _patch(monkeypatch, _review(), calls)
+    import asyncio
+    with pytest.raises(SystemExit, match="CREATE-UAT-BOOK"):
+        asyncio.run(tc2.run_instant_book(tc2.build_args(_ns(
+            execute_uat_book=True, confirm="CREATE-UAT-HOLD", pan="ABCDE1234F",
+            contact_email="a@b.co", contact_phone="9876543210"))))
+    assert calls == []
