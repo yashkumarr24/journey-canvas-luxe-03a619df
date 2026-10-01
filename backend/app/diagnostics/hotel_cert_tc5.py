@@ -163,6 +163,8 @@ def export(recorder: tc4.Recorder, out_dir: Path) -> Path:
         raise SystemExit("Refusing export: Test Case 5 must not include a confirm-hold call.")
     if not tc2.review_hold_explicitly_false(recorder.pairs["review"][1]):
         raise SystemExit("Refusing export: Review did not return onholdAllowed=false.")
+    if not review_is_refundable(recorder.pairs["review"][1]):
+        raise SystemExit("Refusing export: Review option is not refundable (cancel-flow test needs a refundable rate).")
     book_req = recorder.pairs["hold"][0]
     if not (isinstance(book_req, dict) and book_req.get("paymentInfos")):
         raise SystemExit("Refusing export: Book request has no paymentInfos (not an instant booking).")
@@ -203,7 +205,7 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
 
 
 async def run_book_and_cancel(args: argparse.Namespace) -> None:
-    config, session, _option, review = await tc2._fresh_instant_review(args)
+    config, session, _option, review = await _fresh_refundable_instant_review(args)
     reqs = uat.book_requirements(review)
     print("BOOK REQUIREMENTS (from Review):", json.dumps(reqs, indent=1))
     execute = bool(args.execute_uat_book)
@@ -211,6 +213,8 @@ async def run_book_and_cancel(args: argparse.Namespace) -> None:
         raise SystemExit("Review returned no bookingId; Book cannot be built.")
     if not tc2.review_hold_explicitly_false(review):
         raise SystemExit("Refusing: Test Case 5 needs Review onholdAllowed=false. Book NOT called.")
+    if not review_is_refundable(review):
+        raise SystemExit("Refusing: Test Case 5 needs a refundable option for the cancel flow. Book NOT called.")
     if reqs["passport_required"]:
         raise SystemExit("Review requires passport; Test Case 5 expects no passport. Book NOT called.")
     if reqs["gst_info_needed"]:
