@@ -37,6 +37,7 @@ from typing import Any, Optional
 
 from app.diagnostics import hotel_cert_tc3 as tc3
 from app.diagnostics import hotel_cert_tc4 as tc4
+from app.diagnostics import hotel_cert_tc5 as tc5
 from app.diagnostics import hotel_listing_uat as uat
 
 CASE_FOLDER = "Test Case 7"
@@ -112,6 +113,12 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
     )
 
 
+def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
+    """tc5.build_payload: 2-3 word lead names are normalized here (the shared
+    builder only accepts 1-2 words); the name is never printed."""
+    return tc5.build_payload(review, session, args)
+
+
 async def run_book(args: argparse.Namespace) -> None:
     config, session, _option, review = await tc4._fresh_review(args)
     reqs = uat.book_requirements(review)
@@ -125,7 +132,7 @@ async def run_book(args: argparse.Namespace) -> None:
         raise SystemExit("Review needs gstInfo; not supported. Book NOT called.")
     if reqs["pan_required"] and execute and not args.pan:
         raise SystemExit("Review says PAN is required: pass --pan.")
-    payload, failures = tc4.build_payload(review, session, args)
+    payload, failures = build_payload(review, session, args)
     print("BOOK REQUEST (INSTANT, keys/types only):", json.dumps(uat.shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(uat.booking_identity_summary(
         payload, hid=str(review.get("tjHotelId") or review.get("hotelId") or ""),
