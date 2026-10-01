@@ -19,6 +19,7 @@ import {
 } from "@/lib/hotel-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { occupancyLabel } from "@/lib/hotel-search";
+import { formatMoney } from "@/lib/flight-search";
 import { toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
@@ -205,11 +206,29 @@ function HotelReviewPage() {
               This price is held until {new Date(data.expiresAt).toLocaleString("en-IN")}. After that we'll
               re-check it with the hotel.
             </p>
-            <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
-              <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-              {data.room.cancellation?.summary ??
-                (data.room.cancellation?.refundable ? "Free cancellation applies." : "Non-refundable rate.")}
-            </p>
+            <div className="mt-3 text-xs text-muted-foreground" aria-label="Cancellation policy">
+              <p className="flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-foreground">Cancellation policy: </span>
+                  {data.room.cancellation?.summary ??
+                    (data.room.cancellation?.refundable ? "Free cancellation applies." : "Non-refundable rate.")}
+                </span>
+              </p>
+              {data.room.cancellation?.rules && data.room.cancellation.rules.length > 0 && (
+                <ul className="mt-2 space-y-1 pl-5">
+                  {data.room.cancellation.rules.map((rule, i) => (
+                    <li key={i}>
+                      {rule.from ? new Date(rule.from).toLocaleString("en-IN") : "Now"} –{" "}
+                      {rule.to ? new Date(rule.to).toLocaleString("en-IN") : "check-in"}:{" "}
+                      {rule.charge && rule.charge.amount > 0
+                        ? `charge ${formatMoney(rule.charge.amount, rule.charge.currency)}`
+                        : "free cancellation"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </aside>
       </div>
