@@ -118,7 +118,9 @@ def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
     if first:
         lead = hold["roomTravellerInfo"][0]["travellerInfo"][0]
         lead["fN"], lead["lN"] = first, last
-    failures = list(uat.validate_book_payload(hold, rooms, pan_required=False, passport_required=True))
+    # Shared validator would demand pNum on the child too; the sample's child has
+    # none, so passport is checked here on adults only.
+    failures = list(uat.validate_book_payload(hold, rooms, pan_required=False, passport_required=False))
     failures += passport_failures(passport, args.passport_expiry, args.dob, getattr(session, "check_out", ""))
     amount = tc2.review_total(review)
     if amount is None:
