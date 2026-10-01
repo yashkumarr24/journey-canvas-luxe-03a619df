@@ -50,6 +50,34 @@ FILENAMES: tuple[str, ...] = tc4.FILENAMES
 Recorder = tc4.Recorder
 
 
+def parse_lead_guest(raw: str) -> tuple[str, str]:
+    """Case 5 lead name: 2 or 3 letter-only words -> (first, last).
+    "Rohit Mehta" -> ("Rohit", "Mehta"); "Test Guest Five" -> ("Test", "Guest Five").
+    Both parts must still pass the shared traveller-name rule (uat._NAME_RE)."""
+    parts = (raw or "").split()
+    if not 2 <= len(parts) <= 3:
+        raise SystemExit("--lead-guest: use 2 or 3 words, e.g. \"Rohit Mehta\" or \"Test Guest Five\".")
+    first, last = parts[0], " ".join(parts[1:])
+    for value in (first, last):
+        if not uat._NAME_RE.match(value) or not all(p.isalpha() for p in value.split()):
+            raise SystemExit("--lead-guest: letters only, each name at least 2 characters.")
+    return first, last
+
+
+def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
+    """tc4.build_payload with the lead name applied here (shared builder only
+    accepts 1-2 words). The lead name is checked against the shared name rule."""
+    first, last = parse_lead_guest(args.lead_guest) if args.lead_guest else ("", "")
+    payload, failures = tc4.build_payload(review, session, argparse.Namespace(**{**vars(args), "lead_guest": ""}))
+    if first:
+        lead = payload["roomTravellerInfo"][0]["travellerInfo"][0]
+        lead["fN"], lead["lN"] = first, last
+        # Same rule the shared validator applies to fN/lN (parse_lead_guest checked it).
+        if not (uat._NAME_RE.match(lead["fN"]) and uat._NAME_RE.match(lead["lN"])):
+            failures = [*failures, "lead traveller name: fails traveller-name rule"]
+    return payload, failures
+
+
 def export(recorder: tc4.Recorder, out_dir: Path) -> Path:
     """Write the 15 files under out_dir/'Test Case 5' and a ZIP next to it."""
     recorder.derive_cancellation()
@@ -114,7 +142,7 @@ async def run_book_and_cancel(args: argparse.Namespace) -> None:
         raise SystemExit("Review needs gstInfo; not supported. Book NOT called.")
     if reqs["pan_required"] and execute and not args.pan:
         raise SystemExit("Review says PAN is required: pass --pan.")
-    payload, failures = tc4.build_payload(review, session, args)
+    payload, failures = build_payload(review, session, args)
     print("BOOK REQUEST (INSTANT, keys/types only):", json.dumps(uat.shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(uat.booking_identity_summary(
         payload, hid=str(review.get("tjHotelId") or review.get("hotelId") or ""),

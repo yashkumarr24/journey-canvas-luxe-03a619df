@@ -173,3 +173,45 @@ def test_never_cancelled_no_export(monkeypatch, tmp_path):
     with pytest.raises(SystemExit, match="not CANCELLED"):
         asyncio.run(tc5.run(_ns(out_dir=str(tmp_path), cancel_poll_attempts=3, **REAL)))
     assert not (tmp_path / "Test_Case_5.zip").exists()
+
+
+@pytest.mark.parametrize("name,first,last", [
+    ("Rohit Mehta", "Rohit", "Mehta"),
+    ("Test Guest Five", "Test", "Guest Five"),
+    ("  Rohit   Mehta ", "Rohit", "Mehta"),
+])
+def test_lead_guest_valid(name, first, last):
+    assert tc5.parse_lead_guest(name) == (first, last)
+
+
+@pytest.mark.parametrize("name", ["Rohit", "A B C D", "Rohit M3hta", "Rohit O'Neil", "R Mehta", "Rohit-K Mehta"])
+def test_lead_guest_invalid(name):
+    with pytest.raises(SystemExit, match="--lead-guest"):
+        tc5.parse_lead_guest(name)
+
+
+@pytest.mark.parametrize("name,first,last", [("Test Guest Five", "Test", "Guest Five"), ("Rohit Mehta", "Rohit", "Mehta")])
+def test_dry_run_with_lead_guest_no_crash(monkeypatch, capsys, name, first, last):
+    calls = []
+    _patch(monkeypatch, calls, ["SUCCESS"])
+    seen = {}
+    orig = tc5.build_payload
+
+    def spy(review, session, args):
+        payload, failures = orig(review, session, args)
+        seen["lead"], seen["failures"] = payload["roomTravellerInfo"][0]["travellerInfo"][0], failures
+        return payload, failures
+    monkeypatch.setattr(tc5, "build_payload", spy)
+    assert asyncio.run(tc5.run(_ns(pan="ABCDE1234F", lead_guest=name))) is None
+    assert calls == [] and (seen["lead"]["fN"], seen["lead"]["lN"]) == (first, last)
+    assert seen["failures"] == [] or all("email" in f or "phone" in f for f in seen["failures"])
+    assert name not in capsys.readouterr().out
+
+
+def test_real_run_three_word_name_books(monkeypatch, tmp_path):
+    calls = []
+    _patch(monkeypatch, calls, ["SUCCESS", "CANCELLED"])
+    asyncio.run(tc5.run(_ns(out_dir=str(tmp_path), **{**REAL, "lead_guest": "Test Guest Five"})))
+    book = json.loads((tmp_path / "Test Case 5" / "TJ test Hotel Book Request.json").read_text())
+    lead = book["roomTravellerInfo"][0]["travellerInfo"][0]
+    assert (lead["fN"], lead["lN"]) == ("Test", "Guest Five")
