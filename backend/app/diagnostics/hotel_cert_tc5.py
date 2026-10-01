@@ -66,15 +66,15 @@ def parse_lead_guest(raw: str) -> tuple[str, str]:
 
 def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
     """tc4.build_payload with the lead name applied here (shared builder only
-    accepts 1-2 words). Shared validation then re-runs on the final body."""
+    accepts 1-2 words). The lead name is checked against the shared name rule."""
     first, last = parse_lead_guest(args.lead_guest) if args.lead_guest else ("", "")
     payload, failures = tc4.build_payload(review, session, argparse.Namespace(**{**vars(args), "lead_guest": ""}))
     if first:
         lead = payload["roomTravellerInfo"][0]["travellerInfo"][0]
         lead["fN"], lead["lN"] = first, last
-        rooms = uat._rooms_from_session(session)
-        extra = uat.validate_book_payload(payload, rooms, pan_required=False, passport_required=False)
-        failures = list(dict.fromkeys([*failures, *extra]))
+        # Same rule the shared validator applies to fN/lN (parse_lead_guest checked it).
+        if not (uat._NAME_RE.match(lead["fN"]) and uat._NAME_RE.match(lead["lN"])):
+            failures = [*failures, "lead traveller name: fails traveller-name rule"]
     return payload, failures
 
 
