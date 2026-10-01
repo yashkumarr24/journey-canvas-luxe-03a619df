@@ -142,7 +142,7 @@ async def run_book_and_cancel(args: argparse.Namespace) -> None:
         raise SystemExit("Review needs gstInfo; not supported. Book NOT called.")
     if reqs["pan_required"] and execute and not args.pan:
         raise SystemExit("Review says PAN is required: pass --pan.")
-    payload, failures = tc4.build_payload(review, session, args)
+    payload, failures = build_payload(review, session, args)
     print("BOOK REQUEST (INSTANT, keys/types only):", json.dumps(uat.shape(payload), indent=1))
     print("BOOK IDENTITY (compare across attempts):", json.dumps(uat.booking_identity_summary(
         payload, hid=str(review.get("tjHotelId") or review.get("hotelId") or ""),
