@@ -20,12 +20,14 @@ SAMPLE_NAMES = {
     "TJ test hotelDetail-search Request.json", "TJ test hotelDetail-search Response.json",
 }
 BASE = "https://apitest-hotel-booker.tripjack.com"
-POLICY = {"isRefundable": False, "penalties": [{"amount": 25568.3585}]}
+POLICY = {"isRefundable": True, "penalties": [{"amount": 0}]}
+NONREFUNDABLE_POLICY = {"isRefundable": False, "penalties": [{"amount": 25568.3585}]}
 
 
-def _review(hold=False):
+def _review(hold=False, refundable=True):
+    policy = POLICY if refundable else NONREFUNDABLE_POLICY
     return {"status": {"success": True}, "bookingId": "TGP5", "onholdAllowed": hold,
-            "option": {"optionId": "o1", "pricing": {"totalPrice": 25568.3585}, "cancellation": POLICY}}
+            "option": {"optionId": "o1", "pricing": {"totalPrice": 25568.3585}, "cancellation": policy}}
 
 
 def _ns(**kw):
@@ -36,12 +38,12 @@ def _ns(**kw):
     return argparse.Namespace(**base)
 
 
-def _full(monkeypatch, after="CANCELLED", booked="SUCCESS", hold=False, pay=True):
+def _full(monkeypatch, after="CANCELLED", booked="SUCCESS", hold=False, pay=True, refundable=True):
     monkeypatch.setattr(uat, "_booker_base", lambda: BASE)
     r = tc4.Recorder()
     r.record("hms/v3/hotel/listing", {"rooms": [], "apikey": "SECRET"}, {"hotels": []})
     r.record("hms/v3/hotel/pricing", {"hid": "h1"}, {"options": []})
-    r.record("hms/v3/hotel/review", {"hid": "h1", "optionId": "o1", "reviewHash": "rh"}, _review(hold))
+    r.record("hms/v3/hotel/review", {"hid": "h1", "optionId": "o1", "reviewHash": "rh"}, _review(hold, refundable))
     book = {"bookingId": "TGP5", "type": "HOTEL"}
     if pay:
         book["paymentInfos"] = [{"amount": 25568.3585}]
@@ -79,6 +81,7 @@ def test_export_structure(monkeypatch, tmp_path):
     (dict(booked="PAYMENT_SUCCESS"), "not SUCCESS"),
     (dict(hold=True), "onholdAllowed=false"),
     (dict(pay=False), "paymentInfos"),
+    (dict(refundable=False), "not refundable"),
 ])
 def test_export_refusals(monkeypatch, tmp_path, kw, msg):
     with pytest.raises(SystemExit, match=msg):
@@ -97,7 +100,7 @@ class _Session:
     results = {"h1": _Result()}
 
 
-def _patch(monkeypatch, calls, statuses, hold=False):
+def _patch(monkeypatch, calls, statuses, hold=False, reviews=None):
     monkeypatch.setattr(uat, "_config", lambda: (object(), object()))
     monkeypatch.setattr(uat, "_booker_base", lambda: BASE)
 
@@ -110,6 +113,8 @@ def _patch(monkeypatch, calls, statuses, hold=False):
     async def raw_post(config, payload, path=uat.HOTEL_LISTING_PATH):
         if path == uat.HOTEL_PRICING_PATH:
             return 200, {"reviewHash": "rh", "options": []}, 0.1
+        if reviews is not None:
+            return 200, reviews.pop(0) if len(reviews) > 1 else reviews[0], 0.1
         return 200, _review(hold), 0.1
     monkeypatch.setattr(uat, "_raw_post", raw_post)
     monkeypatch.setattr(uat, "_detail_candidates", lambda d, o: [{"optionId": "o1"}])
@@ -142,9 +147,37 @@ def test_dry_run_never_books(monkeypatch):
 def test_holdable_review_never_books(monkeypatch):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS"], hold=True)
-    with pytest.raises(SystemExit, match="NO INSTANT-ELIGIBLE"):
+    with pytest.raises(SystemExit, match="NO REFUNDABLE INSTANT-ELIGIBLE"):
         asyncio.run(tc5.run(_ns(**REAL)))
     assert calls == []
+
+
+def test_review_is_refundable_rule():
+    assert tc5.review_is_refundable(_review()) is True
+    assert tc5.review_is_refundable(_review(refundable=False)) is False
+    assert tc5.review_is_refundable({"option": {"cancellation": {"isRefundable": "true"}}}) is True
+    assert tc5.review_is_refundable({"option": {"cancellation": {}}}) is False
+    assert tc5.review_is_refundable({}) is False
+
+
+def test_nonrefundable_first_option_skipped_for_refundable(monkeypatch, tmp_path):
+    calls = []
+    reviews = [_review(refundable=False), _review(refundable=True)]
+    _patch(monkeypatch, calls, ["SUCCESS", "CANCELLED"], reviews=reviews)
+    z = asyncio.run(tc5.run(_ns(out_dir=str(tmp_path), **REAL)))
+    assert calls[0] == uat.HOTEL_BOOK_PATH
+    resp = json.loads((tmp_path / "Test Case 5" / "TJ test Hotel review Response.json").read_text())
+    assert resp["option"]["cancellation"]["isRefundable"] is True
+    assert z.name == "Test_Case_5.zip"
+
+
+def test_no_refundable_instant_option_stops_safely(monkeypatch, tmp_path):
+    calls = []
+    _patch(monkeypatch, calls, ["SUCCESS"], reviews=[_review(refundable=False)])
+    with pytest.raises(SystemExit, match="NO REFUNDABLE INSTANT-ELIGIBLE"):
+        asyncio.run(tc5.run(_ns(out_dir=str(tmp_path), **REAL)))
+    assert calls == []
+    assert not (tmp_path / "Test_Case_5.zip").exists()
 
 
 def test_real_flow_waits_for_cancelled_and_exports(monkeypatch, tmp_path):

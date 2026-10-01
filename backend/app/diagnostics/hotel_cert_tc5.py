@@ -50,6 +50,81 @@ FILENAMES: tuple[str, ...] = tc4.FILENAMES
 Recorder = tc4.Recorder
 
 
+def review_is_refundable(review: Any) -> bool:
+    """True only when the Review's option cancellation explicitly says refundable."""
+    opt = review.get("option") if isinstance(review, dict) else None
+    canc = (opt or {}).get("cancellation") if isinstance(opt, dict) else None
+    v = (canc or {}).get("isRefundable") if isinstance(canc, dict) else None
+    return v is True or (isinstance(v, str) and v.strip().lower() == "true")
+
+
+async def _fresh_refundable_instant_review(args: argparse.Namespace):
+    """Case 5 picker: like tc2._fresh_instant_review, but an option counts only
+    when Review says onholdAllowed=false AND the option is refundable — the
+    cancel-flow test needs a booking that can actually be cancelled. Read-only:
+    Book never runs here. Returns (config, session, option, review)."""
+    settings, config = uat._config()
+    if args.search_id:
+        from app.services import hotel_sessions as sessions
+        session = await sessions.get_search_session(settings=settings, search_id=args.search_id)
+        if session is None:
+            raise SystemExit("Search session not found or expired.")
+    else:
+        session = await uat._session_via_search(args, settings)
+    if not session.provider_search_id:
+        raise SystemExit("Session has no listing correlationId.")
+    if args.hotel_id:
+        hotel_ids = [args.hotel_id] if args.hotel_id in session.results else []
+    else:
+        priced = [hid for hid, r in session.results.items() if getattr(r, "rate", None)]
+        hotel_ids = priced or list(session.results)
+    if not hotel_ids:
+        raise SystemExit("No hotel id from this search session.")
+    limit = max(1, int(getattr(args, "max_instant_candidates", 30) or 30))
+    tried = 0
+    for hid in hotel_ids:
+        status, detail, _ = await uat._raw_post(config, uat.build_uat_pricing_payload(
+            listing_correlation_id=session.provider_search_id, hid=hid, check_in=session.check_in,
+            check_out=session.check_out, rooms=uat._rooms_from_session(session), currency=session.currency,
+        ), uat.HOTEL_PRICING_PATH)
+        print("DETAIL HTTP status:", status)
+        candidates = uat._detail_candidates(detail, getattr(args, "option_id", "")) if status < 400 else []
+        if not candidates or not isinstance(detail, dict) or not detail.get("reviewHash"):
+            print("DETAIL: no priced option / reviewHash; trying next hotel.")
+            continue
+        for option in candidates:
+            if tried >= limit:
+                break
+            tried += 1
+            status, review, _ = await uat._raw_post(config, uat.build_uat_review_payload(
+                listing_correlation_id=session.provider_search_id, hid=hid,
+                option_id=str(option["optionId"]), review_hash=str(detail["reviewHash"]),
+            ), uat.HOTEL_REVIEW_PATH)
+            rs = uat.review_summary(review, hid, option)
+            print("REVIEW HTTP status:", status, "success:", rs.get("status_success"),
+                  "total_matches_detail:", rs.get("review_total_matches_detail"))
+            ok = status < 400 and rs.get("status_success") is not False and isinstance(review, dict)
+            if not ok:
+                print(f"CANDIDATE {tried}: review failed; skipping.")
+                continue
+            safe = uat.hold_candidate_summary(review, option)
+            print(f"CANDIDATE {tried}:", json.dumps(safe, default=str))
+            if not tc2.review_hold_explicitly_false(review):
+                print("HOLD-ELIGIBLE OPTION: not usable for Test Case 5; trying next.")
+                continue
+            if not review_is_refundable(review):
+                print("INSTANT-ELIGIBLE BUT NON-REFUNDABLE: not usable for the cancel-flow test; trying next.")
+                continue
+            print("INSTANT-ELIGIBLE REFUNDABLE OPTION FOUND (onholdAllowed=false, isRefundable=true):",
+                  json.dumps(safe, default=str))
+            return config, session, option, review
+        if tried >= limit:
+            break
+    raise SystemExit(f"NO REFUNDABLE INSTANT-ELIGIBLE OPTION: reviewed {tried} option(s) (limit {limit}); "
+                     "none returned onholdAllowed=false with isRefundable=true. Book NOT called. "
+                     "Re-run with a higher --max-instant-candidates to widen the sweep.")
+
+
 def parse_lead_guest(raw: str) -> tuple[str, str]:
     """Case 5 lead name: 2 or 3 letter-only words -> (first, last).
     "Rohit Mehta" -> ("Rohit", "Mehta"); "Test Guest Five" -> ("Test", "Guest Five").
@@ -88,6 +163,8 @@ def export(recorder: tc4.Recorder, out_dir: Path) -> Path:
         raise SystemExit("Refusing export: Test Case 5 must not include a confirm-hold call.")
     if not tc2.review_hold_explicitly_false(recorder.pairs["review"][1]):
         raise SystemExit("Refusing export: Review did not return onholdAllowed=false.")
+    if not review_is_refundable(recorder.pairs["review"][1]):
+        raise SystemExit("Refusing export: Review option is not refundable (cancel-flow test needs a refundable rate).")
     book_req = recorder.pairs["hold"][0]
     if not (isinstance(book_req, dict) and book_req.get("paymentInfos")):
         raise SystemExit("Refusing export: Book request has no paymentInfos (not an instant booking).")
@@ -128,7 +205,7 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
 
 
 async def run_book_and_cancel(args: argparse.Namespace) -> None:
-    config, session, _option, review = await tc2._fresh_instant_review(args)
+    config, session, _option, review = await _fresh_refundable_instant_review(args)
     reqs = uat.book_requirements(review)
     print("BOOK REQUIREMENTS (from Review):", json.dumps(reqs, indent=1))
     execute = bool(args.execute_uat_book)
@@ -136,6 +213,8 @@ async def run_book_and_cancel(args: argparse.Namespace) -> None:
         raise SystemExit("Review returned no bookingId; Book cannot be built.")
     if not tc2.review_hold_explicitly_false(review):
         raise SystemExit("Refusing: Test Case 5 needs Review onholdAllowed=false. Book NOT called.")
+    if not review_is_refundable(review):
+        raise SystemExit("Refusing: Test Case 5 needs a refundable option for the cancel flow. Book NOT called.")
     if reqs["passport_required"]:
         raise SystemExit("Review requires passport; Test Case 5 expects no passport. Book NOT called.")
     if reqs["gst_info_needed"]:
