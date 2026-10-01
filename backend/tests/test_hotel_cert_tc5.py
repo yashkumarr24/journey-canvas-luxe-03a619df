@@ -20,12 +20,14 @@ SAMPLE_NAMES = {
     "TJ test hotelDetail-search Request.json", "TJ test hotelDetail-search Response.json",
 }
 BASE = "https://apitest-hotel-booker.tripjack.com"
-POLICY = {"isRefundable": False, "penalties": [{"amount": 25568.3585}]}
+POLICY = {"isRefundable": True, "penalties": [{"amount": 0}]}
+NONREFUNDABLE_POLICY = {"isRefundable": False, "penalties": [{"amount": 25568.3585}]}
 
 
-def _review(hold=False):
+def _review(hold=False, refundable=True):
+    policy = POLICY if refundable else NONREFUNDABLE_POLICY
     return {"status": {"success": True}, "bookingId": "TGP5", "onholdAllowed": hold,
-            "option": {"optionId": "o1", "pricing": {"totalPrice": 25568.3585}, "cancellation": POLICY}}
+            "option": {"optionId": "o1", "pricing": {"totalPrice": 25568.3585}, "cancellation": policy}}
 
 
 def _ns(**kw):
@@ -97,7 +99,7 @@ class _Session:
     results = {"h1": _Result()}
 
 
-def _patch(monkeypatch, calls, statuses, hold=False):
+def _patch(monkeypatch, calls, statuses, hold=False, reviews=None):
     monkeypatch.setattr(uat, "_config", lambda: (object(), object()))
     monkeypatch.setattr(uat, "_booker_base", lambda: BASE)
 
@@ -110,6 +112,8 @@ def _patch(monkeypatch, calls, statuses, hold=False):
     async def raw_post(config, payload, path=uat.HOTEL_LISTING_PATH):
         if path == uat.HOTEL_PRICING_PATH:
             return 200, {"reviewHash": "rh", "options": []}, 0.1
+        if reviews is not None:
+            return 200, reviews.pop(0) if len(reviews) > 1 else reviews[0], 0.1
         return 200, _review(hold), 0.1
     monkeypatch.setattr(uat, "_raw_post", raw_post)
     monkeypatch.setattr(uat, "_detail_candidates", lambda d, o: [{"optionId": "o1"}])
