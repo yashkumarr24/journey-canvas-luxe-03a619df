@@ -178,7 +178,7 @@ def test_logs_hide_secrets(monkeypatch, tmp_path, capsys):
     _patch(monkeypatch, calls, ["SUCCESS", "CANCELLED"])
     asyncio.run(tc10.run(_ns(out_dir=str(tmp_path), lead_guest="Fresh Name", **REAL)))
     out = capsys.readouterr().out
-    for secret in ("ABCDE1234F", "ops@flynfeel.in", "9000000000", "Fresh Name", '"rh"'):
+    for secret in ("ABCDE1234F", "ops@flynfeel.in", "9000000000", "Fresh Name", '"rh"', "TGP5"):
         assert secret not in out
 
 
