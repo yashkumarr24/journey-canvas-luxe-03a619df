@@ -119,3 +119,108 @@ async def test_capture_wraps_and_restores(monkeypatch):
     undo()
     assert tc3.uat._booker_post is fake_booker
     assert r.pairs["hold"] == ({"bookingId": "TGP1"}, {"bookingId": "TGP1"})
+
+
+# ---- Hold-eligible Review -> Hold -> ON_HOLD -> Confirm Hold -> SUCCESS ----
+from types import SimpleNamespace  # noqa: E402
+
+TC3_REVIEW = {"status": {"success": True}, "bookingId": "TGP9", "hotelId": "25", "onholdAllowed": True,
+              "option": {"optionId": "o1", "pricing": {"totalPrice": 132009.0819},
+                         "cancellation": {"isRefundable": True}}}
+
+
+def _ns(**kw):
+    base = dict(destination="Mumbai", days_ahead=30, nights=1, hotel_id="", max_hold_candidates=5,
+                max_candidates=30, execute_uat_hold=True, confirm=tc3.uat.BOOK_CONFIRM_PHRASE,
+                contact_email="a@b.co", contact_phone="9876543210", pan="ABCDE1234F", passport="",
+                lead_guest="Test Guest Three", out_dir="")
+    base.update(kw)
+    return argparse.Namespace(**base)
+
+
+def _wire(monkeypatch, review=TC3_REVIEW, statuses=("ON_HOLD", "SUCCESS"), confirm_ok=True):
+    from app.diagnostics import hotel_cert_tc4 as tc4, hotel_cert_tc6 as tc6
+    session = SimpleNamespace(provider_search_id="c", check_in="2026-06-20", check_out="2026-06-21",
+                              currency="INR", rooms=tc3.TC3_ROOMS)
+    calls, queue = [], list(statuses)
+
+    async def fresh(args):
+        await tc3.uat._raw_post(None, {"hid": "25", "optionId": "o1", "reviewHash": "h"}, tc3.HOTEL_REVIEW_PATH)
+        return None, session, {}, review
+
+    async def raw(config, payload, path=tc3.HOTEL_LISTING_PATH):
+        return 200, review, 0.1
+
+    async def booker(config, path, payload):
+        calls.append((path, payload))
+        if path == tc3.uat.HOTEL_BOOK_PATH:
+            return 200, {"bookingId": "TGP9", "status": {"success": True}}, 0.1
+        if path == tc3.uat.HOTEL_CONFIRM_BOOK_PATH:
+            return 200, {"status": {"success": confirm_ok}}, 0.1
+        return 200, {"order": {"status": queue.pop(0) if queue else "PENDING"}}, 0.1
+
+    async def nosleep(_):
+        return None
+
+    monkeypatch.setattr(tc6, "_fresh_hold_review", fresh)
+    monkeypatch.setattr(tc3.uat, "_raw_post", raw)
+    monkeypatch.setattr(tc3.uat, "_booker_post", booker)
+    monkeypatch.setattr(tc3.uat, "_rooms_from_session", lambda s: copy.deepcopy(tc3.TC3_ROOMS))
+    monkeypatch.setattr(tc3.uat, "check_confirm_hold_args", lambda a: None)
+    monkeypatch.setattr(tc4.asyncio, "sleep", nosleep)
+    return calls
+
+
+import copy  # noqa: E402
+
+
+def test_full_flow_exports_14_files(monkeypatch, tmp_path, capsys):
+    calls = _wire(monkeypatch)
+    z = asyncio_run(tc3.run(_ns(out_dir=str(tmp_path))))
+    assert z and zipfile.ZipFile(z).namelist().__len__() == 14
+    paths = [p for p, _ in calls]
+    assert paths == [tc3.uat.HOTEL_BOOK_PATH, tc3.uat.HOTEL_BOOKING_DETAILS_PATH,
+                     tc3.uat.HOTEL_CONFIRM_BOOK_PATH, tc3.uat.HOTEL_BOOKING_DETAILS_PATH]
+    hold = calls[0][1]
+    assert "paymentInfos" not in hold
+    r1 = hold["roomTravellerInfo"][0]["travellerInfo"]
+    assert [t["pt"] for t in r1] == ["ADULT", "ADULT", "CHILD", "CHILD"]
+    assert r1[0]["isLeadGuest"] is True and (r1[0]["fN"], r1[0]["lN"]) == ("Test", "Guest Three")
+    assert [t.get("age") for t in r1[2:]] == [2, 3] and all("pan" not in t for t in r1[2:])
+    assert all(t["pan"] == "ABCDE1234F" for t in r1[:2])
+    assert calls[2][1] == {"bookingId": "TGP9", "paymentInfos": [{"amount": 132009.0819}]}
+    out = capsys.readouterr().out
+    for s in ("ABCDE1234F", "TGP9", "Guest Three", "9876543210"):
+        assert s not in out
+
+
+def test_dry_run_never_holds(monkeypatch, tmp_path):
+    calls = _wire(monkeypatch)
+    assert asyncio_run(tc3.run(_ns(execute_uat_hold=False, confirm="", out_dir=str(tmp_path)))) is None
+    assert calls == [] and not (tmp_path / "Test Case 3").exists()
+
+
+def test_refuses_without_onhold_allowed(monkeypatch, tmp_path):
+    calls = _wire(monkeypatch, review={**TC3_REVIEW, "onholdAllowed": False})
+    with pytest.raises(SystemExit, match="onholdAllowed"):
+        asyncio_run(tc3.run(_ns(out_dir=str(tmp_path))))
+    assert calls == []
+
+
+def test_no_confirm_unless_on_hold(monkeypatch, tmp_path):
+    calls = _wire(monkeypatch, statuses=("FAILED",))
+    with pytest.raises(SystemExit, match="not ON_HOLD"):
+        asyncio_run(tc3.run(_ns(out_dir=str(tmp_path))))
+    assert tc3.uat.HOTEL_CONFIRM_BOOK_PATH not in [p for p, _ in calls]
+
+
+def test_rejected_confirm_exports_nothing(monkeypatch, tmp_path):
+    _wire(monkeypatch, confirm_ok=False)
+    with pytest.raises(SystemExit, match="Confirm Hold rejected"):
+        asyncio_run(tc3.run(_ns(out_dir=str(tmp_path))))
+    assert not (tmp_path / "Test Case 3").exists()
+
+
+def asyncio_run(coro):
+    import asyncio
+    return asyncio.run(coro)
