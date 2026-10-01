@@ -73,9 +73,8 @@ def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
         lead = payload["roomTravellerInfo"][0]["travellerInfo"][0]
         lead["fN"], lead["lN"] = first, last
         rooms = uat._rooms_from_session(session)
-        failures = [f for f in failures if "fN" not in f and "lN" not in f] + [
-            f for f in uat.validate_book_payload(payload, rooms, pan_required=False, passport_required=False)
-            if "fN" in f or "lN" in f]
+        extra = uat.validate_book_payload(payload, rooms, pan_required=False, passport_required=False)
+        failures = list(dict.fromkeys([*failures, *extra]))
     return payload, failures
 
 
