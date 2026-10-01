@@ -347,3 +347,37 @@ def test_probe_summary_empty_and_missing_pricing():
     assert s["first_option_price_fields"] == {"totalPrice": {"type": "str", "value": None},
                                               "mf": "absent", "mft": "absent"}
     assert diag.probe_summary({}, ["1"])["returned_count"] == 0
+
+
+# ---- listing structural diagnostics (safe, structure-only) ----
+
+def test_listing_shape_reports_structure_without_values():
+    body = {"correlationId": "corr-secret", "status": {"success": True, "httpStatus": 200},
+            "totalResults": 2,
+            "hotels": [{"hotelId": "111", "name": "Secret Hotel",
+                        "options": [{"optionId": "o1", "pricing": {"totalPrice": 10}}]},
+                       {"hotelId": "222", "options": []}, "junk"]}
+    shape = tj.listing_shape(body)
+    assert shape["hotels_len"] == 3 and shape["hotels_non_dict"] == 1
+    assert shape["dropped_no_name"] == 1 and shape["dropped_no_id"] == 0
+    assert shape["without_priced_options"] == 1
+    assert shape["total_results"] == 2 and shape["total_results_present"] is True
+    assert shape["status"] == {"success": True, "httpStatus": 200}
+    text = json.dumps(shape)
+    for leaked in ("corr-secret", "Secret Hotel", "111", "222", "o1"):
+        assert leaked not in text
+
+
+def test_listing_shape_empty_and_missing_hotels():
+    assert tj.listing_shape({"hotels": [], "totalResults": 0})["hotels_len"] == 0
+    shape = tj.listing_shape({"searchResult": {"his": []}})
+    assert shape["hotels_type"] == "NoneType" and shape["total_results_present"] is False
+    assert shape["top_keys"] == ["searchResult"]
+    assert tj.listing_shape(None) == {"body_type": "NoneType"}
+
+
+def test_listing_shape_error_codes_only():
+    shape = tj.listing_shape({"status": {"success": False, "httpStatus": 400},
+                              "errors": [{"errCode": "4005", "message": "guest a@b.com"}]})
+    assert shape["error_codes"] == ["4005"]
+    assert "a@b.com" not in json.dumps(shape)
