@@ -145,6 +145,8 @@ def _wire(monkeypatch, review=TC3_REVIEW, statuses=("ON_HOLD", "SUCCESS"), confi
     calls, queue = [], list(statuses)
 
     async def fresh(args):
+        await tc3.uat._raw_post(None, {"rooms": []}, tc3.HOTEL_LISTING_PATH)
+        await tc3.uat._raw_post(None, {"hid": "25"}, tc3.HOTEL_PRICING_PATH)
         await tc3.uat._raw_post(None, {"hid": "25", "optionId": "o1", "reviewHash": "h"}, tc3.HOTEL_REVIEW_PATH)
         return None, session, {}, review
 
