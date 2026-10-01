@@ -164,6 +164,35 @@ def test_real_flow_books_and_exports(monkeypatch, tmp_path):
     assert z.name == "Test_Case_7.zip"
 
 
+def test_lead_guest_three_word_name_accepted(monkeypatch, tmp_path):
+    calls = []
+    _patch(monkeypatch, calls, ["SUCCESS"])
+    z = asyncio.run(tc7.run(_ns(execute_uat_book=True, confirm="CREATE-UAT-BOOK", pan="ABCDE1234F",
+                                contact_email="ops@flynfeel.in", contact_phone="9000000000",
+                                lead_guest="Test Guest Twenty", out_dir=str(tmp_path))))
+    book = json.loads((tmp_path / "Test Case 7" / "TJ test Hotel Book Request.json").read_text())
+    lead = book["roomTravellerInfo"][0]["travellerInfo"][0]
+    assert lead["fN"] == "Test" and lead["lN"] == "Guest Twenty"
+    assert z.name == "Test_Case_7.zip"
+
+
+def test_dry_run_accepts_three_word_lead_name(monkeypatch, capsys):
+    calls = []
+    _patch(monkeypatch, calls, [])
+    assert asyncio.run(tc7.run(_ns(pan="ABCDE1234F", lead_guest="Test Guest Twenty"))) is None
+    assert calls == []
+    assert "Test Guest Twenty" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("bad", ["Single", "Four Word Name Here", "Rohit123 Mehta", "R Mehta"])
+def test_lead_guest_invalid_formats_refused(monkeypatch, bad):
+    calls = []
+    _patch(monkeypatch, calls, [])
+    with pytest.raises(SystemExit, match="--lead-guest"):
+        asyncio.run(tc7.run(_ns(pan="ABCDE1234F", lead_guest=bad)))
+    assert calls == []
+
+
 def test_no_export_when_booking_fails(monkeypatch, tmp_path):
     calls = []
     _patch(monkeypatch, calls, ["FAILED"])
