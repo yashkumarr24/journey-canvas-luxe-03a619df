@@ -161,6 +161,11 @@ async def search_hotels(
             break
 
         page = normalize_listing_response(body, currency=currency, nights=nights)
+        logger.info(
+            "tripjack_hotel_listing_shape",
+            extra=log_extra(batch=index + 1, hids_sent=len(batch),
+                            normalized=len(page.results), **listing_shape(body)),
+        )
         search_id = search_id or page.search_id or payload["correlationId"]
         total_results += page.total_results or 0
         done += 1
@@ -205,6 +210,55 @@ def normalize_listing_response(
 
 def _raw_hotel_list(body: dict[str, Any]) -> list[Any]:
     return get_list(body, "hotels") if isinstance(body, dict) else []
+
+
+_SAFE_STATUS_KEYS = ("success", "httpStatus", "errCode", "errorCode", "code")
+
+
+def listing_shape(body: Any) -> dict[str, Any]:
+    """Structure-only summary of a listing reply, safe to log.
+
+    Reports key NAMES, list lengths, booleans and numeric/status codes only —
+    never ids, names, prices, messages or any guest data. Used to tell
+    "TripJack returned zero hotels" apart from "our parser dropped them".
+    """
+    if not isinstance(body, dict):
+        return {"body_type": type(body).__name__}
+    shape: dict[str, Any] = {"top_keys": sorted(str(k) for k in body.keys())[:30]}
+    shape["list_keys"] = {str(k): len(v) for k, v in body.items() if isinstance(v, list)}
+    shape["total_results_present"] = "totalResults" in body
+    shape["total_results"] = get_int(body, "totalResults")
+    status = body.get("status")
+    if isinstance(status, dict):
+        shape["status"] = {k: status[k] for k in _SAFE_STATUS_KEYS
+                           if k in status and isinstance(status[k], (bool, int, str))
+                           and (not isinstance(status[k], str) or len(status[k]) <= 12)}
+    elif isinstance(status, (bool, int)):
+        shape["status"] = status
+    errors = body.get("errors")
+    if isinstance(errors, list):
+        shape["error_codes"] = [str(e.get("errCode") or e.get("code"))[:12]
+                                for e in errors[:5] if isinstance(e, dict)]
+    hotels = body.get("hotels")
+    shape["hotels_type"] = type(hotels).__name__
+    if isinstance(hotels, list):
+        items = [h for h in hotels if isinstance(h, dict)]
+        static = STATIC_NAMES.get() or {}
+        no_id = no_name = no_priced = 0
+        for h in items:
+            hid = get_str(h, "hotelId", "tjHotelId", "id", "hid", "code")
+            if not hid:
+                no_id += 1
+            elif not (get_str(h, "name", "hotelName") or static.get(hid)):
+                no_name += 1
+            if not any(isinstance(o, dict) and "pricing" in o for o in get_list(h, "options")):
+                no_priced += 1
+        shape.update(
+            hotels_len=len(hotels), hotels_non_dict=len(hotels) - len(items),
+            hotel_keys=sorted({str(k) for h in items[:5] for k in h.keys()})[:40],
+            dropped_no_id=no_id, dropped_no_name=no_name, without_priced_options=no_priced,
+        )
+    return shape
 
 
 def _hotel_result(raw: Any, currency: str, *, nights: int | None = None) -> HotelResult | None:
