@@ -50,6 +50,35 @@ FILENAMES: tuple[str, ...] = tc4.FILENAMES
 Recorder = tc4.Recorder
 
 
+def parse_lead_guest(raw: str) -> tuple[str, str]:
+    """Case 5 lead name: 2 or 3 letter-only words -> (first, last).
+    "Rohit Mehta" -> ("Rohit", "Mehta"); "Test Guest Five" -> ("Test", "Guest Five").
+    Both parts must still pass the shared traveller-name rule (uat._NAME_RE)."""
+    parts = (raw or "").split()
+    if not 2 <= len(parts) <= 3:
+        raise SystemExit("--lead-guest: use 2 or 3 words, e.g. \"Rohit Mehta\" or \"Test Guest Five\".")
+    first, last = parts[0], " ".join(parts[1:])
+    for value in (first, last):
+        if not uat._NAME_RE.match(value) or not all(p.isalpha() for p in value.split()):
+            raise SystemExit("--lead-guest: letters only, each name at least 2 characters.")
+    return first, last
+
+
+def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
+    """tc4.build_payload with the lead name applied here (shared builder only
+    accepts 1-2 words). Shared validation then re-runs on the final body."""
+    first, last = parse_lead_guest(args.lead_guest) if args.lead_guest else ("", "")
+    payload, failures = tc4.build_payload(review, session, argparse.Namespace(**{**vars(args), "lead_guest": ""}))
+    if first:
+        lead = payload["roomTravellerInfo"][0]["travellerInfo"][0]
+        lead["fN"], lead["lN"] = first, last
+        rooms = uat._rooms_from_session(session)
+        failures = [f for f in failures if "fN" not in f and "lN" not in f] + [
+            f for f in uat.validate_book_payload(payload, rooms, pan_required=False, passport_required=False)
+            if "fN" in f or "lN" in f]
+    return payload, failures
+
+
 def export(recorder: tc4.Recorder, out_dir: Path) -> Path:
     """Write the 15 files under out_dir/'Test Case 5' and a ZIP next to it."""
     recorder.derive_cancellation()
