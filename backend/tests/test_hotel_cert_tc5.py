@@ -147,7 +147,7 @@ def test_dry_run_never_books(monkeypatch):
 def test_holdable_review_never_books(monkeypatch):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS"], hold=True)
-    with pytest.raises(SystemExit, match="NO INSTANT-ELIGIBLE"):
+    with pytest.raises(SystemExit, match="NO REFUNDABLE INSTANT-ELIGIBLE"):
         asyncio.run(tc5.run(_ns(**REAL)))
     assert calls == []
 
