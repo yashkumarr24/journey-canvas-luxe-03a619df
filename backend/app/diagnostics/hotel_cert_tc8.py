@@ -6,7 +6,7 @@ Matches Aryan's Test Case 8 sample:
   * flow: search -> detail -> review -> INSTANT Book (paymentInfos = latest
     Review totalPrice) -> booking-details (SUCCESS) -> cancellation policy
   * the sample's Review had onholdAllowed=true and was still booked instantly,
-    so Case 7 needs a successful Review only (hold flag is not a gate here)
+    so Case 8 needs a successful Review only (hold flag is not a gate here)
   * PAN on every adult; no passport
   * NO cancel step: the sample has no Cancel files
   * cancellation policy files derived from the Review reply (v3 has no endpoint)
