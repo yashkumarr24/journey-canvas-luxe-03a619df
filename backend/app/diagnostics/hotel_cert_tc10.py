@@ -31,7 +31,6 @@ import zipfile
 from pathlib import Path
 from typing import Any, Optional
 
-from app.diagnostics import hotel_cert_tc2 as tc2
 from app.diagnostics import hotel_cert_tc3 as tc3
 from app.diagnostics import hotel_cert_tc4 as tc4
 from app.diagnostics import hotel_listing_uat as uat
@@ -60,8 +59,8 @@ def review_is_refundable(review: Any) -> bool:
 
 
 async def _fresh_refundable_instant_review(args: argparse.Namespace):
-    """Case 10 picker: like tc2._fresh_instant_review, but an option counts only
-    when Review says onholdAllowed=false AND the option is refundable — the
+    """Case 10 picker: an option counts only when its Review succeeds AND
+    the option is refundable (onholdAllowed is not a gate, as in the sample) — the
     cancel-flow test needs a booking that can actually be cancelled. Read-only:
     Book never runs here. Returns (config, session, option, review)."""
     settings, config = uat._config()
@@ -123,10 +122,7 @@ async def _fresh_refundable_instant_review(args: argparse.Namespace):
                      "Re-run with a higher --max-instant-candidates to widen the sweep.")
 
 
-parse_lead_guest_unused = None
-
-
-def _parse_lead_guest_doc(raw: str) -> tuple[str, str]:
+def parse_lead_guest(raw: str) -> tuple[str, str]:
     """Case 10 lead name: 2 or 3 letter-only words -> (first, last).
     "Rohit Mehta" -> ("Rohit", "Mehta"); "Test Guest Five" -> ("Test", "Guest Five").
     Both parts must still pass the shared traveller-name rule (uat._NAME_RE)."""
