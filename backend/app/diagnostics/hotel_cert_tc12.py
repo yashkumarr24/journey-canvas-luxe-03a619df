@@ -86,7 +86,8 @@ def passport_failures(passport: str, expiry: str, dob: str, check_out: str = "")
 
 def review_requires_passport_not_pan(review: Any) -> bool:
     reqs = uat.book_requirements(review)
-    return reqs["passport_required"] is True and reqs["pan_required"] is not True
+    yes = lambda v: v is True or (isinstance(v, str) and v.strip().lower() == "true")
+    return yes(reqs["passport_required"]) and not yes(reqs["pan_required"])
 
 
 def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
