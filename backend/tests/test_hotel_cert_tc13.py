@@ -164,7 +164,7 @@ def test_failed_review_never_books(monkeypatch):
     assert calls == []
 
 
-def test_real_flow_books_one_room_with_child_age_6(monkeypatch, tmp_path):
+def test_real_flow_books_one_room_with_child_age_8(monkeypatch, tmp_path):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS", "CANCELLED"])
     asyncio.run(tc13.run(_ns(out_dir=str(tmp_path), **REAL)))
@@ -172,7 +172,7 @@ def test_real_flow_books_one_room_with_child_age_6(monkeypatch, tmp_path):
     rooms = book["roomTravellerInfo"]
     assert [len(r["travellerInfo"]) for r in rooms] == [3]
     kids = [t for r in rooms for t in r["travellerInfo"] if t["pt"] == "CHILD"]
-    assert [k["age"] for k in kids] == [6] and all("pan" not in k for k in kids)
+    assert [k["age"] for k in kids] == [8] and all("pan" not in k for k in kids)
     assert "passport" not in json.dumps(book).lower()
     adults = [t for r in rooms for t in r["travellerInfo"] if t["pt"] == "ADULT"]
     assert len(adults) == 2 and all(a.get("pan") == "ABCDE1234F" for a in adults)
