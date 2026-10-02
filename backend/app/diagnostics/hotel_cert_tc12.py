@@ -169,7 +169,14 @@ async def _session_via_search(args, settings):
     session = await sessions.get_search_session(settings=settings, search_id=token)
     if session is None:
         raise SystemExit("Saved search session could not be loaded.")
-    if session.nationality != NATIONALITY:
+    stored = getattr(session, "nationality", None)
+    if stored is None:
+        # The shared session store does not persist nationality (the DB row
+        # has no column for it and _search_from_row rebuilds it as None).
+        # This diagnostic itself searched with 231, so restore that here;
+        # the Detail call below sends it to TripJack exactly as the sample.
+        session.nationality = NATIONALITY
+    elif str(stored).strip() != NATIONALITY:
         raise SystemExit(f"Search session nationality is not {NATIONALITY}; refusing to continue.")
     return session
 
