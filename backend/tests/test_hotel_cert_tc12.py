@@ -123,7 +123,9 @@ def test_search_sends_nationality_231_via_service(monkeypatch):
 
     async def fake_get(*, settings, search_id):
         assert search_id == "tok"
-        return _Session()
+        s = _Session()
+        s.nationality = "231"
+        return s
 
     monkeypatch.setattr(hotel_service, "search_hotels", fake_search)
     monkeypatch.setattr(sessions, "get_search_session", fake_get)
