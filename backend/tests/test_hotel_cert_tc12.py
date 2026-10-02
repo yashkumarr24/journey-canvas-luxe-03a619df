@@ -109,6 +109,50 @@ def test_detail_uses_nationality_231(monkeypatch):
     assert pricing and pricing[0]["nationality"] == "231"
 
 
+def test_search_sends_nationality_231_via_service(monkeypatch):
+    """TC12 must reach the search service with nationality 231 (no 422)."""
+    from app.services import hotel_search as hotel_service
+    from app.services import hotel_sessions as sessions
+
+    seen = {}
+
+    async def fake_search(*, request, payload, auth, settings):
+        seen["nationality"] = payload.nationality
+        seen["rooms"] = [(r.adults, list(r.child_ages)) for r in payload.rooms]
+        return argparse.Namespace(search_id="tok")
+
+    async def fake_get(*, settings, search_id):
+        assert search_id == "tok"
+        s = _Session()
+        s.nationality = "231"
+        return s
+
+    monkeypatch.setattr(hotel_service, "search_hotels", fake_search)
+    monkeypatch.setattr(sessions, "get_search_session", fake_get)
+    session = asyncio.run(tc12._session_via_search(_ns(), object()))
+    assert seen["nationality"] == "231"
+    assert seen["rooms"] == [(2, [7])]
+    assert session.provider_search_id == "corr"
+
+
+def test_search_session_wrong_nationality_refused(monkeypatch):
+    from app.services import hotel_search as hotel_service
+    from app.services import hotel_sessions as sessions
+
+    async def fake_search(*, request, payload, auth, settings):
+        return argparse.Namespace(search_id="tok")
+
+    async def fake_get(*, settings, search_id):
+        s = _Session()
+        s.nationality = "106"
+        return s
+
+    monkeypatch.setattr(hotel_service, "search_hotels", fake_search)
+    monkeypatch.setattr(sessions, "get_search_session", fake_get)
+    with pytest.raises(SystemExit, match="nationality"):
+        asyncio.run(tc12._session_via_search(_ns(), object()))
+
+
 def test_real_flow_matches_sample_layout(monkeypatch, tmp_path):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS", "CANCELLATION_PENDING", "CANCELLED"])

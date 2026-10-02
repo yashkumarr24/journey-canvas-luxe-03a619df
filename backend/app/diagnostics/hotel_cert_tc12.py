@@ -129,25 +129,48 @@ def build_payload(review: dict, session, args) -> tuple[dict, list[str]]:
 
 
 async def _session_via_search(args, settings):
-    """Normal /api/v1/hotels/search in-process, with nationality 231."""
-    import httpx
-    from app.main import create_app
+    """Normal hotel search in-process, with nationality 231.
+
+    The public /api/v1/hotels/search schema only accepts 3-letter/ISO
+    nationality codes, so a TripJack countryId like 231 is refused with 422
+    before it can reach the provider. Aryan's TC12 sample requires 231 on the
+    Search and Detail calls, so this diagnostic builds the same request model
+    without the public code check (model_construct) and calls the same search
+    service the endpoint uses. The public validator is NOT weakened.
+    """
+    from starlette.requests import Request
+
+    from app.core.auth import GUEST
+    from app.schemas.hotels import HotelOccupancy, HotelSearchRequest
+    from app.services import hotel_search as hotel_service
     from app.services import hotel_sessions as sessions
 
     ci, co = uat.dates(args.days_ahead, TC12_NIGHTS)
-    body = {"destination": args.destination, "checkIn": ci, "checkOut": co,
-            "rooms": [dict(r) for r in TC12_ROOMS], "nationality": NATIONALITY, "currency": "INR"}
-    transport = httpx.ASGITransport(app=create_app())
-    async with httpx.AsyncClient(transport=transport, base_url="http://diag") as c:
-        r = await c.post("/api/v1/hotels/search", json=body)
-    print("search HTTP status:", r.status_code)
-    data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
-    token = data.get("searchId") if isinstance(data, dict) else None
-    if r.status_code >= 400 or not token:
+    payload = HotelSearchRequest.model_construct(
+        destination=args.destination,
+        check_in=date.fromisoformat(ci),
+        check_out=date.fromisoformat(co),
+        rooms=[HotelOccupancy.model_construct(
+            adults=int(r.get("adults") or 1),
+            child_ages=[int(a) for a in r.get("childAges") or []],
+        ) for r in TC12_ROOMS],
+        nationality=NATIONALITY,
+        currency="INR",
+    )
+    request = Request({"type": "http", "method": "POST", "headers": [],
+                       "client": ("127.0.0.1", 0), "scheme": "http",
+                       "server": ("diag", 80), "path": "/diag/tc12"})
+    response = await hotel_service.search_hotels(
+        request=request, payload=payload, auth=GUEST, settings=settings)
+    token = response.search_id
+    print("search session created:", bool(token))
+    if not token:
         raise SystemExit("Search did not produce a session.")
     session = await sessions.get_search_session(settings=settings, search_id=token)
     if session is None:
         raise SystemExit("Saved search session could not be loaded.")
+    if session.nationality != NATIONALITY:
+        raise SystemExit(f"Search session nationality is not {NATIONALITY}; refusing to continue.")
     return session
 
 
