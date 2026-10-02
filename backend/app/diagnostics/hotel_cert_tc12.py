@@ -169,7 +169,7 @@ async def _session_via_search(args, settings):
     session = await sessions.get_search_session(settings=settings, search_id=token)
     if session is None:
         raise SystemExit("Saved search session could not be loaded.")
-    stored = session.nationality
+    stored = getattr(session, "nationality", None)
     if stored is None:
         # The shared session store does not persist nationality (the DB row
         # has no column for it and _search_from_row rebuilds it as None).
