@@ -153,6 +153,23 @@ def test_search_session_wrong_nationality_refused(monkeypatch):
         asyncio.run(tc12._session_via_search(_ns(), object()))
 
 
+def test_search_session_missing_nationality_restored_to_231(monkeypatch):
+    """The shared store drops nationality; TC12 restores 231, never another value."""
+    from app.services import hotel_search as hotel_service
+    from app.services import hotel_sessions as sessions
+
+    async def fake_search(*, request, payload, auth, settings):
+        return argparse.Namespace(search_id="tok")
+
+    async def fake_get(*, settings, search_id):
+        return _Session()  # no nationality attribute, like a reloaded row
+
+    monkeypatch.setattr(hotel_service, "search_hotels", fake_search)
+    monkeypatch.setattr(sessions, "get_search_session", fake_get)
+    session = asyncio.run(tc12._session_via_search(_ns(), object()))
+    assert session.nationality == "231"
+
+
 def test_real_flow_matches_sample_layout(monkeypatch, tmp_path):
     calls = []
     _patch(monkeypatch, calls, ["SUCCESS", "CANCELLATION_PENDING", "CANCELLED"])
