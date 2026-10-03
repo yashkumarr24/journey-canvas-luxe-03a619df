@@ -24,6 +24,7 @@ Run in numeric order; every file is idempotent and reproducible on a fresh datab
 | 0005 | `0005_payments_events.sql` | `payments`, `booking_events`, `provider_debug_logs` |
 | 0006 | `0006_rls_policies.sql` | All RLS policies |
 | 0019 | `0019_holiday_packages.sql` | Holiday package catalogue (destinations, packages, options, hotels, itinerary, notes, enquiries) — indicative prices, enquiry-only |
+| 0020 | `0020_package_duplicate_review.sql` | One package per source file; possible duplicates flagged for review, never auto-merged |
 
 Apply with the Supabase CLI (preferred) or psql:
 
