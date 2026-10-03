@@ -8,6 +8,7 @@ row; nothing is updated or merged. Images are counted but not uploaded yet
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 from app.package_import.duplicates import find_candidates
@@ -38,8 +39,7 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
 
     dest = await match_destination(db, pkg, destination_slug)
     if dest is None:
-        pkg.needs_review.append(type(pkg.needs_review[0])("destination", "no single existing destination matched")
-                                if pkg.needs_review else _ri("destination", "no single existing destination matched"))
+        pkg.needs_review.append(_ri("destination", "no single existing destination matched"))
     if pkg.images:
         pkg.needs_review.append(_ri("images", f"{len(pkg.images)} image(s) extracted, not uploaded yet"))
     status = "needs_review" if pkg.needs_review else "parsed"
@@ -47,7 +47,7 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
     src = (await db.insert("package_sources", {
         "original_filename": pkg.source_filename, "file_checksum": pkg.checksum,
         "parse_status": status if dest else "needs_review", "parse_warnings": warnings,
-        "parsed_at": "now()",
+        "parsed_at": datetime.now(timezone.utc).isoformat(),
     }))[0]
     if dest is None:
         return {"status": "needs_review", "source_id": src["id"], "package_id": None}
