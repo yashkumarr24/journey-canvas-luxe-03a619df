@@ -12,7 +12,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.package_import.duplicates import find_candidates
+from typing import Awaitable, Callable
+
+from app.package_import.docx_reader import DocImage
 from app.package_import.extractor import ExtractedPackage
+from app.package_import.storage import UPLOADABLE, object_path, storage_ref, upload_image
 from app.repositories.supabase_rest import SupabaseRest
 
 
@@ -32,7 +36,9 @@ async def match_destination(db: SupabaseRest, pkg: ExtractedPackage, destination
     return hits[0] if len(hits) == 1 else None
 
 
-async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slug: str | None) -> dict[str, Any]:
+async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slug: str | None,
+                        images: list[DocImage] | None = None, settings: Any = None,
+                        uploader: Callable[..., Awaitable[None]] = upload_image) -> dict[str, Any]:
     existing = await db.select("package_sources", columns="id", filters={"file_checksum": f"eq.{pkg.checksum}"})
     if existing:
         return {"status": "skipped", "reason": "same file checksum already imported"}
@@ -40,8 +46,6 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
     dest = await match_destination(db, pkg, destination_slug)
     if dest is None:
         pkg.needs_review.append(_ri("destination", "no single existing destination matched"))
-    if pkg.images:
-        pkg.needs_review.append(_ri("images", f"{len(pkg.images)} image(s) extracted, not uploaded yet"))
     status = "needs_review" if pkg.needs_review else "parsed"
     warnings = [{"field": i.field, "reason": i.reason} for i in pkg.needs_review]
     src = (await db.insert("package_sources", {
@@ -50,7 +54,8 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
         "parsed_at": datetime.now(timezone.utc).isoformat(),
     }))[0]
     if dest is None:
-        return {"status": "needs_review", "source_id": src["id"], "package_id": None}
+        return {"status": "needs_review", "source_id": src["id"], "package_id": None,
+                "images": [{"name": i.name, "status": "skipped_no_package"} for i in (images or [])]}
 
     slug = slugify(f"{pkg.name or pkg.source_filename}-{pkg.checksum[:8]}")
     row = (await db.insert("packages", {
@@ -99,9 +104,45 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
         await db.upsert("package_duplicate_candidates",
                         [{"package_a_id": a, "package_b_id": b, "match_reasons": r} for a, b, r in cands],
                         on_conflict="package_a_id,package_b_id")
-    return {"status": status, "source_id": src["id"], "package_id": pid, "duplicate_candidates": len(cands)}
+    image_results = await _upload_images(db, settings, uploader, pid, pkg, images or [])
+    failed = [r for r in image_results if r["status"] != "uploaded"]
+    if failed:
+        warnings.append({"field": "images", "reason": f"{len(failed)} image(s) not uploaded"})
+        await db.update("package_sources", {"parse_status": "needs_review", "parse_warnings": warnings},
+                        filters={"id": f"eq.{src['id']}"})
+        status = "needs_review"
+    return {"status": status, "images": image_results, "source_id": src["id"], "package_id": pid, "duplicate_candidates": len(cands)}
 
 
 def _ri(field: str, reason: str):
     from app.package_import.extractor import ReviewItem
     return ReviewItem(field, reason)
+
+
+async def _upload_images(db, settings, uploader, pid: str, pkg: ExtractedPackage,
+                         images: list[DocImage]) -> list[dict[str, Any]]:
+    """Upload each embedded image; link successes in package_images (no alt text invented)."""
+    results: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for i, img in enumerate(images):
+        if img.sha256 in seen:
+            results.append({"name": img.name, "status": "skipped_duplicate_in_file"})
+            continue
+        seen.add(img.sha256)
+        ctype = UPLOADABLE.get(img.ext)
+        if ctype is None:
+            results.append({"name": img.name, "status": "skipped_unsupported_format"})
+            continue
+        path = object_path(pkg.checksum, i, img.name)
+        try:
+            await uploader(settings, path, img.data, ctype)
+        except Exception as exc:  # noqa: BLE001
+            results.append({"name": img.name, "status": "failed", "error": str(exc)[:120]})
+            continue
+        rows.append({"package_id": pid, "url": storage_ref(path), "alt": None,
+                     "is_cover": False, "sort_order": len(rows)})
+        results.append({"name": img.name, "status": "uploaded", "path": path})
+    if rows:
+        await db.insert("package_images", rows, returning=False)
+    return results
