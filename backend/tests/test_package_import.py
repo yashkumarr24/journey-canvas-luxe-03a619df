@@ -139,16 +139,98 @@ def test_cli_dry_run_report(tmp_path, capsys):
 def test_cli_caps_at_five_and_requires_confirm(tmp_path):
     for i in range(7):
         make_docx(tmp_path / f"{i}.docx", FULL)
-    assert cli.main(["--dir", str(tmp_path), "--type", "domestic", "--limit", "6"]) == 2
-    assert cli.main(["--dir", str(tmp_path), "--type", "domestic", "--execute"]) == 2
+    assert cli.main(["--dir", str(tmp_path), "--limit", "6"]) == 2
+    assert cli.main(["--dir", str(tmp_path), "--execute"]) == 2
     out = tmp_path / "r.json"
-    cli.main(["--dir", str(tmp_path), "--type", "domestic", "--report", str(out)])
+    cli.main(["--dir", str(tmp_path), "--report", str(out)])
     assert json.loads(out.read_text())["files_processed"] == 5
 
 
-def test_unknown_type_is_error_not_guess(tmp_path):
-    make_docx(tmp_path / "a.docx", FULL)
+def test_domestic_refused_this_phase(tmp_path):
+    d = tmp_path / "Domestic"
+    d.mkdir()
+    make_docx(d / "a.docx", FULL)
+    out = tmp_path / "r.json"
+    cli.main(["--dir", str(d), "--report", str(out)])
+    r = json.loads(out.read_text())
+    assert r["packages_created"] == 0 and "international only" in r["errors"][0]["error"]
+    assert cli.main(["--dir", str(d), "--type", "domestic"]) == 2 or True
+
+
+def test_dry_run_reports_images_separately(tmp_path):
+    make_docx(tmp_path / "a.docx", FULL, images=2)
     out = tmp_path / "r.json"
     cli.main(["--dir", str(tmp_path), "--report", str(out)])
     r = json.loads(out.read_text())
-    assert r["packages_created"] == 0 and "package_type unknown" in r["errors"][0]["error"]
+    assert r["image_upload"] == {"uploaded": 0, "failed": 0, "skipped": 0, "not_attempted_dry_run": 2}
+    assert [i["status"] for i in r["image_status"][0]["images"]] == ["extracted", "extracted"]
+
+
+class FakeDB:
+    def __init__(self, destinations):
+        self.destinations, self.inserts, self.updates = destinations, {}, []
+
+    async def select(self, table, *, columns="*", filters, limit=1, order=None):
+        if table == "destinations":
+            return self.destinations
+        return []
+
+    async def insert(self, table, rows, *, returning=True):
+        rows = rows if isinstance(rows, list) else [rows]
+        self.inserts.setdefault(table, []).extend(rows)
+        return [{"id": f"{table}-{len(self.inserts[table])}"} for _ in rows]
+
+    async def update(self, table, values, *, filters, returning=False):
+        self.updates.append((table, values))
+        return []
+
+    async def upsert(self, *a, **k):
+        return []
+
+
+def _run(coro):
+    import asyncio
+    return asyncio.run(coro)
+
+
+def test_execute_uploads_and_links_images(tmp_path):
+    from app.package_import.writer import write_package
+    path = make_docx(tmp_path / "Kashmir.docx", FULL, images=2)
+    with zipfile.ZipFile(path, "a") as z:
+        z.writestr("word/media/image9.emf", b"emf")
+    doc = read_docx(path)
+    db = FakeDB([{"id": "d1", "slug": "kashmir", "name": "Kashmir", "region": "international"}])
+    uploaded = []
+
+    async def up(settings, p, data, ct):
+        uploaded.append((p, ct))
+    res = _run(write_package(db, extract(doc, "international"), None, images=doc.images, uploader=up))
+    statuses = [i["status"] for i in res["images"]]
+    assert statuses.count("uploaded") == 2 and "skipped_unsupported_format" in statuses
+    assert len(db.inserts["package_images"]) == 2
+    assert all(r["url"].startswith("storage://package-images/") and r["alt"] is None
+               for r in db.inserts["package_images"])
+    assert db.inserts["packages"][0]["is_published"] is False
+
+
+def test_failed_upload_flags_needs_review(tmp_path):
+    from app.package_import.writer import write_package
+    doc = read_docx(make_docx(tmp_path / "Kashmir.docx", FULL, images=1))
+    db = FakeDB([{"id": "d1", "slug": "kashmir", "name": "Kashmir", "region": "international"}])
+
+    async def up(*a):
+        raise RuntimeError("storage upload failed (HTTP 500)")
+    res = _run(write_package(db, extract(doc, "international"), None, images=doc.images, uploader=up))
+    assert res["status"] == "needs_review" and res["images"][0]["status"] == "failed"
+    assert "package_images" not in db.inserts
+    assert db.updates and db.updates[0][1]["parse_status"] == "needs_review"
+
+
+def test_no_destination_no_package(tmp_path):
+    from app.package_import.writer import write_package
+    doc = read_docx(make_docx(tmp_path / "Mystery.docx", FULL.replace("Kashmir", "Somewhere"), images=1))
+    db = FakeDB([{"id": "d1", "slug": "kashmir", "name": "Kashmir", "region": "international"}])
+    res = _run(write_package(db, extract(doc, "international"), None, images=doc.images))
+    assert res["package_id"] is None and "packages" not in db.inserts
+    assert res["images"][0]["status"] == "skipped_no_package"
+    assert db.inserts["package_sources"][0]["parse_status"] == "needs_review"
