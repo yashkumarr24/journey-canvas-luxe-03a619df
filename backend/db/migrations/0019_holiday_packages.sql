@@ -14,6 +14,16 @@
 -- FastAPI (validated + rate-limited); a signed-in user may read their own.
 -- ---------------------------------------------------------------------------
 
+-- prerequisites (idempotent; this database may not have 0001 applied)
+create extension if not exists citext;
+
+create or replace function public.set_updated_at()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
 -- ---- destinations ----------------------------------------------------------
 create table if not exists public.destinations (
   id              uuid primary key default gen_random_uuid(),
