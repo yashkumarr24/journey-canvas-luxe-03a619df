@@ -154,7 +154,8 @@ def test_domestic_refused_this_phase(tmp_path):
     cli.main(["--dir", str(d), "--report", str(out)])
     r = json.loads(out.read_text())
     assert r["packages_created"] == 0 and "international only" in r["errors"][0]["error"]
-    assert cli.main(["--dir", str(d), "--type", "domestic"]) == 2 or True
+    with pytest.raises(SystemExit):
+        cli.main(["--dir", str(d), "--type", "domestic"])
 
 
 def test_dry_run_reports_images_separately(tmp_path):
