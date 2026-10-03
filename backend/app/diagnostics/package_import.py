@@ -24,30 +24,33 @@ from app.package_import.duplicates import find_candidates, norm
 from app.package_import.extractor import extract
 
 MAX_FILES_THIS_PHASE = 5
+UPLOAD_EXT = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
 CONFIRM_PHRASE = "IMPORT-PACKAGES"
 
 
+ALLOWED_TYPE_THIS_PHASE = "international"
+
+
 def infer_type(path: Path) -> str | None:
-    s = str(path).lower()
-    if "international" in s:
-        return "international"
-    if "domestic" in s:
-        return "domestic"
-    return None
+    """This phase is INTERNATIONAL only; a file under a 'domestic' path is refused."""
+    if "domestic" in str(path).lower():
+        return None
+    return ALLOWED_TYPE_THIS_PHASE
 
 
 def build_report(files: list[Path], forced_type: str | None) -> dict[str, Any]:
     report: dict[str, Any] = {"mode": "dry-run", "files_processed": 0, "packages_created": 0,
                               "options_created": 0, "hotels_found": 0, "images_extracted": 0,
                               "itinerary_days": 0, "errors": [], "needs_review": [], "files": [],
-                              "duplicate_candidates": []}
+                              "duplicate_candidates": [], "image_status": [],
+                              "image_upload": {"uploaded": 0, "failed": 0, "skipped": 0, "not_attempted_dry_run": 0}}
     pool = []
     for f in files:
         report["files_processed"] += 1
-        ptype = forced_type or infer_type(f)
+        ptype = infer_type(f)
         try:
             if ptype is None:
-                raise ValueError("package_type unknown: pass --type or put file under a domestic/international folder")
+                raise ValueError("domestic file refused: this test phase is international only")
             pkg = extract(read_docx(f), ptype)
         except Exception as exc:  # noqa: BLE001 — report per file, keep going
             report["errors"].append({"file": f.name, "error": f"{type(exc).__name__}: {exc}"})
@@ -56,6 +59,11 @@ def build_report(files: list[Path], forced_type: str | None) -> dict[str, Any]:
         report["options_created"] += len(pkg.options)
         report["hotels_found"] += sum(len(o["hotels"]) for o in pkg.options)
         report["images_extracted"] += len(pkg.images)
+        report["image_status"].append({"file": f.name, "images": [
+            {"name": i["name"], "bytes": i["bytes"],
+             "status": "extracted" + ("" if i["name"].rsplit(".", 1)[-1].lower() in UPLOAD_EXT
+                                      else " (unsupported format, will be skipped)")}
+            for i in pkg.images]})
         report["itinerary_days"] += len(pkg.itinerary)
         for item in pkg.needs_review:
             report["needs_review"].append({"file": f.name, "field": item.field, "reason": item.reason})
@@ -73,6 +81,7 @@ def build_report(files: list[Path], forced_type: str | None) -> dict[str, Any]:
         })
         pool.append({"key": f.name, "name": pkg.name, "package_code": pkg.package_code,
                      "destination_key": norm(pkg.name).split(" ")[0] if pkg.name else None})
+    report["image_upload"]["not_attempted_dry_run"] = report["images_extracted"]
     report["duplicate_candidates"] = [
         {"a": a, "b": b, "match_reasons": [r for r in reasons if r != "destination"]}
         for a, b, reasons in find_candidates(pool)
@@ -85,6 +94,9 @@ def print_summary(r: dict[str, Any]) -> None:
     for k in ("files_processed", "packages_created", "options_created", "hotels_found",
               "images_extracted", "itinerary_days"):
         print(f"  {k.replace('_', ' ')}: {r[k]}")
+    iu = r["image_upload"]
+    print(f"  images: uploaded {iu['uploaded']}, failed {iu['failed']}, skipped {iu['skipped']}, "
+          f"not attempted (dry-run) {iu['not_attempted_dry_run']}")
     print(f"  errors: {len(r['errors'])}")
     print(f"  needs_review items: {len(r['needs_review'])}")
     print(f"  duplicate candidates (in batch): {len(r['duplicate_candidates'])}")
@@ -99,26 +111,34 @@ async def _execute(report: dict[str, Any], files: list[Path], forced_type: str |
     from app.package_import.writer import write_package
     from app.repositories.supabase_rest import SupabaseRest
 
-    db = SupabaseRest(get_settings())
+    settings = get_settings()
+    db = SupabaseRest(settings)
     if not db.enabled:
         raise SystemExit("Database credentials not configured on this server; nothing written.")
     report["mode"] = "execute"
     report["written"] = []
     for f in files:
-        ptype = forced_type or infer_type(f)
+        ptype = infer_type(f)
         if ptype is None:
             continue
         try:
-            result = await write_package(db, extract(read_docx(f), ptype), dest)
+            doc = read_docx(f)
+            result = await write_package(db, extract(doc, ptype), dest, images=doc.images, settings=settings)
         except Exception as exc:  # noqa: BLE001
             result = {"status": "failed", "error": type(exc).__name__}
         report["written"].append({"file": f.name, **result})
+    iu = report["image_upload"] = {"uploaded": 0, "failed": 0, "skipped": 0, "not_attempted_dry_run": 0}
+    for w in report["written"]:
+        for img in w.get("images", []):
+            key = img["status"] if img["status"] in ("uploaded", "failed") else "skipped"
+            iu[key] += 1
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dir", required=True, type=Path)
-    ap.add_argument("--type", choices=["domestic", "international"])
+    ap.add_argument("--type", choices=["international"], default="international",
+                    help="international only in this phase")
     ap.add_argument("--limit", type=int, default=MAX_FILES_THIS_PHASE)
     ap.add_argument("--report", type=Path)
     ap.add_argument("--destination-slug")
