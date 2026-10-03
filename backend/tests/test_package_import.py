@@ -235,3 +235,25 @@ def test_no_destination_no_package(tmp_path):
     assert res["package_id"] is None and "packages" not in db.inserts
     assert res["images"][0]["status"] == "skipped_no_package"
     assert db.inserts["package_sources"][0]["parse_status"] == "needs_review"
+
+
+def test_source_and_mode_flags_and_csv(tmp_path):
+    src = tmp_path / "intl"
+    src.mkdir()
+    make_docx(src / "a.docx", FULL, images=1)
+    out = tmp_path / "rep"
+    assert cli.main(["--source", str(src), "--mode", "dry-run", "--report-dir", str(out)]) == 0
+    for n in ("report.json", "packages.csv", "needs_review.csv", "images.csv", "errors.csv",
+              "duplicate_candidates.csv"):
+        assert (out / n).exists()
+    import csv as _csv
+    rows = list(_csv.DictReader((out / "images.csv").open()))
+    assert rows[0]["upload"] == "not_attempted (dry-run)"
+    pk = list(_csv.DictReader((out / "packages.csv").open()))[0]
+    assert pk["file"] == "a.docx" and len(pk["checksum"]) == 64
+
+
+def test_import_mode_requires_confirm(tmp_path):
+    make_docx(tmp_path / "a.docx", FULL)
+    assert cli.main(["--source", str(tmp_path), "--mode", "import"]) == 2
+    assert cli.main(["--source", str(tmp_path / "missing")]) == 2
