@@ -242,7 +242,10 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         text = block.text
         all_text.append(text)
         first_line = text.split("\n", 1)[0]
-        sec = _section_of(first_line) if (block.is_heading_like or len(first_line) <= 40) else None
+        looks_heading = block.is_heading_like or first_line.rstrip().endswith(":") \
+            or (":" in first_line and len(first_line.split(":", 1)[0].split()) <= 3) \
+            or len(first_line.split()) <= 3
+        sec = _section_of(first_line.split(":", 1)[0] if ":" in first_line else first_line) if looks_heading else None
         day_m = DAY_RE.match(first_line)
 
         if pkg.name is None and (block.style.lower().startswith(("title", "heading")) or block.bold) \
