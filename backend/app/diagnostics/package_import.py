@@ -1,13 +1,11 @@
-"""Holiday package DOCX importer CLI.
+"""Holiday package DOCX importer — standalone VPS CLI (international only).
 
-DRY-RUN by default: reads files, extracts, writes a report. Nothing is sent to
-the database. Writing requires BOTH --execute and --confirm IMPORT-PACKAGES.
-A hard cap of 5 files applies in this phase (the full 207 run is not allowed
-yet).
+Reads .docx files straight from a local folder. DRY-RUN by default: nothing
+is written to the database or storage. Import mode needs
+--mode import --confirm IMPORT-PACKAGES. Max 5 files per run in this phase.
 
-    python -m app.diagnostics.package_import --dir ./docs --type international
-    python -m app.diagnostics.package_import --dir ./docs --type domestic \
-        --report /tmp/import_report.json
+    python -m app.diagnostics.package_import --source /path/to/international \
+        --report-dir ./import-reports/run1
 """
 
 from __future__ import annotations
