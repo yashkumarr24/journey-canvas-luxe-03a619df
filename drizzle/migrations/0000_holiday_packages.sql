@@ -1,20 +1,3 @@
--- ---------------------------------------------------------------------------
--- 0019_holiday_packages.sql   (additive — touches no existing table)
---
--- Holiday package catalogue imported from source DOCX files:
---   destinations → packages → package_options → package_option_hotels
---   plus itinerary, inclusions/exclusions, images, flights, notes,
---   departures and enquiries.
---
--- Prices are INDICATIVE only. There is no booking status, payment field or
--- provider handle here: packages are enquiry-only.
---
--- Writes: FastAPI (service_role) only. Reads: anon/authenticated may SELECT
--- published content. package_sources is internal. Enquiries are inserted by
--- FastAPI (validated + rate-limited); a signed-in user may read their own.
--- ---------------------------------------------------------------------------
-
--- prerequisites (idempotent; this database may not have 0001 applied)
 create extension if not exists citext;
 
 create or replace function public.set_updated_at()
@@ -24,7 +7,6 @@ begin
   return new;
 end $$;
 
--- ---- destinations ----------------------------------------------------------
 create table if not exists public.destinations (
   id              uuid primary key default gen_random_uuid(),
   slug            text not null unique,
@@ -40,7 +22,6 @@ create table if not exists public.destinations (
   updated_at      timestamptz not null default now()
 );
 
--- ---- source files (internal provenance) -----------------------------------
 create table if not exists public.package_sources (
   id                 uuid primary key default gen_random_uuid(),
   original_filename  text not null unique,
@@ -53,7 +34,6 @@ create table if not exists public.package_sources (
   updated_at         timestamptz not null default now()
 );
 
--- ---- packages --------------------------------------------------------------
 create table if not exists public.packages (
   id                     uuid primary key default gen_random_uuid(),
   destination_id         uuid not null references public.destinations(id) on delete restrict,
@@ -79,7 +59,6 @@ create table if not exists public.packages (
          or travel_validity_to >= travel_validity_from)
 );
 
--- ---- options (hotel/pricing tiers) ----------------------------------------
 create table if not exists public.package_options (
   id                 uuid primary key default gen_random_uuid(),
   package_id         uuid not null references public.packages(id) on delete cascade,
@@ -110,7 +89,6 @@ create table if not exists public.package_option_hotels (
   sort_order   integer not null default 0
 );
 
--- ---- package detail children ----------------------------------------------
 create table if not exists public.package_itinerary_days (
   id              uuid primary key default gen_random_uuid(),
   package_id      uuid not null references public.packages(id) on delete cascade,
@@ -170,7 +148,6 @@ create table if not exists public.package_departures (
   unique (package_id, departure_date)
 );
 
--- ---- enquiries (no booking, no payment) -----------------------------------
 create table if not exists public.package_enquiries (
   id            uuid primary key default gen_random_uuid(),
   package_id    uuid not null references public.packages(id) on delete restrict,
@@ -191,7 +168,6 @@ create table if not exists public.package_enquiries (
   check (email is not null or phone is not null)
 );
 
--- ---- indexes ---------------------------------------------------------------
 create index if not exists destinations_region_pub_idx    on public.destinations (region, is_published, sort_order);
 create index if not exists packages_destination_idx        on public.packages (destination_id);
 create index if not exists packages_source_idx             on public.packages (source_id);
@@ -206,7 +182,6 @@ create index if not exists package_enquiries_package_idx   on public.package_enq
 create index if not exists package_enquiries_user_idx      on public.package_enquiries (user_id);
 create index if not exists package_enquiries_status_idx    on public.package_enquiries (status, created_at desc);
 
--- ---- updated_at triggers ---------------------------------------------------
 do $$
 declare t text;
 begin
@@ -217,7 +192,6 @@ begin
   end loop;
 end $$;
 
--- ---- grants ----------------------------------------------------------------
 grant select on public.destinations, public.packages, public.package_options,
                public.package_option_hotels, public.package_itinerary_days,
                public.package_inclusions, public.package_images, public.package_flights,
@@ -231,9 +205,8 @@ grant all on public.destinations, public.package_sources, public.packages,
              public.package_departures, public.package_enquiries
   to service_role;
 
--- ---- RLS -------------------------------------------------------------------
 alter table public.destinations           enable row level security;
-alter table public.package_sources        enable row level security;  -- no client policy
+alter table public.package_sources        enable row level security;
 alter table public.packages               enable row level security;
 alter table public.package_options        enable row level security;
 alter table public.package_option_hotels  enable row level security;
@@ -245,7 +218,6 @@ alter table public.package_notes          enable row level security;
 alter table public.package_departures     enable row level security;
 alter table public.package_enquiries      enable row level security;
 
--- Published-package check, security definer so child policies don't recurse.
 create or replace function public.is_package_published(p_package_id uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
