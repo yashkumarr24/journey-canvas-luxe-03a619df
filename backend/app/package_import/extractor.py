@@ -226,8 +226,7 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     for block in doc.blocks:
         if isinstance(block, Table):
             all_text.extend(" | ".join(r) for r in block.rows)
-            if _hotel_table(block, pkg) or (section == "flights" and _flight_table(block, pkg)) \
-                    or _flight_table(block, pkg) if section != "hotels" else _hotel_table(block, pkg):
+            if _hotel_table(block, pkg) or _flight_table(block, pkg):
                 continue
             if _price_table(block, pkg):
                 continue
