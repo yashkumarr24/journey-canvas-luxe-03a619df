@@ -8,6 +8,13 @@
       "when": 1791070385957,
       "tag": "0000_holiday_packages",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791070404523,
+      "tag": "0001_package_duplicate_review",
+      "breakpoints": true
     }
   ]
 }

@@ -91,6 +91,60 @@ export type Database = {
           },
         ]
       }
+      package_duplicate_candidates: {
+        Row: {
+          created_at: string
+          id: string
+          match_reasons: string[]
+          package_a_id: string
+          package_b_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_reasons: string[]
+          package_a_id: string
+          package_b_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_reasons?: string[]
+          package_a_id?: string
+          package_b_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_duplicate_candidates_package_a_id_fkey"
+            columns: ["package_a_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_duplicate_candidates_package_b_id_fkey"
+            columns: ["package_b_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_enquiries: {
         Row: {
           adults: number
