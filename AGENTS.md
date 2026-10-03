@@ -6,3 +6,4 @@
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
 - Holiday packages (0019) are enquiry-only catalogue tables with indicative prices and no booking/payment fields; writes go through FastAPI service_role, clients read published rows only, so packages can never be booked or charged directly.
 - Package import keeps one package per source DOCX and only flags possible duplicates (code/name/destination) in package_duplicate_candidates (0020); merging needs human review so no source content is lost.
+- Package DOCX importer (backend/app/package_import, CLI app.diagnostics.package_import) is dry-run by default, capped at 5 files per run, writes only with --execute --confirm IMPORT-PACKAGES, inserts unpublished and flags gaps as needs_review; keeps each file a separate package and source wording untouched.
