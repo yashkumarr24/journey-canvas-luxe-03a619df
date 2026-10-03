@@ -5,3 +5,4 @@
 - Hotel Book/Details/Confirm/Cancel live in backend services/hotel_booking.py with compare-and-set status transitions on hotel_bookings (0018); prevents duplicate provider bookings and keeps provider handles server-side.
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
 - Holiday packages (0019) are enquiry-only catalogue tables with indicative prices and no booking/payment fields; writes go through FastAPI service_role, clients read published rows only, so packages can never be booked or charged directly.
+- Package import keeps one package per source DOCX and only flags possible duplicates (code/name/destination) in package_duplicate_candidates (0020); merging needs human review so no source content is lost.
