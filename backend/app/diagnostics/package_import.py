@@ -1,19 +1,18 @@
-"""Holiday package DOCX importer CLI.
+"""Holiday package DOCX importer — standalone VPS CLI (international only).
 
-DRY-RUN by default: reads files, extracts, writes a report. Nothing is sent to
-the database. Writing requires BOTH --execute and --confirm IMPORT-PACKAGES.
-A hard cap of 5 files applies in this phase (the full 207 run is not allowed
-yet).
+Reads .docx files straight from a local folder. DRY-RUN by default: nothing
+is written to the database or storage. Import mode needs
+--mode import --confirm IMPORT-PACKAGES. Max 5 files per run in this phase.
 
-    python -m app.diagnostics.package_import --dir ./docs --type international
-    python -m app.diagnostics.package_import --dir ./docs --type domestic \
-        --report /tmp/import_report.json
+    python -m app.diagnostics.package_import --source /path/to/international \
+        --report-dir ./import-reports/run1
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import csv
 import json
 import sys
 from pathlib import Path
@@ -134,9 +133,48 @@ async def _execute(report: dict[str, Any], files: list[Path], forced_type: str |
             iu[key] += 1
 
 
+def write_report_dir(r: dict[str, Any], out: Path) -> None:
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "report.json").write_text(json.dumps(r, indent=2, ensure_ascii=False))
+    written = {w["file"]: w for w in r.get("written", [])}
+
+    def csv_out(name: str, header: list[str], rows: list[list[Any]]) -> None:
+        with (out / name).open("w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh)
+            w.writerow(header)
+            w.writerows(rows)
+
+    csv_out("packages.csv",
+            ["file", "checksum", "status", "name", "package_code", "nights", "days", "price_from",
+             "options", "itinerary_days", "inclusions", "exclusions", "flights", "notes",
+             "departures", "images", "fields_extracted", "import_result", "package_id"],
+            [[f["file"], f["checksum"], f["status"], f["name"], f["package_code"], *f["duration"],
+              f["indicative_price_from"], *f["counts"].values(), ";".join(f["fields_extracted"]),
+              written.get(f["file"], {}).get("status", "not_imported (dry-run)" if r["mode"] == "dry-run" else ""),
+              written.get(f["file"], {}).get("package_id")] for f in r["files"]])
+    csv_out("needs_review.csv", ["file", "field", "reason"],
+            [[n["file"], n["field"], n["reason"]] for n in r["needs_review"]])
+    img_rows = []
+    for f in r["image_status"]:
+        uploads = {i["name"]: i for i in written.get(f["file"], {}).get("images", [])}
+        for i in f["images"]:
+            u = uploads.get(i["name"], {})
+            img_rows.append([f["file"], i["name"], i["bytes"], i["status"],
+                             u.get("status", "not_attempted (dry-run)" if r["mode"] == "dry-run" else ""),
+                             u.get("path", ""), u.get("error", "")])
+    csv_out("images.csv", ["file", "image", "bytes", "extraction", "upload", "storage_path", "error"], img_rows)
+    csv_out("errors.csv", ["file", "error"], [[e["file"], e["error"]] for e in r["errors"]])
+    csv_out("duplicate_candidates.csv", ["file_a", "file_b", "match_reasons"],
+            [[d["a"], d["b"], ";".join(d["match_reasons"])] for d in r["duplicate_candidates"]])
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--dir", required=True, type=Path)
+    ap.add_argument("--source", "--dir", dest="source", required=True, type=Path,
+                    help="local folder of international package .docx files (read from disk)")
+    ap.add_argument("--mode", choices=["dry-run", "import"], default="dry-run")
+    ap.add_argument("--report-dir", type=Path,
+                    help="write report.json, packages.csv, needs_review.csv, images.csv here")
     ap.add_argument("--type", choices=["international"], default="international",
                     help="international only in this phase")
     ap.add_argument("--limit", type=int, default=MAX_FILES_THIS_PHASE)
@@ -149,18 +187,26 @@ def main(argv: list[str] | None = None) -> int:
     if a.limit < 1 or a.limit > MAX_FILES_THIS_PHASE:
         print(f"--limit must be 1..{MAX_FILES_THIS_PHASE} in this phase.", file=sys.stderr)
         return 2
-    files = sorted(p for p in a.dir.rglob("*.docx") if not p.name.startswith("~$"))[: a.limit]
+    if a.mode == "import":
+        a.execute = True
+    if not a.source.is_dir():
+        print(f"--source is not a directory: {a.source}", file=sys.stderr)
+        return 2
+    files = sorted(p for p in a.source.rglob("*.docx") if not p.name.startswith("~$"))[: a.limit]
     if not files:
         print("No .docx files found.", file=sys.stderr)
         return 2
     if a.execute and a.confirm != CONFIRM_PHRASE:
-        print(f"--execute requires --confirm {CONFIRM_PHRASE}", file=sys.stderr)
+        print(f"--mode import requires --confirm {CONFIRM_PHRASE}", file=sys.stderr)
         return 2
 
     report = build_report(files, a.type)
     if a.execute:
         asyncio.run(_execute(report, files, a.type, a.destination_slug))
     print_summary(report)
+    if a.report_dir:
+        write_report_dir(report, a.report_dir)
+        print(f"Reports written to {a.report_dir}")
     if a.report:
         a.report.write_text(json.dumps(report, indent=2, ensure_ascii=False))
         print(f"Report written to {a.report}")
