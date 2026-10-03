@@ -563,6 +563,7 @@ export type Database = {
           name: string
           overview: string | null
           package_code: string | null
+          package_type: string | null
           price_basis: string | null
           slug: string
           source_id: string | null
@@ -585,6 +586,7 @@ export type Database = {
           name: string
           overview?: string | null
           package_code?: string | null
+          package_type?: string | null
           price_basis?: string | null
           slug: string
           source_id?: string | null
@@ -607,6 +609,7 @@ export type Database = {
           name?: string
           overview?: string | null
           package_code?: string | null
+          package_type?: string | null
           price_basis?: string | null
           slug?: string
           source_id?: string | null
