@@ -9,98 +9,62 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as InternationalRouteImport } from './routes/international'
-import { Route as HolidaysRouteImport } from './routes/holidays'
-import { Route as DomesticRouteImport } from './routes/domestic'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as BookingLookupRouteImport } from './routes/booking-lookup'
-import { Route as AssistantRouteImport } from './routes/assistant'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
-import { Route as FlightsIndexRouteImport } from './routes/flights.index'
-import { Route as BlogIndexRouteImport } from './routes/blog.index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as HotelsReviewRouteImport } from './routes/hotels.review'
-import { Route as HotelsDetailRouteImport } from './routes/hotels.detail'
-import { Route as HotelsConfirmationRouteImport } from './routes/hotels.confirmation'
-import { Route as HotelsCheckoutRouteImport } from './routes/hotels.checkout'
-import { Route as FlightsReviewRouteImport } from './routes/flights.review'
-import { Route as FlightsConfirmationRouteImport } from './routes/flights.confirmation'
-import { Route as FlightsCheckoutRouteImport } from './routes/flights.checkout'
-import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
-import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as AuthRegisterRouteImport } from './routes/auth.register'
-import { Route as AuthLoginRouteImport } from './routes/auth.login'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminSupportRouteImport } from './routes/admin.support'
-import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
-import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminFunnelRouteImport } from './routes/admin.funnel'
-import { Route as AdminBookingActivityRouteImport } from './routes/admin.booking-activity'
-import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
-import { Route as AdminActivityRouteImport } from './routes/admin.activity'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AssistantRouteImport } from './routes/assistant'
+import { Route as BookingLookupRouteImport } from './routes/booking-lookup'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DomesticRouteImport } from './routes/domestic'
+import { Route as HolidaysRouteImport } from './routes/holidays'
+import { Route as InternationalRouteImport } from './routes/international'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
-import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminActivityRouteImport } from './routes/admin.activity'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminBookingActivityRouteImport } from './routes/admin.booking-activity'
+import { Route as AdminFunnelRouteImport } from './routes/admin.funnel'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminSessionsRouteImport } from './routes/admin.sessions'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthRegisterRouteImport } from './routes/auth.register'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
+import { Route as FlightsIndexRouteImport } from './routes/flights.index'
+import { Route as FlightsCheckoutRouteImport } from './routes/flights.checkout'
+import { Route as FlightsConfirmationRouteImport } from './routes/flights.confirmation'
+import { Route as FlightsReviewRouteImport } from './routes/flights.review'
+import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
+import { Route as HotelsCheckoutRouteImport } from './routes/hotels.checkout'
+import { Route as HotelsConfirmationRouteImport } from './routes/hotels.confirmation'
+import { Route as HotelsDetailRouteImport } from './routes/hotels.detail'
+import { Route as HotelsReviewRouteImport } from './routes/hotels.review'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account.index'
-import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
-import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
-import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authenticated/account.support'
-import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
 import { Route as AuthenticatedAccountNotificationsRouteImport } from './routes/_authenticated/account.notifications'
+import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account.profile'
+import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authenticated/account.support'
+import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
+import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
+import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
 import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
 import { Route as AuthenticatedAccountBookingsReferenceRouteImport } from './routes/_authenticated/account.bookings.$reference'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InternationalRoute = InternationalRouteImport.update({
-  id: '/international',
-  path: '/international',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HolidaysRoute = HolidaysRouteImport.update({
-  id: '/holidays',
-  path: '/holidays',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DomesticRoute = DomesticRouteImport.update({
-  id: '/domestic',
-  path: '/domestic',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BookingLookupRoute = BookingLookupRouteImport.update({
-  id: '/booking-lookup',
-  path: '/booking-lookup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssistantRoute = AssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -108,143 +72,49 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BookingLookupRoute = BookingLookupRouteImport.update({
+  id: '/booking-lookup',
+  path: '/booking-lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HotelsIndexRoute = HotelsIndexRouteImport.update({
-  id: '/hotels/',
-  path: '/hotels/',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FlightsIndexRoute = FlightsIndexRouteImport.update({
-  id: '/flights/',
-  path: '/flights/',
+const DomesticRoute = DomesticRouteImport.update({
+  id: '/domestic',
+  path: '/domestic',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
-  id: '/blog/',
-  path: '/blog/',
+const HolidaysRoute = HolidaysRouteImport.update({
+  id: '/holidays',
+  path: '/holidays',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+const InternationalRoute = InternationalRouteImport.update({
+  id: '/international',
+  path: '/international',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HotelsReviewRoute = HotelsReviewRouteImport.update({
-  id: '/hotels/review',
-  path: '/hotels/review',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HotelsDetailRoute = HotelsDetailRouteImport.update({
-  id: '/hotels/detail',
-  path: '/hotels/detail',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HotelsConfirmationRoute = HotelsConfirmationRouteImport.update({
-  id: '/hotels/confirmation',
-  path: '/hotels/confirmation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HotelsCheckoutRoute = HotelsCheckoutRouteImport.update({
-  id: '/hotels/checkout',
-  path: '/hotels/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FlightsReviewRoute = FlightsReviewRouteImport.update({
-  id: '/flights/review',
-  path: '/flights/review',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FlightsConfirmationRoute = FlightsConfirmationRouteImport.update({
-  id: '/flights/confirmation',
-  path: '/flights/confirmation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FlightsCheckoutRoute = FlightsCheckoutRouteImport.update({
-  id: '/flights/checkout',
-  path: '/flights/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
-  id: '/destinations/$slug',
-  path: '/destinations/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog/$slug',
-  path: '/blog/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/auth/reset-password',
-  path: '/auth/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRegisterRoute = AuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/auth/forgot-password',
-  path: '/auth/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSupportRoute = AdminSupportRouteImport.update({
-  id: '/admin/support',
-  path: '/admin/support',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSessionsRoute = AdminSessionsRouteImport.update({
-  id: '/admin/sessions',
-  path: '/admin/sessions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
-  id: '/admin/notifications',
-  path: '/admin/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminFunnelRoute = AdminFunnelRouteImport.update({
-  id: '/admin/funnel',
-  path: '/admin/funnel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminBookingActivityRoute = AdminBookingActivityRouteImport.update({
-  id: '/admin/booking-activity',
-  path: '/admin/booking-activity',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
-  id: '/admin/analytics',
-  path: '/admin/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminActivityRoute = AdminActivityRouteImport.update({
-  id: '/admin/activity',
-  path: '/admin/activity',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
@@ -252,9 +122,134 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
-  id: '/admin/bookings/',
-  path: '/admin/bookings/',
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/admin/activity',
+  path: '/admin/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBookingActivityRoute = AdminBookingActivityRouteImport.update({
+  id: '/admin/booking-activity',
+  path: '/admin/booking-activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFunnelRoute = AdminFunnelRouteImport.update({
+  id: '/admin/funnel',
+  path: '/admin/funnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSessionsRoute = AdminSessionsRouteImport.update({
+  id: '/admin/sessions',
+  path: '/admin/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/admin/support',
+  path: '/admin/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
+  id: '/destinations/$slug',
+  path: '/destinations/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsIndexRoute = FlightsIndexRouteImport.update({
+  id: '/flights/',
+  path: '/flights/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsCheckoutRoute = FlightsCheckoutRouteImport.update({
+  id: '/flights/checkout',
+  path: '/flights/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsConfirmationRoute = FlightsConfirmationRouteImport.update({
+  id: '/flights/confirmation',
+  path: '/flights/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsReviewRoute = FlightsReviewRouteImport.update({
+  id: '/flights/review',
+  path: '/flights/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsIndexRoute = HotelsIndexRouteImport.update({
+  id: '/hotels/',
+  path: '/hotels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsCheckoutRoute = HotelsCheckoutRouteImport.update({
+  id: '/hotels/checkout',
+  path: '/hotels/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsConfirmationRoute = HotelsConfirmationRouteImport.update({
+  id: '/hotels/confirmation',
+  path: '/hotels/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsDetailRoute = HotelsDetailRouteImport.update({
+  id: '/hotels/detail',
+  path: '/hotels/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HotelsReviewRoute = HotelsReviewRouteImport.update({
+  id: '/hotels/review',
+  path: '/hotels/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountIndexRoute =
@@ -263,21 +258,10 @@ const AuthenticatedAccountIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
-const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
-  id: '/admin/bookings/$reference',
-  path: '/admin/bookings/$reference',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAccountTravellersRoute =
-  AuthenticatedAccountTravellersRouteImport.update({
-    id: '/travellers',
-    path: '/travellers',
-    getParentRoute: () => AuthenticatedAccountRoute,
-  } as any)
-const AuthenticatedAccountSupportRoute =
-  AuthenticatedAccountSupportRouteImport.update({
-    id: '/support',
-    path: '/support',
+const AuthenticatedAccountNotificationsRoute =
+  AuthenticatedAccountNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
 const AuthenticatedAccountProfileRoute =
@@ -286,12 +270,28 @@ const AuthenticatedAccountProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
-const AuthenticatedAccountNotificationsRoute =
-  AuthenticatedAccountNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
+const AuthenticatedAccountSupportRoute =
+  AuthenticatedAccountSupportRouteImport.update({
+    id: '/support',
+    path: '/support',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
+const AuthenticatedAccountTravellersRoute =
+  AuthenticatedAccountTravellersRouteImport.update({
+    id: '/travellers',
+    path: '/travellers',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
+  id: '/admin/bookings/',
+  path: '/admin/bookings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
+  id: '/admin/bookings/$reference',
+  path: '/admin/bookings/$reference',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountBookingsIndexRoute =
   AuthenticatedAccountBookingsIndexRouteImport.update({
     id: '/bookings/',
@@ -648,74 +648,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/international': {
-      id: '/international'
-      path: '/international'
-      fullPath: '/international'
-      preLoaderRoute: typeof InternationalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/holidays': {
-      id: '/holidays'
-      path: '/holidays'
-      fullPath: '/holidays'
-      preLoaderRoute: typeof HolidaysRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/domestic': {
-      id: '/domestic'
-      path: '/domestic'
-      fullPath: '/domestic'
-      preLoaderRoute: typeof DomesticRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/booking-lookup': {
-      id: '/booking-lookup'
-      path: '/booking-lookup'
-      fullPath: '/booking-lookup'
-      preLoaderRoute: typeof BookingLookupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assistant': {
-      id: '/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof AssistantRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -725,193 +662,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hotels/': {
-      id: '/hotels/'
-      path: '/hotels'
-      fullPath: '/hotels/'
-      preLoaderRoute: typeof HotelsIndexRouteImport
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/flights/': {
-      id: '/flights/'
-      path: '/flights'
-      fullPath: '/flights/'
-      preLoaderRoute: typeof FlightsIndexRouteImport
+    '/booking-lookup': {
+      id: '/booking-lookup'
+      path: '/booking-lookup'
+      fullPath: '/booking-lookup'
+      preLoaderRoute: typeof BookingLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/': {
-      id: '/blog/'
-      path: '/blog'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
+    '/domestic': {
+      id: '/domestic'
+      path: '/domestic'
+      fullPath: '/domestic'
+      preLoaderRoute: typeof DomesticRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hotels/review': {
-      id: '/hotels/review'
-      path: '/hotels/review'
-      fullPath: '/hotels/review'
-      preLoaderRoute: typeof HotelsReviewRouteImport
+    '/holidays': {
+      id: '/holidays'
+      path: '/holidays'
+      fullPath: '/holidays'
+      preLoaderRoute: typeof HolidaysRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hotels/detail': {
-      id: '/hotels/detail'
-      path: '/hotels/detail'
-      fullPath: '/hotels/detail'
-      preLoaderRoute: typeof HotelsDetailRouteImport
+    '/international': {
+      id: '/international'
+      path: '/international'
+      fullPath: '/international'
+      preLoaderRoute: typeof InternationalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hotels/confirmation': {
-      id: '/hotels/confirmation'
-      path: '/hotels/confirmation'
-      fullPath: '/hotels/confirmation'
-      preLoaderRoute: typeof HotelsConfirmationRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hotels/checkout': {
-      id: '/hotels/checkout'
-      path: '/hotels/checkout'
-      fullPath: '/hotels/checkout'
-      preLoaderRoute: typeof HotelsCheckoutRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/flights/review': {
-      id: '/flights/review'
-      path: '/flights/review'
-      fullPath: '/flights/review'
-      preLoaderRoute: typeof FlightsReviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/flights/confirmation': {
-      id: '/flights/confirmation'
-      path: '/flights/confirmation'
-      fullPath: '/flights/confirmation'
-      preLoaderRoute: typeof FlightsConfirmationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/flights/checkout': {
-      id: '/flights/checkout'
-      path: '/flights/checkout'
-      fullPath: '/flights/checkout'
-      preLoaderRoute: typeof FlightsCheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/destinations/$slug': {
-      id: '/destinations/$slug'
-      path: '/destinations/$slug'
-      fullPath: '/destinations/$slug'
-      preLoaderRoute: typeof DestinationsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/blog/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/reset-password': {
-      id: '/auth/reset-password'
-      path: '/auth/reset-password'
-      fullPath: '/auth/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/register': {
-      id: '/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof AuthRegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/auth/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/admin/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/support': {
-      id: '/admin/support'
-      path: '/admin/support'
-      fullPath: '/admin/support'
-      preLoaderRoute: typeof AdminSupportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/sessions': {
-      id: '/admin/sessions'
-      path: '/admin/sessions'
-      fullPath: '/admin/sessions'
-      preLoaderRoute: typeof AdminSessionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/notifications': {
-      id: '/admin/notifications'
-      path: '/admin/notifications'
-      fullPath: '/admin/notifications'
-      preLoaderRoute: typeof AdminNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/funnel': {
-      id: '/admin/funnel'
-      path: '/admin/funnel'
-      fullPath: '/admin/funnel'
-      preLoaderRoute: typeof AdminFunnelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/booking-activity': {
-      id: '/admin/booking-activity'
-      path: '/admin/booking-activity'
-      fullPath: '/admin/booking-activity'
-      preLoaderRoute: typeof AdminBookingActivityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/analytics': {
-      id: '/admin/analytics'
-      path: '/admin/analytics'
-      fullPath: '/admin/analytics'
-      preLoaderRoute: typeof AdminAnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/activity': {
-      id: '/admin/activity'
-      path: '/admin/activity'
-      fullPath: '/admin/activity'
-      preLoaderRoute: typeof AdminActivityRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account': {
@@ -921,11 +739,186 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/admin/bookings/': {
-      id: '/admin/bookings/'
-      path: '/admin/bookings'
-      fullPath: '/admin/bookings/'
-      preLoaderRoute: typeof AdminBookingsIndexRouteImport
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/admin/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/booking-activity': {
+      id: '/admin/booking-activity'
+      path: '/admin/booking-activity'
+      fullPath: '/admin/booking-activity'
+      preLoaderRoute: typeof AdminBookingActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/funnel': {
+      id: '/admin/funnel'
+      path: '/admin/funnel'
+      fullPath: '/admin/funnel'
+      preLoaderRoute: typeof AdminFunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/sessions': {
+      id: '/admin/sessions'
+      path: '/admin/sessions'
+      fullPath: '/admin/sessions'
+      preLoaderRoute: typeof AdminSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/admin/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/destinations/$slug': {
+      id: '/destinations/$slug'
+      path: '/destinations/$slug'
+      fullPath: '/destinations/$slug'
+      preLoaderRoute: typeof DestinationsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/': {
+      id: '/flights/'
+      path: '/flights'
+      fullPath: '/flights/'
+      preLoaderRoute: typeof FlightsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/checkout': {
+      id: '/flights/checkout'
+      path: '/flights/checkout'
+      fullPath: '/flights/checkout'
+      preLoaderRoute: typeof FlightsCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/confirmation': {
+      id: '/flights/confirmation'
+      path: '/flights/confirmation'
+      fullPath: '/flights/confirmation'
+      preLoaderRoute: typeof FlightsConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights/review': {
+      id: '/flights/review'
+      path: '/flights/review'
+      fullPath: '/flights/review'
+      preLoaderRoute: typeof FlightsReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/': {
+      id: '/hotels/'
+      path: '/hotels'
+      fullPath: '/hotels/'
+      preLoaderRoute: typeof HotelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/checkout': {
+      id: '/hotels/checkout'
+      path: '/hotels/checkout'
+      fullPath: '/hotels/checkout'
+      preLoaderRoute: typeof HotelsCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/confirmation': {
+      id: '/hotels/confirmation'
+      path: '/hotels/confirmation'
+      fullPath: '/hotels/confirmation'
+      preLoaderRoute: typeof HotelsConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/detail': {
+      id: '/hotels/detail'
+      path: '/hotels/detail'
+      fullPath: '/hotels/detail'
+      preLoaderRoute: typeof HotelsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotels/review': {
+      id: '/hotels/review'
+      path: '/hotels/review'
+      fullPath: '/hotels/review'
+      preLoaderRoute: typeof HotelsReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/': {
@@ -935,25 +928,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
-    '/admin/bookings/$reference': {
-      id: '/admin/bookings/$reference'
-      path: '/admin/bookings/$reference'
-      fullPath: '/admin/bookings/$reference'
-      preLoaderRoute: typeof AdminBookingsReferenceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/account/travellers': {
-      id: '/_authenticated/account/travellers'
-      path: '/travellers'
-      fullPath: '/account/travellers'
-      preLoaderRoute: typeof AuthenticatedAccountTravellersRouteImport
-      parentRoute: typeof AuthenticatedAccountRoute
-    }
-    '/_authenticated/account/support': {
-      id: '/_authenticated/account/support'
-      path: '/support'
-      fullPath: '/account/support'
-      preLoaderRoute: typeof AuthenticatedAccountSupportRouteImport
+    '/_authenticated/account/notifications': {
+      id: '/_authenticated/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AuthenticatedAccountNotificationsRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/account/profile': {
@@ -963,12 +942,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
-    '/_authenticated/account/notifications': {
-      id: '/_authenticated/account/notifications'
-      path: '/notifications'
-      fullPath: '/account/notifications'
-      preLoaderRoute: typeof AuthenticatedAccountNotificationsRouteImport
+    '/_authenticated/account/support': {
+      id: '/_authenticated/account/support'
+      path: '/support'
+      fullPath: '/account/support'
+      preLoaderRoute: typeof AuthenticatedAccountSupportRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/travellers': {
+      id: '/_authenticated/account/travellers'
+      path: '/travellers'
+      fullPath: '/account/travellers'
+      preLoaderRoute: typeof AuthenticatedAccountTravellersRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/admin/bookings/': {
+      id: '/admin/bookings/'
+      path: '/admin/bookings'
+      fullPath: '/admin/bookings/'
+      preLoaderRoute: typeof AdminBookingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/bookings/$reference': {
+      id: '/admin/bookings/$reference'
+      path: '/admin/bookings/$reference'
+      fullPath: '/admin/bookings/$reference'
+      preLoaderRoute: typeof AdminBookingsReferenceRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/bookings/': {
       id: '/_authenticated/account/bookings/'
