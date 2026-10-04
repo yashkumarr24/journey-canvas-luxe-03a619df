@@ -55,6 +55,8 @@ import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authe
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
 import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
+import { Route as PackagesDestinationIndexRouteImport } from './routes/packages.$destination.index'
+import { Route as PackagesDestinationPackageRouteImport } from './routes/packages.$destination.$package'
 import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
 import { Route as AuthenticatedAccountBookingsReferenceRouteImport } from './routes/_authenticated/account.bookings.$reference'
 
@@ -292,6 +294,18 @@ const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
   path: '/admin/bookings/$reference',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PackagesDestinationIndexRoute =
+  PackagesDestinationIndexRouteImport.update({
+    id: '/packages/$destination/',
+    path: '/packages/$destination/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PackagesDestinationPackageRoute =
+  PackagesDestinationPackageRouteImport.update({
+    id: '/packages/$destination/$package',
+    path: '/packages/$destination/$package',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAccountBookingsIndexRoute =
   AuthenticatedAccountBookingsIndexRouteImport.update({
     id: '/bookings/',
@@ -349,8 +363,10 @@ export interface FileRoutesByFullPath {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/packages/$destination/': typeof PackagesDestinationIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -397,8 +413,10 @@ export interface FileRoutesByTo {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
+  '/packages/$destination': typeof PackagesDestinationIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -448,8 +466,10 @@ export interface FileRoutesById {
   '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/packages/$destination/': typeof PackagesDestinationIndexRoute
   '/_authenticated/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/_authenticated/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
 }
@@ -499,8 +519,10 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/packages/$destination/$package'
     | '/account/'
     | '/admin/bookings/'
+    | '/packages/$destination/'
     | '/account/bookings/$reference'
     | '/account/bookings/'
   fileRoutesByTo: FileRoutesByTo
@@ -547,8 +569,10 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/packages/$destination/$package'
     | '/account'
     | '/admin/bookings'
+    | '/packages/$destination'
     | '/account/bookings/$reference'
     | '/account/bookings'
   id:
@@ -597,8 +621,10 @@ export interface FileRouteTypes {
     | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
     | '/admin/bookings/$reference'
+    | '/packages/$destination/$package'
     | '/_authenticated/account/'
     | '/admin/bookings/'
+    | '/packages/$destination/'
     | '/_authenticated/account/bookings/$reference'
     | '/_authenticated/account/bookings/'
   fileRoutesById: FileRoutesById
@@ -643,7 +669,9 @@ export interface RootRouteChildren {
   FlightsIndexRoute: typeof FlightsIndexRoute
   HotelsIndexRoute: typeof HotelsIndexRoute
   AdminBookingsReferenceRoute: typeof AdminBookingsReferenceRoute
+  PackagesDestinationPackageRoute: typeof PackagesDestinationPackageRoute
   AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
+  PackagesDestinationIndexRoute: typeof PackagesDestinationIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -970,6 +998,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/packages/$destination/': {
+      id: '/packages/$destination/'
+      path: '/packages/$destination'
+      fullPath: '/packages/$destination/'
+      preLoaderRoute: typeof PackagesDestinationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/packages/$destination/$package': {
+      id: '/packages/$destination/$package'
+      path: '/packages/$destination/$package'
+      fullPath: '/packages/$destination/$package'
+      preLoaderRoute: typeof PackagesDestinationPackageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/account/bookings/': {
       id: '/_authenticated/account/bookings/'
       path: '/bookings'
@@ -1065,7 +1107,9 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsIndexRoute: FlightsIndexRoute,
   HotelsIndexRoute: HotelsIndexRoute,
   AdminBookingsReferenceRoute: AdminBookingsReferenceRoute,
+  PackagesDestinationPackageRoute: PackagesDestinationPackageRoute,
   AdminBookingsIndexRoute: AdminBookingsIndexRoute,
+  PackagesDestinationIndexRoute: PackagesDestinationIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
