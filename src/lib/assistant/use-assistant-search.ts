@@ -7,9 +7,18 @@ import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { flightSearchQueryOptions } from "@/lib/flight-search";
 import { hotelSearchQueryOptions } from "@/lib/hotel-search";
 import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
-import type { FlightResult, FlightSearchRequest, HotelResult, HotelSearchRequest } from "@/types/booking";
+import type {
+  FlightResult,
+  FlightSearchRequest,
+  HotelResult,
+  HotelSearchRequest,
+} from "@/types/booking";
 import { applyPreferenceFilters, buildRecommendations } from "./recommendations";
-import { toValidatedHotelSearchRequest, toValidatedSearchRequest, wantsHotels } from "./requirements";
+import {
+  toValidatedHotelSearchRequest,
+  toValidatedSearchRequest,
+  wantsHotels,
+} from "./requirements";
 import { useAssistant } from "./use-assistant";
 
 export function useAssistantSearch({ active = true }: { active?: boolean } = {}) {
@@ -20,10 +29,17 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
   const [hotelRequest, setHotelRequest] = useState<HotelSearchRequest | null>(null);
   const [selectingId, setSelectingId] = useState<string | null>(null);
 
-  const flightValidation = useMemo(() => toValidatedSearchRequest(assistant.requirements), [assistant.requirements]);
-  const hotelValidation = useMemo(() => toValidatedHotelSearchRequest(assistant.requirements), [assistant.requirements]);
+  const flightValidation = useMemo(
+    () => toValidatedSearchRequest(assistant.requirements),
+    [assistant.requirements],
+  );
+  const hotelValidation = useMemo(
+    () => toValidatedHotelSearchRequest(assistant.requirements),
+    [assistant.requirements],
+  );
   const needsHotel = wantsHotels(assistant.requirements);
-  const canSearch = assistant.guidedStep === null && flightValidation.ok && (!needsHotel || hotelValidation.ok);
+  const canSearch =
+    assistant.guidedStep === null && flightValidation.ok && (!needsHotel || hotelValidation.ok);
 
   const flightQuery = useQuery(flightSearchQueryOptions(flightRequest));
   const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
@@ -35,7 +51,9 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
     [flightResults, assistant.requirements],
   );
   if (assistant.requirements.resultSort === "cheapest") {
-    preferredFlights = [...preferredFlights].sort((a, b) => a.fare.totalPrice.amount - b.fare.totalPrice.amount);
+    preferredFlights = [...preferredFlights].sort(
+      (a, b) => a.fare.totalPrice.amount - b.fare.totalPrice.amount,
+    );
   }
   const recommendations = useMemo(
     () => buildRecommendations(preferredFlights, assistant.requirements),
@@ -51,30 +69,57 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
         )
       : hotelResults;
     return assistant.requirements.resultSort === "cheapest"
-      ? [...filtered].sort((a, b) => (a.rate?.totalPrice.amount ?? Infinity) - (b.rate?.totalPrice.amount ?? Infinity))
+      ? [...filtered].sort(
+          (a, b) =>
+            (a.rate?.totalPrice.amount ?? Infinity) - (b.rate?.totalPrice.amount ?? Infinity),
+        )
       : filtered;
-  }, [hotelResults, assistant.requirements.hotelLocationPreference, assistant.requirements.resultSort]);
+  }, [
+    hotelResults,
+    assistant.requirements.hotelLocationPreference,
+    assistant.requirements.resultSort,
+  ]);
 
-  useTrackOnce(ANALYTICS_EVENTS.assistantRecommendationsShown, active && recommendations.length > 0, {
-    recommendationCount: recommendations.length,
+  useTrackOnce(
+    ANALYTICS_EVENTS.assistantRecommendationsShown,
+    active && recommendations.length > 0,
+    {
+      recommendationCount: recommendations.length,
+      resultCount: flightResults.length,
+    },
+  );
+  useTrackOnce(ANALYTICS_EVENTS.assistantFlightResultsShown, active && flightResults.length > 0, {
     resultCount: flightResults.length,
   });
-  useTrackOnce(ANALYTICS_EVENTS.assistantFlightResultsShown, active && flightResults.length > 0, { resultCount: flightResults.length });
-  useTrackOnce(ANALYTICS_EVENTS.assistantHotelResultsShown, active && hotelResults.length > 0, { resultCount: hotelResults.length });
+  useTrackOnce(ANALYTICS_EVENTS.assistantHotelResultsShown, active && hotelResults.length > 0, {
+    resultCount: hotelResults.length,
+  });
 
   const runSearch = useCallback(() => {
     if (!active || !canSearch || !flightValidation.ok || !flightValidation.request) return;
     setFlightRequest(flightValidation.request);
-    setHotelRequest(needsHotel && hotelValidation.ok && hotelValidation.request ? hotelValidation.request : null);
+    setHotelRequest(
+      needsHotel && hotelValidation.ok && hotelValidation.request ? hotelValidation.request : null,
+    );
     track(ANALYTICS_EVENTS.assistantSearchStarted, {
       tripType: flightValidation.request.tripType,
       cabinClass: flightValidation.request.cabinClass,
       nonStopOnly: assistant.requirements.nonStopOnly ?? false,
     });
     if (needsHotel && hotelValidation.request) {
-      track(ANALYTICS_EVENTS.assistantHotelSearchStarted, { nights: assistant.requirements.durationNights ?? 0 });
+      track(ANALYTICS_EVENTS.assistantHotelSearchStarted, {
+        nights: assistant.requirements.durationNights ?? 0,
+      });
     }
-  }, [active, assistant.requirements, canSearch, flightValidation, hotelValidation, needsHotel, track]);
+  }, [
+    active,
+    assistant.requirements,
+    canSearch,
+    flightValidation,
+    hotelValidation,
+    needsHotel,
+    track,
+  ]);
 
   const searchKey = canSearch
     ? JSON.stringify([flightValidation.request, needsHotel ? hotelValidation.request : null])
@@ -117,7 +162,10 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
       if (!hotelQuery.data?.searchId) return;
       track(ANALYTICS_EVENTS.assistantHotelSelected);
       track(ANALYTICS_EVENTS.assistantHandoffToBooking, { step: "hotel_detail" });
-      navigate({ to: "/hotels/detail", search: { searchId: hotelQuery.data.searchId, hotelId: hotel.id } });
+      navigate({
+        to: "/hotels/detail",
+        search: { searchId: hotelQuery.data.searchId, hotelId: hotel.id },
+      });
     },
     [hotelQuery.data?.searchId, navigate, track],
   );
@@ -132,9 +180,10 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
   return {
     assistant,
     canSearch,
-    issues: assistant.missing.length === 0
-      ? [...flightValidation.issues, ...(needsHotel ? hotelValidation.issues : [])]
-      : [],
+    issues:
+      assistant.missing.length === 0
+        ? [...flightValidation.issues, ...(needsHotel ? hotelValidation.issues : [])]
+        : [],
     runSearch,
     clearSearch,
     hasSearch: flightRequest !== null,

@@ -21,7 +21,11 @@ export function AssistantSearchResults({ search }: { search: AssistantSearchCont
         <div className="mb-4 flex items-center gap-2">
           <Plane className="size-5 text-primary" />
           <h2 className="font-display text-2xl">Flights</h2>
-          {flightQuery.isSuccess ? <span className="text-xs text-muted-foreground">{search.preferredFlights.length} available</span> : null}
+          {flightQuery.isSuccess ? (
+            <span className="text-xs text-muted-foreground">
+              {search.preferredFlights.length} available
+            </span>
+          ) : null}
         </div>
         {flightQuery.isFetching ? (
           <ResultLoading>Finding the best available flights…</ResultLoading>
@@ -50,10 +54,16 @@ export function AssistantSearchResults({ search }: { search: AssistantSearchCont
           <div className="mb-4 flex items-center gap-2">
             <BedDouble className="size-5 text-primary" />
             <h2 className="font-display text-2xl">Hotels</h2>
-            {hotelQuery.isSuccess ? <span className="text-xs text-muted-foreground">{search.visibleHotels.length} available</span> : null}
+            {hotelQuery.isSuccess ? (
+              <span className="text-xs text-muted-foreground">
+                {search.visibleHotels.length} available
+              </span>
+            ) : null}
           </div>
           {hotelQuery.isFetching ? (
-            <ResultLoading>Finding stays in {assistant.requirements.destinationLabel ?? "your destination"}…</ResultLoading>
+            <ResultLoading>
+              Finding stays in {assistant.requirements.destinationLabel ?? "your destination"}…
+            </ResultLoading>
           ) : hotelQuery.isError ? (
             <SearchError title="Hotel search unavailable" error={hotelQuery.error} />
           ) : search.visibleHotels.length ? (
@@ -76,14 +86,21 @@ export function AssistantSearchResults({ search }: { search: AssistantSearchCont
       <Alert>
         <Info />
         <AlertTitle>Result integrity</AlertTitle>
-        <AlertDescription>Prices, availability, schedules, property details, and images shown here come only from the existing search result data.</AlertDescription>
+        <AlertDescription>
+          Prices, availability, schedules, property details, and images shown here come only from
+          the existing search result data.
+        </AlertDescription>
       </Alert>
     </div>
   );
 }
 
 function Empty({ text }: { text: string }) {
-  return <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">{text}</div>;
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      {text}
+    </div>
+  );
 }
 
 function SearchError({ title, error }: { title: string; error: unknown }) {
