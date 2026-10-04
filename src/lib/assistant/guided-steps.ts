@@ -70,7 +70,7 @@ export function nextGuidedStep(requirements: TravelRequirements, confirmed: Conf
   if (!confirmed.tripType) return "tripType";
   if (requirements.tripType === "roundtrip" && !requirements.returnDate) return "returnDate";
   if (!confirmed.products) return "products";
-  if (requirements.products?.includes("hotels") && !requirements.durationNights) return "nights";
+  if (requirements.products?.includes("hotels") && !requirements.durationNights && !requirements.returnDate) return "nights";
   if (!confirmed.travellers) return "travellers";
   if (!confirmed.cabinClass) return "cabinClass";
   return null;
