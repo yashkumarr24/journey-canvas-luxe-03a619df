@@ -10,11 +10,12 @@ export interface TravelSummaryCardProps {
   issues: string[];
   canSearch: boolean;
   searching: boolean;
-  onSearch: () => void;
+  /** Kept for compatibility; search now runs automatically. */
+  onSearch?: () => void;
   onChange: () => void;
 }
 
-export function TravelSummaryCard({ requirements, missing, issues, canSearch, searching, onSearch, onChange }: TravelSummaryCardProps) {
+export function TravelSummaryCard({ requirements, missing, issues, canSearch, searching, onChange }: TravelSummaryCardProps) {
   const cabin = cabinClassOptions.find((item) => item.value === (requirements.cabinClass ?? "economy"))?.label ?? "Economy";
   const travellers = (requirements.adults ?? 1) + (requirements.children ?? 0) + (requirements.infants ?? 0);
   const stay = wantsHotels(requirements);
@@ -34,7 +35,7 @@ export function TravelSummaryCard({ requirements, missing, issues, canSearch, se
       </div>
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">{detailRows.map(({ icon: Icon, value }) => <div key={value} className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground"><Icon className="size-4 shrink-0 text-foreground" /><span className="truncate">{value}</span></div>)}</div>
       {missing.length > 0 || issues.length > 0 ? <div className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">{missing[0]?.prompt ?? issues[0]}</div> : null}
-      <Button onClick={onSearch} disabled={!canSearch || searching} className="mt-4 w-full"><Search />{searching ? "Searching your trip…" : stay ? "Search flights & hotels" : "Search flights"}</Button>
+      {searching ? <p className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground"><Search className="size-4 text-primary" />Searching your trip…</p> : null}
     </section>
   );
 }

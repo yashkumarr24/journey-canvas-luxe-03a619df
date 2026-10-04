@@ -65,6 +65,10 @@ export function useAssistant(): UseAssistantResult {
   // Requirements are also held in a ref so two messages sent in quick
   // succession always merge onto the latest understanding, never a stale one.
   const requirementsRef = useRef<TravelRequirements>({});
+  // Values picked with guided controls. UI selections are the source of truth
+  // and always win over whatever a later AI turn returns.
+  const selectedRef = useRef<TravelRequirements>({});
+  const confirmedRef = useRef<ConfirmedSteps>({});
   const readyTracked = useRef(false);
   const hydrated = useRef(false);
 
@@ -76,6 +80,7 @@ export function useAssistant(): UseAssistantResult {
       setRequirements(restored.requirements);
       requirementsRef.current = restored.requirements;
       setConfirmed(restored.confirmed ?? {});
+      confirmedRef.current = restored.confirmed ?? {};
     }
     hydrated.current = true;
   }, []);
@@ -100,14 +105,20 @@ export function useAssistant(): UseAssistantResult {
           history: history.map((m) => ({ role: m.role, text: m.text })),
         });
 
-        const preserved = preserveStatedDetails(text, response.requirements);
+        const preserved = { ...preserveStatedDetails(text, response.requirements), ...selectedRef.current };
+        const nextConfirmed = confirmFromTurn(text, preserved, confirmedRef.current);
         requirementsRef.current = preserved;
+        confirmedRef.current = nextConfirmed;
         setRequirements(preserved);
-        setConfirmed((prev) => confirmFromTurn(text, preserved, prev));
+        setConfirmed(nextConfirmed);
         setSuggestions(response.suggestions ?? []);
+        // When guided controls take over, they ask the questions; don't also
+        // show the AI's own question, which would duplicate or contradict them.
+        const guidedNext = nextGuidedStep(preserved, nextConfirmed);
+        const reply = guidedNext ? "Thanks — just pick the remaining details below." : response.reply;
         setMessages((prev) => [
           ...prev,
-          createMessage("assistant", response.reply, response.missing.length > 0 ? "question" : "summary"),
+          createMessage("assistant", reply, guidedNext || response.missing.length > 0 ? "question" : "summary"),
         ]);
         track(ANALYTICS_EVENTS.assistantResponseReceived, {
           provider: response.provider,
@@ -164,16 +175,24 @@ export function useAssistant(): UseAssistantResult {
     requirementsRef.current = {};
     setSuggestions([]);
     setConfirmed({});
+    confirmedRef.current = {};
+    selectedRef.current = {};
     setError(null);
     readyTracked.current = false;
     lastMessage.current = null;
   }, []);
 
   const answerStep = useCallback((step: GuidedStep, patch: TravelRequirements) => {
+    selectedRef.current = { ...selectedRef.current, ...patch };
     const next = { ...requirementsRef.current, ...patch };
+    const nextConfirmed: ConfirmedSteps = { ...confirmedRef.current, [step]: true };
     requirementsRef.current = next;
+    confirmedRef.current = nextConfirmed;
     setRequirements(next);
-    setConfirmed((prev) => ({ ...prev, [step]: true }));
+    setConfirmed(nextConfirmed);
+    if (nextGuidedStep(next, nextConfirmed) === null && missingRequirements(next).length === 0) {
+      setMessages((prev) => [...prev, createMessage("assistant", "Got it — searching your trip now.", "summary")]);
+    }
   }, []);
 
   const missing = missingRequirements(requirements);
