@@ -58,7 +58,7 @@ DURATION_RE = re.compile(r"(\d{1,2})\s*N(?:ights?)?\s*[/&,\-\s]*\s*(\d{1,2})\s*D
 CODE_RE = re.compile(r"\b(?:package|tour|pkg|trip)\s*(?:code|id|ref(?:erence)?)\s*(?:no\.?)?\s*[:\-#]?\s*([A-Z0-9][A-Z0-9/_\-]{2,30})", re.I)
 _CUR = r"₹|INR|Rs\.?|USD|US\$|\$|AED|EUR|€|GBP|£|SGD|MYR|THB"
 PRICE_RE = re.compile(
-    rf"(?P<c1>{_CUR})\s*(?P<a1>\d[\d,]*(?:\.\d{{1,2}})?)"
+    rf"(?P<c1>{_CUR})\s*[:\-]?\s*(?P<a1>\d[\d,]*(?:\.\d{{1,2}})?)"
     rf"|(?P<a2>\d[\d,]{{2,}}(?:\.\d{{1,2}})?)\s*(?:(?P<c2>INR|USD|AED|EUR|GBP|SGD|MYR|THB|Rs\.?)\b|(?P<dash>/-))", re.I)
 CUR_CODE = {"₹": "INR", "inr": "INR", "rs": "INR", "rs.": "INR", "usd": "USD", "us$": "USD", "$": "USD",
             "aed": "AED", "eur": "EUR", "€": "EUR", "gbp": "GBP", "£": "GBP", "sgd": "SGD", "myr": "MYR", "thb": "THB"}
@@ -68,6 +68,8 @@ PRICE_WORDS = re.compile(r"\b(price|cost|rate|tariff|per\s+person|pp|twin|double
 # Labels that describe a room or a price basis, never a package option.
 ROOM_BASIS_RE = re.compile(r"\b(rooms?|twin|double|triple|single|quad|sharing|child|children|cwb|cnb|infant|adult|"
                            r"extra\s+bed|per\s+person|pp|supplement)\b", re.I)
+STAR_ONLY_RE = re.compile(r"^\s*[1-7]\s*-?\s*(?:\*+|★+|☆+|stars?)(?:\s+(?:hotels?|category|property))?\s*$", re.I)
+OPTION_NUM_RE = re.compile(r"^\s*(?:option|opt\.?)\s*[-#:]?\s*0?\d{1,2}\b[\s:.\-–]*$", re.I)
 MEAL_WORDS = {"breakfast": "breakfast", "lunch": "lunch", "dinner": "dinner"}
 MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
@@ -315,7 +317,7 @@ def _row_cell(row: list[str], i: int | None) -> str:
     return row[i].strip() if i is not None and i < len(row) else ""
 
 
-def _hotel_table(tbl: Table, pkg: ExtractedPackage) -> bool:
+def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = None) -> bool:
     """Rows of hotels with a 'hotel/accommodation' header (header may be the
     2nd/3rd row under a merged title row). Grouped by an option column."""
     hdr_idx = next((i for i, r in enumerate(tbl.rows[:3])
@@ -339,17 +341,30 @@ def _hotel_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     c_nights = col("night", "nts", "no. of n", "duration")
     c_meal = col("meal", "plan", "basis")
     c_star = col("star", "rating")
-    c_price = col("price", "cost", "rate", "inr", "₹", "tariff", "usd")
+    c_price = col("price", "cost", "rate", "inr", "₹", "tariff", "usd", "twin", "double", "sharing", "per person")
     if c_hotel == c_city:
         c_city = None
+    # An "Option N" title above the header (merged row) or just before the table names the option.
+    default_opt = next((c.strip() for r in tbl.rows[:hdr_idx] for c in r if OPTION_NUM_RE.match(c) or _is_option_label(c)),
+                       None) or ctx_option
+    # A category column holding only star labels (4 ****, 5★) is the hotel's star class, not an option.
+    body = tbl.rows[hdr_idx + 1:]
+    if c_option is not None:
+        vals = [_row_cell(r, c_option) for r in body if _row_cell(r, c_option)]
+        if vals and all(STAR_ONLY_RE.match(v) for v in vals) and default_opt:
+            c_star, c_option = c_star if c_star is not None else c_option, None
 
     by_option: dict[str, dict[str, Any]] = {}
-    for row in tbl.rows[hdr_idx + 1:]:
+    for row in body:
         cell = lambda i: _row_cell(row, i)  # noqa: E731
+        filled = [c.strip() for c in row if c.strip()]
+        if len(filled) == 1 and (OPTION_NUM_RE.match(filled[0]) or _is_option_label(filled[0])):
+            default_opt = filled[0]  # option sub-heading row inside the table
+            continue
         hotel = cell(c_hotel)
         if not hotel or hotel.lower() == header[c_hotel]:
             continue
-        opt_name = cell(c_option) or "Option 1"
+        opt_name = cell(c_option) or default_opt or "Option 1"
         if opt_name not in by_option:
             by_option[opt_name] = _find_option(pkg, opt_name) or _new_option(pkg, opt_name)
         opt = by_option[opt_name]
@@ -538,6 +553,42 @@ def _finalise_itinerary(pkg: ExtractedPackage, ends: dict[int, int], inferred: s
         pkg.itinerary = []
         notes.append(f"{len(days)} headings looked like days but exceed the {limit}-day duration; kept for review")
         return notes
+    merged: list[dict[str, Any]] = []
+    for d in days:
+        prev = merged[-1] if merged else None
+        if prev is not None and d["day_number"] == prev["day_number"]:
+            # "Day 3" heading immediately followed by "Day 3 ..." detail: one day, nothing dropped.
+            extra = [x for x in (d["title"] if d["title"] != f"Day {d['day_number']}" else None, d["description"]) if x]
+            if prev["title"] == f"Day {prev['day_number']}" and extra:
+                prev["title"] = extra.pop(0)
+            if extra:
+                prev["description"] = "\n".join(x for x in (prev["description"], *extra) if x)
+            ends[id(prev)] = max(ends.get(id(prev), prev["day_number"]), ends.get(id(d), d["day_number"]))
+            continue
+        merged.append(d)
+    days = merged
+    # A title-only summary (Day 1..N) followed by the detailed Day 1..N: keep the detail,
+    # fill placeholder titles from the summary, keep differing summary titles for review.
+    seq0: list[list[dict[str, Any]]] = [[]]
+    for d in days:
+        if seq0[-1] and d["day_number"] <= seq0[-1][-1]["day_number"]:
+            seq0.append([])
+        seq0[-1].append(d)
+    if len(seq0) == 2:
+        summ, det = seq0
+        if sum(1 for d in summ if not d["description"]) >= 0.8 * len(summ) and \
+                {d["day_number"] for d in summ} <= {d["day_number"] for d in det}:
+            by_num = {d["day_number"]: d for d in det}
+            for sd in summ:
+                dd = by_num[sd["day_number"]]
+                body_txt = f"{dd['title']}\n{dd['description'] or ''}".lower()
+                if dd["title"] == f"Day {dd['day_number']}":
+                    dd["title"] = sd["title"]
+                elif sd["title"] != f"Day {sd['day_number']}" and sd["title"].lower() not in body_txt:
+                    pkg.review_text.append({"field": "itinerary_summary",
+                                            "text": f"Day {sd['day_number']}: {sd['title']}"})
+            days = det
+    pkg.itinerary = days
     seqs: list[list[dict[str, Any]]] = [[]]
     for d in days:
         if seqs[-1] and d["day_number"] <= seqs[-1][-1]["day_number"]:
@@ -576,7 +627,7 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
         if isinstance(block, Table):
             state["all_text"].extend(" | ".join(r) for r in block.rows)
             if (_incl_excl_table(block, pkg) or _itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
-                    or _hotel_table(block, pkg) or _flight_table(block, pkg)
+                    or _hotel_table(block, pkg, state.get("ctx_option")) or _flight_table(block, pkg)
                     or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)):
                 continue
             state["layout_tables"] += 1
@@ -633,6 +684,8 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             sec = _section_of(cand, strong_only=strong_only)
         if sec:
             state["section"], current_day = sec, None
+            if sec in ("hotels", "pricing"):
+                state.setdefault("heading_" + sec, _clean_head(line))
             if sec == "departures":
                 ym = re.search(r"\b(20\d\d)\b", line)
                 state["dep_year"] = int(ym.group(1)) if ym else None
@@ -693,20 +746,28 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 if target is not None:
                     _set_price(target, line, basis=None)
                     continue
-                pkg.notes.append({"kind": "other", "text": line})  # price not tied to an option: kept verbatim
-                state.setdefault("loose_prices", []).append(line)
+                basis = label if label and ROOM_BASIS_RE.search(label) else state.pop("last_basis", None)
+                state.setdefault("loose_prices", []).append((line, basis))
                 continue
-            if _is_option_label(_clean_head(line)) and (heading_like or ends_colon or section == "hotels"):
-                name = _clean_head(line)
+            name = _clean_head(line)
+            if STAR_ONLY_RE.match(name) and current_opt is not None and OPTION_NUM_RE.match(current_opt["option_name"]):
+                state["star_txt"] = name  # "Option 1" then "4 ****": the option's hotel category
+                continue
+            if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"):
                 current_opt = _find_option(pkg, name) or _new_option(pkg, name)
+                state["ctx_option"], state["star_txt"] = name, ""
                 continue
+            if ROOM_BASIS_RE.search(line) and len(line.split()) <= 6:
+                state["last_basis"] = line  # e.g. "Twin/Double sharing" above its price
+                state.setdefault("basis_lines", []).append(line)
+                continue
+            city, hotel = (head_part.strip(), after.strip()) if colon_head and after.strip() else (None, line)
             if section == "hotels":
+                h = _hotel_dict(hotel, city, star_txt=state.get("star_txt", ""))
                 if current_opt is None:
-                    # Hotel/room line with no option label above it: do not invent an option.
-                    pkg.review_text.append({"field": "hotels", "text": line})
-                    continue
-                city, hotel = (head_part.strip(), after.strip()) if colon_head and after.strip() else (None, line)
-                current_opt["hotels"].append(_hotel_dict(hotel, city))
+                    state.setdefault("loose_hotels", []).append((h, line))
+                else:
+                    current_opt["hotels"].append(h)
                 continue
             pkg.review_text.append({"field": "pricing", "text": line})
             continue
@@ -719,6 +780,28 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     if (m := CODE_RE.search(joined)):
         pkg.package_code = m.group(1)
     itin_notes = _finalise_itinerary(pkg, state["ends"], inferred)
+    loose_h = state.get("loose_hotels", [])
+    loose_p = state.get("loose_prices", [])
+    used_basis: set[str] = {b for _, b in loose_p if b}
+    heading = state.get("heading_hotels") or state.get("heading_pricing")
+    if not pkg.options and (loose_h or loose_p) and heading:
+        # The document has one unlabelled hotel/price set: it is a single option
+        # named by its own section heading. Flagged so a reviewer confirms it.
+        opt = _new_option(pkg, heading)
+        opt["hotels"] = [h for h, _ in loose_h]
+        for line, basis in loose_p:
+            _set_price(opt, line, basis=basis)
+        pkg.needs_review.append(ReviewItem("options", f"single option built from un-labelled hotels/prices under '{heading}'"))
+    else:
+        for _, line in loose_h:
+            pkg.review_text.append({"field": "hotels", "text": line})
+        for line, basis in loose_p:
+            pkg.notes.append({"kind": "other", "text": line})  # price not tied to an option: kept verbatim
+            pkg.review_text.append({"field": "pricing", "text": f"{basis}: {line}" if basis else line})
+        used_basis = set()
+    for b in state.get("basis_lines", []):
+        if b not in used_basis:
+            pkg.review_text.append({"field": "pricing", "text": b})
     # Labels that collected neither hotels nor a price are not real options.
     for o in list(pkg.options):
         if not o["hotels"] and not o.get("indicative_price"):
