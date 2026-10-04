@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from app.package_import.coverage import account
 from app.package_import.docx_reader import read_docx
 from app.package_import.duplicates import find_candidates, norm
 from app.package_import.extractor import extract
@@ -50,7 +51,9 @@ def build_report(files: list[Path], forced_type: str | None) -> dict[str, Any]:
         try:
             if ptype is None:
                 raise ValueError("domestic file refused: this test phase is international only")
-            pkg = extract(read_docx(f), ptype)
+            doc = read_docx(f)
+            pkg = extract(doc, ptype)
+            summary = account(pkg, doc)
         except Exception as exc:  # noqa: BLE001 — report per file, keep going
             report["errors"].append({"file": f.name, "error": f"{type(exc).__name__}: {exc}"})
             continue
@@ -76,6 +79,8 @@ def build_report(files: list[Path], forced_type: str | None) -> dict[str, Any]:
                        "flights": len(pkg.flights), "notes": len(pkg.notes),
                        "departures": len(pkg.departures), "images": len(pkg.images)},
             "status": "needs_review" if pkg.needs_review else "parsed",
+            "extraction_summary": summary,
+            "unclassified": pkg.unclassified,
             "extracted": pkg.to_dict(),
         })
         pool.append({"key": f.name, "name": pkg.name, "package_code": pkg.package_code,
@@ -101,6 +106,10 @@ def print_summary(r: dict[str, Any]) -> None:
     print(f"  duplicate candidates (in batch): {len(r['duplicate_candidates'])}")
     for f in r["files"]:
         print(f"- {f['file']} [{f['status']}] fields: {', '.join(f['fields_extracted']) or 'none'}")
+        s = f.get("extraction_summary")
+        if s:
+            print(f"    coverage {s['coverage_pct']}% of {s['source_lines']} lines; review items {s['needs_review_items']}; "
+                  f"review_text {s['review_text_items']}; unclassified {s['unclassified_items']}")
     for e in r["errors"]:
         print(f"! {e['file']}: {e['error']}")
 
@@ -122,7 +131,9 @@ async def _execute(report: dict[str, Any], files: list[Path], forced_type: str |
             continue
         try:
             doc = read_docx(f)
-            result = await write_package(db, extract(doc, ptype), dest, images=doc.images, settings=settings)
+            pkg = extract(doc, ptype)
+            account(pkg, doc)  # unclassified content marks the source needs_review
+            result = await write_package(db, pkg, dest, images=doc.images, settings=settings)
         except Exception as exc:  # noqa: BLE001
             result = {"status": "failed", "error": type(exc).__name__}
         report["written"].append({"file": f.name, **result})
@@ -152,8 +163,25 @@ def write_report_dir(r: dict[str, Any], out: Path) -> None:
               f["indicative_price_from"], *f["counts"].values(), ";".join(f["fields_extracted"]),
               written.get(f["file"], {}).get("status", "not_imported (dry-run)" if r["mode"] == "dry-run" else ""),
               written.get(f["file"], {}).get("package_id")] for f in r["files"]])
-    csv_out("review_text.csv", ["file", "field", "text"],
-            [[f["file"], t["field"], t["text"]] for f in r["files"] for t in f["extracted"].get("review_text", [])])
+    csv_out("review_text.csv", ["file", "field", "text", "source_context"],
+            [[f["file"], t["field"], t["text"], t.get("context", "")] for f in r["files"]
+             for t in [*f["extracted"].get("review_text", []), *f.get("unclassified", [])]])
+    csv_out("extraction_summary.csv",
+            ["file", "status", "coverage_pct", "source_lines", "classified_lines", "needs_review_items",
+             "review_text_items", "unclassified_items", *(f"structured_{k}" for k in (
+                 "name", "package_code", "duration_days", "indicative_price_from", "overview", "highlights",
+                 "options", "hotels", "itinerary", "inclusions", "exclusions", "flights", "notes",
+                 "departures", "images")), "tables", "data_tables_parsed", "textbox_paragraphs",
+             "header_footer_note_lines", "linked_images"],
+            [[f["file"], f["status"], s["coverage_pct"], s["source_lines"], s["classified_lines"],
+              s["needs_review_items"], s["review_text_items"], s["unclassified_items"],
+              *(s["structured"][k] for k in ("name", "package_code", "duration_days", "indicative_price_from",
+                                             "overview", "highlights", "options", "hotels", "itinerary",
+                                             "inclusions", "exclusions", "flights", "notes", "departures", "images")),
+              s["layout_parts"]["tables"], s["layout_parts"]["data_tables_parsed"],
+              s["layout_parts"]["textbox_paragraphs"], s["layout_parts"]["header_footer_note_lines"],
+              s["layout_parts"]["linked_images"]]
+             for f in r["files"] for s in [f["extraction_summary"]]])
     csv_out("needs_review.csv", ["file", "field", "reason"],
             [[n["file"], n["field"], n["reason"]] for n in r["needs_review"]])
     img_rows = []
