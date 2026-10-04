@@ -642,7 +642,6 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
     for block in doc.blocks:
         if isinstance(block, Table):
             state["all_text"].extend(" | ".join(r) for r in block.rows)
-            state["block_no"] = state.get("block_no", 0) + 1
             if (_incl_excl_table(block, pkg) or _itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
                     or _hotel_table(block, pkg, state.get("ctx_option")) or _flight_table(block, pkg)
                     or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)):
