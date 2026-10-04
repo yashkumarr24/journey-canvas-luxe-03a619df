@@ -136,14 +136,14 @@ def test_cli_dry_run_report(tmp_path, capsys):
     assert r["duplicate_candidates"][0]["match_reasons"] == ["name"]
 
 
-def test_cli_caps_at_five_and_requires_confirm(tmp_path):
-    for i in range(7):
+def test_cli_caps_at_twenty_and_requires_confirm(tmp_path):
+    for i in range(22):
         make_docx(tmp_path / f"{i}.docx", FULL)
-    assert cli.main(["--dir", str(tmp_path), "--limit", "6"]) == 2
+    assert cli.main(["--dir", str(tmp_path), "--limit", "21"]) == 2
     assert cli.main(["--dir", str(tmp_path), "--execute"]) == 2
     out = tmp_path / "r.json"
     cli.main(["--dir", str(tmp_path), "--report", str(out)])
-    assert json.loads(out.read_text())["files_processed"] == 5
+    assert json.loads(out.read_text())["files_processed"] == 20
 
 
 def test_domestic_refused_this_phase(tmp_path):
