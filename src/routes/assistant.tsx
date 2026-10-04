@@ -29,6 +29,7 @@ export const Route = createFileRoute("/assistant")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
+  validateSearch: (search: Record<string, unknown>): { run?: boolean } => (search.run === true || search.run === "true" || search.run === 1 ? { run: true } : {}),
   component: AssistantPage,
 });
 
@@ -64,13 +65,25 @@ function AssistantPage() {
   useTrackOnce(ANALYTICS_EVENTS.assistantFlightResultsShown, flightResults.length > 0, { resultCount: flightResults.length });
   useTrackOnce(ANALYTICS_EVENTS.assistantHotelResultsShown, hotelResults.length > 0, { resultCount: hotelResults.length });
 
+  const { run: runOnArrival } = Route.useSearch();
+  const resultsAnchor = useRef<HTMLDivElement | null>(null);
   const runSearch = () => {
-    if (!flightValidation.ok || !flightValidation.request) return;
+    if (!canSearch || !flightValidation.ok || !flightValidation.request) return;
     setFlightRequest(flightValidation.request);
     setHotelRequest(needsHotel && hotelValidation.ok && hotelValidation.request ? hotelValidation.request : null);
     track(ANALYTICS_EVENTS.assistantSearchStarted, { tripType: flightValidation.request.tripType, cabinClass: flightValidation.request.cabinClass, nonStopOnly: assistant.requirements.nonStopOnly ?? false });
     if (needsHotel && hotelValidation.request) track(ANALYTICS_EVENTS.assistantHotelSearchStarted, { nights: assistant.requirements.durationNights ?? 0 });
+    requestAnimationFrame(() => resultsAnchor.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
+
+  // Handoff from the Ask AI drawer: run the same validated search once the
+  // restored trip is ready, then drop the flag so a refresh does not re-run it.
+  useEffect(() => {
+    if (!runOnArrival || !canSearch) return;
+    runSearch();
+    navigate({ to: "/assistant", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runOnArrival, canSearch]);
 
   const selectFlight = useMutation({
     mutationFn: (result: FlightResult) => bookingApi.selectFlight({ searchId: flightQuery.data?.searchId as string, fareId: result.fare?.fareId ?? result.id, idempotencyKey: newIdempotencyKey() }),
@@ -111,7 +124,7 @@ function AssistantPage() {
   );
 
   function Results() {
-    return <div className="mt-8 space-y-10">
+    return <div ref={resultsAnchor} className="mt-8 scroll-mt-24 space-y-10">
       {selectError ? <Alert variant="destructive"><AlertCircle /><AlertTitle>Couldn’t continue with that fare</AlertTitle><AlertDescription>{selectError.message}</AlertDescription></Alert> : null}
       <section><div className="mb-4 flex items-center gap-2"><Plane className="size-5 text-primary" /><h2 className="font-display text-2xl">Flights</h2>{flightQuery.isSuccess ? <span className="text-xs text-muted-foreground">{preferredFlights.length} available</span> : null}</div>{flightQuery.isFetching ? <ResultLoading>Finding the best available flights…</ResultLoading> : flightQuery.isError ? <SearchError title="Flight search unavailable" error={flightQuery.error} /> : preferredFlights.length ? <div className="space-y-4">{preferredFlights.slice(0, 8).map((result) => <AssistantFlightCard key={result.id} result={result} recommendations={recommendations} selecting={selectingId === result.id} disabled={selectFlight.isPending} onSelect={handleFlightSelect} />)}</div> : flightQuery.isSuccess ? <Empty text="No flights matched this trip. Ask to change dates, timing, or stops." /> : null}</section>
       {needsHotel ? <section><div className="mb-4 flex items-center gap-2"><BedDouble className="size-5 text-primary" /><h2 className="font-display text-2xl">Hotels</h2>{hotelQuery.isSuccess ? <span className="text-xs text-muted-foreground">{visibleHotels.length} available</span> : null}</div>{hotelQuery.isFetching ? <ResultLoading>Finding stays in {assistant.requirements.destinationLabel ?? "your destination"}…</ResultLoading> : hotelQuery.isError ? <SearchError title="Hotel search unavailable" error={hotelQuery.error} /> : visibleHotels.length ? <div className="space-y-4">{visibleHotels.slice(0, 8).map((hotel) => <AssistantHotelCard key={hotel.id} hotel={hotel} nights={hotelQuery.data?.nights ?? assistant.requirements.durationNights ?? 0} onSelect={handleHotelSelect} />)}</div> : hotelQuery.isSuccess ? <Empty text="No stays matched this trip. Ask to change the area or dates." /> : null}</section> : null}
