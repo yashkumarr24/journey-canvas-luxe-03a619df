@@ -17,6 +17,7 @@ import {
 import type { FlightSearchRequest } from "@/types/booking";
 import { hotelSearchSchema, toHotelSearchRequest } from "@/lib/hotel-search";
 import type { HotelSearchRequest } from "@/types/booking";
+import { addNights } from "./guided-steps";
 import type { MissingRequirement, RequirementField, TravelRequirements } from "@/types/assistant";
 
 export const MAX_ASSISTANT_MESSAGE_LENGTH = 500;
@@ -127,7 +128,10 @@ export function toValidatedHotelSearchRequest(requirements: TravelRequirements):
   const values = {
     destination: requirements.hotelDestination ?? requirements.destinationLabel ?? "",
     checkIn: requirements.departureDate ?? "",
-    checkOut: requirements.returnDate ?? "",
+    checkOut:
+      requirements.departureDate && requirements.durationNights
+        ? addNights(requirements.departureDate, requirements.durationNights)
+        : (requirements.returnDate ?? ""),
     rooms: [{ adults: requirements.adults ?? 1, childAges: Array(requirements.children ?? 0).fill(8) }],
     nationality: "IN",
     currency: "INR",

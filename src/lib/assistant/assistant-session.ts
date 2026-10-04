@@ -7,6 +7,7 @@
  * no fares, no fare ids.
  */
 
+import type { ConfirmedSteps } from "./guided-steps";
 import type { AssistantMessage, AssistantMessageKind, AssistantRole, TravelRequirements } from "@/types/assistant";
 
 const STORAGE_KEY = "fnf.assistant.session.v1";
@@ -15,6 +16,7 @@ const MAX_MESSAGES = 40;
 export interface AssistantSessionState {
   messages: AssistantMessage[];
   requirements: TravelRequirements;
+  confirmed?: ConfirmedSteps;
 }
 
 export const emptyAssistantSession: AssistantSessionState = { messages: [], requirements: {} };
@@ -43,6 +45,7 @@ export function loadAssistantSession(): AssistantSessionState {
     return {
       messages: parsed.messages.slice(-MAX_MESSAGES),
       requirements: parsed.requirements ?? {},
+      confirmed: parsed.confirmed ?? {},
     };
   } catch {
     return emptyAssistantSession;
@@ -54,7 +57,7 @@ export function saveAssistantSession(state: AssistantSessionState): void {
   try {
     window.sessionStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ messages: state.messages.slice(-MAX_MESSAGES), requirements: state.requirements }),
+      JSON.stringify({ messages: state.messages.slice(-MAX_MESSAGES), requirements: state.requirements, confirmed: state.confirmed ?? {} }),
     );
   } catch {
     // Storage full or blocked — the assistant keeps working in memory.

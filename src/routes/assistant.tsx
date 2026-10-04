@@ -5,6 +5,7 @@ import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Info, Plane } from "
 import { Nav } from "@/components/Nav";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { AssistantFlightCard, AssistantHotelCard, ResultLoading } from "@/components/assistant/AssistantResultCards";
+import { GuidedStepControl } from "@/components/assistant/GuidedStepControl";
 import { TravelSummaryCard } from "@/components/assistant/TravelSummaryCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ function AssistantPage() {
   const flightValidation = useMemo(() => toValidatedSearchRequest(assistant.requirements), [assistant.requirements]);
   const hotelValidation = useMemo(() => toValidatedHotelSearchRequest(assistant.requirements), [assistant.requirements]);
   const needsHotel = wantsHotels(assistant.requirements);
-  const canSearch = flightValidation.ok && (!needsHotel || hotelValidation.ok);
+  const canSearch = assistant.guidedStep === null && flightValidation.ok && (!needsHotel || hotelValidation.ok);
   const flightQuery = useQuery(flightSearchQueryOptions(flightRequest));
   const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
   const flightResults = flightQuery.data?.results ?? [];
@@ -90,7 +91,7 @@ function AssistantPage() {
       <Nav />
       <div className="mx-auto flex min-h-screen max-w-[1600px] pt-20 lg:h-screen lg:overflow-hidden">
         <aside className={`${panelCompact ? "lg:w-20" : "lg:w-[390px] xl:w-[430px]"} relative flex min-h-[calc(100vh-5rem)] w-full shrink-0 flex-col border-r border-border bg-background transition-[width] duration-300 lg:min-h-0`}>
-          <div ref={chatInputAnchor} className={panelCompact ? "hidden lg:block lg:flex-1" : "min-h-0 flex-1"}>{panelCompact ? <div className="flex h-full flex-col items-center gap-4 py-6"><Plane className="size-5 text-primary" /><span className="[writing-mode:vertical-rl] text-xs uppercase tracking-[0.18em] text-muted-foreground">Trip finder</span></div> : <AssistantChat messages={assistant.messages} pending={assistant.pending} error={assistant.error} suggestions={assistant.suggestions} suggestedPrompts={SUGGESTED_PROMPTS} isDemo={assistant.isDemo} onSend={assistant.send} onRetry={assistant.retry} onReset={() => { assistant.reset(); setFlightRequest(null); setHotelRequest(null); }} />}</div>
+          <div ref={chatInputAnchor} className={panelCompact ? "hidden lg:block lg:flex-1" : "min-h-0 flex-1"}>{panelCompact ? <div className="flex h-full flex-col items-center gap-4 py-6"><Plane className="size-5 text-primary" /><span className="[writing-mode:vertical-rl] text-xs uppercase tracking-[0.18em] text-muted-foreground">Trip finder</span></div> : <AssistantChat messages={assistant.messages} pending={assistant.pending} error={assistant.error} suggestions={assistant.suggestions} suggestedPrompts={SUGGESTED_PROMPTS} isDemo={assistant.isDemo} onSend={assistant.send} onRetry={assistant.retry} onReset={() => { assistant.reset(); setFlightRequest(null); setHotelRequest(null); }} guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null} />}</div>
           <Button variant="outline" size="icon-sm" onClick={() => setPanelCompact((value) => !value)} className="absolute -right-4 top-5 z-10 hidden rounded-full bg-background lg:inline-flex" title={panelCompact ? "Expand assistant" : "Collapse assistant"}>{panelCompact ? <ChevronRight /> : <ChevronLeft />}</Button>
         </aside>
 

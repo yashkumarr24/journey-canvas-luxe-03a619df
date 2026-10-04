@@ -18,6 +18,7 @@ import {
   saveAssistantSession,
 } from "./assistant-session";
 import { missingRequirements, sanitizeAssistantMessage } from "./requirements";
+import { confirmFromTurn, nextGuidedStep, type ConfirmedSteps, type GuidedStep } from "./guided-steps";
 
 const GREETING = createMessage(
   "assistant",
@@ -46,6 +47,10 @@ export interface UseAssistantResult {
   reset: () => void;
   /** Directly patch requirements after a validation failure, if ever needed. */
   setRequirements: (next: TravelRequirements) => void;
+  /** Next control-driven step, or null. */
+  guidedStep: GuidedStep | null;
+  /** Apply a control selection locally. Never sent to the AI. */
+  answerStep: (step: GuidedStep, patch: TravelRequirements) => void;
 }
 
 export function useAssistant(): UseAssistantResult {
@@ -55,6 +60,7 @@ export function useAssistant(): UseAssistantResult {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<AssistantApiError | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [confirmed, setConfirmed] = useState<ConfirmedSteps>({});
   const lastMessage = useRef<string | null>(null);
   // Requirements are also held in a ref so two messages sent in quick
   // succession always merge onto the latest understanding, never a stale one.
@@ -69,6 +75,7 @@ export function useAssistant(): UseAssistantResult {
       setMessages(restored.messages);
       setRequirements(restored.requirements);
       requirementsRef.current = restored.requirements;
+      setConfirmed(restored.confirmed ?? {});
     }
     hydrated.current = true;
   }, []);
@@ -79,8 +86,8 @@ export function useAssistant(): UseAssistantResult {
 
   useEffect(() => {
     if (!hydrated.current) return;
-    saveAssistantSession({ messages, requirements });
-  }, [messages, requirements]);
+    saveAssistantSession({ messages, requirements, confirmed });
+  }, [messages, requirements, confirmed]);
 
   const run = useCallback(
     async (text: string, history: AssistantMessage[]) => {
@@ -95,6 +102,7 @@ export function useAssistant(): UseAssistantResult {
 
         requirementsRef.current = response.requirements;
         setRequirements(response.requirements);
+        setConfirmed((prev) => confirmFromTurn(text, response.requirements, prev));
         setSuggestions(response.suggestions ?? []);
         setMessages((prev) => [
           ...prev,
@@ -154,18 +162,27 @@ export function useAssistant(): UseAssistantResult {
     setRequirements({});
     requirementsRef.current = {};
     setSuggestions([]);
+    setConfirmed({});
     setError(null);
     readyTracked.current = false;
     lastMessage.current = null;
   }, []);
 
+  const answerStep = useCallback((step: GuidedStep, patch: TravelRequirements) => {
+    const next = { ...requirementsRef.current, ...patch };
+    requirementsRef.current = next;
+    setRequirements(next);
+    setConfirmed((prev) => ({ ...prev, [step]: true }));
+  }, []);
+
   const missing = missingRequirements(requirements);
+  const guidedStep = nextGuidedStep(requirements, confirmed);
 
   return {
     messages,
     requirements,
     missing,
-    ready: missing.length === 0,
+    ready: missing.length === 0 && guidedStep === null,
     pending,
     error,
     suggestions,
@@ -174,5 +191,7 @@ export function useAssistant(): UseAssistantResult {
     retry,
     reset,
     setRequirements,
+    guidedStep,
+    answerStep,
   };
 }

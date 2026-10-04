@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Compass, Search } from "lucide-react";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
+import { GuidedStepControl } from "@/components/assistant/GuidedStepControl";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useAssistant } from "@/lib/assistant/use-assistant";
@@ -37,6 +38,7 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
             onSend={assistant.send}
             onRetry={assistant.retry}
             onReset={assistant.reset}
+            guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null}
           />
         </div>
         <div className="border-t border-border bg-card p-4">
