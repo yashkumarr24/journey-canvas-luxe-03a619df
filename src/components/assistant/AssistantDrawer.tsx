@@ -1,8 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { Compass, Search } from "lucide-react";
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { Compass } from "lucide-react";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { GuidedStepControl } from "@/components/assistant/GuidedStepControl";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useAssistant } from "@/lib/assistant/use-assistant";
 
@@ -15,6 +15,14 @@ const drawerPrompts = [
 
 export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const assistant = useAssistant();
+  const navigate = useNavigate();
+  // Once the trip is complete, go straight to results — no extra button.
+  useEffect(() => {
+    if (!open || !assistant.ready) return;
+    onOpenChange(false);
+    void navigate({ to: "/assistant", search: { run: true } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, assistant.ready]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -41,15 +49,7 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
             guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null}
           />
         </div>
-        <div className="border-t border-border bg-card p-4">
-          <Button asChild className="w-full" disabled={!assistant.ready}>
-            <Link to="/assistant" search={assistant.ready ? { run: true } : {}} onClick={() => onOpenChange(false)}>
-              <Search className="size-4" />
-              {assistant.ready ? (assistant.requirements.products?.includes("hotels") ? "Search flights & hotels" : "Search flights") : "Add trip details to continue"}
-            </Link>
-          </Button>
-          <p className="mt-2 text-center text-[11px] text-muted-foreground">Results come only from the existing flight and hotel search services.</p>
-        </div>
+        <p className="border-t border-border bg-card p-4 text-center text-[11px] text-muted-foreground">Results open automatically once your trip details are complete.</p>
       </SheetContent>
     </Sheet>
   );

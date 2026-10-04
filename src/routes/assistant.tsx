@@ -75,14 +75,17 @@ function AssistantPage() {
     requestAnimationFrame(() => Array.from(document.querySelectorAll<HTMLElement>("[data-assistant-results]")).find((el) => el.offsetParent !== null)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
-  // Handoff from the Ask AI drawer: run the same validated search once the
-  // restored trip is ready, then drop the flag so a refresh does not re-run it.
+  // Automatic search: as soon as every required choice is made and validation
+  // passes, run the existing validated search. Re-runs only when the trip changes.
+  const searchKey = canSearch ? JSON.stringify([flightValidation.request, needsHotel ? hotelValidation.request : null]) : null;
+  const lastSearchKey = useRef<string | null>(null);
   useEffect(() => {
-    if (!runOnArrival || !canSearch) return;
+    if (!searchKey || searchKey === lastSearchKey.current) return;
+    lastSearchKey.current = searchKey;
     runSearch();
-    void navigate({ to: "/assistant", search: () => ({}), replace: true });
+    if (runOnArrival) void navigate({ to: "/assistant", search: () => ({}), replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runOnArrival, canSearch]);
+  }, [searchKey]);
 
   const selectFlight = useMutation({
     mutationFn: (result: FlightResult) => bookingApi.selectFlight({ searchId: flightQuery.data?.searchId as string, fareId: result.fare?.fareId ?? result.id, idempotencyKey: newIdempotencyKey() }),
@@ -103,7 +106,7 @@ function AssistantPage() {
       <Nav />
       <div className="mx-auto flex min-h-screen max-w-[1600px] pt-20 lg:h-screen lg:overflow-hidden">
         <aside className={`${panelCompact ? "lg:w-20" : "lg:w-[390px] xl:w-[430px]"} relative flex min-h-[calc(100vh-5rem)] w-full shrink-0 flex-col border-r border-border bg-background transition-[width] duration-300 lg:min-h-0`}>
-          <div ref={chatInputAnchor} className={panelCompact ? "hidden lg:block lg:flex-1" : "min-h-0 flex-1"}>{panelCompact ? <div className="flex h-full flex-col items-center gap-4 py-6"><Plane className="size-5 text-primary" /><span className="[writing-mode:vertical-rl] text-xs uppercase tracking-[0.18em] text-muted-foreground">Trip finder</span></div> : <AssistantChat messages={assistant.messages} pending={assistant.pending} error={assistant.error} suggestions={assistant.suggestions} suggestedPrompts={SUGGESTED_PROMPTS} isDemo={assistant.isDemo} onSend={assistant.send} onRetry={assistant.retry} onReset={() => { assistant.reset(); setFlightRequest(null); setHotelRequest(null); }} guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null} />}</div>
+          <div ref={chatInputAnchor} className={panelCompact ? "hidden lg:block lg:flex-1" : "min-h-0 flex-1"}>{panelCompact ? <div className="flex h-full flex-col items-center gap-4 py-6"><Plane className="size-5 text-primary" /><span className="[writing-mode:vertical-rl] text-xs uppercase tracking-[0.18em] text-muted-foreground">Trip finder</span></div> : <AssistantChat messages={assistant.messages} pending={assistant.pending} error={assistant.error} suggestions={assistant.suggestions} suggestedPrompts={SUGGESTED_PROMPTS} isDemo={assistant.isDemo} onSend={assistant.send} onRetry={assistant.retry} onReset={() => { assistant.reset(); setFlightRequest(null); setHotelRequest(null); lastSearchKey.current = null; }} guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null} />}</div>
           <Button variant="outline" size="icon-sm" onClick={() => setPanelCompact((value) => !value)} className="absolute -right-4 top-5 z-10 hidden rounded-full bg-background lg:inline-flex" title={panelCompact ? "Expand assistant" : "Collapse assistant"}>{panelCompact ? <ChevronRight /> : <ChevronLeft />}</Button>
         </aside>
 
@@ -126,7 +129,7 @@ function AssistantPage() {
     return <div data-assistant-results className="mt-8 scroll-mt-24 space-y-10">
       {selectError ? <Alert variant="destructive"><AlertCircle /><AlertTitle>Couldn’t continue with that fare</AlertTitle><AlertDescription>{selectError.message}</AlertDescription></Alert> : null}
       <section><div className="mb-4 flex items-center gap-2"><Plane className="size-5 text-primary" /><h2 className="font-display text-2xl">Flights</h2>{flightQuery.isSuccess ? <span className="text-xs text-muted-foreground">{preferredFlights.length} available</span> : null}</div>{flightQuery.isFetching ? <ResultLoading>Finding the best available flights…</ResultLoading> : flightQuery.isError ? <SearchError title="Flight search unavailable" error={flightQuery.error} /> : preferredFlights.length ? <div className="space-y-4">{preferredFlights.slice(0, 8).map((result) => <AssistantFlightCard key={result.id} result={result} recommendations={recommendations} selecting={selectingId === result.id} disabled={selectFlight.isPending} onSelect={handleFlightSelect} />)}</div> : flightQuery.isSuccess ? <Empty text="No flights matched this trip. Ask to change dates, timing, or stops." /> : null}</section>
-      {needsHotel ? <section><div className="mb-4 flex items-center gap-2"><BedDouble className="size-5 text-primary" /><h2 className="font-display text-2xl">Hotels</h2>{hotelQuery.isSuccess ? <span className="text-xs text-muted-foreground">{visibleHotels.length} available</span> : null}</div>{hotelQuery.isFetching ? <ResultLoading>Finding stays in {assistant.requirements.destinationLabel ?? "your destination"}…</ResultLoading> : hotelQuery.isError ? <SearchError title="Hotel search unavailable" error={hotelQuery.error} /> : visibleHotels.length ? <div className="space-y-4">{visibleHotels.slice(0, 8).map((hotel) => <AssistantHotelCard key={hotel.id} hotel={hotel} nights={hotelQuery.data?.nights ?? assistant.requirements.durationNights ?? 0} onSelect={handleHotelSelect} />)}</div> : hotelQuery.isSuccess ? <Empty text="No stays matched this trip. Ask to change the area or dates." /> : null}</section> : null}
+      {hotelRequest ? <section><div className="mb-4 flex items-center gap-2"><BedDouble className="size-5 text-primary" /><h2 className="font-display text-2xl">Hotels</h2>{hotelQuery.isSuccess ? <span className="text-xs text-muted-foreground">{visibleHotels.length} available</span> : null}</div>{hotelQuery.isFetching ? <ResultLoading>Finding stays in {assistant.requirements.destinationLabel ?? "your destination"}…</ResultLoading> : hotelQuery.isError ? <SearchError title="Hotel search unavailable" error={hotelQuery.error} /> : visibleHotels.length ? <div className="space-y-4">{visibleHotels.slice(0, 8).map((hotel) => <AssistantHotelCard key={hotel.id} hotel={hotel} nights={hotelQuery.data?.nights ?? assistant.requirements.durationNights ?? 0} onSelect={handleHotelSelect} />)}</div> : hotelQuery.isSuccess ? <Empty text="No stays matched this trip. Ask to change the area or dates." /> : null}</section> : null}
       <Alert><Info /><AlertTitle>Result integrity</AlertTitle><AlertDescription>Prices, availability, schedules, property details, and images shown here come only from the existing search result data.</AlertDescription></Alert>
     </div>;
   }

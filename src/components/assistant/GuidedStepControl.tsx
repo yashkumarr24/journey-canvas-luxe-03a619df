@@ -65,7 +65,7 @@ function StepBody({ step, requirements, onAnswer }: GuidedStepControlProps) {
       <Choices
         options={[{ value: "flights", label: "Flights Only" }, { value: "both", label: "Flights + Hotel" }]}
         onPick={(value) => {
-          if (value === "flights") return onAnswer(step, { products: ["flights"], durationNights: undefined });
+          if (value === "flights") return onAnswer(step, { products: ["flights"] });
           const derived = requirements.departureDate && requirements.returnDate ? { durationNights: nightsBetweenDates(requirements.departureDate, requirements.returnDate) } : {};
           onAnswer(step, {
             products: ["flights", "hotels"],
