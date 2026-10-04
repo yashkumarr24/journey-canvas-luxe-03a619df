@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth/auth-context";
 import { AnalyticsProvider } from "../lib/analytics/tracker";
 import { AdminAuthProvider } from "../lib/admin/admin-context";
+import { AssistantProvider } from "../lib/assistant/use-assistant";
 
 function NotFoundComponent() {
   return (
@@ -141,7 +142,9 @@ function RootComponent() {
         <AnalyticsProvider>
           <AdminAuthProvider>
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            <AssistantProvider>
+              <Outlet />
+            </AssistantProvider>
           </AdminAuthProvider>
         </AnalyticsProvider>
       </AuthProvider>

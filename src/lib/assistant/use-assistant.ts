@@ -6,7 +6,7 @@
  * demo provider and the future backend AI endpoint are interchangeable.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { useAnalytics } from "@/lib/analytics/tracker";
 import type { AssistantMessage, MissingRequirement, TravelRequirements } from "@/types/assistant";
@@ -53,7 +53,7 @@ export interface UseAssistantResult {
   answerStep: (step: GuidedStep, patch: TravelRequirements) => void;
 }
 
-export function useAssistant(): UseAssistantResult {
+function useAssistantState(): UseAssistantResult {
   const { track } = useAnalytics();
   const [messages, setMessages] = useState<AssistantMessage[]>([GREETING]);
   const [requirements, setRequirements] = useState<TravelRequirements>({});
@@ -214,4 +214,22 @@ export function useAssistant(): UseAssistantResult {
     guidedStep,
     answerStep,
   };
+}
+
+/**
+ * One shared assistant session for the whole app: the header Ask AI drawer,
+ * Menu → Plan with AI and the /assistant page all read and write the same
+ * state, so a trip completed in the drawer is exactly the trip the page searches.
+ */
+const AssistantContext = createContext<UseAssistantResult | null>(null);
+
+export function AssistantProvider({ children }: { children: ReactNode }) {
+  const value = useAssistantState();
+  return createElement(AssistantContext.Provider, { value }, children);
+}
+
+export function useAssistant(): UseAssistantResult {
+  const shared = useContext(AssistantContext);
+  if (!shared) throw new Error("useAssistant must be used inside AssistantProvider");
+  return shared;
 }
