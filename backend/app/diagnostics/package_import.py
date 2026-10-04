@@ -2,7 +2,7 @@
 
 Reads .docx files straight from a local folder. DRY-RUN by default: nothing
 is written to the database or storage. Import mode needs
---mode import --confirm IMPORT-PACKAGES. Max 20 files per run in this phase.
+--mode import --confirm IMPORT-PACKAGES. Max 50 files per run in this phase.
 
     python -m app.diagnostics.package_import --source /path/to/international \
         --report-dir ./import-reports/run1
@@ -23,7 +23,7 @@ from app.package_import.docx_reader import read_docx
 from app.package_import.duplicates import find_candidates, norm
 from app.package_import.extractor import extract
 
-MAX_FILES_THIS_PHASE = 20
+MAX_FILES_THIS_PHASE = 50
 UPLOAD_EXT = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
 CONFIRM_PHRASE = "IMPORT-PACKAGES"
 
