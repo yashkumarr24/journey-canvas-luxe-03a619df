@@ -3,7 +3,29 @@ import { Link } from "@tanstack/react-router";
 import { SectionTitle } from "./Section";
 import type { Destination } from "@/data/destinations";
 
-export function DestinationCard({ p, index }: { p: Destination; index: number }) {
+export type CardData = Pick<Destination, "slug" | "name" | "country" | "tagline" | "price" | "nights" | "img">;
+
+export type CardLink =
+  | { to: "/destinations/$slug"; params: { slug: string } }
+  | { to: "/packages/$destination"; params: { destination: string } }
+  | { to: "/packages/$destination/$package"; params: { destination: string; package: string } };
+
+export function DestinationCard({
+  p,
+  index,
+  link,
+  badge = "5★",
+  cta = "Discover Stays",
+  priceNote,
+}: {
+  p: CardData;
+  index: number;
+  link?: CardLink;
+  badge?: string | null;
+  cta?: string;
+  priceNote?: string;
+}) {
+  const target: CardLink = link ?? { to: "/destinations/$slug", params: { slug: p.slug } };
   return (
     <motion.article
       initial={{ y: 60, opacity: 0 }}
@@ -12,7 +34,7 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
       transition={{ duration: 0.9, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
       className="group relative overflow-hidden rounded-sm border border-foreground/10 bg-card shadow-[var(--shadow-card)] transition-all duration-500 hover:-translate-y-1 hover:border-gold/40 hover:shadow-[var(--shadow-luxe)]"
     >
-      <Link to="/destinations/$slug" params={{ slug: p.slug }} className="block">
+      <Link {...(target as any)} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           <img
             src={p.img}
@@ -23,9 +45,11 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
             className="size-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-110"
           />
           {/* Rating pill — top right */}
-          <div className="absolute right-4 top-4 rounded-sm bg-card/85 px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-md ring-1 ring-foreground/10">
-            5★
-          </div>
+          {badge && (
+            <div className="absolute right-4 top-4 rounded-sm bg-card/85 px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-md ring-1 ring-foreground/10">
+              {badge}
+            </div>
+          )}
         </div>
 
         <div className="p-6 md:p-7">
@@ -39,10 +63,13 @@ export function DestinationCard({ p, index }: { p: Destination; index: number })
 
           <div className="mt-5 flex items-end justify-between gap-4 border-t border-foreground/10 pt-4">
             <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground transition-colors group-hover:text-gold">
-              Discover Stays
+              {cta}
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </div>
             <div className="text-right">
+              {priceNote && (
+                <div className="mb-1 text-[9px] uppercase tracking-[0.22em] text-muted-foreground">{priceNote}</div>
+              )}
               <div className="font-display text-lg leading-none text-gold md:text-xl">{p.price}</div>
               <div className="mt-1 text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
                 {p.nights}
