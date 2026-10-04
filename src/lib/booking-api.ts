@@ -12,6 +12,7 @@
  * credentials are ever referenced here.
  */
 
+import { normalizeFlightSearchResponse } from "@/lib/flight-normalize";
 import type {
   APIResponse,
   BookingError,
@@ -298,7 +299,9 @@ export const bookingApi = {
 
   /** Flight search. The backend endpoint is added in a later phase. */
   searchFlights: (payload: FlightSearchRequest, options?: RequestOptions) =>
-    request<FlightSearchResponse>("POST", "/api/v1/flights/search", payload, options),
+    request<FlightSearchResponse>("POST", "/api/v1/flights/search", payload, options).then(
+      (response) => normalizeFlightSearchResponse(response, payload),
+    ),
 
   /**
    * Select a fare. The backend re-prices it with the provider and opens a
