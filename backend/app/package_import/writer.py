@@ -63,14 +63,14 @@ async def write_package(db: SupabaseRest, pkg: ExtractedPackage, destination_slu
         "name": pkg.name or pkg.source_filename, "slug": slug,
         "duration_nights": pkg.duration_nights, "duration_days": pkg.duration_days,
         "indicative_price_from": pkg.indicative_price_from, "overview": pkg.overview,
-        "highlights": pkg.highlights, "is_published": False,
+        "highlights": pkg.highlights, "is_published": False, "currency": pkg.currency,
     }))[0]
     pid = row["id"]
     for i, o in enumerate(pkg.options):
         opt = (await db.insert("package_options", {
             "package_id": pid, "option_name": o["option_name"], "sort_order": i,
             "indicative_price": o.get("indicative_price"), "price_basis": o.get("price_basis"),
-            "notes": o.get("price_text"),
+            "notes": o.get("price_text"), "currency": o.get("currency") or pkg.currency,
         }))[0]
         if o["hotels"]:
             await db.insert("package_option_hotels", [

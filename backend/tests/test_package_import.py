@@ -257,3 +257,70 @@ def test_import_mode_requires_confirm(tmp_path):
     make_docx(tmp_path / "a.docx", FULL)
     assert cli.main(["--source", str(tmp_path), "--mode", "import"]) == 2
     assert cli.main(["--source", str(tmp_path / "missing")]) == 2
+
+
+# ---- varied real-world layouts ---------------------------------------------
+
+def test_layout_tables_option_columns_and_paragraph_sections(tmp_path):
+    body = (
+        p("Baku & Georgia 6N/7D", "Title")
+        + tbl([["City", "3★ Hotels", "4★ Hotels"],
+               ["Baku (3N)", "Central Park Hotel or similar", "Ramada Baku"],
+               ["Tbilisi (3N)", "Hotel Ibis", "Holiday Inn Tbilisi"],
+               ["Price per person on twin sharing", "INR 65,000", "₹ 78,500/-"]])
+        + tbl([["Tour Itinerary"]])
+        + p("Day 01: Arrive Baku") + p("Transfer to hotel. Dinner.")
+        + p("Day 02 - 03 | Baku city tour") + p("Day 4: Drive to Tbilisi")
+        + p("Day 5: Tbilisi") + p("Day 6: Kakheti") + p("Day 7: Departure")
+        + tbl([["Package Inclusions:", "Accommodation\nDaily breakfast"],
+               ["Package Exclusions:", "Airfare\nVisa"]])
+    )
+    pkg = extract(read_docx(make_docx(tmp_path / "BakuGeorgia.docx", body)), "international")
+    assert [o["option_name"] for o in pkg.options] == ["3★ Hotels", "4★ Hotels"]
+    assert pkg.options[1]["indicative_price"] == 78500 and pkg.options[0]["indicative_price"] == 65000
+    assert pkg.options[0]["hotels"][0]["city"] == "Baku (3N)" and pkg.options[0]["hotels"][0]["nights"] == 3
+    assert pkg.itinerary[1]["title"] == "Baku city tour"
+    assert pkg.inclusions == ["Accommodation", "Daily breakfast"]
+    assert pkg.exclusions == ["Airfare", "Visa"]
+    fields = {i.field for i in pkg.needs_review}
+    assert "itinerary" not in fields and "options" not in fields and "tables" not in fields
+    assert "package_code" in pkg.optional_missing and "package_code" not in fields
+
+
+def test_itinerary_table_and_departure_formats(tmp_path):
+    body = (
+        p("Almaty Fix Departure 4N/5D", "Title")
+        + tbl([["Day", "Itinerary"], ["1", "Arrival Almaty\nMeet at airport."], ["2", "City tour"],
+               ["3", "Shymbulak"], ["4", "Free day"], ["5", "Departure"]])
+        + p("Fixed Departures", bold=True)
+        + p("12th Oct 2026") + p("Nov 5, 2026") + p("December 2026: 3, 17")
+        + p("15 Jan 2027 - 19 Jan 2027") + p("On request")
+    )
+    pkg = extract(read_docx(make_docx(tmp_path / "Almaty.docx", body)), "international")
+    assert [d["day_number"] for d in pkg.itinerary] == [1, 2, 3, 4, 5]
+    assert pkg.itinerary[0]["title"] == "Arrival Almaty" and pkg.itinerary[0]["description"] == "Meet at airport."
+    assert pkg.departures == ["2026-10-12", "2026-11-05", "2026-12-03", "2026-12-17", "2027-01-15"]
+    assert pkg.unparsed_departures == ["On request"]
+    assert not any(i.field == "itinerary" for i in pkg.needs_review)
+
+
+def test_heading_days_without_markers_are_flagged_not_hidden(tmp_path):
+    body = (p("Dubai Delight 2N/3D", "Title") + p("Day Wise Itinerary", bold=True)
+            + p("Arrival in Dubai", bold=True) + p("Dhow cruise dinner.")
+            + p("Desert Safari", bold=True) + p("Afternoon safari.")
+            + p("Departure", bold=True) + p("Transfer to airport.")
+            + p("What's Included", bold=True) + p("Hotel stay")
+            + p("Not Included", bold=True) + p("Visa"))
+    pkg = extract(read_docx(make_docx(tmp_path / "Dubai.docx", body)), "international")
+    assert [d["title"] for d in pkg.itinerary] == ["Arrival in Dubai", "Desert Safari", "Departure"]
+    assert pkg.itinerary[1]["description"] == "Afternoon safari."
+    assert pkg.inclusions == ["Hotel stay"] and pkg.exclusions == ["Visa"]
+    assert any("numbered by order" in i.reason for i in pkg.needs_review)
+
+
+def test_textbox_and_content_control_text_is_read(tmp_path):
+    box = ('<w:p><w:r><w:drawing><w:txbxContent>' + p("Day 1: Arrival") + '</w:txbxContent></w:drawing></w:r></w:p>')
+    sdt = '<w:sdt><w:sdtContent>' + p("Inclusions", bold=True) + p("Breakfast") + '</w:sdtContent></w:sdt>'
+    doc = read_docx(make_docx(tmp_path / "t.docx", p("Trip 1N/2D", "Title") + box + sdt))
+    pkg = extract(doc, "international")
+    assert pkg.itinerary[0]["title"] == "Arrival" and pkg.inclusions == ["Breakfast"]
