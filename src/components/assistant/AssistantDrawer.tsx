@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Compass } from "lucide-react";
+import { Plane } from "lucide-react";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
+import { AssistantSearchResults } from "@/components/assistant/AssistantSearchResults";
 import { GuidedStepControl } from "@/components/assistant/GuidedStepControl";
+import { TravelSummaryCard } from "@/components/assistant/TravelSummaryCard";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import { useAssistant } from "@/lib/assistant/use-assistant";
+import { useAssistantSearch } from "@/lib/assistant/use-assistant-search";
 
 const drawerPrompts = [
   "Find flights from Ahmedabad to Mumbai",
@@ -14,31 +14,18 @@ const drawerPrompts = [
 ];
 
 export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const assistant = useAssistant();
-  const navigate = useNavigate();
-  // Once the trip is complete, go straight to results — no extra button.
-  const wasReady = useRef(assistant.ready);
-  useEffect(() => {
-    const becameReady = assistant.ready && !wasReady.current;
-    wasReady.current = assistant.ready;
-    if (!open || !becameReady) return;
-    onOpenChange(false);
-    void navigate({ to: "/assistant", search: { run: true } });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, assistant.ready]);
+  const search = useAssistantSearch({ active: open });
+  const { assistant } = search;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" overlayClassName="z-[65]" className="z-[70] flex w-[min(100vw,460px)] max-w-none flex-col gap-0 p-0 sm:max-w-[460px]">
+      <SheetContent side="left" overlayClassName="z-[65]" className="z-[70] flex h-dvh w-screen max-w-none flex-col gap-0 overflow-y-auto border-0 p-0 sm:max-w-none lg:grid lg:grid-cols-[430px_minmax(0,1fr)] lg:overflow-hidden">
         <div className="sr-only">
           <SheetTitle>Ask AI</SheetTitle>
-          <SheetDescription>Describe your trip and continue to validated flight and hotel results.</SheetDescription>
+          <SheetDescription>Describe your trip and view validated flight and hotel results beside the conversation.</SheetDescription>
         </div>
-        <div className="border-b border-border px-5 py-4 pr-14">
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase text-primary"><Compass className="size-4" />Ask AI</p>
-          <p className="mt-1 text-sm text-muted-foreground">Describe your trip in your own words.</p>
-        </div>
-        <div className="min-h-0 flex-1">
+        <aside className="flex h-[64dvh] min-h-[520px] flex-col border-b border-border bg-background lg:h-dvh lg:min-h-0 lg:border-b-0 lg:border-r">
+          <div className="min-h-0 flex-1">
           <AssistantChat
             messages={assistant.messages}
             pending={assistant.pending}
@@ -48,11 +35,30 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
             isDemo={assistant.isDemo}
             onSend={assistant.send}
             onRetry={assistant.retry}
-            onReset={assistant.reset}
+            onReset={() => { assistant.reset(); search.clearSearch(); }}
             guided={assistant.guidedStep ? <GuidedStepControl step={assistant.guidedStep} requirements={assistant.requirements} onAnswer={assistant.answerStep} /> : null}
           />
-        </div>
-        <p className="border-t border-border bg-card p-4 text-center text-[11px] text-muted-foreground">Results open automatically once your trip details are complete.</p>
+          </div>
+        </aside>
+
+        <section className="min-h-[36dvh] bg-muted/40 px-4 py-6 sm:px-7 lg:h-dvh lg:min-h-0 lg:overflow-y-auto lg:px-10 lg:py-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="pr-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">AI travel search</p>
+              <h1 className="mt-2 font-display text-3xl sm:text-4xl">Your Trip</h1>
+            </div>
+            <div className="mt-5">
+              <TravelSummaryCard requirements={assistant.requirements} missing={assistant.missing} issues={search.issues} canSearch={search.canSearch} searching={search.searching} onChange={() => undefined} />
+            </div>
+            {search.hasSearch ? (
+              <div className="mt-8"><AssistantSearchResults search={search} /></div>
+            ) : (
+              <div className="mt-8 grid min-h-64 place-items-center rounded-lg border border-dashed border-border bg-background/70 p-8 text-center">
+                <div><div className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary"><Plane /></div><h2 className="mt-4 font-display text-2xl">Ready when your trip is</h2><p className="mt-2 max-w-md text-sm text-muted-foreground">Complete the trip details in the conversation. Live flights and stays will appear here automatically.</p></div>
+              </div>
+            )}
+          </div>
+        </section>
       </SheetContent>
     </Sheet>
   );
