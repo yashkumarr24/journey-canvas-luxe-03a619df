@@ -143,3 +143,34 @@ def test_dry_run_is_still_default(tmp_path, monkeypatch):
     called = []
     monkeypatch.setattr(cli, "_execute", lambda *a, **k: called.append(1))
     assert cli.main(["--source", str(src)]) == 0 and not called
+
+
+def test_itinerary_table_continuation_rows_join_their_day(tmp_path):
+    body = (p("City Break 2N/3D", "Title")
+            + tbl([["Day 1: Arrival", "Transfer to hotel"],
+                   ["", "Evening walk along the promenade"],
+                   ["Visit the old cathedral", ""],
+                   ["Day 2: Mountains", "Cable car ride"],
+                   ["In just 1 hour", "reach the summit"],
+                   ["Day 3: Departure", "Transfer to airport"],
+                   ["Inclusions", ""],
+                   ["Unrelated footnote zqx", ""]]))
+    pkg, _, s = _run(make_docx(tmp_path / "C.docx", body))
+    d = {x["day_number"]: x for x in pkg.itinerary}
+    assert [*d] == [1, 2, 3]
+    assert "Evening walk along the promenade" in d[1]["description"]
+    assert "Visit the old cathedral" in d[1]["description"]
+    assert "In just 1 hour" in d[2]["description"] and "reach the summit" in d[2]["description"]
+    assert "zqx" not in (d[3]["description"] or "")
+    # Text after a section heading row is not glued onto a day; it is reported with context.
+    assert any("zqx" in u["text"] and u["context"] for u in pkg.unclassified)
+    assert not any("promenade" in u["text"] or "1 hour" in u["text"] for u in pkg.unclassified)
+
+
+def test_itinerary_paragraph_lines_stay_with_current_day(tmp_path):
+    body = (p("Peaks 1N/2D", "Title") + p("Itinerary", bold=True)
+            + p("Day 1: Arrive") + p("Panoramic viewpoint", bold=True) + p("Explore the city by evening.")
+            + p("Day 2: Depart") + p("Transfer to airport"))
+    pkg, _, s = _run(make_docx(tmp_path / "P.docx", body))
+    assert "Panoramic viewpoint" in pkg.itinerary[0]["description"]
+    assert s["unclassified_items"] == 0
