@@ -166,7 +166,7 @@ function PackagePage() {
                                   <td className="py-2 pr-4">
                                     {h.hotel_name}
                                     {h.star_rating != null && <span className="ml-1 text-gold">{h.star_rating}★</span>}
-                                    {h.is_similar && <span className="ml-1 text-muted-foreground">or similar</span>}
+                                    {h.is_similar && !/similar/i.test(h.hotel_name) && <span className="ml-1 text-muted-foreground">or similar</span>}
                                   </td>
                                   <td className="py-2 pr-4">{h.room_type ?? "—"}</td>
                                   <td className="py-2 pr-4">{h.nights ?? "—"}</td>
