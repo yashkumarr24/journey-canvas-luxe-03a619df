@@ -368,7 +368,7 @@ def _option_column_table(tbl: Table, pkg: ExtractedPackage) -> bool:
                                    allow_bare=True) or _set_price(opts[i], val, basis=label or None, allow_bare=True)
             else:
                 nights = re.search(r"\(?\s*(\d+)\s*(?:n|nts?|nights?)\b\s*\)?", label, re.I)
-                opts[i]["hotels"].append(_hotel_dict(val, label or None, nights=nights.group(0) if nights else ""))
+                opts[i]["hotels"].append(_hotel_dict(val, label or None, nights=nights.group(0) if nights else "", star_txt=header[i]))
                 used = True
     return used
 
