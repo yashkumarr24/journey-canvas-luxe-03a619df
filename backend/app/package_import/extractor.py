@@ -74,7 +74,7 @@ MONTHS = {m: i for i, m in enumerate(
 _MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
 _ORD = r"(?:st|nd|rd|th)?"
 DATE_NUM_RE = re.compile(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b")
-DATE_DMY_RE = re.compile(rf"\b(\d{{1,2}}){_ORD}((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)[\s\-]*{_MON}(?:[\s,'’\-]*(\d{{4}}|\d{{2}}\b))?", re.I)
+DATE_DMY_RE = re.compile(rf"\b(\d{{1,2}}){_ORD}((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)[\s\-]*{_MON}(?:[\s,\-]*(\d{{4}})\b|\s*['’]\s*(\d{{2}})\b)?", re.I)
 DATE_MDY_RE = re.compile(rf"\b{_MON}\s*(\d{{1,2}}){_ORD}\b((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD}\b)*)(?:,?\s*(\d{{4}}))?", re.I)
 DATE_MY_LIST_RE = re.compile(rf"\b{_MON}[\s,'’\-]*(\d{{4}}|\d{{2}})\s*:\s*(\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)\b", re.I)
 RANGE_GAP_RE = re.compile(r"^\s*(?:-|–|—|to|till|until)\s*$", re.I)
@@ -225,7 +225,7 @@ def _dates_in(text: str) -> list[str]:
             if any(s <= m.start() < e for s, e, _ in found):
                 continue
             if dmy:
-                first, more, mtok, ytok = m.group(1), m.group(2), m.group(3), m.group(4)
+                first, more, mtok, ytok = m.group(1), m.group(2), m.group(3), m.group(4) or m.group(5)
             else:
                 mtok, first, more, ytok = m.group(1), m.group(2), m.group(3), m.group(4)
             mo = mon(mtok)
