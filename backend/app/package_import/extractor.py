@@ -385,7 +385,8 @@ def _option_column_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     else:
         return False
     header = tbl.rows[hdr_idx]
-    opts = {i: (_find_option(pkg, header[i].strip()) or _new_option(pkg, header[i].strip())) for i in opt_cols}
+    opts = {i: (_find_option(pkg, header[i].strip()) or _new_option(pkg, header[i].strip(), "table header: " + " | ".join(header)
+                                                                           + (" / next row: " + " | ".join(tbl.rows[hdr_idx + 1]) if len(tbl.rows) > hdr_idx + 1 else ""))) for i in opt_cols}
     used = False
     for row in tbl.rows[hdr_idx + 1:]:
         label = _row_cell(row, 0)
@@ -769,7 +770,7 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 state["star_txt"] = name  # "Option 1" then "4 ****": the option's hotel category
                 continue
             if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"):
-                current_opt = _find_option(pkg, name) or _new_option(pkg, name)
+                current_opt = _find_option(pkg, name) or _new_option(pkg, name, f"standalone line in the {section} section")
                 state["ctx_option"], state["star_txt"] = name, ""
                 continue
             if ROOM_BASIS_RE.search(line) and len(line.split()) <= 6:

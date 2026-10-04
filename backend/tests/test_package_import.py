@@ -390,3 +390,42 @@ def test_star_labels_under_option_are_hotel_categories(tmp_path):
     assert [o["option_name"] for o in pkg.options] == ["Option 1", "Option 2"]
     assert pkg.options[0]["hotels"][0]["star_rating"] == 4 and pkg.options[1]["hotels"][0]["star_rating"] == 5
     assert [o["indicative_price"] for o in pkg.options] == [50000, 70000]
+
+
+def test_unknown_duration_ignores_unrelated_numbered_days(tmp_path):
+    body = (p("Abu Dhabi & Dubai", "Title") + p("Itinerary", bold=True)
+            + p("Day 1: Arrive") + p("Day 2: Tour") + p("Day 3: Depart")
+            + p("Day 10: Park access valid") + p("Day 26: Offer ends"))
+    pkg = extract(read_docx(make_docx(tmp_path / "AUH.docx", body)), "international")
+    assert [d["day_number"] for d in pkg.itinerary] == [1, 2, 3]
+    assert sum(1 for t in pkg.review_text if t["field"] == "itinerary") == 2
+
+
+def test_duration_with_nts_in_title_caps_days(tmp_path):
+    body = (p("Abu Dhabi & Dubai 6 Nts / 7 Days", "Title") + p("Itinerary", bold=True)
+            + "".join(p(f"Day {i}: Stop {i}") for i in range(1, 8)) + p("Day 9: Unrelated"))
+    pkg = extract(read_docx(make_docx(tmp_path / "AUH.docx", body)), "international")
+    assert (pkg.duration_nights, pkg.duration_days) == (6, 7)
+    assert len(pkg.itinerary) == 7
+
+
+def test_separately_priced_hotel_choices_are_not_collapsed(tmp_path):
+    body = (p("Abu Dhabi & Dubai 6N/7D", "Title") + p("Hotel Details", bold=True)
+            + p("Abu Dhabi Hotel (2N + 2 Park Access)")
+            + p("Yas Island Rotana") + p("Centro Yas Island")
+            + p("Package Cost", bold=True)
+            + p("Yas Island Rotana: INR 85,000") + p("Centro Yas Island: INR 72,000"))
+    pkg = extract(read_docx(make_docx(tmp_path / "AUH.docx", body)), "international")
+    assert [o["option_name"] for o in pkg.options] == ["Yas Island Rotana", "Centro Yas Island"]
+    assert [o["indicative_price"] for o in pkg.options] == [85000, 72000]
+    assert pkg.options[0]["hotels"][0]["city"] == "Abu Dhabi" and pkg.options[0]["hotels"][0]["nights"] == 2
+    assert not any("Park Access" in t["text"] for t in pkg.review_text)
+
+
+def test_removed_option_label_keeps_table_context(tmp_path):
+    body = (p("Azerbaijan 4N/5D", "Title")
+            + tbl([["City", "Standard", "Deluxe"], ["Baku", "", "Hotel A"], ["Price", "", "INR 60,000"]]))
+    pkg = extract(read_docx(make_docx(tmp_path / "AZ.docx", body)), "international")
+    assert [o["option_name"] for o in pkg.options] == ["Deluxe"]
+    ctx = [t["text"] for t in pkg.review_text if t["field"] == "options"]
+    assert ctx and ctx[0].startswith("Standard") and "table header: City | Standard | Deluxe" in ctx[0]
