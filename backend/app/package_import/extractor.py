@@ -463,6 +463,9 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
     header = [c.lower() for c in tbl.rows[0]]
     day_col_numeric = bool(header) and re.fullmatch(r"\s*day[s]?\s*(no\.?)?\s*", header[0] or "") is not None
     rows = []
+    # Rows with no day marker that follow a day row (sight-seeing lines, merged
+    # day cell spanning several rows) continue that day: kept, never dropped.
+    continuation: dict[int, list[str]] = {}
     for row in tbl.rows[1:] if day_col_numeric else tbl.rows:
         first = _row_cell(row, 0)
         if day_col_numeric and re.fullmatch(r"0?\d{1,2}", first):
@@ -471,9 +474,13 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
             dm = _day_match(first.split("\n", 1)[0])
         if dm:
             rows.append((dm, row, first))
+        elif rows and (cells := [c.strip() for c in row if c.strip()]) and not (
+                len(cells) <= 3 and all(_section_of(c, strong_only=True) and len(c.split()) <= 6 for c in cells)):
+            # A section heading row (e.g. "Inclusions") ends the itinerary block instead.
+            continuation.setdefault(len(rows) - 1, []).extend(cells)
     if not rows or (len(rows) < 2 and not pkg.itinerary and len(tbl.rows) > 2):
         return False
-    for (a, b, rest), row, first in rows:
+    for i, ((a, b, rest), row, first) in enumerate(rows):
         extra_first = first.split("\n", 1)[1].strip() if "\n" in first else ""
         others = [c.strip() for c in row[1:] if c.strip()]
         title = rest
@@ -482,7 +489,7 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
             if remainder.strip():
                 others.insert(0, remainder.strip())
         title = title or f"Day {a}"
-        desc = "\n".join(x for x in [extra_first, *others] if x) or None
+        desc = "\n".join(x for x in [extra_first, *others, *continuation.get(i, [])] if x) or None
         day = {"day_number": a, "title": title, "description": desc, "meals": []}
         pkg.itinerary.append(day)
         ends[id(day)] = b
