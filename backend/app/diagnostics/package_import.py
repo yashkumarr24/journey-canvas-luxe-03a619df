@@ -23,7 +23,7 @@ from app.package_import.docx_reader import read_docx
 from app.package_import.duplicates import find_candidates, norm
 from app.package_import.extractor import extract
 
-MAX_FILES_THIS_PHASE = 5
+MAX_FILES_THIS_PHASE = 20
 UPLOAD_EXT = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
 CONFIRM_PHRASE = "IMPORT-PACKAGES"
 
