@@ -14,7 +14,7 @@ import re
 from typing import Any
 
 from app.package_import.docx_reader import DocxContent, Paragraph, Table
-from app.package_import.extractor import ExtractedPackage, ReviewItem, _section_of
+from app.package_import.extractor import ExtractedPackage, ReviewItem, _day_match, _section_of
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 _BULLET = re.compile(r"^[\s•●○▪■◦·\-–—*>✓✔➢➤►\d.)]*\s*")
@@ -57,6 +57,9 @@ def _covered(line: str, joined: str, tokens: set[str]) -> bool:
         return True  # punctuation / bullet-only line: no content
     if n in joined:
         return True
+    if (dm := _day_match(line.strip())) is not None:
+        # "Day 3 - Pahalgam": the marker became day_number, the rest the title.
+        return not dm[2].strip() or _covered(dm[2], joined, tokens)
     toks = _TOKEN.findall(n)
     # Short lines may be split across fields (e.g. "Dubai: Hotel X" -> city + hotel).
     return len(toks) <= SHORT_LINE_TOKENS and all(t in tokens for t in toks)
