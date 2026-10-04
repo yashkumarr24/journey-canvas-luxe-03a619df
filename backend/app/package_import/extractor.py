@@ -306,7 +306,9 @@ def _hotel_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     2nd/3rd row under a merged title row). Grouped by an option column."""
     hdr_idx = next((i for i, r in enumerate(tbl.rows[:3])
                     if any(re.search(r"\bhotels?\b|accommodation|property|properties", c, re.I) for c in r)
-                    and len(r) >= 2), None)
+                    and len(r) >= 2 and all("\n" not in c and len(c.split()) <= 5 for c in r)
+                    and not any(_section_of(c, strong_only=True) in ("inclusion", "exclusion", "itinerary")
+                                or _day_match(c) for c in r)), None)
     if hdr_idx is None or len(tbl.rows) <= hdr_idx + 1:
         return False
     header = [c.lower() for c in tbl.rows[hdr_idx]]
