@@ -459,6 +459,33 @@ def _price_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     return found
 
 
+def _labelled_price_table(tbl: Table, pkg: ExtractedPackage, label: str | None) -> bool:
+    """A price table with no option names ('Pax | Total Cost | Per Person')
+    directly under a pricing heading that names the option, e.g.
+    'Package Cost (3★):'. Each priced cell is kept verbatim with its column
+    header (and row label) as the basis; per-person amounts are preferred as
+    the indicative price."""
+    if not label or len(tbl.rows) < 2:
+        return False
+    header = tbl.rows[0]
+    if not any(PRICE_WORDS.search(h) or re.search(r"\b(cost|total)\b", h, re.I) for h in header):
+        return False
+    cells = [(ri, ci, _row_cell(row, ci)) for ri, row in enumerate(tbl.rows[1:], start=1)
+             for ci in range(1, len(row)) if _row_cell(row, ci)]
+    if not any(_price_cur(v) or _bare_amount(v) is not None for _, _, v in cells):
+        return False
+    opt = _find_option(pkg, label) or _new_option(pkg, label, "price table under heading naming the option")
+    pp = lambda ci: 0 if re.search(r"per\s+person|\bpp\b", _row_cell(header, ci), re.I) else 1  # noqa: E731
+    found = False
+    for ri, ci, val in sorted(cells, key=lambda t: (pp(t[1]), t[0], t[1])):
+        if not (_price_cur(val) or _bare_amount(val) is not None):
+            continue
+        rl = _row_cell(tbl.rows[ri], 0)
+        basis = " ".join(x for x in (_row_cell(header, ci), f"({rl})" if rl else "") if x) or None
+        found |= _set_price(opt, f"{basis}: {val}" if basis and _price_cur(val) else val, basis=basis, allow_bare=True)
+    return found
+
+
 def _flight_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     if len(tbl.rows) < 2:
         return False
