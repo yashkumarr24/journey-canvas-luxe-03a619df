@@ -70,6 +70,10 @@ PRICE_WORDS = re.compile(r"\b(price|cost|rate|tariff|per\s+person|pp|twin|double
 ROOM_BASIS_RE = re.compile(r"\b(rooms?|twin|double|triple|single|quad|sharing|child|children|cwb|cnb|infant|adult|"
                            r"extra\s+bed|per\s+person|pp|supplement)\b", re.I)
 STAR_ONLY_RE = re.compile(r"^\s*[1-7]\s*-?\s*(?:\*+|★+|☆+|stars?)(?:\s+(?:hotels?|category|property))?\s*$", re.I)
+OPTION_PREFIX_RE = re.compile(r"^\s*(?:option|opt\.?)\s*[-#:]?\s*0?(\d{1,2})\b", re.I)
+FARE_RE = re.compile(r"\b(flights?|air\s*fares?|airfares?|air\s*tickets?)\b", re.I)
+# Lines whose amount is not the land package price (never used as "price from").
+NON_PACKAGE_PRICE_RE = re.compile(r"\b(flights?|air\s*fares?|airfares?|air\s*tickets?|visa|gst|tcs|tax(es)?|deposit|advance|supplement)\b", re.I)
 OPTION_NUM_RE = re.compile(r"^\s*(?:option|opt\.?)\s*[-#:]?\s*0?\d{1,2}\b[\s:.\-–]*$", re.I)
 MEAL_WORDS = {"breakfast": "breakfast", "lunch": "lunch", "dinner": "dinner"}
 MONTHS = {m: i for i, m in enumerate(
@@ -280,6 +284,15 @@ def _day_match(line: str) -> tuple[int, int, str] | None:
 def _find_option(pkg: ExtractedPackage, name: str) -> dict[str, Any] | None:
     key = _norm_opt(name)
     return next((o for o in pkg.options if key and _norm_opt(o["option_name"]) == key), None)
+
+
+def _find_option_num(pkg: ExtractedPackage, n: int) -> dict[str, Any] | None:
+    """The option whose name starts with 'Option n' (e.g. 'Option 1 – Standard')."""
+    for o in pkg.options:
+        m = OPTION_PREFIX_RE.match(o["option_name"] or "")
+        if m and int(m.group(1)) == n:
+            return o
+    return None
 
 
 def _new_option(pkg: ExtractedPackage, name: str, context: str | None = None) -> dict[str, Any]:
@@ -866,7 +879,8 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 if target is None and current_opt is not None and (
                         section == "hotels" or state.get("price_opt") is current_opt):
                     target = current_opt
-                if target is None and pend is not None and not label:
+                if target is None and pend is not None and (
+                        not label or _section_of(label) == "pricing" or ROOM_BASIS_RE.search(label)):
                     target = pend
                 if target is not None:
                     _set_price(target, line, basis=None)
@@ -883,7 +897,14 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 consumed.add(line)
                 state["star_txt"] = name  # "Option 1" then "4 ****": the option's hotel category
                 continue
-            if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"):
+            if _is_option_label(name) and current_opt is not None and not current_opt["hotels"] \
+                    and not current_opt.get("indicative_price") and (k := _norm_opt(name)) \
+                    and k != _norm_opt(current_opt["option_name"]) and k in _norm_opt(current_opt["option_name"]):
+                consumed.add(line)  # "Option 1 – Bronze Package" then "Bronze": the same option repeated
+                continue
+            if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"
+                                           or (section == "pricing" and OPTION_PREFIX_RE.match(name))):
+                state["price_opt"] = None
                 current_opt = _find_option(pkg, name) or _new_option(pkg, name, f"standalone line in the {section} section")
                 state["ctx_option"], state["star_txt"] = name, ""
                 continue
@@ -914,6 +935,10 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     if (m := DURATION_RE.search(pkg.name or "") or DURATION_RE.search(doc.filename.replace("_", " "))
             or DURATION_RE.search(joined)):
         pkg.duration_nights, pkg.duration_days = int(m.group(1)), int(m.group(2))
+        fm = DURATION_RE.search(doc.filename.replace("_", " "))
+        if fm and (int(fm.group(1)), int(fm.group(2))) != (pkg.duration_nights, pkg.duration_days):
+            pkg.needs_review.append(ReviewItem("duration", f"document says {pkg.duration_nights}N/{pkg.duration_days}D "
+                                               f"but file name says {fm.group(1)}N/{fm.group(2)}D; kept the document's"))
     if (m := CODE_RE.search(joined)):
         pkg.package_code = m.group(1)
     itin_notes = _finalise_itinerary(pkg, state["ends"], inferred)
@@ -964,6 +989,13 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     for b in state.get("basis_lines", []):
         if b not in used_basis:
             pkg.review_text.append({"field": "pricing", "text": b})
+    for o in pkg.options:
+        if o.pop("_pending", None):
+            pkg.needs_review.append(ReviewItem("options", f"hotel table without an option name; option named "
+                                               f"'{o['option_name']}' from its section heading"))
+    if state.get("named_from_price"):
+        pkg.needs_review.append(ReviewItem("options", f"{state['named_from_price']} option name(s) taken from the "
+                                           "price line that follows the hotel table"))
     # Labels that collected neither hotels nor a price are not real options.
     for o in list(pkg.options):
         if not o["hotels"] and not o.get("indicative_price"):
@@ -980,7 +1012,9 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         curs = [o.get("currency") or "INR" for o in priced]
         pkg.currency = max(set(curs), key=curs.count)
         pkg.indicative_price_from = min(o["indicative_price"] for o in priced if (o.get("currency") or "INR") == pkg.currency)
-    elif (pc := _price_cur(joined)) is not None:
+    elif (pc := next((p for ln in joined.split("\n") if not NON_PACKAGE_PRICE_RE.search(ln)
+                      and (p := _price_cur(ln)) is not None), None)) is not None:
+        # First package-price line in the text; flight fares, visa, GST etc. are skipped.
         pkg.indicative_price_from, pkg.currency = pc[0], pc[1] or "INR"
         pkg.needs_review.append(ReviewItem("indicative_price_from", "price found in text, not tied to an option"))
     pkg.images = [{"name": i.name, "sha256": i.sha256, "bytes": len(i.data)} for i in doc.images]
