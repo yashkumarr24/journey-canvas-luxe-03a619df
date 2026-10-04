@@ -349,3 +349,44 @@ def test_restarted_day_blocks_and_label_noise_go_to_review(tmp_path):
     assert pkg.departures == ["2026-10-12", "2026-10-19"]
     assert pkg.unparsed_departures == ["Every Friday"]
     assert not any("duplicate" in i.reason for i in pkg.needs_review)
+
+
+def test_unlabelled_hotels_and_prices_become_one_flagged_option(tmp_path):
+    body = (p("Abu Dhabi & Dubai 2N/3D", "Title")
+            + p("Hotel Details", bold=True)
+            + p("Dubai: Hotel Citymax or similar") + p("Abu Dhabi: Hotel Ibis")
+            + p("Package Cost", bold=True) + p("Twin/Double sharing") + p("INR 45,000 per person"))
+    pkg = extract(read_docx(make_docx(tmp_path / "AUH.docx", body)), "international")
+    assert len(pkg.options) == 1 and pkg.options[0]["option_name"] == "Hotel Details"
+    o = pkg.options[0]
+    assert [h["hotel_name"] for h in o["hotels"]] == ["Hotel Citymax or similar", "Hotel Ibis"]
+    assert o["hotels"][0]["city"] == "Dubai"
+    assert o["indicative_price"] == 45000 and o["price_basis"] == "Twin/Double sharing"
+    assert any("single option built" in i.reason for i in pkg.needs_review)
+    assert not [t for t in pkg.review_text if t["field"] in ("hotels", "pricing")]
+
+
+def test_heading_plus_detail_days_are_one_itinerary(tmp_path):
+    body = (p("Baku + Georgia 2N/3D", "Title") + p("Itinerary", bold=True)
+            + p("Day 1: Arrive Baku") + p("Day 2: Baku tour") + p("Day 3: Depart")
+            + p("Detailed Itinerary", bold=True)
+            + p("Day 1", bold=True) + p("Day 1: Arrive Baku") + p("Meet at airport.")
+            + p("Day 2", bold=True) + p("Old city walk.")
+            + p("Day 3", bold=True) + p("Transfer to airport."))
+    pkg = extract(read_docx(make_docx(tmp_path / "Baku.docx", body)), "international")
+    assert [d["day_number"] for d in pkg.itinerary] == [1, 2, 3]
+    assert [d["title"] for d in pkg.itinerary] == ["Arrive Baku", "Baku tour", "Depart"]
+    assert pkg.itinerary[0]["description"] == "Meet at airport."
+    assert pkg.itinerary[1]["description"] == "Old city walk."
+    assert not any(i.field == "itinerary" for i in pkg.needs_review)
+
+
+def test_star_labels_under_option_are_hotel_categories(tmp_path):
+    body = (p("Almaty 1N/2D", "Title")
+            + tbl([["Option 1"], ["City", "Hotel", "Category"], ["Almaty", "Hotel Kazakhstan", "4 ****"]])
+            + tbl([["Option 2"], ["City", "Hotel", "Category"], ["Almaty", "Rixos Almaty", "5 *****"]])
+            + tbl([["Category", "Price"], ["Option 1", "INR 50,000"], ["Option 2", "INR 70,000"]]))
+    pkg = extract(read_docx(make_docx(tmp_path / "Almaty.docx", body)), "international")
+    assert [o["option_name"] for o in pkg.options] == ["Option 1", "Option 2"]
+    assert pkg.options[0]["hotels"][0]["star_rating"] == 4 and pkg.options[1]["hotels"][0]["star_rating"] == 5
+    assert [o["indicative_price"] for o in pkg.options] == [50000, 70000]
