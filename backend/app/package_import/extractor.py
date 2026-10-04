@@ -765,6 +765,17 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             if section == "itinerary" and not (heading_like or ends_colon):
                 strong_only = True
             sec = _section_of(cand, strong_only=strong_only)
+        # "Flight Fare: INR …", "Price: INR …", "Option 1 Package Cost: INR …"
+        # carry a price: they are price lines, not section headings, so they
+        # neither end the current option nor move the section.
+        if sec in ("pricing", "flights", "hotels") and colon_head and after.strip() and _price_cur(after) is not None:
+            if sec == "flights" or FARE_RE.search(head_part):
+                pkg.flights.append({"sector": None, "airline": None, "flight_no": None,
+                                    "depart_time": None, "arrive_time": None, "notes": line})
+                continue
+            sec = None
+            if section not in ("hotels", "pricing"):
+                section = "pricing"
         if sec:
             consumed.add(line)
             state["section"], current_day = sec, None
@@ -773,14 +784,26 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             if sec == "departures":
                 ym = re.search(r"\b(20\d\d)\b", line)
                 state["dep_year"] = int(ym.group(1)) if ym else None
-            if sec in ("hotels", "pricing"):
+            state["price_label"], state["price_opt"] = None, None
+            if sec == "hotels":
                 current_opt = None
+            elif sec == "pricing":
+                # "Option 2 – Silver" + hotels, then "Package Cost" + its prices:
+                # an option still without a price keeps collecting them.
+                if current_opt is not None and not current_opt.get("indicative_price"):
+                    state["price_opt"] = current_opt
+                else:
+                    current_opt = None
+                # "Package Cost (3★):" names the option its price table belongs to.
+                if (pl := re.search(r"\(([^)]+)\)", line)) and _is_option_label(pl.group(1)):
+                    state["price_label"] = pl.group(1).strip()
             rest = after.strip() if colon_head else ""
             if not rest:
                 continue
             line, section, dm = rest, sec, _day_match(rest)
 
-        if dm and section not in ("inclusion", "exclusion", "departures", "pricing") and section not in NOTE_KINDS:
+        if dm and section not in ("inclusion", "exclusion", "departures") and section not in NOTE_KINDS and (
+                section != "pricing" or (explicit_days and _price_cur(line) is None)):
             state["section"] = section = "itinerary"
             a, b, rest = dm
             current_day = {"day_number": a, "title": rest or f"Day {a}", "description": None, "meals": []}
@@ -823,10 +846,28 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             label = _clean_head(PRICE_RE.split(line, maxsplit=1)[0]) if pc else ""
             if pc:
                 target = (_find_option(pkg, label) if label else None)
+                pend = getattr(pkg, "_last_pending", None)
+                pend = pend if pend is not None and pend.get("_pending") and not pend.get("indicative_price") else None
+                onum = OPTION_PREFIX_RE.match(label) if label else None
+                if target is None and onum:
+                    oname = onum.group(0).strip(" :-–")
+                    target = _find_option_num(pkg, int(onum.group(1)))
+                    if target is None and pend is not None:
+                        # The hotel table just above had no option name; this
+                        # price line names it ("Option 1 Package Cost: …").
+                        pend["option_name"] = oname
+                        pend.pop("_pending", None)
+                        state["named_from_price"] = state.get("named_from_price", 0) + 1
+                        target = pend
+                    if target is None:
+                        target = _new_option(pkg, oname, "price line naming the option")
                 if target is None and _is_option_label(label):
                     target = _new_option(pkg, label)
-                if target is None and section == "hotels" and current_opt is not None:
+                if target is None and current_opt is not None and (
+                        section == "hotels" or state.get("price_opt") is current_opt):
                     target = current_opt
+                if target is None and pend is not None and not label:
+                    target = pend
                 if target is not None:
                     _set_price(target, line, basis=None)
                     continue
