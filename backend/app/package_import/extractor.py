@@ -466,6 +466,7 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
     # Rows with no day marker that follow a day row (sight-seeing lines, merged
     # day cell spanning several rows) continue that day: kept, never dropped.
     continuation: dict[int, list[str]] = {}
+    stopped = False
     for row in tbl.rows[1:] if day_col_numeric else tbl.rows:
         first = _row_cell(row, 0)
         if day_col_numeric and re.fullmatch(r"0?\d{1,2}", first):
@@ -474,9 +475,14 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
             dm = _day_match(first.split("\n", 1)[0])
         if dm:
             rows.append((dm, row, first))
+            stopped = False
+        elif rows and not stopped and any(
+                _section_of(c.strip(), strong_only=True) and len(c.split()) <= 6 for c in row if c.strip()):
+            stopped = True  # a section heading row (e.g. "Inclusions") ends the day block
+        elif stopped:
+            continue  # after a section heading row: not this day's text (left for review)
         elif rows and (cells := [c.strip() for c in row if c.strip()]) and not (
                 len(cells) <= 3 and all(_section_of(c, strong_only=True) and len(c.split()) <= 6 for c in cells)):
-            # A section heading row (e.g. "Inclusions") ends the itinerary block instead.
             continuation.setdefault(len(rows) - 1, []).extend(cells)
     if not rows or (len(rows) < 2 and not pkg.itinerary and len(tbl.rows) > 2):
         return False
