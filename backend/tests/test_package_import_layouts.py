@@ -10,7 +10,6 @@ from __future__ import annotations
 import csv
 import zipfile
 from pathlib import Path
-from xml.sax.saxutils import escape
 
 import pytest
 
@@ -125,15 +124,16 @@ def test_cli_writes_extraction_summary_and_context(tmp_path):
     src = tmp_path / "intl"
     src.mkdir()
     make_docx(src / "A.docx", TABLE_LAYOUT)
-    make_docx(src / "B.docx", FULL.replace(p("GST 5%"), p("GST 5%") + tbl([["Random", "Grid"], ["zqx", "wvy"]])))
+    make_docx(src / "B.docx", FULL.replace(
+        '<w:tr><w:tc>' + p("Luxury"),
+        '<w:tr><w:tc>' + p("") + '</w:tc><w:tc>' + p("zqx wvy note") + '</w:tc></w:tr><w:tr><w:tc>' + p("Luxury"), 1))
     out = tmp_path / "rep"
     assert cli.main(["--source", str(src), "--report-dir", str(out)]) == 0
     rows = list(csv.DictReader((out / "extraction_summary.csv").open(encoding="utf-8")))
     assert {r["file"] for r in rows} == {"A.docx", "B.docx"}
     assert all(float(r["coverage_pct"]) > 0 for r in rows)
     rt = list(csv.DictReader((out / "review_text.csv").open(encoding="utf-8")))
-    assert "source_context" in rt[0] if rt else True
-    assert any(r["text"] in ("zqx", "wvy") and r["field"] == "unclassified" and r["source_context"] for r in rt)
+    assert any("zqx wvy note" in r["text"] and r["field"] == "unclassified" and r["source_context"] for r in rt)
 
 
 def test_dry_run_is_still_default(tmp_path, monkeypatch):
