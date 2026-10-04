@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Compass } from "lucide-react";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
@@ -17,8 +17,11 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
   const assistant = useAssistant();
   const navigate = useNavigate();
   // Once the trip is complete, go straight to results — no extra button.
+  const wasReady = useRef(assistant.ready);
   useEffect(() => {
-    if (!open || !assistant.ready) return;
+    const becameReady = assistant.ready && !wasReady.current;
+    wasReady.current = assistant.ready;
+    if (!open || !becameReady) return;
     onOpenChange(false);
     void navigate({ to: "/assistant", search: { run: true } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
