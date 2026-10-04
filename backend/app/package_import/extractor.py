@@ -73,7 +73,7 @@ _ORD = r"(?:st|nd|rd|th)?"
 DATE_NUM_RE = re.compile(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b")
 DATE_DMY_RE = re.compile(rf"\b(\d{{1,2}}){_ORD}((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)[\s\-]*{_MON}(?:[\s,'’\-]*(\d{{4}}|\d{{2}}\b))?", re.I)
 DATE_MDY_RE = re.compile(rf"\b{_MON}\s*(\d{{1,2}}){_ORD}\b((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD}\b)*)(?:,?\s*(\d{{4}}))?", re.I)
-DATE_MY_LIST_RE = re.compile(rf"\b{_MON}[\s,'’\-]*(\d{{4}}|\d{{2}})\s*[:\-–]\s*(\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)\b", re.I)
+DATE_MY_LIST_RE = re.compile(rf"\b{_MON}[\s,'’\-]*(\d{{4}}|\d{{2}})\s*:\s*(\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)\b", re.I)
 RANGE_GAP_RE = re.compile(r"^\s*(?:-|–|—|to|till|until)\s*$", re.I)
 FLIGHT_NO_RE = re.compile(r"\b([A-Z0-9]{2})[\s-]?(\d{2,4})\b")
 
