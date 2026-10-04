@@ -43,8 +43,8 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
 
   const flightQuery = useQuery(flightSearchQueryOptions(flightRequest));
   const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
-  const flightResults = flightQuery.data?.results ?? [];
-  const hotelResults = hotelQuery.data?.results ?? [];
+  const flightResults = useMemo(() => flightQuery.data?.results ?? [], [flightQuery.data?.results]);
+  const hotelResults = useMemo(() => hotelQuery.data?.results ?? [], [hotelQuery.data?.results]);
 
   let preferredFlights = useMemo(
     () => applyPreferenceFilters(flightResults, assistant.requirements),
