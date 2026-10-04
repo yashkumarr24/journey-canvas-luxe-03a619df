@@ -18,7 +18,7 @@ import {
   saveAssistantSession,
 } from "./assistant-session";
 import { missingRequirements, sanitizeAssistantMessage } from "./requirements";
-import { confirmFromTurn, nextGuidedStep, type ConfirmedSteps, type GuidedStep } from "./guided-steps";
+import { preserveStatedDetails, confirmFromTurn, nextGuidedStep, type ConfirmedSteps, type GuidedStep } from "./guided-steps";
 
 const GREETING = createMessage(
   "assistant",
@@ -100,9 +100,10 @@ export function useAssistant(): UseAssistantResult {
           history: history.map((m) => ({ role: m.role, text: m.text })),
         });
 
-        requirementsRef.current = response.requirements;
-        setRequirements(response.requirements);
-        setConfirmed((prev) => confirmFromTurn(text, response.requirements, prev));
+        const preserved = preserveStatedDetails(text, response.requirements);
+        requirementsRef.current = preserved;
+        setRequirements(preserved);
+        setConfirmed((prev) => confirmFromTurn(text, preserved, prev));
         setSuggestions(response.suggestions ?? []);
         setMessages((prev) => [
           ...prev,

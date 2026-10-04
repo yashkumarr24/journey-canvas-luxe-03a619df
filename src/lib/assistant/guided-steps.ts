@@ -10,7 +10,7 @@
  * "flights only" are never treated as the user's answer.
  */
 
-import type { TravelRequirements } from "@/types/assistant";
+import type { TimeWindow, TravelRequirements } from "@/types/assistant";
 
 export type GuidedStep =
   | "departureDate"
@@ -91,4 +91,39 @@ export function addNights(iso: string, nights: number): string {
 export function nightsBetweenDates(from: string, to: string): number {
   const ms = new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime();
   return Math.round(ms / 86_400_000);
+}
+
+const WINDOW_WORDS: [RegExp, TimeWindow][] = [
+  [/early morning/, "early_morning"],
+  [/morning/, "morning"],
+  [/afternoon/, "afternoon"],
+  [/evening/, "evening"],
+  [/night/, "night"],
+];
+
+function windowIn(fragment: string): TimeWindow | undefined {
+  return WINDOW_WORDS.find(([re]) => re.test(fragment))?.[1];
+}
+
+/**
+ * Keep details the user stated literally, even if a provider dropped or
+ * mis-filed them. Only reads the user's own words; never invents values.
+ */
+export function preserveStatedDetails(userText: string, requirements: TravelRequirements): TravelRequirements {
+  const text = userText.toLowerCase();
+  const next: TravelRequirements = { ...requirements };
+
+  const stay = /\b(?:stay(?:ing)?|for)\s+(?:for\s+)?(\d{1,2})\s*nights?\b/.exec(text) ?? /\b(\d{1,2})\s*nights?\b/.exec(text);
+  if (stay) next.durationNights = Number(stay[1]);
+
+  const ret = /\b(?:return(?:ing)?|coming back|back flight|inbound)\b([^.,;]*)/.exec(text);
+  const returnWindow = ret ? windowIn(ret[1] ?? "") : undefined;
+  if (returnWindow) {
+    next.preferredReturnWindow = returnWindow;
+    const outside = text.replace(ret![0], " ");
+    const departureWindow = windowIn(outside.replace(/\barriv\w*[^.,;]*/, " "));
+    // A return-only time must not become an outbound preference.
+    if (!departureWindow && next.preferredDepartureWindow === returnWindow) delete next.preferredDepartureWindow;
+  }
+  return next;
 }

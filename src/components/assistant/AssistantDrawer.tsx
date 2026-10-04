@@ -43,9 +43,9 @@ export function AssistantDrawer({ open, onOpenChange }: { open: boolean; onOpenC
         </div>
         <div className="border-t border-border bg-card p-4">
           <Button asChild className="w-full" disabled={!assistant.ready}>
-            <Link to="/assistant" onClick={() => onOpenChange(false)}>
+            <Link to="/assistant" search={assistant.ready ? { run: true } : {}} onClick={() => onOpenChange(false)}>
               <Search className="size-4" />
-              {assistant.ready ? "Review trip & search results" : "Add trip details to continue"}
+              {assistant.ready ? (assistant.requirements.products?.includes("hotels") ? "Search flights & hotels" : "Search flights") : "Add trip details to continue"}
             </Link>
           </Button>
           <p className="mt-2 text-center text-[11px] text-muted-foreground">Results come only from the existing flight and hotel search services.</p>
