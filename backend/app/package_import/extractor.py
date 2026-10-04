@@ -702,8 +702,10 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
         if isinstance(block, Table):
             state["all_text"].extend(" | ".join(r) for r in block.rows)
             if (_incl_excl_table(block, pkg) or _itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
-                    or _hotel_table(block, pkg, state.get("ctx_option")) or _flight_table(block, pkg)
-                    or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)):
+                    or _hotel_table(block, pkg, state.get("ctx_option"), state.get("heading_hotels"))
+                    or _flight_table(block, pkg)
+                    or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)
+                    or (state["section"] == "pricing" and _labelled_price_table(block, pkg, state.get("price_label")))):
                 state.setdefault("data_tables", set()).add(id(block))
                 pkg._data_tables = state["data_tables"]  # type: ignore[attr-defined]
                 continue
