@@ -201,8 +201,6 @@ def _dates_in(text: str) -> list[str]:
     for m in DATE_MY_LIST_RE.finditer(text):
         mo, y = mon(m.group(1)), int(m.group(2))
         for d in re.findall(r"\d{1,2}", m.group(3)):
-            add((m.start() + len(found) * 0, m.end()), None)  # placeholder keeps span
-            found.pop()
             iso = _mk_date(y, mo, int(d)) if mo else None
             if iso:
                 found.append((m.start(), m.end(), iso))
@@ -234,7 +232,6 @@ def _dates_in(text: str) -> list[str]:
         if iso not in out:
             out.append(iso)
         prev_end = e
-    # "15-20 Oct 2026": a day range collapsed into one DMY match keeps its start.
     return out
 
 
@@ -493,12 +490,12 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
                     lines = cell.split("\n")
                     for li, ln in enumerate(lines):
                         heading = ci == 0 and li == 0 and len(cells) > 1 and _section_of(ln) is not None
-                        yield ln, heading, True
+                        yield ln, heading, True, None
             continue
         assert isinstance(block, Paragraph)
         state["all_text"].append(block.text)
         for li, ln in enumerate(block.text.split("\n")):
-            yield ln, (block.is_heading_like if li == 0 else False), False, *( (block,) if li == 0 else (None,))
+            yield ln, (block.is_heading_like if li == 0 else False), False, (block if li == 0 else None)
 
 
 def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
@@ -512,8 +509,7 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     preamble: list[str] = []
 
     for unit in _units(doc, pkg, state):
-        raw, heading_like, from_table = unit[0], unit[1], unit[2]
-        block = unit[3] if len(unit) > 3 else None
+        raw, heading_like, from_table, block = unit
         line = raw.strip()
         if not line:
             continue
