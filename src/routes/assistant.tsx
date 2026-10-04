@@ -80,7 +80,7 @@ function AssistantPage() {
   useEffect(() => {
     if (!runOnArrival || !canSearch) return;
     runSearch();
-    navigate({ to: "/assistant", search: {}, replace: true });
+    void navigate({ to: "/assistant", search: () => ({}), replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runOnArrival, canSearch]);
 
