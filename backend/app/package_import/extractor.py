@@ -441,9 +441,12 @@ def _itinerary_table(tbl: Table, pkg: ExtractedPackage, ends: dict[int, int]) ->
     for (a, b, rest), row, first in rows:
         extra_first = first.split("\n", 1)[1].strip() if "\n" in first else ""
         others = [c.strip() for c in row[1:] if c.strip()]
-        title = rest or (others.pop(0).split("\n", 1)[0] if others else "") or f"Day {a}"
-        if others and others[0].startswith(title):
-            others[0] = others[0][len(title):].strip()
+        title = rest
+        if not title and others:
+            title, _, remainder = others.pop(0).partition("\n")
+            if remainder.strip():
+                others.insert(0, remainder.strip())
+        title = title or f"Day {a}"
         desc = "\n".join(x for x in [extra_first, *others] if x) or None
         day = {"day_number": a, "title": title, "description": desc, "meals": []}
         pkg.itinerary.append(day)
