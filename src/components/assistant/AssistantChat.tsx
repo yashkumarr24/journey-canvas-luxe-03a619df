@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Compass, RefreshCcw, RotateCcw } from "lucide-react";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -19,9 +19,11 @@ export interface AssistantChatProps {
   onSend: (text: string) => void;
   onRetry: () => void;
   onReset: () => void;
+  /** Guided control for the next missing detail, shown under the conversation. */
+  guided?: ReactNode;
 }
 
-export function AssistantChat({ messages, pending, error, suggestions, suggestedPrompts, isDemo, onSend, onRetry, onReset }: AssistantChatProps) {
+export function AssistantChat({ messages, pending, error, suggestions, suggestedPrompts, isDemo, onSend, onRetry, onReset, guided }: AssistantChatProps) {
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const chips = suggestions.length > 0 ? suggestions : messages.length <= 1 ? suggestedPrompts : [];
@@ -53,7 +55,9 @@ export function AssistantChat({ messages, pending, error, suggestions, suggested
         <ConversationScrollButton />
       </Conversation>
 
-      {chips.length > 0 ? <div className="flex gap-2 overflow-x-auto border-t border-border px-4 py-3 sm:flex-wrap sm:px-5">{chips.map((chip) => <Button key={chip} variant="outline" size="sm" disabled={pending} onClick={() => onSend(chip)} className="shrink-0 font-normal">{chip}</Button>)}</div> : null}
+      {guided && !pending ? <div className="border-t border-border px-4 py-3 sm:px-5">{guided}</div> : null}
+
+      {!guided && chips.length > 0 ? <div className="flex gap-2 overflow-x-auto border-t border-border px-4 py-3 sm:flex-wrap sm:px-5">{chips.map((chip) => <Button key={chip} variant="outline" size="sm" disabled={pending} onClick={() => onSend(chip)} className="shrink-0 font-normal">{chip}</Button>)}</div> : null}
 
       <div className="border-t border-border p-3 sm:p-4">
         <PromptInput onSubmit={({ text }) => { const trimmed = text.trim(); if (!trimmed || pending) return; setValue(""); onSend(trimmed); }} className="rounded-lg border-border bg-card shadow-none">
