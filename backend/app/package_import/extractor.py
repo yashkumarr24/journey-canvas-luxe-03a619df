@@ -320,7 +320,8 @@ def _row_cell(row: list[str], i: int | None) -> str:
     return row[i].strip() if i is not None and i < len(row) else ""
 
 
-def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = None) -> bool:
+def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = None,
+                 pending_name: str | None = None) -> bool:
     """Rows of hotels with a 'hotel/accommodation' header (header may be the
     2nd/3rd row under a merged title row). Grouped by an option column."""
     hdr_idx = next((i for i, r in enumerate(tbl.rows[:3])
@@ -331,7 +332,8 @@ def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = Non
     if hdr_idx is None or len(tbl.rows) <= hdr_idx + 1:
         return False
     header = [c.lower() for c in tbl.rows[hdr_idx]]
-    if sum(1 for h in header[1:] if OPTION_RE.search(h)) >= 2:
+    if sum(1 for h in header[1:] if OPTION_RE.search(h)) >= 2 and not any(
+            re.search(r"\b(city|room\s*type|meal|nights?)\b", h) for h in header):
         return False  # option-per-column layout: handled by _option_column_table
 
     def col(*keys: str) -> int | None:
@@ -347,14 +349,18 @@ def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = Non
     c_price = col("price", "cost", "rate", "inr", "₹", "tariff", "usd", "twin", "double", "sharing", "per person")
     if c_hotel == c_city:
         c_city = None
+    if c_option is not None and c_option == c_room:
+        c_option = None
     # An "Option N" title above the header (merged row) or just before the table names the option.
     default_opt = next((c.strip() for r in tbl.rows[:hdr_idx] for c in r if OPTION_NUM_RE.match(c) or _is_option_label(c)),
                        None) or ctx_option
-    # A category column holding only star labels (4 ****, 5★) is the hotel's star class, not an option.
+    # A category column holding only star labels (4 ****, 5★) is the hotel's
+    # star class, never the option: several tables with "4★" rows are separate
+    # options, not one merged "4★" option.
     body = tbl.rows[hdr_idx + 1:]
     if c_option is not None:
         vals = [_row_cell(r, c_option) for r in body if _row_cell(r, c_option)]
-        if vals and all(STAR_ONLY_RE.match(v) for v in vals) and default_opt:
+        if vals and all(STAR_ONLY_RE.match(v) for v in vals):
             c_star, c_option = c_star if c_star is not None else c_option, None
 
     by_option: dict[str, dict[str, Any]] = {}
@@ -367,10 +373,18 @@ def _hotel_table(tbl: Table, pkg: ExtractedPackage, ctx_option: str | None = Non
         hotel = cell(c_hotel)
         if not hotel or hotel.lower() == header[c_hotel]:
             continue
-        opt_name = cell(c_option) or default_opt or "Option 1"
-        if opt_name not in by_option:
-            by_option[opt_name] = _find_option(pkg, opt_name) or _new_option(pkg, opt_name)
-        opt = by_option[opt_name]
+        opt_name = cell(c_option) or default_opt
+        key = opt_name or "\0pending"
+        if key not in by_option:
+            if opt_name:
+                by_option[key] = _find_option(pkg, opt_name) or _new_option(pkg, opt_name)
+            else:
+                # Option not named in or above the table: a later "Option N … price"
+                # line names it; until then it carries the section heading (flagged).
+                by_option[key] = _new_option(pkg, pending_name or "Option 1", "hotel table without an option name")
+                by_option[key]["_pending"] = True
+                pkg._last_pending = by_option[key]  # type: ignore[attr-defined]
+        opt = by_option[key]
         opt["hotels"].append(_hotel_dict(hotel, cell(c_city), cell(c_room), cell(c_nights), cell(c_meal), cell(c_star)))
         if c_price is not None and cell(c_price):
             _set_price(opt, cell(c_price), allow_bare=True)
@@ -382,7 +396,12 @@ def _option_column_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     city row; rows whose label/cells are prices give that option's price."""
     for hdr_idx, header in enumerate(tbl.rows[:3]):
         opt_cols = [i for i, h in enumerate(header) if i > 0 and _is_option_label(h)]
-        if len(opt_cols) >= 2:
+        others = [h for i, h in enumerate(header) if i > 0 and h.strip()]
+        # A data row ('4N | Kuta | Hotel X | 4★ | Deluxe | BB') is not an option
+        # header: option labels must be most of its cells, and no row above may
+        # already be a hotel-table header.
+        if len(opt_cols) >= 2 and len(opt_cols) * 2 >= len(others) and not any(
+                re.search(r"\b(hotels?|city|room\s*type|meal)\b", " ".join(r), re.I) for r in tbl.rows[:hdr_idx]):
             break
     else:
         return False
