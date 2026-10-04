@@ -17,9 +17,18 @@ function headers(key: string) {
 
 export async function rest<T>(path: string): Promise<T> {
   const { url, key } = cfg();
-  const r = await fetch(`${url}/rest/v1/${path}`, { headers: headers(key) });
-  if (!r.ok) throw new Error(`Package catalogue read failed (${r.status})`);
-  return (await r.json()) as T;
+  // One retry on a dropped connection or temporary server error, so a brief
+  // network blip doesn't hide the whole catalogue.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const r = await fetch(`${url}/rest/v1/${path}`, { headers: headers(key) });
+      if (r.ok) return (await r.json()) as T;
+      if (r.status < 500 || attempt >= 1) throw new Error(`Package catalogue read failed (${r.status})`);
+    } catch (e) {
+      if (attempt >= 1 || (e instanceof Error && e.message.startsWith("Package catalogue read failed"))) throw e;
+    }
+    await new Promise((res) => setTimeout(res, 300));
+  }
 }
 
 const BUCKET = "package-images";
