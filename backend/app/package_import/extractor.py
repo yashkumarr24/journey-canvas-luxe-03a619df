@@ -113,6 +113,8 @@ class ExtractedPackage:
     notes: list[dict[str, str]] = field(default_factory=list)
     departures: list[str] = field(default_factory=list)
     unparsed_departures: list[str] = field(default_factory=list)
+    # Source lines whose dates were stored in `departures` (verbatim).
+    departure_source_text: list[str] = field(default_factory=list)
     images: list[dict[str, Any]] = field(default_factory=list)
     # Absent optional facts (e.g. no package code) — informational, not review.
     optional_missing: list[str] = field(default_factory=list)
@@ -518,6 +520,7 @@ def _departure_line(pkg: ExtractedPackage, line: str, year: int | None) -> int:
             _dates_in(re.sub(rf"(\b{_MON}\s*\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)", rf"\1 {year}", line, flags=re.I))
     if ds:
         pkg.departures.extend(d for d in ds if d not in pkg.departures)
+        pkg.departure_source_text.append(line)
         return 1
     if HAS_DATEISH.search(line) or WEEKDAY_RE.search(line):
         pkg.unparsed_departures.append(line)
@@ -639,9 +642,12 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
     for block in doc.blocks:
         if isinstance(block, Table):
             state["all_text"].extend(" | ".join(r) for r in block.rows)
+            state["block_no"] = state.get("block_no", 0) + 1
             if (_incl_excl_table(block, pkg) or _itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
                     or _hotel_table(block, pkg, state.get("ctx_option")) or _flight_table(block, pkg)
                     or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)):
+                state.setdefault("data_tables", set()).add(id(block))
+                pkg._data_tables = state["data_tables"]  # type: ignore[attr-defined]
                 continue
             state["layout_tables"] += 1
             for row in block.rows:
@@ -660,6 +666,10 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
 
 def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     pkg = ExtractedPackage(source_filename=doc.filename, checksum=doc.checksum, package_type=package_type)
+    # Lines used as structure (section headings, group headings, categories);
+    # read by the coverage pass so they are not reported as unclassified.
+    consumed: set[str] = set()
+    pkg._consumed = consumed  # type: ignore[attr-defined]
     state: dict[str, Any] = {"section": None, "all_text": [], "ends": {}, "layout_tables": 0}
     current_day: dict[str, Any] | None = None
     current_opt: dict[str, Any] | None = None
@@ -696,6 +706,7 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 strong_only = True
             sec = _section_of(cand, strong_only=strong_only)
         if sec:
+            consumed.add(line)
             state["section"], current_day = sec, None
             if sec in ("hotels", "pricing"):
                 state.setdefault("heading_" + sec, _clean_head(line))
@@ -764,9 +775,11 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 continue
             name = _clean_head(line)
             if GROUP_HEAD_RE.search(line) and len(line.split()) <= 10:
+                consumed.add(line)
                 state["group"] = line  # e.g. "Abu Dhabi Hotel (2N + 2 Park Access)": heads the lines below
                 continue
             if STAR_ONLY_RE.match(name) and current_opt is not None and OPTION_NUM_RE.match(current_opt["option_name"]):
+                consumed.add(line)
                 state["star_txt"] = name  # "Option 1" then "4 ****": the option's hotel category
                 continue
             if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"):

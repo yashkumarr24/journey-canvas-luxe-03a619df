@@ -25,6 +25,7 @@ class Paragraph:
     text: str
     style: str = ""
     bold: bool = False
+    origin: str = "body"  # body | textbox
 
     @property
     def is_heading_like(self) -> bool:
@@ -55,6 +56,12 @@ class DocxContent:
     checksum: str
     blocks: list[Paragraph | Table] = field(default_factory=list)
     images: list[DocImage] = field(default_factory=list)
+    # Page headers/footers, footnotes, endnotes and comments: (part name, block).
+    # Kept apart from the body so they never become package fields silently;
+    # the coverage pass reports them for review.
+    other_parts: list[tuple[str, Paragraph | Table]] = field(default_factory=list)
+    # Images referenced by external link (not embedded in the file).
+    linked_images: list[str] = field(default_factory=list)
 
 
 def _walk(el: ET.Element, skip_textboxes: bool = False):
@@ -103,22 +110,24 @@ def _table(t: ET.Element) -> Table:
     return Table(rows=rows)
 
 
-def _collect(container: ET.Element, out: list[Paragraph | Table]) -> None:
+def _collect(container: ET.Element, out: list[Paragraph | Table], origin: str = "body") -> None:
     """Body-level blocks in order, descending into content controls (w:sdt)
     and emitting text-box paragraphs right after their anchor paragraph."""
     for child in container:
         if child.tag == W + "p":
             para = _para(child)
+            para.origin = origin
             if para.text:
                 out.append(para)
             for box in (n for n in _walk(child) if n.tag == TXBX):
-                _collect(box, out)
+                _collect(box, out, "textbox")
         elif child.tag == W + "tbl":
             tbl = _table(child)
             if any(any(c for c in r) for r in tbl.rows):
                 out.append(tbl)
-        elif child.tag in (W + "sdt", W + "sdtContent", W + "customXml", MC + "AlternateContent", MC + "Choice"):
-            _collect(child, out)
+        elif child.tag in (W + "sdt", W + "sdtContent", W + "customXml", MC + "AlternateContent", MC + "Choice",
+                           W + "footnote", W + "endnote", W + "comment"):
+            _collect(child, out, origin)
 
 
 def read_docx(path: Path) -> DocxContent:
@@ -130,6 +139,17 @@ def read_docx(path: Path) -> DocxContent:
         if body is not None:
             _collect(body, content.blocks)
         for name in sorted(z.namelist()):
+            if re.fullmatch(r"word/(header\d*|footer\d*|footnotes|endnotes|comments)\.xml", name):
+                blocks: list[Paragraph | Table] = []
+                try:
+                    _collect(ET.fromstring(z.read(name)), blocks)
+                except ET.ParseError:
+                    continue
+                content.other_parts.extend((name.split("/")[-1][:-4], b) for b in blocks)
+            elif name.startswith("word/_rels/") and name.endswith(".rels"):
+                for rel in ET.fromstring(z.read(name)):
+                    if rel.get("TargetMode") == "External" and rel.get("Type", "").endswith("/image"):
+                        content.linked_images.append(rel.get("Target", ""))
             if name.startswith("word/media/") and Path(name).suffix.lower() in IMAGE_EXT:
                 data = z.read(name)
                 content.images.append(
