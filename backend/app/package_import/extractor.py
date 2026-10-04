@@ -54,7 +54,8 @@ DAY_RE = re.compile(
     r"(?:\s*(?:&|-|–|—|to|and|/|,)\s*(?:day\s*)?0?(\d{1,2}))?(?!\d)" + _SEP + r"(.*)$", re.I)
 DAY_ORD_RE = re.compile(r"^\s*(\d{1,2})(?:st|nd|rd|th)\s+day\b" + _SEP + r"(.*)$", re.I)
 DAY_WORD_RE = re.compile(r"^\s*day\s+(" + "|".join(WORD_NUM) + r")\b" + _SEP + r"(.*)$", re.I)
-DURATION_RE = re.compile(r"(\d{1,2})\s*N(?:ights?)?\s*[/&,\-\s]*\s*(\d{1,2})\s*D(?:ays?)?\b", re.I)
+DURATION_RE = re.compile(r"(\d{1,2})\s*N(?:ights?|ts?|ites?)?\.?\s*[/&,\-–\s]*\s*(\d{1,2})\s*D(?:ays?|ys?)?\b", re.I)
+GROUP_HEAD_RE = re.compile(r"\bhotels?\b.*\(\s*\d+\s*N\b|\(\s*\d+\s*N\b.*\bhotels?\b", re.I)
 CODE_RE = re.compile(r"\b(?:package|tour|pkg|trip)\s*(?:code|id|ref(?:erence)?)\s*(?:no\.?)?\s*[:\-#]?\s*([A-Z0-9][A-Z0-9/_\-]{2,30})", re.I)
 _CUR = r"₹|INR|Rs\.?|USD|US\$|\$|AED|EUR|€|GBP|£|SGD|MYR|THB"
 PRICE_RE = re.compile(
@@ -279,9 +280,9 @@ def _find_option(pkg: ExtractedPackage, name: str) -> dict[str, Any] | None:
     return next((o for o in pkg.options if key and _norm_opt(o["option_name"]) == key), None)
 
 
-def _new_option(pkg: ExtractedPackage, name: str) -> dict[str, Any]:
+def _new_option(pkg: ExtractedPackage, name: str, context: str | None = None) -> dict[str, Any]:
     opt = {"option_name": name, "hotels": [], "indicative_price": None, "price_text": None,
-           "price_basis": None, "currency": None}
+           "price_basis": None, "currency": None, "source_context": context}
     pkg.options.append(opt)
     return opt
 
@@ -384,7 +385,8 @@ def _option_column_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     else:
         return False
     header = tbl.rows[hdr_idx]
-    opts = {i: (_find_option(pkg, header[i].strip()) or _new_option(pkg, header[i].strip())) for i in opt_cols}
+    opts = {i: (_find_option(pkg, header[i].strip()) or _new_option(pkg, header[i].strip(), "table header: " + " | ".join(header)
+                                                                           + (" / next row: " + " | ".join(tbl.rows[hdr_idx + 1]) if len(tbl.rows) > hdr_idx + 1 else ""))) for i in opt_cols}
     used = False
     for row in tbl.rows[hdr_idx + 1:]:
         label = _row_cell(row, 0)
@@ -600,6 +602,17 @@ def _finalise_itinerary(pkg: ExtractedPackage, ends: dict[int, int], inferred: s
         return (0 if not limit else -abs(last - limit), len(seq))
 
     best = max(seqs, key=score)
+    if not limit:
+        # No stated duration to check against: only an unbroken Day 1, 2, 3... run counts.
+        run, expect = [], 1
+        for d in best:
+            if d["day_number"] != expect:
+                break
+            run.append(d)
+            expect = ends.get(id(d), d["day_number"]) + 1
+        if len(run) < len(best):
+            notes.append("no stated duration; day numbering has gaps, only the unbroken run from Day 1 kept")
+        best = run
     keep: list[dict[str, Any]] = []
     dropped = 0
     for d in days:
@@ -747,14 +760,17 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                     _set_price(target, line, basis=None)
                     continue
                 basis = label if label and ROOM_BASIS_RE.search(label) else state.pop("last_basis", None)
-                state.setdefault("loose_prices", []).append((line, basis))
+                state.setdefault("loose_prices", []).append((line, basis, label if label and not ROOM_BASIS_RE.search(label) else None))
                 continue
             name = _clean_head(line)
+            if GROUP_HEAD_RE.search(line) and len(line.split()) <= 10:
+                state["group"] = line  # e.g. "Abu Dhabi Hotel (2N + 2 Park Access)": heads the lines below
+                continue
             if STAR_ONLY_RE.match(name) and current_opt is not None and OPTION_NUM_RE.match(current_opt["option_name"]):
                 state["star_txt"] = name  # "Option 1" then "4 ****": the option's hotel category
                 continue
             if _is_option_label(name) and (heading_like or ends_colon or section == "hotels"):
-                current_opt = _find_option(pkg, name) or _new_option(pkg, name)
+                current_opt = _find_option(pkg, name) or _new_option(pkg, name, f"standalone line in the {section} section")
                 state["ctx_option"], state["star_txt"] = name, ""
                 continue
             if ROOM_BASIS_RE.search(line) and len(line.split()) <= 6:
@@ -764,6 +780,12 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             city, hotel = (head_part.strip(), after.strip()) if colon_head and after.strip() else (None, line)
             if section == "hotels":
                 h = _hotel_dict(hotel, city, star_txt=state.get("star_txt", ""))
+                if state.get("group"):
+                    g = state["group"]
+                    if not h["city"] and (cm := re.match(r"\s*(.+?)\s+hotels?\b", g, re.I)):
+                        h["city"] = cm.group(1)
+                    if h["nights"] is None and (nm := re.search(r"\(\s*(\d+)\s*N\b", g, re.I)):
+                        h["nights"] = int(nm.group(1))
                 if current_opt is None:
                     state.setdefault("loose_hotels", []).append((h, line))
                 else:
@@ -775,27 +797,53 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
 
     # ---- document-wide facts (copied, never inferred beyond the pattern) ----
     joined = "\n".join(state["all_text"])
-    if (m := DURATION_RE.search((pkg.name or "") + "\n" + doc.filename + "\n" + joined)):
+    if (m := DURATION_RE.search(pkg.name or "") or DURATION_RE.search(doc.filename.replace("_", " "))
+            or DURATION_RE.search(joined)):
         pkg.duration_nights, pkg.duration_days = int(m.group(1)), int(m.group(2))
     if (m := CODE_RE.search(joined)):
         pkg.package_code = m.group(1)
     itin_notes = _finalise_itinerary(pkg, state["ends"], inferred)
     loose_h = state.get("loose_hotels", [])
     loose_p = state.get("loose_prices", [])
-    used_basis: set[str] = {b for _, b in loose_p if b}
+    used_basis: set[str] = {b for _, b, _ in loose_p if b}
     heading = state.get("heading_hotels") or state.get("heading_pricing")
     if not pkg.options and (loose_h or loose_p) and heading:
         # The document has one unlabelled hotel/price set: it is a single option
         # named by its own section heading. Flagged so a reviewer confirms it.
-        opt = _new_option(pkg, heading)
-        opt["hotels"] = [h for h, _ in loose_h]
-        for line, basis in loose_p:
-            _set_price(opt, line, basis=basis)
-        pkg.needs_review.append(ReviewItem("options", f"single option built from un-labelled hotels/prices under '{heading}'"))
+        labels = list(dict.fromkeys(lb for _, _, lb in loose_p if lb))
+        if len(labels) >= 2:
+            # Each priced line names its own hotel choice: separate options, never collapsed.
+            for lb in labels:
+                opt = _new_option(pkg, lb)
+                opt["hotels"] = [h for h, _ in loose_h if h["hotel_name"].lower() in lb.lower()]
+                for line, basis, l2 in loose_p:
+                    if l2 == lb:
+                        _set_price(opt, line, basis=basis)
+            placed = {id(h) for o in pkg.options for h in o["hotels"]}
+            shared = [h for h, _ in loose_h if id(h) not in placed]
+            for h, line in loose_h:
+                if id(h) not in placed:
+                    pkg.review_text.append({"field": "hotels", "text": line})
+            unl = [(ln, b) for ln, b, lb in loose_p if not lb]
+            for ln, b in unl:
+                pkg.review_text.append({"field": "pricing", "text": f"{b}: {ln}" if b else ln})
+            pkg.needs_review.append(ReviewItem("options", f"{len(labels)} options built from separately priced hotel choices"
+                                               + (f"; {len(shared)} hotel line(s) not tied to a choice" if shared else "")))
+        else:
+            opt = _new_option(pkg, heading)
+            opt["hotels"] = [h for h, _ in loose_h]
+            for line, basis, _ in loose_p:
+                _set_price(opt, line, basis=basis)
+            pkg.needs_review.append(ReviewItem("options", f"single option built from un-labelled hotels/prices under '{heading}'"))
+            bases = [b or "" for _, b, _ in loose_p]
+            amounts = {(b or "", _price(ln)) for ln, b, _ in loose_p}
+            if len(amounts) > len(set(bases)):
+                pkg.needs_review.append(ReviewItem("options", "several different prices for the same sharing basis; "
+                                                   "they may be separate choices — all kept in price_text"))
     else:
         for _, line in loose_h:
             pkg.review_text.append({"field": "hotels", "text": line})
-        for line, basis in loose_p:
+        for line, basis, _ in loose_p:
             pkg.notes.append({"kind": "other", "text": line})  # price not tied to an option: kept verbatim
             pkg.review_text.append({"field": "pricing", "text": f"{basis}: {line}" if basis else line})
         used_basis = set()
@@ -806,7 +854,8 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     for o in list(pkg.options):
         if not o["hotels"] and not o.get("indicative_price"):
             pkg.options.remove(o)
-            pkg.review_text.append({"field": "options", "text": o["option_name"]})
+            ctx = o.get("source_context")
+            pkg.review_text.append({"field": "options", "text": o["option_name"] + (f"  [context: {ctx}]" if ctx else "")})
     if preamble:
         pkg.overview = "\n".join(p for p in preamble if p != pkg.name) or None
     for day in pkg.itinerary:
