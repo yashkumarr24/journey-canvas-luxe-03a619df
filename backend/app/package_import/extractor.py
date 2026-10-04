@@ -62,16 +62,19 @@ PRICE_RE = re.compile(
     rf"|(?P<a2>\d[\d,]{{2,}}(?:\.\d{{1,2}})?)\s*(?:(?P<c2>INR|USD|AED|EUR|GBP|SGD|MYR|THB|Rs\.?)\b|(?P<dash>/-))", re.I)
 CUR_CODE = {"₹": "INR", "inr": "INR", "rs": "INR", "rs.": "INR", "usd": "USD", "us$": "USD", "$": "USD",
             "aed": "AED", "eur": "EUR", "€": "EUR", "gbp": "GBP", "£": "GBP", "sgd": "SGD", "myr": "MYR", "thb": "THB"}
-OPTION_RE = re.compile(r"(\b[1-7]\s*(?:\*|★|☆|star\b|stars\b)|★|\b(deluxe|standard|premium|luxury|budget|superior|economy|"
+OPTION_RE = re.compile(r"(\b[1-7]\s*(?:\*+|★+|☆+|-?\s*star\b|-?\s*stars\b)|★|\b(deluxe|standard|premium|luxury|budget|superior|economy|"
                        r"super\s+deluxe|option\s*\w*|category\s*\w*|cat\s*\d|platinum|gold|silver)\b)", re.I)
 PRICE_WORDS = re.compile(r"\b(price|cost|rate|tariff|per\s+person|pp|twin|double|triple|single|child|adult|sharing|inr|usd|aed)\b|₹|\$", re.I)
+# Labels that describe a room or a price basis, never a package option.
+ROOM_BASIS_RE = re.compile(r"\b(rooms?|twin|double|triple|single|quad|sharing|child|children|cwb|cnb|infant|adult|"
+                           r"extra\s+bed|per\s+person|pp|supplement)\b", re.I)
 MEAL_WORDS = {"breakfast": "breakfast", "lunch": "lunch", "dinner": "dinner"}
 MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
 _MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
 _ORD = r"(?:st|nd|rd|th)?"
 DATE_NUM_RE = re.compile(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b")
-DATE_DMY_RE = re.compile(rf"\b(\d{{1,2}}){_ORD}((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)[\s\-]*{_MON}(?:[\s,'’\-]*(\d{{4}}|\d{{2}}\b))?", re.I)
+DATE_DMY_RE = re.compile(rf"\b(\d{{1,2}}){_ORD}((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)[\s\-]*{_MON}(?:[\s,\-]*(\d{{4}})\b|\s*['’]\s*(\d{{2}})\b)?", re.I)
 DATE_MDY_RE = re.compile(rf"\b{_MON}\s*(\d{{1,2}}){_ORD}\b((?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD}\b)*)(?:,?\s*(\d{{4}}))?", re.I)
 DATE_MY_LIST_RE = re.compile(rf"\b{_MON}[\s,'’\-]*(\d{{4}}|\d{{2}})\s*:\s*(\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)\b", re.I)
 RANGE_GAP_RE = re.compile(r"^\s*(?:-|–|—|to|till|until)\s*$", re.I)
@@ -110,6 +113,8 @@ class ExtractedPackage:
     images: list[dict[str, Any]] = field(default_factory=list)
     # Absent optional facts (e.g. no package code) — informational, not review.
     optional_missing: list[str] = field(default_factory=list)
+    # Content that could not be assigned to a field with confidence, verbatim.
+    review_text: list[dict[str, str]] = field(default_factory=list)
     needs_review: list[ReviewItem] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -171,10 +176,19 @@ def _bare_amount(text: str) -> float | None:
 
 
 def _norm_opt(name: str) -> str:
-    n = name.lower().replace("★", " star ").replace("*", " star ")
-    n = re.sub(r"\bstars\b", "star", n)
-    n = re.sub(r"\b(hotels?|option|category|package)\b", "", n)
+    n = name.lower()
+    n = re.sub(r"(\d)\s*-?\s*(?:\*+|★+|☆+|stars?\b)", r"\1star", n)   # 4★ / 4 **** / 4 Star -> 4star
+    n = re.sub(r"\b(hotels?|option|category|package|cat)\b", "", n)
+    n = re.sub(r"\b0+(\d)", r"\1", n)                                  # Option 01 -> 1
     return re.sub(r"[^a-z0-9]", "", n)
+
+
+def _is_option_label(text: str) -> bool:
+    """A package option / hotel category label (3★, Deluxe, Option 2) — not a
+    room type or price basis (Standard Room, Twin sharing, Child with bed)."""
+    t = text.strip()
+    return bool(t) and len(t.split()) <= 6 and "\n" not in t and bool(OPTION_RE.search(t)) \
+        and not ROOM_BASIS_RE.search(t) and _price_cur(t) is None
 
 
 def _mk_date(y: int, m: int, d: int) -> str | None:
@@ -211,7 +225,7 @@ def _dates_in(text: str) -> list[str]:
             if any(s <= m.start() < e for s, e, _ in found):
                 continue
             if dmy:
-                first, more, mtok, ytok = m.group(1), m.group(2), m.group(3), m.group(4)
+                first, more, mtok, ytok = m.group(1), m.group(2), m.group(3), m.group(4) or m.group(5)
             else:
                 mtok, first, more, ytok = m.group(1), m.group(2), m.group(3), m.group(4)
             mo = mon(mtok)
@@ -349,8 +363,7 @@ def _option_column_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     """Header like 'City | 3★ | 4★ | 5★': each option column lists hotels per
     city row; rows whose label/cells are prices give that option's price."""
     for hdr_idx, header in enumerate(tbl.rows[:3]):
-        opt_cols = [i for i, h in enumerate(header) if i > 0 and h.strip() and OPTION_RE.search(h)
-                    and len(h.split()) <= 6 and not _price_cur(h)]
+        opt_cols = [i for i, h in enumerate(header) if i > 0 and _is_option_label(h)]
         if len(opt_cols) >= 2:
             break
     else:
@@ -387,7 +400,7 @@ def _price_table(tbl: Table, pkg: ExtractedPackage) -> bool:
     header = tbl.rows[0]
     for ci, name in enumerate(header[1:], start=1):
         name = name.strip()
-        if not name or _price_cur(name):
+        if not _is_option_label(name):
             continue
         for row in tbl.rows[1:]:
             val = _row_cell(row, ci)
@@ -398,12 +411,13 @@ def _price_table(tbl: Table, pkg: ExtractedPackage) -> bool:
         return True
     for row in tbl.rows:
         label = _row_cell(row, 0)
-        if not label or not OPTION_RE.search(label):
+        if not _is_option_label(label):
             continue
-        for val in row[1:]:
+        for ci, val in enumerate(row[1:], start=1):
             if val.strip() and (_price_cur(val) or _bare_amount(val) is not None):
                 opt = _find_option(pkg, label) or _new_option(pkg, label)
-                found |= _set_price(opt, val, allow_bare=True)
+                basis = _row_cell(header, ci) if header is not row else None
+                found |= _set_price(opt, val, basis=basis or None, allow_bare=True)
     return found
 
 
@@ -462,17 +476,94 @@ def _departure_table(tbl: Table, pkg: ExtractedPackage, section: str | None) -> 
         return False
     if re.search(r"\b(hotel|flight|airline|sector)\b", header):
         return False
-    hits = 0
+    ym = re.search(r"\b(20\d\d)\b", header)
     rows = tbl.rows[1:] if not _dates_in(" ".join(tbl.rows[0])) else tbl.rows
-    for row in rows:
-        line = " | ".join(c for c in row if c.strip())
-        ds = _dates_in(line)
-        if ds:
-            hits += 1
-            pkg.departures.extend(d for d in ds if d not in pkg.departures)
-        elif line:
-            pkg.unparsed_departures.append(line)
+    hits = sum(_departure_line(pkg, " | ".join(c for c in row if c.strip()), int(ym.group(1)) if ym else None)
+               for row in rows)
     return hits > 0
+
+
+HAS_DATEISH = re.compile(rf"\d|\b{_MON}", re.I)
+WEEKDAY_RE = re.compile(r"\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*day\b|\bdaily\b|\bevery\b", re.I)
+
+
+def _departure_line(pkg: ExtractedPackage, line: str, year: int | None) -> int:
+    """Store explicit dates. A day+month with no year uses a year written in
+    the same departure heading/table header only; otherwise kept for review.
+    Lines with no date content at all are kept as departure notes."""
+    line = line.strip()
+    if not line:
+        return 0
+    ds = _dates_in(line)
+    if not ds and year is not None and not re.search(r"\b20\d\d\b", line):
+        ds = _dates_in(re.sub(rf"(\b{_MON})", rf"\1 {year}", line, count=0, flags=re.I)) \
+            if re.search(rf"\d{{1,2}}{_ORD}\s*[\-\s]*{_MON}", line, re.I) else \
+            _dates_in(re.sub(rf"(\b{_MON}\s*\d{{1,2}}{_ORD}(?:\s*(?:,|&|and)\s*\d{{1,2}}{_ORD})*)", rf"\1 {year}", line, flags=re.I))
+    if ds:
+        pkg.departures.extend(d for d in ds if d not in pkg.departures)
+        return 1
+    if HAS_DATEISH.search(line) or WEEKDAY_RE.search(line):
+        pkg.unparsed_departures.append(line)
+    else:
+        pkg.notes.append({"kind": "other", "text": line})
+    return 0
+
+
+def _incl_excl_table(tbl: Table, pkg: ExtractedPackage) -> bool:
+    """Header row 'Inclusions | Exclusions' with items listed under each column."""
+    kinds = [_section_of(c, strong_only=True) if len(c.split()) <= 6 else None for c in tbl.rows[0]]
+    if not any(k in ("inclusion", "exclusion") for k in kinds) or any(
+            k not in ("inclusion", "exclusion", None) for k in kinds):
+        return False
+    for row in tbl.rows[1:]:
+        for i, c in enumerate(row):
+            k = kinds[i] if i < len(kinds) else None
+            if k and c.strip():
+                (pkg.inclusions if k == "inclusion" else pkg.exclusions).extend(_split_lines(c))
+    return True
+
+
+def _finalise_itinerary(pkg: ExtractedPackage, ends: dict[int, int], inferred: set[int]) -> list[str]:
+    """Keep one consistent day sequence. A restart (Day 1 again), a day beyond
+    the stated duration, or order-numbered headings exceeding the duration is
+    preserved verbatim in review_text instead of becoming itinerary days."""
+    notes: list[str] = []
+    days = pkg.itinerary
+    if not days:
+        return notes
+    limit = pkg.duration_days
+    if inferred and limit and len(inferred) > limit:
+        for d in days:
+            pkg.review_text.append({"field": "itinerary", "text": "\n".join(x for x in (d["title"], d["description"]) if x)})
+        pkg.itinerary = []
+        notes.append(f"{len(days)} headings looked like days but exceed the {limit}-day duration; kept for review")
+        return notes
+    seqs: list[list[dict[str, Any]]] = [[]]
+    for d in days:
+        if seqs[-1] and d["day_number"] <= seqs[-1][-1]["day_number"]:
+            seqs.append([])
+        seqs[-1].append(d)
+
+    def score(seq: list[dict[str, Any]]) -> tuple[int, int]:
+        last = max(ends.get(id(d), d["day_number"]) for d in seq)
+        return (0 if not limit else -abs(last - limit), len(seq))
+
+    best = max(seqs, key=score)
+    keep: list[dict[str, Any]] = []
+    dropped = 0
+    for d in days:
+        if any(d is x for x in best) and not (limit and d["day_number"] > limit):
+            keep.append(d)
+        else:
+            dropped += 1
+            pkg.review_text.append({"field": "itinerary", "text": "\n".join(
+                x for x in (f"Day {d['day_number']}: {d['title']}", d["description"]) if x)})
+    if len(seqs) > 1:
+        notes.append(f"{len(seqs)} separate day sequences found (day numbering restarts); kept the one matching the duration, others kept for review")
+    if dropped and len(seqs) == 1:
+        notes.append(f"{dropped} day(s) beyond the {limit}-day duration kept for review")
+    pkg.itinerary = keep
+    return notes
 
 
 # ---------------------------------------------------------------- extract --
@@ -484,7 +575,7 @@ def _units(doc: DocxContent, pkg: ExtractedPackage, state: dict[str, Any]):
     for block in doc.blocks:
         if isinstance(block, Table):
             state["all_text"].extend(" | ".join(r) for r in block.rows)
-            if (_itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
+            if (_incl_excl_table(block, pkg) or _itinerary_table(block, pkg, state["ends"]) or _option_column_table(block, pkg)
                     or _hotel_table(block, pkg) or _flight_table(block, pkg)
                     or _departure_table(block, pkg, state["section"]) or _price_table(block, pkg)):
                 continue
@@ -508,9 +599,10 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
     state: dict[str, Any] = {"section": None, "all_text": [], "ends": {}, "layout_tables": 0}
     current_day: dict[str, Any] | None = None
     current_opt: dict[str, Any] | None = None
-    explicit_days = False
-    inferred_days = 0
-    unnamed_option = False
+    lines_all = [ln for b in doc.blocks for ln in (
+        [b.text] if isinstance(b, Paragraph) else [c for r in b.rows for c in r]) for ln in ln.split("\n")]
+    explicit_days = any(_day_match(ln.strip()) for ln in lines_all)
+    inferred: set[int] = set()
     preamble: list[str] = []
 
     for unit in _units(doc, pkg, state):
@@ -541,6 +633,9 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             sec = _section_of(cand, strong_only=strong_only)
         if sec:
             state["section"], current_day = sec, None
+            if sec == "departures":
+                ym = re.search(r"\b(20\d\d)\b", line)
+                state["dep_year"] = int(ym.group(1)) if ym else None
             if sec in ("hotels", "pricing"):
                 current_opt = None
             rest = after.strip() if colon_head else ""
@@ -550,7 +645,6 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
 
         if dm and section not in ("inclusion", "exclusion", "departures", "pricing") and section not in NOTE_KINDS:
             state["section"] = section = "itinerary"
-            explicit_days = True
             a, b, rest = dm
             current_day = {"day_number": a, "title": rest or f"Day {a}", "description": None, "meals": []}
             pkg.itinerary.append(current_day)
@@ -560,9 +654,9 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         if section == "itinerary":
             if (heading_like and not explicit_days and len(line) <= 90 and not line.endswith(".")) or current_day is None:
                 if heading_like and not explicit_days and len(line) <= 90:
-                    inferred_days += 1
                     current_day = {"day_number": len(pkg.itinerary) + 1, "title": line, "description": None, "meals": []}
                     pkg.itinerary.append(current_day)
+                    inferred.add(id(current_day))
                     state["ends"][id(current_day)] = current_day["day_number"]
                     continue
                 if current_day is None:
@@ -585,18 +679,14 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
             continue
         if section == "departures":
             for ln in _split_lines(line):
-                ds = _dates_in(ln)
-                if ds:
-                    pkg.departures.extend(d for d in ds if d not in pkg.departures)
-                else:
-                    pkg.unparsed_departures.append(ln)
+                _departure_line(pkg, ln, state.get("dep_year"))
             continue
         if section in ("hotels", "pricing"):
             pc = _price_cur(line)
             label = _clean_head(PRICE_RE.split(line, maxsplit=1)[0]) if pc else ""
             if pc:
                 target = (_find_option(pkg, label) if label else None)
-                if target is None and label and OPTION_RE.search(label) and len(label.split()) <= 6:
+                if target is None and _is_option_label(label):
                     target = _new_option(pkg, label)
                 if target is None and section == "hotels" and current_opt is not None:
                     target = current_opt
@@ -606,18 +696,19 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
                 pkg.notes.append({"kind": "other", "text": line})  # price not tied to an option: kept verbatim
                 state.setdefault("loose_prices", []).append(line)
                 continue
-            if OPTION_RE.search(line) and len(line.split()) <= 6 and (heading_like or ends_colon or section == "hotels"):
+            if _is_option_label(_clean_head(line)) and (heading_like or ends_colon or section == "hotels"):
                 name = _clean_head(line)
                 current_opt = _find_option(pkg, name) or _new_option(pkg, name)
                 continue
             if section == "hotels":
                 if current_opt is None:
-                    current_opt = _new_option(pkg, "Option 1")
-                    unnamed_option = True
+                    # Hotel/room line with no option label above it: do not invent an option.
+                    pkg.review_text.append({"field": "hotels", "text": line})
+                    continue
                 city, hotel = (head_part.strip(), after.strip()) if colon_head and after.strip() else (None, line)
                 current_opt["hotels"].append(_hotel_dict(hotel, city))
                 continue
-            pkg.notes.append({"kind": "other", "text": line})
+            pkg.review_text.append({"field": "pricing", "text": line})
             continue
         preamble.append(line)
 
@@ -627,6 +718,12 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         pkg.duration_nights, pkg.duration_days = int(m.group(1)), int(m.group(2))
     if (m := CODE_RE.search(joined)):
         pkg.package_code = m.group(1)
+    itin_notes = _finalise_itinerary(pkg, state["ends"], inferred)
+    # Labels that collected neither hotels nor a price are not real options.
+    for o in list(pkg.options):
+        if not o["hotels"] and not o.get("indicative_price"):
+            pkg.options.remove(o)
+            pkg.review_text.append({"field": "options", "text": o["option_name"]})
     if preamble:
         pkg.overview = "\n".join(p for p in preamble if p != pkg.name) or None
     for day in pkg.itinerary:
@@ -648,15 +745,15 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         r(ReviewItem("name", "no title/heading found"))
     if pkg.duration_nights is None:
         r(ReviewItem("duration", "no 'xN/yD' duration pattern found"))
+    for n in itin_notes:
+        r(ReviewItem("itinerary", n))
     if not pkg.itinerary:
         r(ReviewItem("itinerary", "no day-wise itinerary identified"))
     else:
-        nums = [d["day_number"] for d in pkg.itinerary]
         last = max(state["ends"].get(id(d), d["day_number"]) for d in pkg.itinerary)
-        if len(set(nums)) != len(nums):
-            r(ReviewItem("itinerary", "duplicate day numbers"))
-        if inferred_days:
-            r(ReviewItem("itinerary", f"{inferred_days} day(s) numbered by order (no 'Day N' marker in source)"))
+        n_inf = sum(1 for d in pkg.itinerary if id(d) in inferred)
+        if n_inf:
+            r(ReviewItem("itinerary", f"{n_inf} day(s) numbered by order (no 'Day N' marker in source)"))
         if pkg.duration_days and last != pkg.duration_days:
             r(ReviewItem("itinerary", f"{last} days in itinerary vs {pkg.duration_days} in duration"))
     if not pkg.inclusions:
@@ -665,11 +762,13 @@ def extract(doc: DocxContent, package_type: str) -> ExtractedPackage:
         r(ReviewItem("exclusions", "no exclusions section found"))
     if not pkg.options:
         r(ReviewItem("options", "no hotel/price option found"))
-    if unnamed_option:
-        r(ReviewItem("options", "hotels listed without an option name; grouped as 'Option 1'"))
     for o in pkg.options:
         if not o.get("indicative_price"):
-            r(ReviewItem("options", f"option '{o['option_name']}' has no price"))
+            r(ReviewItem("options", f"option '{o['option_name']}' lists hotels but no price"))
+    for fld in ("options", "hotels", "pricing"):
+        n = sum(1 for t in pkg.review_text if t["field"] == fld)
+        if n:
+            r(ReviewItem(fld, f"{n} line(s) could not be assigned with confidence; kept verbatim in review_text"))
     if pkg.indicative_price_from is None:
         r(ReviewItem("indicative_price_from", "no price found"))
     if pkg.unparsed_departures:

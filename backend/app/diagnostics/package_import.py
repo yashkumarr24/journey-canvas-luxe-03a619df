@@ -152,6 +152,8 @@ def write_report_dir(r: dict[str, Any], out: Path) -> None:
               f["indicative_price_from"], *f["counts"].values(), ";".join(f["fields_extracted"]),
               written.get(f["file"], {}).get("status", "not_imported (dry-run)" if r["mode"] == "dry-run" else ""),
               written.get(f["file"], {}).get("package_id")] for f in r["files"]])
+    csv_out("review_text.csv", ["file", "field", "text"],
+            [[f["file"], t["field"], t["text"]] for f in r["files"] for t in f["extracted"].get("review_text", [])])
     csv_out("needs_review.csv", ["file", "field", "reason"],
             [[n["file"], n["field"], n["reason"]] for n in r["needs_review"]])
     img_rows = []

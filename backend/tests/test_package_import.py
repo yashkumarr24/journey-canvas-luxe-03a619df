@@ -300,7 +300,7 @@ def test_itinerary_table_and_departure_formats(tmp_path):
     assert [d["day_number"] for d in pkg.itinerary] == [1, 2, 3, 4, 5]
     assert pkg.itinerary[0]["title"] == "Arrival Almaty" and pkg.itinerary[0]["description"] == "Meet at airport."
     assert pkg.departures == ["2026-10-12", "2026-11-05", "2026-12-03", "2026-12-17", "2027-01-15"]
-    assert pkg.unparsed_departures == ["On request"]
+    assert pkg.unparsed_departures == [] and {"kind": "other", "text": "On request"} in pkg.notes
     assert not any(i.field == "itinerary" for i in pkg.needs_review)
 
 
@@ -324,3 +324,28 @@ def test_textbox_and_content_control_text_is_read(tmp_path):
     doc = read_docx(make_docx(tmp_path / "t.docx", p("Trip 1N/2D", "Title") + box + sdt))
     pkg = extract(doc, "international")
     assert pkg.itinerary[0]["title"] == "Arrival" and pkg.inclusions == ["Breakfast"]
+
+
+def test_restarted_day_blocks_and_label_noise_go_to_review(tmp_path):
+    body = (
+        p("Abu Dhabi & Dubai 2N/3D", "Title")
+        + p("Itinerary", bold=True)
+        + p("Day 1: Arrive Dubai") + p("Day 2: City tour") + p("Day 3: Depart")
+        + p("Optional add-on", bold=True)
+        + p("Day 1: Abu Dhabi tour") + p("Day 2: Ferrari World")
+        + p("Day 5: Unrelated numbered line")
+        + tbl([["City", "Option 01", "Option 02"], ["Dubai", "Hotel A", "Hotel B"],
+               ["Price", "INR 40,000", "INR 52,000"]])
+        + tbl([["Category", "Twin", "Single"], ["Option 1", "INR 40,000", "INR 55,000"]])
+        + tbl([["Room", "Standard Room", "5★"]])
+        + p("Departure Dates 2026", bold=True) + p("12 Oct, 19 Oct") + p("Every Friday") + p("Ex Mumbai")
+    )
+    pkg = extract(read_docx(make_docx(tmp_path / "AUH.docx", body)), "international")
+    assert [d["title"] for d in pkg.itinerary] == ["Arrive Dubai", "City tour", "Depart"]
+    assert any("Abu Dhabi tour" in t["text"] for t in pkg.review_text if t["field"] == "itinerary")
+    assert [o["option_name"] for o in pkg.options] == ["Option 01", "Option 02"]
+    assert pkg.options[0]["indicative_price"] == 40000
+    assert not any("Standard Room" == o["option_name"] for o in pkg.options)
+    assert pkg.departures == ["2026-10-12", "2026-10-19"]
+    assert pkg.unparsed_departures == ["Every Friday"]
+    assert not any("duplicate" in i.reason for i in pkg.needs_review)
