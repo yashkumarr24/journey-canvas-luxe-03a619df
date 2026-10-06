@@ -4,6 +4,11 @@ Matches Aryan's Test Case 1 sample:
   * 1 room, 1 adult, 1 night
   * flow: search -> detail -> review -> HOLD -> booking-details (ON_HOLD)
   * NO confirm-hold step (the sample has no Confirm Hold files)
+  * Search is a direct v3 Listing with Aryan's exact parameters: checkIn
+    2026-06-10, checkOut 2026-06-11, INR, nationality 106, timeoutMs 30000 and
+    the COMPLETE hids array read from his TC1 Search Request sample
+    (--hids-file). No destination-name discovery; the hotel used for
+    Detail/Review/Hold is chosen only from that Listing response.
 
 12 files in "Test Case 1/":
   TJ test Hotel Search / hotelDetail-search / Hotel review /
@@ -19,7 +24,8 @@ Run on the VPS from backend/ (creates a REAL UAT hold):
     python -m app.diagnostics.hotel_cert_tc1 --destination Mumbai \\
         --execute-uat-hold --confirm CREATE-UAT-HOLD \\
         --contact-email <email> --contact-phone <10 digits> --pan <PAN> \\
-        --lead-guest "First Last" [--out-dir certification]
+        --lead-guest "First Last" --hids-file "Test Case 1/TJ test Hotel Search Request.json" \\
+        [--out-dir certification]
 
 Without --execute-uat-hold it is a dry run (no Book, nothing exported).
 """
@@ -31,6 +37,7 @@ import asyncio
 import copy
 import json
 import shutil
+from types import SimpleNamespace
 import zipfile
 from pathlib import Path
 from typing import Any, Optional
@@ -44,6 +51,11 @@ REQUIRED_STATUS = "ON_HOLD"
 
 TC1_ROOMS: list[dict[str, Any]] = [{"adults": 1, "childAges": []}]
 TC1_NIGHTS = 1
+TC1_CHECK_IN = "2026-06-10"
+TC1_CHECK_OUT = "2026-06-11"
+TC1_CURRENCY = "INR"
+TC1_NATIONALITY = "106"
+TC1_TIMEOUT_MS = 30000
 
 STEPS: tuple[tuple[str, str], ...] = (
     ("search", "TJ test Hotel Search"),
@@ -81,6 +93,63 @@ def export(recorder: tc3.Recorder, out_dir: Path) -> Path:
     return zip_path
 
 
+def load_sample_hids(path: str) -> list[str]:
+    """Certification-only: the complete hids array from Aryan's TC1 Search
+    Request (or a plain JSON array). Order and every entry are preserved."""
+    if not path:
+        raise SystemExit("Refusing: --hids-file (Aryan's TC1 Search Request JSON) is required.")
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise SystemExit("Refusing: --hids-file could not be read as JSON.") from None
+    hids = data.get("hids") if isinstance(data, dict) else data
+    if not isinstance(hids, list) or not hids or not all(isinstance(h, (int, str)) and str(h).strip() for h in hids):
+        raise SystemExit("Refusing: --hids-file has no usable hids array.")
+    if len(hids) > uat.UAT_MAX_HIDS:
+        raise SystemExit(f"Refusing: {len(hids)} hids exceeds the documented max {uat.UAT_MAX_HIDS}.")
+    if isinstance(data, dict):
+        for key, want in (("checkIn", TC1_CHECK_IN), ("checkOut", TC1_CHECK_OUT),
+                          ("currency", TC1_CURRENCY), ("nationality", TC1_NATIONALITY)):
+            if key in data and str(data[key]) != want:
+                raise SystemExit(f"Refusing: sample {key} does not match Test Case 1.")
+    return [str(h).strip() for h in hids]
+
+
+def build_listing_payload(hids: list[str]) -> dict[str, Any]:
+    """Exact TC1 Listing body (fresh correlationId; all other fields fixed)."""
+    return uat.build_uat_listing_payload(
+        hids=hids, check_in=TC1_CHECK_IN, check_out=TC1_CHECK_OUT,
+        rooms=copy.deepcopy(TC1_ROOMS), nationality=TC1_NATIONALITY,
+        currency=TC1_CURRENCY, timeout_ms=TC1_TIMEOUT_MS,
+    )
+
+
+def make_session_via_listing(hids: list[str]):
+    """Replacement for uat._session_via_search used ONLY inside this runner:
+    one direct Listing with the sample hids; the session is built from that
+    exact response so the selected hotel comes from it."""
+    from app.integrations.tripjack import hotels as tj_hotels
+
+    async def session_via_listing(args, settings):
+        _, config = uat._config()
+        payload = build_listing_payload(hids)
+        status, body, _ = await uat._raw_post(config, payload, uat.HOTEL_LISTING_PATH)
+        print("search HTTP status:", status, "requested_hids:", len(hids))
+        if status >= 400 or not isinstance(body, dict):
+            raise SystemExit("Listing failed; nothing booked.")
+        page = tj_hotels.normalize_listing_response(body, currency=TC1_CURRENCY, nights=TC1_NIGHTS)
+        print("search results:", len(page.results))
+        if not page.results:
+            raise SystemExit("Listing returned no hotels; nothing booked.")
+        return SimpleNamespace(
+            provider_search_id=page.search_id or payload["correlationId"],
+            results={r.id: r for r in page.results},
+            check_in=TC1_CHECK_IN, check_out=TC1_CHECK_OUT, currency=TC1_CURRENCY,
+            rooms=[SimpleNamespace(adults=r["adults"], child_ages=list(r["childAges"])) for r in TC1_ROOMS],
+        )
+    return session_via_listing
+
+
 def build_args(ns: argparse.Namespace) -> argparse.Namespace:
     """Arguments for uat.run_book: Test Case 1 fixed, hold only, never confirm/cancel."""
     return argparse.Namespace(
@@ -95,11 +164,15 @@ def build_args(ns: argparse.Namespace) -> argparse.Namespace:
 
 async def run(ns: argparse.Namespace) -> Optional[Path]:
     args = build_args(ns)
+    hids = load_sample_hids(getattr(ns, "hids_file", ""))
     recorder = tc3.Recorder()
     undo = tc3.install_capture(recorder)
+    orig_session = uat._session_via_search
+    uat._session_via_search = make_session_via_listing(hids)
     try:
         await uat.run_book(args)
     finally:
+        uat._session_via_search = orig_session
         undo()
     if not args.execute_uat_hold:
         print("DRY RUN: nothing exported.")
@@ -122,6 +195,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     p.add_argument("--pan", default="")
     p.add_argument("--passport", default="")
     p.add_argument("--lead-guest", default="")
+    p.add_argument("--hids-file", default="", help="Aryan's TC1 Search Request JSON (its full hids array is used)")
     p.add_argument("--out-dir", default="certification")
     asyncio.run(run(p.parse_args(argv)))
 

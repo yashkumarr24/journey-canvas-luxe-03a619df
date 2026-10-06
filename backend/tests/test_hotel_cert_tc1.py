@@ -85,5 +85,55 @@ async def test_dry_run_exports_nothing(monkeypatch, tmp_path):
     async def fake_run_book(args):
         assert args.execute_uat_hold is False
     monkeypatch.setattr(tc1.uat, "run_book", fake_run_book)
-    assert await tc1.run(_ns(out_dir=str(tmp_path))) is None
+    hf = tmp_path / "s.json"
+    hf.write_text(json.dumps({"hids": [1, 2]}))
+    assert await tc1.run(_ns(out_dir=str(tmp_path), hids_file=str(hf))) is None
     assert not (tmp_path / "Test Case 1").exists()
+
+
+def test_sample_hids_loaded_complete_and_listing_exact(tmp_path):
+    hf = tmp_path / "req.json"
+    hf.write_text(json.dumps({"checkIn": "2026-06-10", "checkOut": "2026-06-11", "currency": "INR",
+                              "nationality": "106", "hids": [3, "1", 2]}))
+    hids = tc1.load_sample_hids(str(hf))
+    assert hids == ["3", "1", "2"]
+    p = tc1.build_listing_payload(hids)
+    assert p["checkIn"] == "2026-06-10" and p["checkOut"] == "2026-06-11"
+    assert p["currency"] == "INR" and p["nationality"] == "106" and p["rooms"] == [{"adults": 1}]
+    assert p["hids"] == [3, 1, 2] and p["timeoutMs"] == 30000
+
+
+def test_sample_hids_required_and_mismatch_refused(tmp_path):
+    with pytest.raises(SystemExit):
+        tc1.load_sample_hids("")
+    hf = tmp_path / "bad.json"
+    hf.write_text(json.dumps({"checkIn": "2026-07-01", "hids": [1]}))
+    with pytest.raises(SystemExit, match="checkIn"):
+        tc1.load_sample_hids(str(hf))
+
+
+@pytest.mark.asyncio
+async def test_session_comes_from_exact_listing(monkeypatch):
+    sent = {}
+
+    async def fake_post(config, payload, path):
+        sent["p"], sent["path"] = payload, path
+        return 200, {"correlationId": "c1", "hotels": [{"hotelId": "2", "name": "H", "options": []}]}, 0.1
+    monkeypatch.setattr(tc1.uat, "_config", lambda: (None, None))
+    monkeypatch.setattr(tc1.uat, "_raw_post", fake_post)
+    s = await tc1.make_session_via_listing(["1", "2"])(None, None)
+    assert sent["path"] == tc1.uat.HOTEL_LISTING_PATH and sent["p"]["hids"] == [1, 2]
+    assert list(s.results) == ["2"] and s.check_in == "2026-06-10" and s.rooms[0].adults == 1
+
+
+@pytest.mark.asyncio
+async def test_run_restores_shared_search(monkeypatch, tmp_path):
+    orig = tc1.uat._session_via_search
+
+    async def fake_run_book(args):
+        assert tc1.uat._session_via_search is not orig
+    monkeypatch.setattr(tc1.uat, "run_book", fake_run_book)
+    hf = tmp_path / "s.json"
+    hf.write_text(json.dumps([1]))
+    await tc1.run(_ns(out_dir=str(tmp_path), hids_file=str(hf)))
+    assert tc1.uat._session_via_search is orig
