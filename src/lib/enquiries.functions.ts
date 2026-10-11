@@ -1,14 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { buildEnquiryEmails } from "./enquiry-email";
+
+const enquirySchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  service: z.string().trim().max(60).optional().or(z.literal("")),
+  destination: z.string().trim().max(200).optional().or(z.literal("")),
   message: z.string().trim().max(4000).optional().or(z.literal("")),
   sourcePage: z.string().trim().max(120).optional().or(z.literal("")),
   // Honeypot: real users never fill this; bots do.
   company: z.string().max(0).optional().or(z.literal("")),
 });
-
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 async function sendResendEmail(apiKey: string, from: string, to: string, subject: string, html: string) {
   const res = await fetch("https://api.resend.com/emails", {
