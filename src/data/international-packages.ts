@@ -27,7 +27,7 @@ export const internationalDestinationImage = (name: string, p: InternationalPack
 };
 export const internationalPhotoCredit = (place: string | undefined) => {
   if (!place) return undefined;
-  const credits: Record<string, { source: string; license: string }> = photoCredits;
+  const credits: Record<string, { source: string; license: string; author?: string; licenseUrl?: string }> = photoCredits;
   const credit = credits[place];
   return credit && !credit.license.includes('unsplash.com') ? credit : undefined;
 };

@@ -184,7 +184,7 @@
     "license": "https://unsplash.com/license"
   },
   "Interlaken": {
-    "source": "https://unsplash.com/photos/SMj2DY7QUfw",
+    "source": "https://unsplash.com/photos/yFk-b33gXQY",
     "license": "https://unsplash.com/license"
   },
   "Montreux": {
@@ -249,6 +249,8 @@
   },
   "Nice": {
     "source": "https://commons.wikimedia.org/wiki/File:Nice_-_Promenade_des_Anglais_-_View_ESE.jpg",
-    "license": "CC BY-SA 4.0 (Attribution: Txllxt TxllxT)"
+    "license": "CC BY-SA 4.0",
+    "author": "Txllxt TxllxT",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
   }
 }
