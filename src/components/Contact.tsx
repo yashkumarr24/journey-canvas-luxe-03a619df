@@ -162,7 +162,7 @@ export function Contact() {
 
           <button
             type="submit"
-            disabled={status === "sending" || status === "sent"}
+            disabled={!hydrated || status === "sending" || status === "sent"}
             className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] disabled:opacity-60"
           >
             {status === "sent" ? "✓ Sent — we'll be in touch" : status === "sending" ? "Sending…" : "Send the brief"}
