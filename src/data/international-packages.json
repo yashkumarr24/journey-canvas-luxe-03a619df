@@ -1,0 +1,4964 @@
+[
+  {
+    "slug": "switzerland-6n-7d",
+    "name": "Switzerland Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Switzerland"
+    ],
+    "cities": [
+      "Lucerne",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Lucerne - Mt. Titlis - Zurich - Rhine Falls"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Lucerne",
+                "Ibis Styles Lucerne or similar"
+              ],
+              [
+                "03 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Zurich Airport, Board the Train from Zurich Airport to Lucerne, check in to the Hotel. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Excursion to Mt. Titlis with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich, check in to the Hotel. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Explore the Zurich city on your own. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Private departure transfer to Zurich Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class 06 Days Swiss Pass",
+      "Excursion To Mt. Titlis with Ice Flyer",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Visit Rhine Falls in Zurich with Swiss Pass (Boat Ride Optional)",
+      "Private departure transfer in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "switzerland"
+  },
+  {
+    "slug": "switzerland-7n-8d",
+    "name": "Switzerland Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Switzerland"
+    ],
+    "cities": [
+      "Lucerne",
+      "Interlaken",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Lucerne - Mt. Titlis - Interlaken - Mt. Jungfraujoch - Zurich - Rhine Falls"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Lucerne",
+                "Ibis Styles Lucerne or similar"
+              ],
+              [
+                "02 Nights",
+                "Interlaken",
+                "Hotel Chalet Swiss or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Zurich Airport, Board the Train from Zurich Airport to Lucerne, check in to the Hotel. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Excursion to Mt. Titlis with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Board the Train from Lucerne to Interlaken. check in to the Hotel. Visit Lake Thun, Lake Brienz with Swiss Pass. Overnight stay in Interlaken."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Excursion to Jungfraujoch -Top of Europe with Swiss Pass. Overnight stay in Interlaken."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Board the Train from Interlaken to Zurich, check in to the Hotel. Day at Leisure, Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private departure transfer to Zurich Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class 08 Days Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion To Mt. Titlis with Ice flyer",
+      "Lake Brienz Cruise with Swiss Pass",
+      "Excursion to Jungfraujoch Top of Europe",
+      "Visit Rhine Falls in Zurich with Swiss Pass (Boat Ride Optional)"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "switzerland"
+  },
+  {
+    "slug": "switzerland-9n-10d",
+    "name": "Switzerland Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Switzerland"
+    ],
+    "cities": [
+      "Lucerne",
+      "Interlaken",
+      "Montreux",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Lucerne - Mt. Titlis - Interlaken - Mt. Jungfraujoch - Montreux - Golden Pass Line - Zurich - Rhine Falls"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Lucerne",
+                "Ibis Styles Lucerne or similar"
+              ],
+              [
+                "02 Nights",
+                "Interlaken",
+                "Hotel Chalet Swiss or similar"
+              ],
+              [
+                "02 Nights",
+                "Montreux",
+                "Hôtel Villa Toscane or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Zurich Airport, Board the Train from Zurich Airport to Lucerne, check in to the Hotel. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass.Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Excursion to Mt. Titlis with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Board the Train from Lucerne to Interlaken. check in to the Hotel. Visit Lake Thun, Lake Brienz with Swiss Pass. Overnight stay in Interlaken."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Excursion to Jungfraujoch -Top of Europe with Swiss Pass. Overnight stay in Interlaken."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Board the Golden Passline Train from Interlaken to Montreux, check in to the Hotel. Overnight stay in Montreux."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, visit Chillon Castle with Swiss Pass. Overnight stay in Montreux."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Board the Train from Montreux to Zurich, check in to the Hotel. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Visit Rhine falls with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Private departure transfer to Zurich Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class 08 Days Swiss Pass",
+      "2nd Class Golden Pass Line Reservation",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion To Mt. Titlis with Ice flyer",
+      "Lake Brienz Cruise with Swiss Pass",
+      "Excursion to Jungfraujoch Top of Europe",
+      "Visit Rhine Falls in Zurich with Swiss Pass ( Boat Ride Optional )",
+      "Private departure transfer in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "switzerland"
+  },
+  {
+    "slug": "france-6n-7d",
+    "name": "France Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "France"
+    ],
+    "cities": [
+      "Paris",
+      "Nice"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Paris & Nice"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "03 Nights",
+                "Nice",
+                "Ibis Nice Centre Notre Dame or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Paris Airport, Private Transfer to your Hotel. Check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Proceed for Paris Hop on & Hop off City Tour, Seine River Cruise and Skip the Line: Eiffel Tower at 2nd Level Tickets. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer from Hotel to Train station, Board the Train from Paris to Nice in 2nd class. Arrival Transfer from Nice Train station to Hotel. Overnight stay in Nice."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Nice Hop on & Hop off Tour. Overnight stay in Nice."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Day trip to Eze, Monaco & Monte Carlo from Nice. Overnight stay in Nice."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Private departure Transfer to Nice Airport for your onward flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Paris - Nice",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "Day Trip to Disneyland - 01 Day 01 Park with Shared Coach Transportation",
+      "Nice Hop on & Hop Off 24 Hours City Tour",
+      "Day Trip to Eze, Monaco & Monte Carlo from Nice",
+      "Private transfer from Airport - Hotel - Train Station in Paris",
+      "Private transfer from Train Station - Hotel - Airport in Nice"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "france"
+  },
+  {
+    "slug": "paris-switzerland-6n-7d",
+    "name": "Paris & Switzerland Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "France",
+      "Switzerland"
+    ],
+    "cities": [
+      "Paris",
+      "Lucerne",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Paris - Lucerne - Zurich"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Paris Airport, Private Transfer to Paris Hotel, check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Paris Hop on & Hop off City Tour,Seine River Cruise Tickets,Skip the Line: Eiffel Tower at 2nd Level Tickets. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, departure Transfer from Paris Hotel to Train station, Board the Train from Paris to Basel in 2nd class. Thereafter Board the Train from Basel to Lucerne by using Swiss Pass. Check in to the Hotel. Later Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Visit Excursion to Mt. Titlis with Ice flyer. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich, check in to the Hotel, Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass and Lindt Chocolate Factory. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Private departure Transfer to Zurich Airport for your onward flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Paris - Basel",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Private transfer from Airport - Hotel - Train Station in Paris",
+      "Private transfer from Hotel - Airport in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "france"
+  },
+  {
+    "slug": "paris-switzerland-7n-8d",
+    "name": "Paris & Switzerland Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "France",
+      "Switzerland"
+    ],
+    "cities": [
+      "Paris",
+      "Lucerne",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Paris - Lucerne - Zurich"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Paris Airport, Private Transfer to Paris Hotel, check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Paris Hop on & Hop off City Tour, Seine River Cruise,Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer to Train station, Board the Train from Paris to Basel in 2nd class. Thereafter, Board the Train from Basel to Lucerne. Check in to the Hotel, Later Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Excursion to Mt.Titlis with Ice Flyer. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich by using Swiss pass. Check in to the Hotel, Later Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass and Lindt Chocolate Factory Tickets.Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private Departure Transfer to Zurich Airport for your onward flight back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Paris - Basel",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "Day Trip to Disneyland - 01 Day 01 Park with Shared Coach Transportation",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Private transfer from Airport - Hotel - Train Station in Paris",
+      "Private transfer from Hotel - Airport in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "france"
+  },
+  {
+    "slug": "amsterdam-paris-swiss-9n-10d",
+    "name": "Amsterdam, Paris & Swiss Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Netherlands",
+      "France",
+      "Switzerland"
+    ],
+    "cities": [
+      "Amsterdam",
+      "Paris",
+      "Lucerne",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Amsterdam - Paris - Lucerne - Zurich"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Amsterdam",
+                "Avenue Hotel or similar"
+              ],
+              [
+                "03 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Amsterdam Airport,Private departure Transfer to Amsterdam Hotel, check in to the Hotel. Later visit Amsterdam City Canal Cruise. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Day trip to Volendam, Marken & Windmills from Amsterdam. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Private departure Transfer from Hotel to Train station, Check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, proceed for Paris Hop on & Hop off City Tour,Seine River Cruise Tickets,Skip the Line: Eiffel Tower at 2nd Level Tickets. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Private departure Transfer from Paris Hotel to Train station, Board the Train from Paris to Basel in 2nd class. Thereafter Board the Train from Basel to Lucerne by using Swiss pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Excursion to Mt. Titlis with Ice Flyer . Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich in 2nd class. Check in to the Hotel. Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Private Departure Transfer to Zurich Airport for your onward flight back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Amsterdam - Paris",
+      "2nd Class Train Ticket from Paris - Basel",
+      "Amsterdam Canal Cruise Tickets",
+      "Day Trip to Volendam, Marken & Windmills from Amsterdam",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "Day Trip to Disneyland - 01 Day 01 Park with Shared Coach Transportation",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Private transfer from Airport - Hotel - Train Station in Amsterdam",
+      "Private transfer from Train Station - Hotel - Train Station in Paris",
+      "Private transfer from Hotel - Airport in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "netherlands"
+  },
+  {
+    "slug": "amsterdam-paris-6n-7d",
+    "name": "Amsterdam & Paris Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Netherlands",
+      "France"
+    ],
+    "cities": [
+      "Amsterdam",
+      "Paris"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Amsterdam & Paris"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Amsterdam",
+                "Avenue Hotel or similar"
+              ],
+              [
+                "03 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Amsterdam Airport, Private departure transfer to Amsterdam Hotel, check in to the Hotel. Later Visit Amsterdam City Canal Cruise. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Later Visit Amsterdam City Canal Cruise. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast,Day trip to Volendam, Marken & Windmills from Amsterdam. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer from Hotel to Train station, Board the Train from Amsterdam to Paris in 2nd class. Check in to the Hotel. Private arrival Transfer from Train station to Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast,Paris Hop on & Hop off City Tour,Seine River Cruise,Skip the Line: Eiffel Tower at 2nd Level. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast,Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Private departure Transfer from Paris Hotel to Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Amsterdam - Paris",
+      "Amsterdam Canal Cruise Tickets",
+      "Day Trip to Volendam, Marken & Windmills from Amsterdam",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "Day Trip to Disneyland - 01 Day 01 Park with Shared Coach Transportation",
+      "Private transfer from Airport - Hotel - Train Station in Amsterdam",
+      "Private transfer from Train Station - Hotel - Airport in Paris"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "netherlands"
+  },
+  {
+    "slug": "paris-swiss-italy-11n-12d",
+    "name": "Paris, Swiss & Italy Holiday Package",
+    "duration": "11 Nights & 12 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "France",
+      "Switzerland",
+      "Italy"
+    ],
+    "cities": [
+      "Paris",
+      "Lucerne",
+      "Zurich",
+      "Venice",
+      "Florence",
+      "Rome"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "11 Nights & 12 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Paris - Lucerne - Zurich - Venice - Florence - Rome"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ],
+              [
+                "02 Nights",
+                "Venice",
+                "San Marco Palace or similar"
+              ],
+              [
+                "01 Night",
+                "Florence",
+                "Atlantic Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Rome",
+                "Palladium Palace or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Paris Airport, Private Transfer to Paris Hotel, check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Paris Hop on & Hop off City Tour,Seine River Cruise Tickets,Skip the Line: Eiffel Tower at 2nd Level Tickets. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, departure Transfer from Paris Hotel to Train station, Board the Train from Paris to Basel in 2nd class. Thereafter Board the Train from Basel to Lucerne by using Swiss Pass. Check in to the Hotel. Later Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Visit Excursion to Mt. Titlis with Ice flyer. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich, check in to the Hotel, Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass and Lindt Chocolate Factory. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Private Transfer to Zurich Train station, Board the Train from Zurich to Venice in 2nd class. Private Transfer from Train station to Hotel, check in to the Hotel. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Venice City Gondola Ride. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Private Transfer from Hotel to Venice Train station, Board the Train from Venice to Florence, Private Transfer from Florence Train station to Hotel, Check in to the Hotel.Day trip to Pisa Leaning Tower from Florence Overnight stay in Florence."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Private Transfer from Florence Hotel to Train station, Board the Train from Florence to Rome by 2nd class. Private Transfer from Rome Train station to Hotel, check in to the Hotel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 11",
+        "text": "Breakfast, Rome Hop on & Hop off City Tour,Skip the Line: Colosseum, Roman Forum & Sistine Chapel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 12",
+        "text": "Breakfast, departure Transfer from Rome Hotel to Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Paris - Basel",
+      "2nd Class Train Ticket from Zurich - Venice",
+      "2nd Class Train Ticket from Venice - Florence",
+      "2nd Class Train Ticket from Florence - Rome",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Venice Canal Gondola Ride",
+      "Day Trip to Pisa & Leaning Tower from Florence ( Leaning Tower from outside )",
+      "Rome Hop on & Hop Off 24 Hours City Tour",
+      "Skip the Line: Colosseum, Roman Forum & Sistine Chapel",
+      "Private transfer from Airport - Hotel - Train Station in Paris",
+      "Private transfer from Hotel - Train Station in Zurich",
+      "Private transfer from Train Station - Hotel - Train Station in Venice",
+      "Private transfer from Train Station - Hotel - Train Station in Florence",
+      "Private transfer from Train Station - Hotel - Rome Airport"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "france"
+  },
+  {
+    "slug": "paris-swiss-italy-12n-13d",
+    "name": "Paris, Swiss & Italy Holiday Package",
+    "duration": "12 Nights & 13 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "France",
+      "Switzerland",
+      "Italy"
+    ],
+    "cities": [
+      "Paris",
+      "Lucerne",
+      "Zurich",
+      "Venice",
+      "Florence",
+      "Rome"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "12 Nights & 13 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Paris - Lucerne - Zurich - Venice - Florence - Rome"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Paris",
+                "Campanile Hotel Bercy Village or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ],
+              [
+                "02 Nights",
+                "Venice",
+                "San Marco Palace or similar"
+              ],
+              [
+                "01 Night",
+                "Florence",
+                "Atlantic Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Rome",
+                "Palladium Palace or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Paris Airport, Private Transfer to Paris Hotel, check in to the Hotel. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Paris Hop on & Hop off City Tour, Seine River Cruise,Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Day trip to Disneyland 01 Day 01 Park with Transportation. Overnight stay in Paris."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer to Train station, Board the Train from Paris to Basel in 2nd class. Thereafter, Board the Train from Basel to Lucerne. Check in to the Hotel, Later Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Excursion to Mt.Titlis with Ice Flyer. Overnight stay in Lucerne."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Board the Train from Lucerne to Zurich by using Swiss pass. Check in to the Hotel, Later Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Visit Rhine Falls with Swiss Pass and Lindt Chocolate Factory Tickets.Overnight stay in Zurich."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private Transfer to Zurich Train station, Board the Train from Zurich to Venice in 2nd class. Private Transfer from Train station to Hotel, check in to the Hotel. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Venice City Gondola Ride. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Private Transfer from Hotel to Venice Train station, Board the Train from Venice to Florence, Private Transfer from Florence Train station to Hotel, Check in to the Hotel.Day trip to Pisa Leaning Tower from Florence Overnight stay in Florence."
+      },
+      {
+        "day": "Day 11",
+        "text": "Breakfast, Private Transfer from Florence Hotel to Train station, Board the Train from Florence to Rome by 2nd class. Private Transfer from Rome Train station to Hotel, check in to the Hotel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 12",
+        "text": "Breakfast, Rome Hop on & Hop off City Tour,Skip the Line: Colosseum, Roman Forum & Sistine Chapel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 13",
+        "text": "Breakfast, departure Transfer from Rome Hotel to Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Paris - Basel",
+      "2nd Class Train Ticket from Zurich - Venice by 2nd Class",
+      "2nd Class Train Ticket from Venice - Florence by 2nd Class",
+      "2nd Class Train Ticket from Florence - Rome by 2nd Class",
+      "Paris Hop on & Hop Off 24 Hours City Tour",
+      "Seine River Cruise Ticket",
+      "Skip the Line: Eiffel Tower 2nd Level Tickets",
+      "Day Trip to Disneyland - 01 Day 01 Park with Shared Coach Transportation",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Venice Canal Gondola Ride",
+      "Day Trip to Pisa & Leaning Tower from Florence ( Leaning Tower from outside )",
+      "Rome Hop on & Hop Off 24 Hours City Tour",
+      "Skip the Line: Colosseum, Roman Forum & Sistine Chapel",
+      "Private transfer from Airport - Hotel - Train Station in Paris",
+      "Private transfer from Hotel - Train Station in Zurich",
+      "Private transfer from Train Station - Hotel - Train Station in Venice",
+      "Private transfer from Train Station - Hotel - Train Station in Florence",
+      "Private transfer from Train Station - Hotel - Rome Airport"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "france"
+  },
+  {
+    "slug": "italy-7n-8d",
+    "name": "Italy Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Italy"
+    ],
+    "cities": [
+      "Rome",
+      "Florence",
+      "Venice",
+      "Milan"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Rome - Florence - Venice - Milan"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Rome",
+                "Palladium Palace or similar"
+              ],
+              [
+                "01 Night",
+                "Florence",
+                "Atlantic Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Venice",
+                "San Marco Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Milan",
+                "Neo Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Rome Airport, Private departure Transfer from Rome Airport to Rome Hotel, check in to the Hotel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast,Rome Hop on & Hop off City Tour- 24 Hours,Skip the Line: Colosseum, Roman Forum & Sistine Chapel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, private Transfer from Rome Hotel to Train station, Board the Train from Rome to Florence, Private Transfer from Florence station to Hotel. Check in to the Hotel,Day trip to Pisa Leaning Tower from Florence. Overnight stay in Florence."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer from Florence Hotel to Train station, Board the Train from Florence to Venice in 2nd class. Private Transfer from Venice station to Hotel, check in to the hotel. Later, Venice Gondola Ride, Overnight stay in Venice."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Murano, Burano & Torcello Island Tour . Overnight stay in Venice."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Private Transfer from Venice Hotel to Train station, Board the Train from Venice to Milan, Private Transfer from Milan Station to Hotel. Overnight stay in Milan."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Milan Hop on & Hop off City Tour. Overnight stay in Milan."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private Transfer from Milan Hotel to Airport to Board the flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Rome - Florence",
+      "2nd Class Train Ticket from Florence - Venice",
+      "2nd Class Train Ticket from Venice - Milan",
+      "Rome Hop on & Hop Off 24 Hours City Tour",
+      "Skip the Line: Colosseum, Roman Forum & Sistine Chapel",
+      "Half Day Trip to Pisa & Leaning Tower from Florence ( Leaning Tower from outside )",
+      "Venice Canal Gondola Ride",
+      "Murano, Burano & Torcello Island Tour from Venice",
+      "Milan Hop on & Hop off 24 Hours City Tour",
+      "Private transfer from Airport - Hotel - Train Station in Rome",
+      "Private transfer from Train Station - Hotel - Train Station in Florence",
+      "Private transfer from Train Station - Hotel - Train Station in Venice",
+      "Private transfer from Train Station - Hotel - Airport in Milan"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "italy"
+  },
+  {
+    "slug": "italy-9n-10d",
+    "name": "Italy Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Italy"
+    ],
+    "cities": [
+      "Rome",
+      "Naples",
+      "Florence",
+      "Venice",
+      "Milan"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Rome - Naples - Florence - Venice - Milan"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Rome",
+                "Palladium Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Naples",
+                "Grand Hotel Europa or similar"
+              ],
+              [
+                "01 Night",
+                "Florence",
+                "Atlantic Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Venice",
+                "San Marco Palace or similar"
+              ],
+              [
+                "02 Nights",
+                "Milan",
+                "Neo Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Rome Airport, Private departure Transfer from Rome Airport to Rome Hotel, check in to the Hotel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast,Rome Hop on & Hop off City Tour- 24 Hours,Skip the Line: Colosseum, Roman Forum & Sistine Chapel. Overnight stay in Rome."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Private Transfer from Hotel to Rome Train station, Board the Train from Rome to Naples. Private Transfer from Naples Train station to Hotel, check in to the Hotel, Naples Hop on & Hop off City Tour, Overnight stay in Naples."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Day trip to Sorrento, Positano & Amalfi from Naples. Overnight stay in Naples."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Private Transfer from Naples Hotel to Train station, Board the Train from Naples to Florence, Private Transfer from Florence Train station to Hotel. Check in to the Hotel Later visit Day trip to Pisa Leaning Tower from Florence. Overnight stay in Florence."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Private Transfer from Hotel to Train station, Board the Train from Florence to Venice, Private Transfer from Venice Train station to Hotel, check in to the Hotel Visit Venice Gondola Ride. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Murano, Burano & Torcello Island Tour. Overnight stay in Venice."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private Transfer from Hotel to Train station, Board the Train from Venice to Milan, Private Transfer from Train station to Hotel, Check in to the Hotel. Overnight stay in Milan."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Milan Hop on & Hop off City Tour. Overnight stay in Milan."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Private Transfer from Hotel to Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Rome - Naples",
+      "2nd Class Train Ticket from Naples - Florence",
+      "2nd Class Train Ticket from Florence - Venice",
+      "2nd Class Train Ticket from Venice - Milan",
+      "Rome Hop on & Hop Off 24 Hours City Tour",
+      "Skip the Line: Colosseum, Roman Forum & Sistine Chapel",
+      "Naples Hop on & Hop Off 24 Hours City Tour",
+      "Day Trip to Sorrento, Positano & Amalfi from Naples",
+      "Day Trip to Pisa & Leaning Tower from Florence ( Leaning Tower from outside )",
+      "Venice Canal Gondola Ride",
+      "Murano, Burano & Torcello Island Tour from Venice",
+      "Milan Hop on & Hop off 24 Hours City Tour",
+      "Private transfer from Airport - Hotel - Train Station in Rome",
+      "Private transfer from Train Station - Hotel - Train Station in Naples",
+      "Private transfer from Train Station - Hotel - Train Station in Florence",
+      "Private transfer from Train Station - Hotel - Train Station in Venice",
+      "Private transfer from Train Station - Hotel - Airport in Milan"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "italy"
+  },
+  {
+    "slug": "brussels-amsterdam-germany-7n-8d",
+    "name": "Brussels, Amsterdam & Germany Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Belgium",
+      "Netherlands",
+      "Germany"
+    ],
+    "cities": [
+      "Brussels",
+      "Amsterdam",
+      "Frankfurt"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Brussels - Amsterdam - Frankfurt"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Brussels",
+                "Hotel Floris Arlequin Grand Place or similar"
+              ],
+              [
+                "02 Nights",
+                "Amsterdam",
+                "Avenue Hotel Amsterdam or similar"
+              ],
+              [
+                "02 Nights",
+                "Frankfurt",
+                "Topas or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Brussels Airport, Private departure Transfer from Brussels Airport to Brussels Hotel, check in to the Hotel. Overnight stay in Brussels."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast,Brussels Hop on & Hop off City Tour. Overnight stay in Brussels."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Enjoy Day trip to Bruges & Ghent from Brussels. Overnight stay in Brussels."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Private Transfer from Hotel to Brussels Train station, Board the Train from Brussels to Amsterdam. Private Transfer from Amsterdam Train station to Hotel, check in to the Hotel, Later Enjoy Amsterdam City Canal Cruise Tickets. Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Day trip to Volendam, Marken & Windmills from Amsterdam . Overnight stay in Amsterdam."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Private Transfer from Amsterdam Hotel to Train station, Board the Train from Amsterdam to Frankfurt, Private Transfer from Frankfurt Train station to Hotel. Check in to the Hotel. Rest of the day at Leisure. Overnight stay in Frankfurt."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Enjoy Frankfurt Hop on & Hop off City Tour. Overnight stay in Frankfurt."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Private Transfer from Hotel to Airport for your flight Back to India."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Brussels - Amsterdam",
+      "2nd Class Train Ticket from Amsterdam - Frankfurt",
+      "Brussels Hop on & Hop Off 24 Hours City Tour",
+      "Day Trip to Bruges & Ghent from Brussels",
+      "Amsterdam Canal Cruise Tickets",
+      "Day Trip to Volendam, Marken & Windmills from Amsterdam",
+      "Frankfurt Hop on & Hop Off 24 Hours City Tour",
+      "Private transfer from Airport - Hotel - Train Station in Brussels",
+      "Private transfer from Train Station - Hotel - Train Station in Amsterdam",
+      "Private transfer from Train Station - Hotel - Airport in Frankfurt"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "belgium"
+  },
+  {
+    "slug": "prague-vienna-budapest-6n-7d",
+    "name": "Prague, Vienna & Budapest Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Czech Republic",
+      "Austria",
+      "Hungary"
+    ],
+    "cities": [
+      "Prague",
+      "Vienna",
+      "Budapest"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Prague - Vienna - Budapest"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Prague",
+                "Atlantic or similar"
+              ],
+              [
+                "02 Nights",
+                "Vienna",
+                "Arion Cityhotel Vienna or similar"
+              ],
+              [
+                "02 Nights",
+                "Budapest",
+                "Corvin Center Suites or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Prague. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Prague."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Prague Hop on & Hop off City Tour. Overnight in Prague."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Prague to Vienna by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Vienna."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Vienna Hop on & Hop off City Tour. Overnight in Vienna."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Vienna to Budapest by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Budapest."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Budapest Hop on & Hop off City Tour. Overnight in Budapest."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today private transfer from hotel to airport. Departure from Budapest Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Prague - Vienna",
+      "2nd Class Train Ticket from Vienna - Budapest",
+      "Prague Hop on & Hop Off 24 Hours City Tour",
+      "Vienna Hop on & Hop Off 24 Hours City Tour",
+      "Budapest Hop on & Hop Off 24 Hours City Tour",
+      "Private transfer from Airport - Hotel - Train Station in Prague",
+      "Private transfer from Train Station - Hotel - Train Station in Vienna",
+      "Private transfer from Train Station - Hotel - Airport in Budapest"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "czech-republic"
+  },
+  {
+    "slug": "prague-austria-budapest-9n-10d",
+    "name": "Prague, Austria & Budapest Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Czech Republic",
+      "Austria",
+      "Hungary"
+    ],
+    "cities": [
+      "Prague",
+      "Vienna",
+      "Innsbruck",
+      "Salzburg",
+      "Budapest"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Prague - Vienna - Innsbruck - Salzburg - Budapest"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Prague",
+                "Atlantic or similar"
+              ],
+              [
+                "02 Nights",
+                "Vienna",
+                "Arion Cityhotel Vienna or similar"
+              ],
+              [
+                "01 Night",
+                "Innsbruck",
+                "Hilton Garden Inn Innsbruck Tivoli or similar"
+              ],
+              [
+                "02 Nights",
+                "Salzburg",
+                "Fourside Hotel Salzburg or similar"
+              ],
+              [
+                "02 Nights",
+                "Budapest",
+                "Corvin Center Suites or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Prague. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Prague."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Prague Hop on & Hop off City Tour. Overnight in Prague."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Prague to Vienna by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Vienna."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Vienna Hop on & Hop off City Tour. Overnight in Vienna."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Vienna to Innsbruck by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Later Enjoy Swarovski Crystal World Tickets. Overnight in Innsbruck."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Innsbruck to Salzburg by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Overnight in Salzburg."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Enjoy Salzburg Hop on & Hop off City Tour. Overnight in Salzburg."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Salzburg to Budapest by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Budapest."
+      },
+      {
+        "day": "Day 9",
+        "text": "After Breakfast, Today Enjoy Budapest Hop on & Hop off City Tour. Overnight in Budapest."
+      },
+      {
+        "day": "Day 10",
+        "text": "After Breakfast, Today private transfer from hotel to airport. Departure from Budapest Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Prague - Vienna",
+      "2nd Class Train Ticket from Vienna - Innsbruck",
+      "2nd Class Train Ticket from Innsbruck - Salzburg",
+      "2nd Class Train Ticket from Salzburg - Budapest",
+      "Prague Hop on & Hop Off 24 Hours City Tour",
+      "Vienna Hop on & Hop Off 24 Hours City Tour",
+      "Budapest Hop on & Hop Off 24 Hours City Tour",
+      "Salzburg Hop on & Hop Off 24 Hours City Tour",
+      "Swarovski Crystal World Tickets",
+      "Private transfer from Airport - Hotel - Train Station in Prague",
+      "Private transfer from Train Station - Hotel - Train Station in Vienna",
+      "Private transfer from Train Station - Hotel - Train Station in Innsbruck",
+      "Private transfer from Train Station - Hotel - Train Station in Salzburg",
+      "Private transfer from Train Station - Hotel - Airport in Budapest"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "czech-republic"
+  },
+  {
+    "slug": "austria-swiss-9n-10d",
+    "name": "Austria & Swiss Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Austria",
+      "Switzerland"
+    ],
+    "cities": [
+      "Vienna",
+      "Salzburg",
+      "Innsbruck",
+      "Lucerne",
+      "Zurich"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Vienna - Salzburg - Innsbruck - Lucerne - Zurich"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Vienna",
+                "Arion Cityhotel Vienna or similar"
+              ],
+              [
+                "02 Nights",
+                "Salzburg",
+                "Fourside Hotel Salzburg or similar"
+              ],
+              [
+                "01 Night",
+                "Innsbruck",
+                "Hilton Garden Inn Innsbruck Tivoli or similar"
+              ],
+              [
+                "02 Nights",
+                "Lucerne",
+                "Ibis Styles Luzern or similar"
+              ],
+              [
+                "02 Nights",
+                "Zurich",
+                "Novotel Zurich Airport Messe or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Vienna. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Vienna."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Vienna Hop on & Hop off City Tour. Overnight in Vienna."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Vienna to Salzburg by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Salzburg."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Salzburg Hop on & Hop off City Tour. Overnight in Salzburg."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Salzburg to Innsbruck by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Later Enjoy Swarovski Crystal World Tickets. Overnight in Innsbruck."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Innsbruck to Lucerne by 2nd Class. Check in at the hotel. Later Enjoy Visit Lake Lucerne, Chapel Bridge, Lion Monument with Swiss Pass. Overnight in Lucerne."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Enjoy Excursion to Mt. Titlis with Ice Flyer. Overnight in Lucerne."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Today Board train from Lucerne to Zurich with Swiss Pass. Check in at the hotel. Later Enjoy Visit Rhine Falls. Overnight in Zurich."
+      },
+      {
+        "day": "Day 9",
+        "text": "After Breakfast, Today Enjoy Visit to Lindt Chocolate Factory & Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass. Overnight in Zurich."
+      },
+      {
+        "day": "Day 10",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from Zurich airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train Ticket from Vienna - Salzburg",
+      "2nd Class Train Ticket from Salzburg - Innsbruck",
+      "2nd Class Train Ticket from Innsbruck - Zurich",
+      "Vienna Hop on & Hop Off 24 Hours City Tour",
+      "Salzburg Hop on & Hop Off 24 Hours City Tour",
+      "Swarovski Crystal World Tickets",
+      "2nd Class 04 Days Consecutive Swiss Pass",
+      "Lake Lucerne Cruise with Swiss Pass",
+      "Excursion to Mt. Titlis with Ice Flyer",
+      "Visit Rhine Falls with Swiss Pass ( Boat Ride Optional )",
+      "Visit Lake Zurich, Old Town, Landquart Shopping Village with Swiss Pass",
+      "Lindt Home of Chocolate Tickets",
+      "Private transfer from Airport - Hotel - Train Station in Vienna",
+      "Private transfer from Train Station - Hotel - Train Station in Salzburg",
+      "Private transfer from Train Station - Hotel - Train Station in Innsbruck",
+      "Private transfer from Airport - Hotel in Zurich"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "austria"
+  },
+  {
+    "slug": "iceland-6n-7d",
+    "name": "Iceland Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Iceland"
+    ],
+    "cities": [
+      "Reykjavik"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Reykjavik"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "06 Nights",
+                "Reykjavik",
+                "Hotel Holt or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Reykjavik. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Reykjavik City Tour. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Enjoy Northern Lights Tour. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Day trip to Golden Circle from Reykjavik. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Enjoy Day trip to South Coast from Reykjavik. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Whale Watching Tour. Overnight in Reykjavik."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Departure from Reykjavik airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Private transfer from Airport - Hotel - Airport in Reykjavik",
+      "Reykjavik City Tour",
+      "Northern Lights Tour",
+      "Day Trip to Golden Circle from Reykjavik",
+      "Day Trip to South Coast from Reykjavik",
+      "Whale Watching Tour"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "iceland"
+  },
+  {
+    "slug": "turkey-8n-9d",
+    "name": "Turkey Holiday Package",
+    "duration": "08 Nights & 09 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Turkey"
+    ],
+    "cities": [
+      "Istanbul",
+      "Cappadocia",
+      "Antalya"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "08 Nights & 09 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Istanbul - Cappadocia - Antalya - Istanbul"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Istanbul",
+                "Endless Suites Taksim or similar"
+              ],
+              [
+                "02 Nights",
+                "Cappadocia",
+                "Acer Cave Hotel or similar"
+              ],
+              [
+                "03 Nights",
+                "Antalya",
+                "Suite Laguna Hotel or similar"
+              ],
+              [
+                "01 Night",
+                "Istanbul",
+                "Villa Pera Suite Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Istanbul. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Full Day Istanbul City Tour. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Istanbul to Kayseri. Private transfer from Kayseri Airport to Cappadocia Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Cappadocia."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Cappadocia Green Tour. Overnight in Cappadocia."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Kayseri to Antalya. Private transfer from Airport to Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Antalya."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Pamukkale Tour. Overnight in Antalya."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Antalya to Istanbul. Private transfer from Airport to Hotel. Check in at the hotel. Later Enjoy Bosphorus Cruise Istanbul. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from Istanbul airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Bosphorus Cruise Istanbul",
+      "Full Day Istanbul City Tour",
+      "Cappadocia Green Tour",
+      "Antalya City Tour with Cable Car & Waterfalls",
+      "Pamukkale & Hierapolis Tour from Antalya",
+      "Private transfer from Airport - Hotel - Airport in Istanbul",
+      "Private transfer from Kayseri Airport - Cappadocia Hotel - Kayseri Airport",
+      "Private transfer from Airport - Hotel - Airport in Antalya",
+      "Private transfer from Airport - Hotel - Airport in Istanbul"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "turkey"
+  },
+  {
+    "slug": "turkey-9n-10d",
+    "name": "Turkey Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Turkey"
+    ],
+    "cities": [
+      "Istanbul",
+      "Cappadocia",
+      "Kusadasi",
+      "Antalya"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Istanbul - Cappadocia - Kusadasi - Antalya - Istanbul"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Istanbul",
+                "Endless Suites Taksim or similar"
+              ],
+              [
+                "02 Nights",
+                "Cappadocia",
+                "Acer Cave Hotel or similar"
+              ],
+              [
+                "02 Nights",
+                "Kusadasi",
+                "Tuntas Family Suites Kusadasi or similar"
+              ],
+              [
+                "02 Nights",
+                "Antalya",
+                "Prime Boutique Hotel or similar"
+              ],
+              [
+                "01 Night",
+                "Istanbul",
+                "Villa Pera Suite Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Istanbul. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Full Day Istanbul City Tour. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Istanbul to Kayseri. Private transfer from Kayseri Airport to Cappadocia Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Cappadocia."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Cappadocia Green Tour. Overnight in Cappadocia."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Kayseri to Izmir. Private transfer from Izmir Airport to Kusadasi Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Kusadasi."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Pamukkale Tour. Overnight in Kusadasi."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Izmir to Antalya. Private transfer from Airport to Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Antalya."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Today Enjoy Antalya City Tour with Cable Car & Waterfalls. Overnight in Antalya."
+      },
+      {
+        "day": "Day 9",
+        "text": "After Breakfast, Today Private transfer from hotel to airport. Board flight from Antalya to Istanbul. Private transfer from Airport to Hotel. Check in at the hotel. Later Enjoy Bosphorus Cruise Istanbul. Overnight in Istanbul."
+      },
+      {
+        "day": "Day 10",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from Istanbul airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Bosphorus Cruise Istanbul",
+      "Full Day Istanbul City Tour",
+      "Cappadocia Green Tour",
+      "Best of Ephesus Tour from Kusadasi",
+      "Antalya City Tour with Cable Car & Waterfalls",
+      "Private transfer from Airport - Hotel - Airport in Istanbul",
+      "Private transfer from Kayseri Airport - Cappadocia Hotel - Kayseri Airport",
+      "Private transfer from Izmir Airport - Kusadasi Hotel - Izmir Airport",
+      "Private transfer from Airport - Hotel - Airport in Antalya",
+      "Private transfer from Airport - Hotel - Airport in Istanbul"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "turkey"
+  },
+  {
+    "slug": "greece-7n-8d",
+    "name": "Greece Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Greece"
+    ],
+    "cities": [
+      "Athens",
+      "Mykonos",
+      "Santorini"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Athens - Mykonos - Santorini - Athens"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Athens",
+                "Brown Kubic Athens or similar"
+              ],
+              [
+                "02 Nights",
+                "Mykonos",
+                "Colours Of Mykonos or similar"
+              ],
+              [
+                "02 Nights",
+                "Santorini",
+                "Artemis Santorini or similar"
+              ],
+              [
+                "01 Night",
+                "Athens",
+                "Brown Kubic Athens or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Athens. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Athens."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy Athens half-day sightseeing tour with Museum. Overnight in Athens."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Private transfer from hotel - port. Board Ferry from Athens to Mykonos. Private transfer from port - hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Mykonos."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Mykonos Half Day City Tour. Overnight in Mykonos."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today Private transfer from hotel - port. Board Ferry from Mykonos to Santorini. Private transfer from port - hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Santorini."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Santorini City Tour with Sunset Oia. Overnight in Santorini."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Private transfer from hotel - port. Board Ferry from Santorini to Athens. Private transfer from port - hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Athens."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from Athens Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Ferry from Athens to Mykonos",
+      "Ferry from Mykonos to Santorini",
+      "Ferry from Santorini to Athens",
+      "Athens half-day sightseeing tour with Acropolis Museum",
+      "Mykonos Half Day City Tour",
+      "Santorini City Tour with Sunset Oia",
+      "Private arrival and departure transfer in Athens",
+      "Private arrival and departure transfer in Mykonos",
+      "Private arrival and departure transfer in Santorini",
+      "Private arrival and departure transfer in Athens"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "greece"
+  },
+  {
+    "slug": "spain-6n-7d",
+    "name": "Spain Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Spain"
+    ],
+    "cities": [
+      "Barcelona",
+      "Valencia",
+      "Madrid"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Barcelona - Valencia - Madrid"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Barcelona",
+                "Holiday Inn Express Barcelona or similar"
+              ],
+              [
+                "02 Nights",
+                "Valencia",
+                "Hotel Villacarlos or similar"
+              ],
+              [
+                "02 Nights",
+                "Madrid",
+                "El Pasaje or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Barcelona. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off & Sagrada Familia Skip-The-Line Guided Tour. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Board Coach from Barcelona to Valencia. Check in at the hotel. Rest of the day at Leisure. Overnight in Valencia."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Valencia Open Bus 24 Hours Hop On Hop Off Tour. Overnight in Valencia."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Train ticket from Valencia to Madrid by 2nd Class. Check in at the hotel. Royal Palace Madrid Afternoon Guided Tour. Overnight in Madrid."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Madrid City Tour By Bus 24 Hours Hop-On Hop-Off. Overnight in Madrid."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Madrid Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Sagrada Familia Skip-The-Line Guided Tour",
+      "Valencia City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Madrid City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Royal Palace Madrid Afternoon Guided Tour in a Small Group",
+      "Economy Coach Ticket Barcelona-Valencia",
+      "2nd Class Train from Valencia - Madrid",
+      "Private Transfer from Airport - Hotel - Coach Station in Barcelona",
+      "Private Transfer from Coach Station - Hotel to Train Station in Valencia",
+      "Private Transfer from Train Station - Hotel - Airport in Madrid"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "spain"
+  },
+  {
+    "slug": "spain-8n-9d",
+    "name": "Spain Holiday Package",
+    "duration": "08 Nights & 09 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Spain"
+    ],
+    "cities": [
+      "Barcelona",
+      "Valencia",
+      "Ibiza",
+      "Madrid"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "08 Nights & 09 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Barcelona - Valencia - Ibiza - Madrid"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Barcelona",
+                "Holiday Inn Express Barcelona or similar"
+              ],
+              [
+                "02 Nights",
+                "Valencia",
+                "Hotel Villacarlos or similar"
+              ],
+              [
+                "02 Nights",
+                "Ibiza",
+                "Ryan's Ibiza Apartments or similar"
+              ],
+              [
+                "02 Nights",
+                "Madrid",
+                "El Pasaje or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Barcelona. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off & Sagrada Familia Skip-The-Line Guided Tour. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Board Coach from Barcelona to Valencia. Check in at the hotel. Rest of the day at Leisure. Overnight in Valencia."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Valencia Open Bus 24 Hours Hop On Hop Off Tour. Overnight in Valencia."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Valencia Airport for your flight. Check in at the hotel. Rest of the day at Leisure. Overnight in Ibiza."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Ibiza Catamaran Cruise. Overnight in Ibiza."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Ibiza Airport for your flight. Check in at the hotel. Royal Palace Madrid Afternoon Guided Tour. Overnight in Madrid."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Today Enjoy Madrid City Tour By Bus 24 Hours Hop-On Hop-Off. Overnight in Madrid."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Madrid Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Sagrada Familia Skip-The-Line Guided Tour",
+      "Valencia City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Ibiza Catamaran Cruise",
+      "Madrid City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Royal Palace Madrid Afternoon Guided Tour in a Small Group",
+      "Economy Coach Ticket Barcelona-Valencia",
+      "Private Transfer from Airport - Hotel - Coach Station in Barcelona",
+      "Private Transfer from Coach Station - Hotel to Valencia Airport",
+      "Private Transfer from Airport - Hotel - Airport Ibiza",
+      "Private Transfer from Airport to Hotel - Airport in Madrid",
+      "Note: Flights valencia - ibiza - madrid are excluded"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "spain"
+  },
+  {
+    "slug": "uk-7n-8d",
+    "name": "UK Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "UK"
+    ],
+    "cities": [
+      "London",
+      "Windermere",
+      "Manchester"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "London - Windermere - Manchester - London"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "London",
+                "The Captain Cook Hotel or similar"
+              ],
+              [
+                "02 Nights",
+                "Windermere",
+                "The Brown Horse Inn or similar"
+              ],
+              [
+                "02 Nights",
+                "Manchester",
+                "Holiday Inn Express Manchester or similar"
+              ],
+              [
+                "01 Night",
+                "London",
+                "The Captain Cook Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in London. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in London."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy London 24 Hrs. Hop-On Hop-Off Tour with Madame Tussauds and London Eye. Overnight in London."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board train from London - Windermere by 2nd Class. Private transfer from Windermere train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Windermere."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Lake District Beatrix Potter Half Day Tour from Windermere. Overnight in Windermere."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board train from Windermere - Manchester by 2nd Class. Private transfer from Manchester train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Manchester."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Manchester 24 Hours Hop On Hop Off Bus Tour. Overnight in Manchester."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board train from Manchester to London by 2nd Class. Private transfer from London train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in London."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from London airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train from London to Windermere",
+      "2nd Class Train from Windermere to Manchester",
+      "2nd Class Train from Manchester to London",
+      "London 24 Hours Hop On Hop Off Bus Tour",
+      "Madame Tussauds Entrance Ticket and London Eye Ticket",
+      "Lake District: Six Lakes Morning Tour from Windermere",
+      "Manchester 24 Hours Hop On Hop Off Bus Tour",
+      "Private Transfer from Airport - Hotel - Station in London",
+      "Private Transfer from Train Station - Hotel - Train Station in Windermere",
+      "Private Transfer from Train Station - Hotel - Train Station in Manchester",
+      "Private Return Train Station - Hotel - Airport in London"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "uk"
+  },
+  {
+    "slug": "uk-scotland-13n-14d",
+    "name": "UK & Scotland Holiday Package",
+    "duration": "13 Nights & 14 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "UK",
+      "Scotland"
+    ],
+    "cities": [
+      "London",
+      "Edinburgh",
+      "Inverness",
+      "Glasgow"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "13 Nights & 14 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "London - Edinburgh - Inverness - Glasgow - London"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "04 Nights",
+                "London",
+                "The Captain Cook Hotel or similar"
+              ],
+              [
+                "03 Nights",
+                "Edinburgh",
+                "Ibis edinburgh centre south bridge or similar"
+              ],
+              [
+                "02 Nights",
+                "Inverness",
+                "Sealladh Sona or similar"
+              ],
+              [
+                "03 Nights",
+                "Glasgow",
+                "Novotel Glasgow Centre or similar"
+              ],
+              [
+                "01 Night",
+                "London",
+                "The Captain Cook Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in London. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in London."
+      },
+      {
+        "day": "Day 2",
+        "text": "After Breakfast, Today Enjoy London 48 Hrs. Hop-On Hop-Off Tour and 30 Min River Cruise. Overnight in London."
+      },
+      {
+        "day": "Day 3",
+        "text": "After Breakfast, Today Enjoy London 48 Hrs. Hop-On Hop-Off Tour and Madame Tussauds and London Eye. Overnight in London."
+      },
+      {
+        "day": "Day 4",
+        "text": "After Breakfast, Today Enjoy Day at Leisure. Overnight in London."
+      },
+      {
+        "day": "Day 5",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board train from London - Edinburgh by 2nd Class. Private transfer from Edinburgh train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Edinburgh."
+      },
+      {
+        "day": "Day 6",
+        "text": "After Breakfast, Today Enjoy Edinburgh Hop-On Hop-Off City Tour 24 Hours Bus & Edinburgh Castle Tickets. Overnight in Edinburgh."
+      },
+      {
+        "day": "Day 7",
+        "text": "After Breakfast, Today Enjoy Day at Leisure. Overnight in Edinburgh."
+      },
+      {
+        "day": "Day 8",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board train from Edinburgh to Inverness by 2nd Class. Private transfer from Inverness train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Inverness."
+      },
+      {
+        "day": "Day 9",
+        "text": "After Breakfast, Today Enjoy Loch Ness Sightseeing Cruise in Inverness. Overnight in Inverness."
+      },
+      {
+        "day": "Day 10",
+        "text": "After Breakfast, Today private transfer from hotel to train station. Board Train from Inverness to Glasgow by 2nd Class. Private transfer from Glasgow train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Glasgow."
+      },
+      {
+        "day": "Day 11",
+        "text": "After Breakfast, Today Enjoy Stirling Castle, Loch Lomond and Whisky Trail Small Group Day Tour from Glasgow. Overnight in Glasgow."
+      },
+      {
+        "day": "Day 12",
+        "text": "After Breakfast, Today Enjoy Day at Leisure. Overnight in Glasgow."
+      },
+      {
+        "day": "Day 13",
+        "text": "After Breakfast, Today Private transfer from hotel to train station. Board train from Glasgow to London by 2nd Class. Private transfer from train station to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in London."
+      },
+      {
+        "day": "Day 14",
+        "text": "After Breakfast, Private transfer from hotel to airport. Departure from London airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train from London to Edinburgh",
+      "2nd Class Train from Edinburgh to Inverness",
+      "2nd Class Train from Inverness to Glasgow",
+      "2nd Class Train from Glasgow to London",
+      "London 48 Hrs. Hop-On Hop-Off Tour and 30 Min River Cruise",
+      "Madame Tussauds and London Eye",
+      "Edinburgh Hop-On Hop-Off City Tour 24 Hours Bus",
+      "Edinburgh Castle Tickets",
+      "From Inverness: Loch Ness Day Trip",
+      "Stirling Castle, Loch Lomond and Whisky Trail Small Group Day Tour from Glasgow",
+      "Private Transfer from Airport - Hotel - Train Station in London",
+      "Private Transfer from Train Station - Hotel - Train Station Edinburgh",
+      "Private Transfer from Train Station - Hotel - Train Station in Inverness",
+      "Private Transfer from Train Station - Hotel - Train Station In Glasgow",
+      "Private Return Airport Transfers in London"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "uk"
+  },
+  {
+    "slug": "portugal-5n-6d",
+    "name": "Portugal Holiday Package",
+    "duration": "05 Nights & 06 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Portugal"
+    ],
+    "cities": [
+      "Lisbon",
+      "Porto"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "05 Nights & 06 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Lisbon - Porto - Lisbon"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Lisbon",
+                "Hotel Eurostars Lisboa Parque or similar"
+              ],
+              [
+                "02 Nights",
+                "Porto",
+                "Hotel Portus Cale or similar"
+              ],
+              [
+                "01 Night",
+                "Lisbon",
+                "Hotel Eurostars Lisboa Parque or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Lisbon. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Lisbon City Tour By Bus 24 Hours Hop On Hop Off. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Board Coach from Lisbon to Porto. Check in at the hotel. Rest of the day at Leisure. Overnight in Porto."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Porto: Douro River Panoramic Tour by Boat. Overnight in Porto."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Board Coach from Porto to Lisbon. Check in at the hotel. Sintra & Cascais Day Tour from Lisbon. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Lisbon Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Coach Ticket from Lisbon to Porto",
+      "Coach Ticket from Porto to Lisbon",
+      "Lisbon City Tour By Bus 24 Hours Hop On Hop Off",
+      "Sintra & Cascais Day Tour from Lisbon",
+      "Porto: Douro River Panoramic Tour by Boat",
+      "Private Transfers from Lisbon Airport to Hotel to Coach Station in Lisbon",
+      "Private Transfers from Coach Station to Hotel to Coach Station in Porto",
+      "Private Transfers from Coach Station to Hotel to Airport in Lisbon"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "portugal"
+  },
+  {
+    "slug": "portugal-spain-9n-10d",
+    "name": "Portugal & Spain Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Portugal",
+      "Spain"
+    ],
+    "cities": [
+      "Barcelona",
+      "Valencia",
+      "Madrid",
+      "Lisbon"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Barcelona - Valencia - Madrid - Lisbon"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Barcelona",
+                "Holiday Inn Express Barcelona or similar"
+              ],
+              [
+                "02 Nights",
+                "Valencia",
+                "Hotel Villacarlos or similar"
+              ],
+              [
+                "02 Nights",
+                "Madrid",
+                "El Pasaje or similar"
+              ],
+              [
+                "03 Nights",
+                "Lisbon",
+                "Hotel Eurostars Lisboa Parque or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Barcelona. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off & Sagrada Familia Skip-The-Line Guided Tour. Overnight in Barcelona."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Board Coach from Barcelona to Valencia. Check in at the hotel. Rest of the day at Leisure. Overnight in Valencia."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Valencia Open Bus 24 Hours Hop On Hop Off Tour. Overnight in Valencia."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Train ticket from Valencia to Madrid by 2nd Class. Check in at the hotel. Royal Palace Madrid Afternoon Guided Tour. Overnight in Madrid."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Madrid City Tour By Bus 24 Hours Hop-On Hop-Off. Overnight in Madrid."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Board Train from Madrid to Lisbon by 2nd Class. Check in at the hotel. Rest of the day at Leisure. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Today Enjoy Lisbon City Tour By Bus 24 Hours Hop On Hop Off. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Today Enjoy Sintra & Cascais Day Tour from Lisbon. Overnight in Lisbon."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Lisbon Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Economy Coach Ticket Barcelona-Valencia",
+      "2nd Class Train from Valencia - Madrid",
+      "Barcelona City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Sagrada Familia Skip-The-Line Guided Tour",
+      "Madrid City Tour By Bus 24 Hours Hop-On Hop-Off",
+      "Royal Palace Madrid Afternoon Guided Tour in a Small Group",
+      "Valencia Open Bus 24 Hours Hop On Hop Off Tour",
+      "Lisbon City Tour By Bus 24 Hours Hop On Hop Off",
+      "Sintra & Cascais Day Tour from Lisbon",
+      "Private Airport Transfer from Barcelona Airport to Hotel to Barcelona Coach Station",
+      "Private Transfer in Valencia from Coach Station to Hotel to Train Station",
+      "Private Transfer from Train Station - Hotel - Airport in Madrid",
+      "Private Transfer from Airport - Hotel - Airport in Lisbon"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "portugal"
+  },
+  {
+    "slug": "ireland-6n-7d",
+    "name": "Ireland Holiday Package",
+    "duration": "06 Nights & 07 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Ireland"
+    ],
+    "cities": [
+      "Belfast",
+      "Galway",
+      "Dublin"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "06 Nights & 07 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Belfast - Galway - Dublin"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Belfast",
+                "Holiday Inn Belfast City Centre or similar"
+              ],
+              [
+                "02 Nights",
+                "Galway",
+                "Claregalway Hotel or similar"
+              ],
+              [
+                "02 Nights",
+                "Dublin",
+                "The West County Hotel or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Belfast. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Belfast."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Belfast City Tour with Giant's Causeway Tour. Overnight in Belfast."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Private transfer from Belfast to Galway. Check in at the hotel. Rest of the day at Leisure. Overnight in Galway."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Day trip to Cliffs of Moher. Overnight in Galway."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Board Train from Galway to Dublin. Check in at the hotel. Rest of the day at Leisure. Overnight in Dublin."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Dublin Hop On Hop Off Bus Tour. Overnight in Dublin."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Dublin Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "2nd Class Train ticket from Galway - Dublin",
+      "Belfast City Tour with Giant's Causeway Tour (With Hotel Pickup SIC)",
+      "Cliffs of Moher Day Trip from Galway (With Hotel Pickup SIC)",
+      "Dublin Hop On Hop Off Bus Tour - 24 Hours",
+      "Private arrival transfer in Belfast",
+      "Private departure transfer in Galway",
+      "Private arrival & departure transfer in Dublin"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "ireland"
+  },
+  {
+    "slug": "scandinavia-9n-10d",
+    "name": "Scandinavia Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Norway",
+      "Sweden",
+      "Denmark"
+    ],
+    "cities": [
+      "Oslo",
+      "Stockholm",
+      "Copenhagen"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Oslo - Stockholm - Copenhagen"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Oslo",
+                "Radisson Blu Hotel Oslo Alna or similar"
+              ],
+              [
+                "03 Nights",
+                "Stockholm",
+                "Best Western Plus Park City Hammarby Sjostad or similar"
+              ],
+              [
+                "03 Nights",
+                "Copenhagen",
+                "Four Points Flex By Sheraton Copenhagen City or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Oslo. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Oslo."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Panoramic Oslo Coach Tour 2 Hours. Overnight in Oslo."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Enjoy Kon-Tiki Museum Entrance Ticket in Oslo. Overnight in Oslo."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Oslo airport for your flight to Stockholm. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Stockholm."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Stockholm Old Town Walking Tour. Overnight in Stockholm."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Vasa Ship Museum Tickets in Stockholm . Overnight in Stockholm."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Stockholm airport for your flight to Copenhagen. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Copenhagen."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Today Enjoy Copenhagen Walking Tour. Overnight in Copenhagen."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Today Enjoy Tivoli Gardens Entrance. Overnight in Copenhagen."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Copenhagen Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Panoramic Oslo Coach Tour 2 Hours",
+      "Kon-Tiki Museum Entrance Ticket in Oslo",
+      "Stockholm Old Town Walking Tour",
+      "Vasa Ship Museum Tickets in Stockholm",
+      "Copenhagen Walking Tour",
+      "Tivoli Gardens Entrance",
+      "Return Airport Transfers in Oslo Private",
+      "Return Airport Transfers in Stockholm Private",
+      "Return Airport Transfers in Copenhagen Private",
+      "Not Included",
+      "Local Flight Economy Class from Oslo to Stockholm",
+      "Local Flight Economy Class from Stockholm to Copenhagen"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "norway"
+  },
+  {
+    "slug": "finland-9n-10d",
+    "name": "Finland Holiday Package",
+    "duration": "09 Nights & 10 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Finland"
+    ],
+    "cities": [
+      "Helsinki",
+      "Rovaniemi",
+      "Kemi"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "09 Nights & 10 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Helsinki - Rovaniemi - Kemi - Helsinki"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "03 Nights",
+                "Helsinki",
+                "Hotel Haaga Central Park or similar"
+              ],
+              [
+                "03 Nights",
+                "Rovaniemi",
+                "Aakenus or similar"
+              ],
+              [
+                "02 Nights",
+                "Kemi",
+                "Scandic Kemi or similar"
+              ],
+              [
+                "01 Night",
+                "Helsinki",
+                "Hotel Haaga Central Park or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Helsinki. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Helsinki."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy City Sightseeing Helsinki Hop-On Hop-Off Bus Tour. Overnight in Helsinki."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Enjoy Porvoo Tour from Helsinki . Overnight in Helsinki."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Board Train from Helsinki to Rovaniemi by 2nd Class. Check in at the hotel. Rest of the day at Leisure. Overnight in Rovaniemi."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Husky, Reindeer Farm and Santa Village Experience From Rovaniemi. Overnight in Rovaniemi."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Enjoy Northern Lights Tour by Snowmobile from Rovaniemi . Overnight in Rovaniemi."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Board Train from Rovaniemi to Kemi by 2nd Class. Check in at the hotel. Rest of the day at Leisure. Overnight in Kemi."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Today Enjoy Sampo Ice Breaker Cruise from Kemi. Overnight in Kemi."
+      },
+      {
+        "day": "Day 9",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Kemi Airport for your flight to Helsinki. Private transfer from Airport to Hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Helsinki."
+      },
+      {
+        "day": "Day 10",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Helsinki Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Private Transfer from Helsinki Airport to Hotel to Helsinki Station",
+      "Private Transfer from Rovaniemi Station to Hotel to Rovaniemi Station",
+      "Private Transfer from Kemi Station to Hotel to Kemi Airport",
+      "Private Transfer from Helsinki Airport to Hotel to Airport",
+      "2nd Class Train ticket from Helsinki - Rovaniemi",
+      "2nd Class Train ticket from Rovaniemi - Kemi",
+      "City Sightseeing Helsinki Hop-On Hop-Off Bus Tour",
+      "Porvoo Tour from Helsinki on Seat In Coach Basis",
+      "Sampo Ice Breaker Cruise from Kemi on Seat In Coach Basis",
+      "Husky, Reindeer Farm and Santa Village Experience From Rovaniemi on Seat In Coach Basis",
+      "Northern Lights Tour by Snowmobile from Rovaniemi on Seat In Coach Basis"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "finland"
+  },
+  {
+    "slug": "croatia-7n-8d",
+    "name": "Croatia Holiday Package",
+    "duration": "07 Nights & 08 Days",
+    "source": "All_Europe_Scandinavian_Packages.docx",
+    "countries": [
+      "Croatia"
+    ],
+    "cities": [
+      "Zagreb",
+      "Split",
+      "Dubrovnik"
+    ],
+    "tour": [
+      {
+        "label": "Duration",
+        "value": "07 Nights & 08 Days"
+      },
+      {
+        "label": "Cities Covered",
+        "value": "Zagreb - Split - Dubrovnik"
+      }
+    ],
+    "options": [
+      {
+        "name": "Accommodation",
+        "tables": [
+          {
+            "columns": [
+              "Stay",
+              "City",
+              "Hotel"
+            ],
+            "rows": [
+              [
+                "02 Nights",
+                "Zagreb",
+                "Canopy by Hilton Zagreb City Centre or similar"
+              ],
+              [
+                "03 Nights",
+                "Split",
+                "Marmontova Luxury Rooms or similar"
+              ],
+              [
+                "02 Nights",
+                "Dubrovnik",
+                "City Apartments Lani or similar"
+              ]
+            ]
+          }
+        ],
+        "price": []
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Zagreb. Private transfer from airport to hotel. Check in at the hotel. Rest of the day at Leisure. Overnight in Zagreb."
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast, Today Enjoy Zagreb City Walking Tour. Overnight in Zagreb."
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast, Today Board Coach from Zagreb to Split. Check in at the hotel. Rest of the day at Leisure. Overnight in Split."
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast, Today Enjoy Split Old Town Small Group Walking Tour. Overnight in Split."
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast, Today Enjoy Krka National Park Eco Tour. Overnight in Split."
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast, Today Board Coach from Split to Dubrovnik. Check in at the hotel. Rest of the day at Leisure. Overnight in Dubrovnik."
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast, Today Enjoy 'Game of Thrones' Walking Tour of Dubrovnik. Overnight in Dubrovnik."
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast, Today Private transfer from Hotel to Airport. Departure from Dubrovnik Airport for your flight."
+      }
+    ],
+    "inclusions": [
+      "Daily Breakfast",
+      "Zagreb City Walking Tour",
+      "Split Old town Small group Walking tour",
+      "Krka National Park Eco Tour from Split",
+      "Exclusive: 'Game of Thrones' Walking Tour of Dubrovnik",
+      "Transfer from Airport - Hotel - Coach Station in Zagreb",
+      "Transfer from Coach Station - Hotel - Coach Station in Split",
+      "Transfer from Coach Station - Hotel - Airport in Dubrovnik"
+    ],
+    "exclusions": [],
+    "notes": [],
+    "flights": [],
+    "imageKey": "croatia"
+  },
+  {
+    "slug": "bali-holiday-package-1295",
+    "name": "Bali Holiday Package",
+    "duration": "6 Nights / 7 Days",
+    "source": "Bali_Holiday_Package_6_Nights_7_Days_-_FNF-2026-1295.docx",
+    "countries": [
+      "Bali"
+    ],
+    "cities": [
+      "Kuta",
+      "Ubud"
+    ],
+    "tour": [
+      {
+        "label": "QUOTATION",
+        "value": "FNF/2026/1295"
+      },
+      {
+        "label": "No. of Pax",
+        "value": "2 Adults"
+      },
+      {
+        "label": "Trip Duration",
+        "value": "6N/7D"
+      },
+      {
+        "label": "Travel Date",
+        "value": "06 Nov 2026"
+      }
+    ],
+    "options": [
+      {
+        "name": "Option 1",
+        "tables": [
+          {
+            "columns": [
+              "Nights",
+              "City",
+              "Hotel Name",
+              "Category",
+              "Meal Plan",
+              "Room Type",
+              "Occupancy"
+            ],
+            "rows": [
+              [
+                "3N",
+                "Kuta",
+                "Golden Tulip Jineng Resort Kuta/Similar",
+                "4 Star",
+                "BB",
+                "Deluxe City View",
+                "2 Pax"
+              ],
+              [
+                "3N",
+                "Ubud",
+                "Ubud Heaven Penestanan Villas/Similar",
+                "4 Star",
+                "BB",
+                "One Bedroom Private Pool Villa",
+                "2 Pax"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 38,999/- Per Person + GST 5% Extra"
+        ]
+      },
+      {
+        "name": "Option 2",
+        "tables": [
+          {
+            "columns": [
+              "Nights",
+              "City",
+              "Hotel Name",
+              "Category",
+              "Meal Plan",
+              "Room Type",
+              "Occupancy"
+            ],
+            "rows": [
+              [
+                "3N",
+                "Kuta",
+                "Ramada By Wyndham Bali Sunset Road Kuta/Similar",
+                "4 Star",
+                "BB",
+                "Superior",
+                "2 Pax"
+              ],
+              [
+                "3N",
+                "Ubud",
+                "Ubud Heaven Penestanan Villas/Similar",
+                "4 Star",
+                "BB",
+                "One Bedroom Private Pool Villa",
+                "2 Pax"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 38,499/- Per Person + GST 5% Extra"
+        ]
+      },
+      {
+        "name": "Option 3",
+        "tables": [
+          {
+            "columns": [
+              "Nights",
+              "City",
+              "Hotel Name",
+              "Category",
+              "Meal Plan",
+              "Room Type",
+              "Occupancy"
+            ],
+            "rows": [
+              [
+                "3N",
+                "Kuta",
+                "Ramada By Wyndham Bali Sunset Road Kuta/Similar",
+                "4 Star",
+                "BB",
+                "Superior",
+                "2 Pax"
+              ],
+              [
+                "3N",
+                "Ubud",
+                "Alam Puisi Villa Ubud/Similar",
+                "4 Star",
+                "BB",
+                "Grand Paddy View Pool Villa",
+                "2 Pax"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 57,499/- Per Person + GST 5% Extra"
+        ]
+      },
+      {
+        "name": "Option 4",
+        "tables": [
+          {
+            "columns": [
+              "Nights",
+              "City",
+              "Hotel Name",
+              "Category",
+              "Meal Plan",
+              "Room Type",
+              "Occupancy"
+            ],
+            "rows": [
+              [
+                "3N",
+                "Kuta",
+                "Golden Tulip Jineng Resort Kuta/Similar",
+                "4 Star",
+                "BB",
+                "Deluxe City View",
+                "2 Pax"
+              ],
+              [
+                "3N",
+                "Ubud",
+                "Alam Puisi Villa Ubud/Similar",
+                "4 Star",
+                "BB",
+                "Grand Paddy View Pool Villa",
+                "2 Pax"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 57,999/- Per Person + GST 5% Extra"
+        ]
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Bali Airport. Meet & greet followed by private transfer to your hotel in Kuta. Check-in and enjoy the rest of the day at leisure. Overnight stay in Kuta.",
+        "date": "06 Nov 2026"
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast at hotel. Enjoy a Half Day Uluwatu Temple Tour followed by the famous Kecak & Fire Dance Show. Temple entrance tickets included. Return to hotel. Overnight stay in Kuta.",
+        "date": "07 Nov 2026"
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast at hotel. Proceed for Watersports Tour including Parasailing, Banana Boat & Jet Ski followed by a visit to Garuda Wisnu Kencana (GWK) Cultural Park. Return to hotel. Overnight stay in Kuta.",
+        "date": "08 Nov 2026"
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast and check-out from Kuta hotel. Private transfer to Ubud. Check-in at your villa and relax. Overnight stay in Ubud.",
+        "date": "09 Nov 2026"
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast at villa. Enjoy the Ubud Experiential Tour covering Tegenungan Waterfall, Ubud Art Market, and Ubud Palace. Visit Alas Harum and experience the Super Bali Swing. Return to villa. Overnight stay in Ubud.",
+        "date": "10 Nov 2026"
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast at villa. Enjoy a 10-Hour Private Vehicle Charter to explore Handara Gate, Ulun Danu Beratan Temple, and Tirta Gangga. Return to villa. Overnight stay in Ubud.",
+        "date": "11 Nov 2026"
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast at hotel. Check-out and transfer to Bali International Airport for your onward journey with wonderful memories.",
+        "date": "12 Nov 2026"
+      }
+    ],
+    "inclusions": [
+      "03 Nights accommodation in Kuta.",
+      "03 Nights accommodation in Ubud.",
+      "Daily breakfast at all hotels.",
+      "Private airport arrival transfer.",
+      "Private airport departure transfer.",
+      "Private inter-hotel transfer (Kuta to Ubud).",
+      "Half Day Uluwatu Temple Tour.",
+      "Kecak & Fire Dance Show.",
+      "Uluwatu Temple entrance ticket.",
+      "Watersports including Parasailing, Banana Boat & Jet Ski.",
+      "Garuda Wisnu Kencana (GWK) visit.",
+      "Ubud Experiential Tour.",
+      "Tegenungan Waterfall visit.",
+      "Ubud Art Market visit.",
+      "Ubud Palace visit.",
+      "Super Bali Swing ticket at Alas Harum.",
+      "10 Hours Private Vehicle Charter.",
+      "Handara Gate entrance ticket.",
+      "Ulun Danu Beratan Temple entrance ticket.",
+      "Tirta Gangga entrance ticket.",
+      "All sightseeing and transfers on Private Basis."
+    ],
+    "exclusions": [
+      "International & Domestic Airfare.",
+      "Indonesia Visa (if applicable).",
+      "Travel Insurance.",
+      "TCS & GST (if applicable).",
+      "Lunch and Dinner unless specified.",
+      "Personal expenses such as laundry, telephone, shopping, minibar, etc.",
+      "Camera or video fees at monuments/attractions.",
+      "Tips & porterage.",
+      "Early check-in & late check-out.",
+      "Additional sightseeing not mentioned in the itinerary.",
+      "Any increase in government taxes or entrance fees.",
+      "Any item not specifically mentioned under \"Package Inclusions.\""
+    ],
+    "notes": [],
+    "flights": [],
+    "imageKey": "bali"
+  },
+  {
+    "slug": "dubai-abu-dhabi-holiday-package-1416",
+    "name": "Dubai & Abu Dhabi Holiday Package",
+    "duration": "07 Nights & 8 Days",
+    "source": "Dubai_Abu_Dhabi_Holiday_Package_7_Nights_8_Days_-_FNF-2026-1416_-_Revised_1.docx",
+    "countries": [
+      "Dubai",
+      "Abu Dhabi"
+    ],
+    "cities": [
+      "Dubai",
+      "Abu Dhabi"
+    ],
+    "tour": [
+      {
+        "label": "Quotation ID",
+        "value": "FNF/2026/1416"
+      },
+      {
+        "label": "Check-in",
+        "value": "10 Nov 2026"
+      },
+      {
+        "label": "Check-out",
+        "value": "17 Nov 2026"
+      },
+      {
+        "label": "Duration",
+        "value": "07 Nights & 8 Days"
+      },
+      {
+        "label": "Pax",
+        "value": "06 Adults & 4 Children ( 15,5,5,4 Years Old )"
+      },
+      {
+        "label": "Flight Fare",
+        "value": "INR 45,800/- Per Person Return Ways"
+      }
+    ],
+    "options": [
+      {
+        "name": "Option 1 – Hotel & Rate",
+        "tables": [
+          {
+            "columns": [
+              "Hotel",
+              "Stay",
+              "Rate Per Person"
+            ],
+            "rows": [
+              [
+                "Sunday Holiday International, Bur Dubai",
+                "5 Nights",
+                "INR 1,06,200 x 6 Adults"
+              ],
+              [
+                "Yas Plaza Marina by IHG with 1 Park Access Per Night",
+                "2 Nights",
+                "INR 1,06,200 x 6 Adults"
+              ],
+              [
+                "Extra Bed – Adult / Child with Bed",
+                "—",
+                "INR 71,300 x 1 Child (15 Years)"
+              ],
+              [
+                "Child Without Bed",
+                "—",
+                "INR 45,960 x 3 Child (Between 3-5 Years)"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 1,06,200 x 6 Adults"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      },
+      {
+        "name": "Option 2 – Hotel & Rate",
+        "tables": [
+          {
+            "columns": [
+              "Hotel",
+              "Stay",
+              "Rate Per Person"
+            ],
+            "rows": [
+              [
+                "Royal Ascot Hotel (Non-Refundable)",
+                "5 Nights",
+                "INR 1,05,860 x 6 Adults"
+              ],
+              [
+                "Yas Plaza Marina by IHG with 1 Park Access Per Night",
+                "2 Nights",
+                "INR 1,05,860 x 6 Adults"
+              ],
+              [
+                "Extra Bed – Adult / Child with Bed",
+                "—",
+                "INR 71,380 x 1 Child (15 Years)"
+              ],
+              [
+                "Child Without Bed",
+                "—",
+                "INR 46,630 x 3 Child (Between 3-5 Years)"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 1,05,860 x 6 Adults"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Dubai Airport (DXB). Private airport transfer to the hotel. Enjoy a 2-hour private yacht ride. Overnight stay in Dubai.",
+        "date": "10 Nov 2026"
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast at hotel. Proceed for Half-Day Dubai City Tour. Drop at Dubai Mall. Visit Burj Khalifa – 124th Floor (Non-Prime Hours) and DAUZ ticket. Private transfer back to hotel.",
+        "date": "11 Nov 2026"
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast at hotel. The View at The Palm – Non-Prime Hours. Later enjoy Desert Safari with BBQ Dinner. Return to hotel.",
+        "date": "12 Nov 2026"
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast at hotel. Visit Miracle Garden and Global Village with private 3-way transfers. Return to hotel.",
+        "date": "13 Nov 2026"
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast at hotel. Enjoy Aquaventure Waterpark & Lost Chambers Aquarium. Return to hotel.",
+        "date": "14 Nov 2026"
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast and check-out. Private inter-hotel transfer to Abu Dhabi. Check-in at Abu Dhabi hotel. Enjoy 1 Park Access.",
+        "date": "15 Nov 2026"
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast at hotel. Leisure day & Enjoy 1 Park Access.",
+        "date": "16 Nov 2026"
+      },
+      {
+        "day": "Day 8",
+        "text": "Breakfast and check-out. Proceed for Abu Dhabi City Tour and visit BAPS Hindu Mandir (Monday closed). Maximum vehicle usage: 10 hours. Then drop to AUH Airport for departure.",
+        "date": "17 Nov 2026"
+      }
+    ],
+    "inclusions": [
+      "5 Nights accommodation in Dubai.",
+      "2 Nights accommodation in Abu Dhabi.",
+      "Daily breakfast at the hotels.",
+      "Private arrival transfer from DXB Airport.",
+      "Private departure transfer to AUH Airport.",
+      "2-hour private yacht ride.",
+      "Half-day Dubai City Tour.",
+      "Burj Khalifa 124th Floor ticket during non-prime hours.",
+      "DAUZ ticket as mentioned in the itinerary.",
+      "The View at The Palm ticket during non-prime hours.",
+      "Desert Safari with BBQ Dinner.",
+      "Miracle Garden visit.",
+      "Global Village visit with 3-way transfers.",
+      "Aquaventure Waterpark entry.",
+      "Lost Chambers Aquarium entry.",
+      "Private inter-hotel transfer from Dubai to Abu Dhabi.",
+      "En-route Abu Dhabi City Tour.",
+      "BAPS Hindu Mandir visit, subject to opening days.",
+      "All sightseeing and tour transfers on private point-to-point basis.",
+      "1 Park Access per night at Yas Plaza Marina by IHG."
+    ],
+    "exclusions": [
+      "GST 5%",
+      "International airfare.",
+      "UAE visa charges @INR 8200/- Per Person",
+      "Travel insurance.",
+      "Lunch and dinner unless specifically mentioned.",
+      "Personal expenses such as laundry, telephone calls, shopping and tips.",
+      "Any additional sightseeing not mentioned in the itinerary.",
+      "Any additional entrance fees not specifically mentioned.",
+      "Optional activities and excursions.",
+      "Any meals or beverages other than those mentioned.",
+      "Any additional vehicle usage beyond the specified duration.",
+      "Any services not specifically mentioned under inclusions.",
+      "Tourism Dirham / hotel taxes, if applicable and payable directly at the hotel.",
+      "Any increase in cost due to changes in taxes, exchange rates or government regulations."
+    ],
+    "notes": [
+      {
+        "title": "Tax",
+        "items": [
+          "GST 5% Applicable"
+        ]
+      }
+    ],
+    "flights": [
+      {
+        "columns": [
+          "Sector",
+          "Date",
+          "Airline",
+          "Flight",
+          "Departure",
+          "Arrival",
+          "Duration"
+        ],
+        "rows": [
+          [
+            "Ahmedabad → Dubai",
+            "10 Nov 2026",
+            "Flydubai",
+            "FZ-438",
+            "03:40",
+            "05:25",
+            "3h 15m"
+          ],
+          [
+            "Abu Dhabi → Ahmedabad",
+            "18 Nov 2026",
+            "IndiGo",
+            "6E-1432",
+            "02:20",
+            "06:35",
+            "2h 45m"
+          ]
+        ]
+      }
+    ],
+    "imageKey": "dubai"
+  },
+  {
+    "slug": "georgia-holiday-package-1423",
+    "name": "Georgia Holiday Package",
+    "duration": "7 Nights / 8 Days",
+    "source": "Georgia_Holiday_Package_-_7_Nights_8_Days_-_FNF-2026-1423.docx",
+    "countries": [
+      "Georgia"
+    ],
+    "cities": [
+      "Tbilisi",
+      "Batumi",
+      "Gudauri"
+    ],
+    "tour": [
+      {
+        "label": "Quotation ID",
+        "value": "FNF/2026/1423"
+      },
+      {
+        "label": "Duration",
+        "value": "7 Nights / 8 Days"
+      },
+      {
+        "label": "Travel Date",
+        "value": "11 Nov 2026"
+      },
+      {
+        "label": "Destination",
+        "value": "Georgia"
+      },
+      {
+        "label": "City Stay",
+        "value": "Tbilisi, Batumi & Gudauri"
+      },
+      {
+        "label": "Pax",
+        "value": "4 Adults"
+      },
+      {
+        "label": "Flight Fare",
+        "value": "INR 2,71,210/- for 4 Pax with 30 KG Luggage"
+      }
+    ],
+    "options": [
+      {
+        "name": "Package Cost: - Option 1 – 4 Star",
+        "tables": [
+          {
+            "columns": [
+              "Destination",
+              "Hotel",
+              "Room Category",
+              "Nights",
+              "Stay"
+            ],
+            "rows": [
+              [
+                "Tbilisi",
+                "Hotel Monograph Freedom Square",
+                "Standard Room",
+                "03 Nights",
+                "11 Nov – 14 Nov 2026"
+              ],
+              [
+                "Gudauri",
+                "Hotel Gudauri Inn",
+                "Standard Room",
+                "01 Night",
+                "14 Nov – 15 Nov 2026"
+              ],
+              [
+                "Batumi",
+                "Hotel Wyndham (Batumi)",
+                "Standard Room",
+                "02 Nights",
+                "15 Nov – 17 Nov 2026"
+              ],
+              [
+                "Tbilisi",
+                "Hotel Monograph Freedom Square",
+                "Standard Room",
+                "01 Night",
+                "17 Nov – 18 Nov 2026"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Room Category",
+              "Cost Per Person",
+              "No of Pax",
+              "Total amount"
+            ],
+            "rows": [
+              [
+                "Double Occupancy",
+                "INR 55,500/- Per Person",
+                "4",
+                "INR 2,22,000/-"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 55,500/- Per Person",
+          "INR 2,22,000/-"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      },
+      {
+        "name": "Package Cost: - Option 2 – 4 Star",
+        "tables": [
+          {
+            "columns": [
+              "Destination",
+              "Hotel",
+              "Room Category",
+              "Nights",
+              "Stay"
+            ],
+            "rows": [
+              [
+                "Tbilisi",
+                "Hotel Golden Tulip Design",
+                "Standard Room",
+                "03 Nights",
+                "11 Nov – 14 Nov 2026"
+              ],
+              [
+                "Gudauri",
+                "Hotel Gudauri Inn",
+                "Standard Room",
+                "01 Night",
+                "14 Nov – 15 Nov 2026"
+              ],
+              [
+                "Batumi",
+                "Hotel La Quinta by Wyndham",
+                "Standard Room",
+                "02 Nights",
+                "15 Nov – 17 Nov 2026"
+              ],
+              [
+                "Tbilisi",
+                "Hotel Golden Tulip Design",
+                "Standard Room",
+                "01 Night",
+                "17 Nov – 18 Nov 2026"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Room Category",
+              "Cost Per Person",
+              "No of Pax",
+              "Total amount"
+            ],
+            "rows": [
+              [
+                "Double Occupancy",
+                "INR 55,700/- Per Person",
+                "4",
+                "INR 2,22,800/-"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 55,700/- Per Person",
+          "INR 2,22,800/-"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      },
+      {
+        "name": "Package Cost: - Option 3 – 5 Star",
+        "tables": [
+          {
+            "columns": [
+              "Destination",
+              "Hotel",
+              "Room Category",
+              "Nights",
+              "Stay"
+            ],
+            "rows": [
+              [
+                "Tbilisi",
+                "Hotel Royal Tulip",
+                "Standard Room",
+                "03 Nights",
+                "11 Nov – 14 Nov 2026"
+              ],
+              [
+                "Gudauri",
+                "Hotel Marco Polo",
+                "Standard Room",
+                "01 Night",
+                "14 Nov – 15 Nov 2026"
+              ],
+              [
+                "Batumi",
+                "Hotel The Grandeur",
+                "Standard Room",
+                "02 Nights",
+                "15 Nov – 17 Nov 2026"
+              ],
+              [
+                "Tbilisi",
+                "Hotel Royal Tulip",
+                "Standard Room",
+                "01 Night",
+                "17 Nov – 18 Nov 2026"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Room Category",
+              "Cost Per Person",
+              "No of Pax",
+              "Total amount"
+            ],
+            "rows": [
+              [
+                "Double Occupancy",
+                "INR 63,500/- Per Person",
+                "4",
+                "INR 2,54,000/-"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 63,500/- Per Person",
+          "INR 2,54,000/-"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      },
+      {
+        "name": "Package Cost: - Option 4 – 5 Star",
+        "tables": [
+          {
+            "columns": [
+              "Destination",
+              "Hotel",
+              "Room Category",
+              "Nights",
+              "Stay"
+            ],
+            "rows": [
+              [
+                "Tbilisi",
+                "Hotel Tbilisi Marriot",
+                "Standard Room",
+                "03 Nights",
+                "11 Nov – 14 Nov 2026"
+              ],
+              [
+                "Gudauri",
+                "Hotel Gudauri Lodge",
+                "Standard Room",
+                "01 Night",
+                "14 Nov – 15 Nov 2026"
+              ],
+              [
+                "Batumi",
+                "Hotel Courtyard by Marriot (Batumi)",
+                "Standard Room",
+                "02 Nights",
+                "15 Nov – 17 Nov 2026"
+              ],
+              [
+                "Tbilisi",
+                "Hotel Tbilisi Marriot",
+                "Standard Room",
+                "01 Night",
+                "17 Nov – 18 Nov 2026"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Room Category",
+              "Cost Per Person",
+              "No of Pax",
+              "Total amount"
+            ],
+            "rows": [
+              [
+                "Double Occupancy",
+                "INR 82,500/- Per Person",
+                "4",
+                "INR 3,30,000/-"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 82,500/- Per Person",
+          "INR 3,30,000/-"
+        ],
+        "details": [
+          "GST 5% Applicable"
+        ]
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Welcome to Tbilisi Meet & Greet with your Driver Transfer to your hotel Welcome to your Hotel.",
+        "date": "11-Nov-2026"
+      },
+      {
+        "day": "Day 2",
+        "text": "Breakfast at your hotel. Tbilisi City tour Extension to Chronicles of Georgia Hotel drop-off for a restful night",
+        "date": "12-Nov-2026",
+        "remark": "Narikala cable car entry"
+      },
+      {
+        "day": "Day 3",
+        "text": "Breakfast at your hotel. Day Excursion to Kakheti: Sighnaghi & Bodbe (From Tbilisi) Journey Back From Sighnaghi, Kakheti to Tbilisi Hotel drop-off for a restful night",
+        "date": "13-Nov-2026",
+        "remark": "KTW winery entry Adult: 4 Child: 0"
+      },
+      {
+        "day": "Day 4",
+        "text": "Breakfast at your hotel. Transfer from Tbilisi to Gudauri via Ananuri, Gudauri & Kazbegi Overnight Stay in Gudauri",
+        "date": "14-Nov-2026",
+        "remark": "4X4 jeep Gergeti Trinity Church"
+      },
+      {
+        "day": "Day 5",
+        "text": "Breakfast at your hotel. Transfer from Gudauri to Batumi Overnight Stay in Batumi",
+        "date": "15-Nov-2026"
+      },
+      {
+        "day": "Day 6",
+        "text": "Breakfast at your hotel. Batumi City Tour Visit Batumi Botanical Garden Overnight Stay in Batumi",
+        "date": "16-Nov-2026",
+        "remark": "Botanical garden entry"
+      },
+      {
+        "day": "Day 7",
+        "text": "Breakfast at your hotel. Transfer from Batumi to Tbilisi via Martvili Canyon Hotel drop-off for a restful night",
+        "date": "17-Nov-2026",
+        "remark": "Martvili canyon entry"
+      },
+      {
+        "day": "Day 8",
+        "text": "It’s time to say good-bye to this beautiful city. Our driver will pick you up from the hotel and transfer you to the airport for your flight home or to an onward destination Check-out formality. Transfer to the Tbilisi Airport",
+        "date": "18-Nov-2026"
+      }
+    ],
+    "inclusions": [
+      "Stay",
+      "As Mentioned Above",
+      "Transportation & Guide Services",
+      "All transfers & sightseeing by private vehicle (Mini Van) for 9 Hrs (10AM – 7PM Only)",
+      "Airport – hotel – airport transfers",
+      "All transfers & sightseeing include services of an English-speaking Driver.",
+      "Entrance & Activities",
+      "Narikala cable car entry (Tbilisi City tour)",
+      "4X4 jeep Gergeti Trinity Church (Transfer from Tbilisi to Gudauri via Ananuri, Gudauri & Kazbegi)",
+      "Botanical garden entry (Visit Batumi Botanical Garden)",
+      "Martvili canyon entry (Transfer from Batumi to Tbilisi via Martvili Canyon)",
+      "KTW winery entry Adult: 4 Child: 0",
+      "Meals",
+      "Breakfast at your hotel.",
+      "Complimentary Services",
+      "2 * 500 ml water bottles pp daily"
+    ],
+    "exclusions": [
+      "GST 5%",
+      "International airfare.",
+      "Visa charges @ INR 5000/- Per Person",
+      "Travel insurance.",
+      "Personal expenses.",
+      "Tips and gratuities.",
+      "Any meals or services not specifically mentioned under inclusions.",
+      "Any additional sightseeing or activities not mentioned in the itinerary.",
+      "Any additional vehicle usage beyond the agreed itinerary.",
+      "Any expenses arising due to unforeseen circumstances.",
+      "Anything not specifically mentioned under inclusions."
+    ],
+    "notes": [
+      {
+        "title": "Important Notes",
+        "items": [
+          "Please note that the airfare is always subject to availability and as per the airline rules it may change without any prior notice.",
+          "Package Cost is based on 4 Pax.",
+          "Above quote is valid for 72 hrs.",
+          "Above quote is subject to currency fluctuation.",
+          "This costing is calculated at an ROE of 1 USD = 2.62 GEL.",
+          "We encourage our partners to conduct due diligence and review hotel feedback online before making any bookings.",
+          "The above proposal is for quotation purposes only. No rooms have been reserved at this stage, and all Hotel bookings are subject to availability at the time of final confirmation.",
+          "The above package is based on the exact number of PAX mentioned.",
+          "Check-in time: 14:00 – 15:00 hrs & Check-out time: 11:00 – 12:00 hrs, and may vary by property.",
+          "The above is just a quotation and is subject to availability & currency fluctuation.",
+          "Above is just a quote and we are not holding reservations.",
+          "While we may make recommendations for hotels all around the world, we do not guarantee and are not responsible for the services or the hardware provided by the hotel/s suggested by us. We strongly urge you to do your own research and make an informed choice.",
+          "Some hotels may require a mandatory security deposit of USD 100–200 per room, per stay (refundable as per hotel policy)."
+        ]
+      },
+      {
+        "title": "Standard FIT Cancellation Policy",
+        "items": [
+          "Free cancellation: Available up to 7 days prior to check-in.",
+          "Partial cancellation: 50% of the booking amount will be charged for cancellations made between 7 and 3 days prior to check-in.",
+          "Full cancellation: 100% of the booking amount will be charged for cancellations made less than 3 days prior to check-in."
+        ]
+      }
+    ],
+    "flights": [
+      {
+        "columns": [
+          "Sector",
+          "Date",
+          "Airline",
+          "Flight",
+          "Departure",
+          "Arrival",
+          "Duration",
+          "Layover"
+        ],
+        "rows": [
+          [
+            "Ahmedabad → Sharjah",
+            "11 Nov 2026",
+            "Air Arabia",
+            "G9-419",
+            "05:00",
+            "06:30",
+            "3h 00m",
+            "6h 50m"
+          ],
+          [
+            "Sharjah → Tbilisi",
+            "11 Nov 2026",
+            "Air Arabia",
+            "G9-294",
+            "13:20",
+            "16:45",
+            "3h 25m",
+            "—"
+          ],
+          [
+            "Tbilisi → Abu Dhabi",
+            "18 Nov 2026",
+            "Air Arabia Abu Dhabi",
+            "3L-715",
+            "13:30",
+            "16:45",
+            "3h 15m",
+            "8h 30m"
+          ],
+          [
+            "Abu Dhabi → Ahmedabad",
+            "19 Nov 2026",
+            "Air Arabia Abu Dhabi",
+            "3L-111",
+            "01:15",
+            "05:25",
+            "2h 40m",
+            "—"
+          ]
+        ]
+      }
+    ],
+    "imageKey": "georgia"
+  },
+  {
+    "slug": "singapore-holiday-package-1329",
+    "name": "Singapore Holiday Package",
+    "duration": "5 Nights / 6 Days",
+    "source": "Singapore_Holiday_Package_-_5_Nights_6_Days_-_FNF-2026-1329.docx",
+    "countries": [
+      "Singapore"
+    ],
+    "cities": [],
+    "tour": [
+      {
+        "label": "Quotation ID",
+        "value": "FNF/2026/1329"
+      },
+      {
+        "label": "Total Pax",
+        "value": "4 Adults"
+      },
+      {
+        "label": "Travel Dates",
+        "value": "05 Oct 2026"
+      },
+      {
+        "label": "Destination",
+        "value": "Singapore"
+      },
+      {
+        "label": "Basis",
+        "value": "SIC Transfers for Tours & Airport Transfers on pvt Basis"
+      },
+      {
+        "label": "Flight Fare",
+        "value": "INR 29,750/- Per Person Return Ways"
+      },
+      {
+        "label": "Duration",
+        "value": "5 Nights / 6 Days"
+      }
+    ],
+    "options": [
+      {
+        "name": "Option 1",
+        "tables": [
+          {
+            "columns": [
+              "Hotel",
+              "Category",
+              "Room Type",
+              "Nights",
+              "Meal Plan",
+              "Cost Per Person"
+            ],
+            "rows": [
+              [
+                "Ibis Budget Singapore – Selegie",
+                "Budget",
+                "Superior",
+                "5",
+                "Breakfast",
+                "INR 68,790/- PP"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 68,790/- PP"
+        ]
+      },
+      {
+        "name": "Option 2",
+        "tables": [
+          {
+            "columns": [
+              "Hotel",
+              "Category",
+              "Room Type",
+              "Nights",
+              "Meal Plan",
+              "Cost Per Person"
+            ],
+            "rows": [
+              [
+                "Ibis Styles Singapore Albert Hotel",
+                "3 Star",
+                "Standard",
+                "5",
+                "Breakfast",
+                "INR 73,200/- PP"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 73,200/- PP"
+        ]
+      },
+      {
+        "name": "Option 3",
+        "tables": [
+          {
+            "columns": [
+              "Hotel",
+              "Category",
+              "Room Type",
+              "Nights",
+              "Meal Plan",
+              "Cost Per Person"
+            ],
+            "rows": [
+              [
+                "Mercure Singapore Tyrwhitt",
+                "4 Star",
+                "Classic",
+                "5",
+                "Breakfast",
+                "INR 75,200/- PP"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 75,200/- PP"
+        ]
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival at Singapore Airport & Pvt transfer to Hotel evening Night Safari ** SIC Basis ** (Complimentary Animal Show + Tram Ride).",
+        "date": "05 Oct 2026"
+      },
+      {
+        "day": "Day 2",
+        "text": "After breakfast visit FD Sentosa Basic (MT+cc+wot) ** SIC Basis ** (Mount Faber line closed for maintenance from 02-09 Sep'26 + MT Admission + Spirits of boat ride + Images of SIN + Ultimate Film Star Experience + Cable Car (Mount Faber Line) + Madame Tussauds (Standard Ticket) + Wings Of Time (07.40 Pm)).",
+        "date": "06 Oct 2026"
+      },
+      {
+        "day": "Day 3",
+        "text": "Merlion City Drive with Flyer ** SIC Basis ** (Singapore Flyer).",
+        "date": "07 Oct 2026"
+      },
+      {
+        "day": "Day 4",
+        "text": "Universal Studios ** SIC Basis ** (TRANSFORMERS The Ride: The Ultimate 3D Battle is closed from 23-Aug to 04-Sep).",
+        "date": "08 Oct 2026"
+      },
+      {
+        "day": "Day 5",
+        "text": "Sands Sky Park & Gardens By The Bay (non-peak) ** SIC Basis ** (Cloud Forest (Jurassic World: The Experience)Cloud Forest (Jurassic World: The Experience) + Flower Dome + Sands Sky Park ticket is non-refundable even in extreme weather conditions like rain or lightning + SSP should visit before 4pm + Gardens By The Bay - 2 Conservatories + Sands Skypark Observation Deck (MBS non-peak)).",
+        "date": "09 Oct 2026"
+      },
+      {
+        "day": "Day 6",
+        "text": "Check out & Pvt transfer to airport for return journey.",
+        "date": "10 Oct 2026"
+      }
+    ],
+    "inclusions": [
+      "05 Nights accommodation in the selected hotel on twin-sharing basis.",
+      "Daily breakfast at the hotel.",
+      "Arrival airport transfer from Singapore Airport to hotel on Private basis.",
+      "Departure airport transfer from hotel to Singapore Airport on Private basis.",
+      "Night Safari on SIC basis with Complimentary Animal Show + Tram Ride.",
+      "FD Sentosa Basic (MT+cc+wot) on SIC basis.",
+      "Merlion City Drive with Singapore Flyer on SIC basis.",
+      "Universal Studios Singapore admission on SIC basis.",
+      "Sands SkyPark & Gardens By The Bay (Non-Peak) on SIC basis.",
+      "Cloud Forest (Jurassic World: The Experience).",
+      "Flower Dome.",
+      "Gardens By The Bay – 2 Conservatories.",
+      "Sands SkyPark Observation Deck – Non-Peak.",
+      "9 Tour Transfers on Seat-in-Coach (SIC) basis as mentioned in the itinerary.",
+      "All sightseeing entrance tickets and services specifically mentioned in the above inclusions."
+    ],
+    "exclusions": [
+      "GST 5%",
+      "International airfare.",
+      "Visa charges, if applicable.",
+      "Travel insurance.",
+      "Lunch, dinner and any meals other than breakfast.",
+      "Personal expenses such as laundry, telephone calls, room service, tips, porterage, etc.",
+      "Any additional sightseeing or activities not specifically mentioned in the itinerary.",
+      "Any additional transportation apart from the transfers mentioned above.",
+      "Early check-in or late check-out charges.",
+      "Any expenses arising due to flight delays, cancellations, weather conditions or other unforeseen circumstances.",
+      "Any increase in taxes, entrance fees or government charges after confirmation.",
+      "Any other services not specifically mentioned under Inclusions."
+    ],
+    "notes": [
+      {
+        "title": "Important Notes",
+        "items": [
+          "GST 5% Applicable",
+          "✈️ Mumbai ↔ Singapore | 5–10 Oct 2026",
+          "📅 Tentative Day-wise Itinerary",
+          "Rates are dynamic and subject to availability",
+          "Valid for India market only",
+          "Booking confirmation only after payment",
+          "Surcharge may apply during peak dates"
+        ]
+      }
+    ],
+    "flights": [
+      {
+        "columns": [
+          "Airline",
+          "Flight",
+          "Date",
+          "Sector",
+          "Departure",
+          "Arrival",
+          "Duration",
+          "Layover"
+        ],
+        "rows": [
+          [
+            "IndiGo",
+            "6E-1339",
+            "5 Oct 2026",
+            "Mumbai → Singapore",
+            "01:20",
+            "09:45",
+            "5h 55m",
+            "Non-Stop"
+          ],
+          [
+            "IndiGo",
+            "6E-1164",
+            "10 Oct 2026",
+            "Singapore → Mumbai",
+            "19:45",
+            "22:45",
+            "5h 30m",
+            "Non-Stop"
+          ]
+        ]
+      }
+    ],
+    "imageKey": "singapore"
+  },
+  {
+    "slug": "vietnam-holiday-package-1320",
+    "name": "Vietnam Holiday Package",
+    "duration": "8 Nights 9 Days",
+    "source": "Vietnam_Holiday_Package_-_8_Nights_9_Days_-_FNF-2026-1320.docx",
+    "countries": [
+      "Vietnam"
+    ],
+    "cities": [
+      "Danang",
+      "Sapa",
+      "Hanoi",
+      "Halong Bay"
+    ],
+    "tour": [
+      {
+        "label": "Tour Code",
+        "value": "FNF/2026/1320"
+      },
+      {
+        "label": "Travel Dates",
+        "value": "14 Dec 2026"
+      },
+      {
+        "label": "Duration",
+        "value": "8 Nights 9 Days"
+      },
+      {
+        "label": "Guests",
+        "value": "8 Adults"
+      },
+      {
+        "label": "Flight Fare",
+        "value": "INR 63,700/- Per Person Return Ways"
+      },
+      {
+        "label": "Package Cost",
+        "value": "INR 73,900/- Per Person Including Visa"
+      }
+    ],
+    "options": [
+      {
+        "name": "Package",
+        "tables": [
+          {
+            "columns": [
+              "Dates",
+              "No of Nights",
+              "Destinations",
+              "Hotels Names"
+            ],
+            "rows": [
+              [
+                "14-17 Dec",
+                "3N",
+                "Danang",
+                "Cosmos Hotel Danang or Similar – Deluxe Room"
+              ],
+              [
+                "17-19 Dec",
+                "2N",
+                "Sapa",
+                "Freesia Hotel or Similar – Deluxe Room"
+              ],
+              [
+                "19-21 Dec",
+                "2N",
+                "Hanoi",
+                "My Moon Hotel or Similar – Deluxe Room"
+              ],
+              [
+                "21-22 Dec",
+                "1N",
+                "Halong Bay",
+                "Amanda Premier/Le Journey premium/Sapphire/Syrena Cruise or Similar"
+              ]
+            ]
+          }
+        ],
+        "price": [
+          "INR 73,900/- Per Person Including Visa"
+        ]
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "text": "Arrival in Da NangArrive in Da Nang and transfer to the hotel by private vehicle.",
+        "meals": "Dinner"
+      },
+      {
+        "day": "Day 2",
+        "text": "Ba Na Hills & Golden BridgeAfter breakfast, proceed for a Full-Day Ba Na Hills & Golden Bridge Tour, including Cable Car and Indian Lunch, on a private basis.",
+        "meals": "Breakfast + Lunch + Dinner"
+      },
+      {
+        "day": "Day 3",
+        "text": "Marble Mountain – Coconut Forest – Hoi AnAfter breakfast, enjoy an afternoon tour covering Marble Mountain, Coconut Forest and Hoi An Ancient Town, including a boat ride and lantern release, on a private basis.",
+        "meals": "Breakfast + Dinner"
+      },
+      {
+        "day": "Day 4",
+        "text": "Da Nang – Hanoi – SapaAfter breakfast, transfer to Da Nang Airport for your flight to Hanoi. Upon arrival, transfer to Sapa by private vehicle. In the afternoon, visit Cat Cat Village on a private basis.",
+        "meals": "Breakfast + Dinner"
+      },
+      {
+        "day": "Day 5",
+        "text": "Sapa – Fansipan TourAfter breakfast, proceed for the Fansipan Tour with Cable Car and Monorail. Private transfers included; no guide.",
+        "meals": "Breakfast + Dinner"
+      },
+      {
+        "day": "Day 6",
+        "text": "Sapa – HanoiAfter breakfast, check out and transfer from Sapa Hotel to Hanoi Hotel by private vehicle.",
+        "meals": "Breakfast + Dinner"
+      },
+      {
+        "day": "Day 7",
+        "text": "Hanoi City TourAfter breakfast, proceed for a Full-Day Hanoi City Tour with local lunch on a private basis.",
+        "meals": "Breakfast + Lunch + Dinner"
+      },
+      {
+        "day": "Day 8",
+        "text": "Hanoi – Ha Long Bay CruiseAfter breakfast, proceed to Ha Long Bay and board the cruise. Enjoy the cruise experience with Full Board Meals. Overnight stay on the Ha Long Bay Cruise.",
+        "meals": "Breakfast + Lunch + Dinner"
+      },
+      {
+        "day": "Day 9",
+        "text": "Ha Long Bay – DepartureEnjoy brunch on the cruise and check out at approximately 12:30 PM. Transfer from Ha Long Bay to the airport for your flight back to your home country.",
+        "meals": "Brunch"
+      }
+    ],
+    "inclusions": [
+      "Assistance on Arrival",
+      "Daily Breakfast at Hotel",
+      "07 Dinner at Indian Restaurant",
+      "03 Nights’ Accommodation in Danang",
+      "02 Nights’ Accommodation in Sapa",
+      "02 Nights’ Accommodation in Hanoi",
+      "01 Night Stay in Halong Bay Cruise with Full Board. (2Lunch, 1Dinner, 1Breakfast) transfer by Pvt. Vehicle",
+      "All airport transfers mentioned in the itinerary (PVT) -- using 16 Seater Vehicle",
+      "All Tours as mentioned in the itinerary",
+      "English Speaking Tour Guide during tours",
+      "All entrance fees mentioned in the itinerary",
+      "1water bottle(500ml)/person/day during Group tours",
+      "Transportation mentioned in the itinerary",
+      "Guide & Driver Tips mandatory on pvt Services",
+      "Vietnam E-visa",
+      "GST 5%"
+    ],
+    "exclusions": [
+      "Personal Expenses",
+      "Extra Tours which are not mentioned in the itinerary",
+      "Drinks",
+      "International flights/Domestic Flight",
+      "Insurances",
+      "Late Check-out"
+    ],
+    "notes": [
+      {
+        "title": "Highlights & Important Notes",
+        "items": [
+          "Enjoy 105 free games at Fantasy Park & Jurassic Park. (Note: Not including the fee for visiting Wax Museum, Wine Cellar Debay(12$/person), cotton animal game, bonus games, Alpine coaster 1ride(5$/person) and carnival skills at Fantasy Park), Bana Hills",
+          "**Term & condition apply price and hotel are subject to availability.",
+          "Notes: ***",
+          "1.     All Confirmation totally depends on availability with airlines and hotels at the time of booking***",
+          "2.     All Tours Starts from Particular departure point, so if you want to avail the tour then need to reach at departure point."
+        ]
+      },
+      {
+        "title": "Booking Conditions",
+        "items": [
+          "1.     A non - refundable deposit of Rs.10,000 to initiate a booking if travel date is more than 45 days from the date of booking for destination",
+          "2.     A non - refundable deposit of 50% of tour cost if travel date is Less than 45 days from the date of booking",
+          "3.     A non - refundable deposit of 75% of tour cost if travel date is Less than 30 days from the date of booking",
+          "4.     A non - refundable deposit of 100% of tour cost if travel date is Less than 20 days from the date of booking",
+          "5.     6 Month Valid Passport copies( Front/Back) from Date of Travel",
+          "6.     GST/TCs we’re not charging",
+          "7.     For Cruise booking: Full cruise payment required within 2 days of package confirmation.",
+          "8.     No refund either in part or in full will be made for any unused part of the services provided in the package",
+          "9.     Full payment is required on confirmation of all services and before departure as per cancellation policy",
+          "10.  Any flights, non-refundable hotel, cruise, visa (if applied) booked as part of this holiday package are non-refundable and no refund shall be made upon cancellation.",
+          "11.     Visa Fee & Service charges are non-refundable"
+        ]
+      },
+      {
+        "title": "Cancellation Policy",
+        "items": [
+          "1.     45 Days & Above Booking Amount will be forfeited",
+          "2.     45 – 30 days: 50% of the total cost",
+          "3.     30 – 20 days: 75% of the total cost",
+          "4.     20 – 0 days: 100% of the total cost",
+          "5.     In case of No-show 100%"
+        ]
+      }
+    ],
+    "flights": [
+      {
+        "columns": [
+          "Date",
+          "Airline",
+          "Flight No.",
+          "Sector",
+          "Departure",
+          "Arrival",
+          "Duration",
+          "Stops"
+        ],
+        "rows": [
+          [
+            "13 Dec 2026",
+            "VietJet Air",
+            "VJ-1806",
+            "Ahmedabad → Ho Chi Minh City",
+            "23:50 AMD",
+            "06:20 SGN (14 Dec)",
+            "5h 00m",
+            "Non-Stop"
+          ],
+          [
+            "14 Dec 2026",
+            "VietJet Air",
+            "VJ-638",
+            "Ho Chi Minh City → Da Nang",
+            "10:30 SGN",
+            "11:50 DAD",
+            "1h 20m",
+            "Non-Stop"
+          ],
+          [
+            "17 Dec 2026",
+            "VietJet Air",
+            "VJ-510",
+            "Da Nang → Hanoi",
+            "09:20 DAD",
+            "10:40 HAN",
+            "1h 20m",
+            "Non-Stop"
+          ],
+          [
+            "22 Dec 2026",
+            "VietJet Air",
+            "VJ-1925",
+            "Hanoi → Ahmedabad",
+            "19:00 HAN",
+            "23:10 AMD",
+            "5h 40m",
+            "Non-Stop"
+          ]
+        ]
+      }
+    ],
+    "imageKey": "vietnam"
+  }
+]
