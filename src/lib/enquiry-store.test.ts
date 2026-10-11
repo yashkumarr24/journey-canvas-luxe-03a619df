@@ -33,11 +33,10 @@ describe('saveEnquiry', () => {
 
     await saveEnquiry(row);
 
-    assert.ok(seen);
-    assert.equal(seen!.url, 'https://fnf.example.co/rest/v1/enquiries');
-    assert.equal(seen!.apikey, 'test-service-key');
-    assert.equal(seen!.auth, 'Bearer test-service-key');
-    assert.deepEqual(JSON.parse(seen!.body), row);
+    assert.equal(seen.url, 'https://fnf.example.co/rest/v1/enquiries');
+    assert.equal(seen.apikey, 'test-service-key');
+    assert.equal(seen.auth, 'Bearer test-service-key');
+    assert.deepEqual(JSON.parse(seen.body), row);
   });
 
   it('throws when the FNF credentials are not configured', async () => {
