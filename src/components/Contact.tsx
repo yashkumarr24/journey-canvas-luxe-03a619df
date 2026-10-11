@@ -46,6 +46,10 @@ function Field({
 
 export function Contact() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  // The form is SSR'd before hydration; until React attaches onSubmit, a click
+  // submits nothing and no request is made. Disable the button until hydrated.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const [service, setService] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -158,7 +162,7 @@ export function Contact() {
 
           <button
             type="submit"
-            disabled={status === "sending" || status === "sent"}
+            disabled={!hydrated || status === "sending" || status === "sent"}
             className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] disabled:opacity-60"
           >
             {status === "sent" ? "✓ Sent — we'll be in touch" : status === "sending" ? "Sending…" : "Send the brief"}
