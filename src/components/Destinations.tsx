@@ -10,6 +10,8 @@ export type CardLink =
   | { to: "/packages/$destination"; params: { destination: string } }
   | { to: "/packages/$destination/$package"; params: { destination: string; package: string } }
   | { to: "/domestic-packages/$destination"; params: { destination: string } }
+  | { to: "/international-packages/$destination"; params: { destination: string } }
+  | { to: "/international-packages/$destination/$package"; params: { destination: string; package: string } }
   | { to: "/domestic-packages/$destination/$package"; params: { destination: string; package: string } };
 
 export function DestinationCard({

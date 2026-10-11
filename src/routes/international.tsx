@@ -10,6 +10,7 @@ import { internationalDestinations } from "@/data/destinations";
 import { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 import { formatPrice } from "@/lib/packages/types";
 import vietnamHero from "@/assets/vietnam.webp";
+import { internationalPackageDestinations, internationalImage, internationalPrice } from "@/data/international-packages";
 
 export const Route = createFileRoute("/international")({
   loader: async () => {
@@ -54,6 +55,16 @@ function InternationalPage() {
         title={<>Curated <span className="italic gold-gradient">international</span> escapes</>}
         subtitle="Prices are quoted from destination airports. We can build a complete package from Ahmedabad or any Indian city with the best airfares, visa and insurance."
       />
+      <section className="relative mx-auto max-w-7xl border-t border-foreground/10 px-6 py-24 md:py-32">
+        <SectionTitle eyebrow="Countries & cities" title={<>Explore <span className="italic gold-gradient">international holidays</span></>} subtitle="Complete itineraries with source-quoted hotels and prices. Enquire for a confirmed quote." />
+        <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+          {internationalPackageDestinations.map((d, i) => {
+            const p = d.packages[0];
+            if (!p) return null;
+            return <DestinationCard key={d.slug} index={i} badge={null} cta="View Packages" link={{ to: "/international-packages/$destination", params: { destination: d.slug } }} p={{ slug: d.slug, name: d.name, country: p.countries.join(" · "), tagline: `${d.packages.length} packages`, price: internationalPrice(p), nights: "", img: internationalImage(p) }} />;
+          })}
+        </div>
+      </section>
       {catalogue.length > 0 && (
         <section className="relative mx-auto max-w-7xl border-t border-foreground/10 px-6 py-24 md:py-32">
           <SectionTitle
