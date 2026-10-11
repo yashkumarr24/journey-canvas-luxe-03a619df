@@ -27,7 +27,10 @@ describe('saveEnquiry', () => {
     const seen = {} as { url: string; apikey?: string; auth?: string; body: string };
     globalThis.fetch = (async (input: unknown, init?: RequestInit) => {
       const headers = (init?.headers ?? {}) as Record<string, string>;
-      seen = { url: String(input), apikey: headers.apikey, auth: headers.Authorization, body: String(init?.body) };
+      seen.url = String(input);
+      seen.apikey = headers.apikey;
+      seen.auth = headers.Authorization;
+      seen.body = String(init?.body);
       return new Response('[]', { status: 201 });
     }) as typeof fetch;
 
