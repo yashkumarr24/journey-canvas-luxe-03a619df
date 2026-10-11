@@ -285,5 +285,123 @@
     "license": "CC0 1.0",
     "author": "Bernard Spragg. NZ",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Switzerland (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Swiss_Alps_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "author": "Vladimir Nordmann nordmann_v",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Netherlands (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:The_Windmills_of_Zaanse_Schans,_Netherlands.jpg",
+    "license": "CC0 1.0",
+    "author": "Mustang Joe",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Hungary (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Hungarian_Parliament_Building_2023-9.jpg",
+    "license": "CC0 1.0",
+    "author": "Pierre Blaché",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Scotland (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:In_the_Scottish_Highlands_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "author": "Robert Haverly roberthaverly",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Sweden (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Stockholm,_Sweden_(Unsplash_1eNzThfCPnc).jpg",
+    "license": "CC0 1.0",
+    "author": "EVREN  AYDIN evrenaydin",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Denmark (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Nyhavn_55_Copenhagen.jpg",
+    "license": "CC0 1.0",
+    "author": "Jebulon",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Bali (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Bali,_Indonesia_(Unsplash_KtJpghtFTuI).jpg",
+    "license": "CC0 1.0",
+    "author": "Lola Guti lolaguti",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Georgia (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Caucasus_Mountains_(Unsplash_N2ZUsECT73U).jpg",
+    "license": "CC0 1.0",
+    "author": "Sylwia Bartyzel sylwiabartyzel",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Vietnam (country)": {
+    "source": "https://commons.wikimedia.org/wiki/File:Basket_Boat_and_the_Bamboo_forest_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "author": "Chester Ho chesterho",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "France (country)": {
+    "source": "https://unsplash.com/photos/m8Dbkhe41Ss",
+    "license": "https://unsplash.com/license"
+  },
+  "Italy (country)": {
+    "source": "https://unsplash.com/photos/8kiXBf7xefg",
+    "license": "https://unsplash.com/license"
+  },
+  "Germany (country)": {
+    "source": "https://unsplash.com/photos/jMBCVbsgquU",
+    "license": "https://unsplash.com/license"
+  },
+  "Austria (country)": {
+    "source": "https://unsplash.com/photos/qqAr4q5y5dU",
+    "license": "https://unsplash.com/license"
+  },
+  "Czech Republic (country)": {
+    "source": "https://unsplash.com/photos/NP3N9tr-jLk",
+    "license": "https://unsplash.com/license"
+  },
+  "Iceland (country)": {
+    "source": "https://unsplash.com/photos/eC0ikYx7G2Q",
+    "license": "https://unsplash.com/license"
+  },
+  "Turkey (country)": {
+    "source": "https://unsplash.com/photos/LQq8XFPvXAE",
+    "license": "https://unsplash.com/license"
+  },
+  "Greece (country)": {
+    "source": "https://unsplash.com/photos/r4IFcNRYw6Y",
+    "license": "https://unsplash.com/license"
+  },
+  "Spain (country)": {
+    "source": "https://unsplash.com/photos/g1JA_Xn9Wl8",
+    "license": "https://unsplash.com/license"
+  },
+  "Belgium (country)": {
+    "source": "https://unsplash.com/photos/v5j_fxYUwaI",
+    "license": "https://unsplash.com/license"
+  },
+  "UK (country)": {
+    "source": "https://unsplash.com/photos/ITqpES3TycI",
+    "license": "https://unsplash.com/license"
+  },
+  "Portugal (country)": {
+    "source": "https://unsplash.com/photos/XSpZIUPSYTM",
+    "license": "https://unsplash.com/license"
+  },
+  "Ireland (country)": {
+    "source": "https://unsplash.com/photos/PoijSabYHQY",
+    "license": "https://unsplash.com/license"
+  },
+  "Norway (country)": {
+    "source": "https://unsplash.com/photos/WGJEiYW8LgU",
+    "license": "https://unsplash.com/license"
+  },
+  "Finland (country)": {
+    "source": "https://unsplash.com/photos/-l6Dl_NBu00",
+    "license": "https://unsplash.com/license"
+  },
+  "Croatia (country)": {
+    "source": "https://unsplash.com/photos/rfRa7uuKCxE",
+    "license": "https://unsplash.com/license"
   }
 }

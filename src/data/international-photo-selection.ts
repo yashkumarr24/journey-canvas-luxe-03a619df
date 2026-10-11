@@ -46,7 +46,21 @@ const optionStops: Record<string, string[]> = {
   'georgia-holiday-package-1423': ['Tbilisi', 'Batumi', 'Gudauri', 'Kazbegi'],
   'singapore-holiday-package-1329': ['Singapore', 'Gardens by the Bay', 'Singapore Flyer'],
 };
-const photoFiles: Record<string, string> = { 'Paris by night': 'france-stock.jpg' };
+// Country cards get their own country photo so they never repeat a city card shown beside them.
+const countryPhotos: Record<string, string> = {
+  Switzerland: 'country-switzerland.jpg', France: 'france-stock.jpg', Netherlands: 'country-netherlands.jpg',
+  Italy: 'italy-stock.jpg', Belgium: 'belgium-landmark.jpg', Germany: 'germany-stock.jpg',
+  'Czech Republic': 'czech-republic-stock.jpg', Austria: 'austria-stock.jpg', Hungary: 'country-hungary.jpg',
+  Iceland: 'iceland-stock.jpg', Turkey: 'turkey-stock.jpg', Greece: 'greece-stock.jpg', Spain: 'spain-landmark.jpg',
+  UK: 'uk-stock.jpg', Scotland: 'country-scotland.jpg', Portugal: 'portugal-stock.jpg', Ireland: 'ireland-stock.jpg',
+  Norway: 'norway-stock.jpg', Sweden: 'country-sweden.jpg', Denmark: 'country-denmark.jpg', Finland: 'finland-stock.jpg',
+  Croatia: 'croatia-stock.jpg', Bali: 'country-bali.jpg', Georgia: 'country-georgia.jpg', Vietnam: 'country-vietnam.jpg',
+};
+const countryKey = (name: string) => `${name} (country)`;
+const photoFiles: Record<string, string> = {
+  'Paris by night': 'france-stock.jpg',
+  ...Object.fromEntries(Object.entries(countryPhotos).map(([c, f]) => [countryKey(c), f])),
+};
 export const packagePhotoStop = (slug: string, option = 0) => optionStops[slug]?.[option] ?? optionStops[slug]?.[0] ?? selectedStops[slug];
 export const photoFileForStop = (stop: string) => photoFiles[stop] ?? `city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
 const countryStops: Record<string, string> = {
@@ -62,5 +76,7 @@ const countryStops: Record<string, string> = {
 export const destinationPhotoStop = (name: string, slug: string) => {
   const p = packages.find(p => p.slug === slug);
   if (!p) return undefined;
-  return p.cities.some(city => city === name) ? name : countryStops[name] ?? packagePhotoStop(slug);
+  if (p.cities.some(city => city === name)) return name;
+  if (countryPhotos[name]) return countryKey(name);
+  return countryStops[name] ?? packagePhotoStop(slug);
 };

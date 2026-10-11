@@ -34,3 +34,14 @@ Other five photographs were supplied within the user’s source quotations.
 - Kazbegi (Gergeti Trinity Church) — Public domain, Alexander Roumega, https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_and_road_2023.jpg
 - Gardens by the Bay — CC0, Mustang Joe, https://commons.wikimedia.org/wiki/File:Supertree_Grove,_Gardens_by_the_Bay,_Singapore1.jpg
 - Singapore Flyer — CC0, Bernard Spragg. NZ, https://commons.wikimedia.org/wiki/File:Singapore_Flyer,_Singapore;_May_2012.jpg
+
+## Country card photos (added 2026-10-11)
+- Switzerland — CC0, Vladimir Nordmann nordmann_v, https://commons.wikimedia.org/wiki/File:Swiss_Alps_(Unsplash).jpg
+- Netherlands — CC0, Mustang Joe, https://commons.wikimedia.org/wiki/File:The_Windmills_of_Zaanse_Schans,_Netherlands.jpg
+- Hungary — CC0, Pierre Blaché, https://commons.wikimedia.org/wiki/File:Hungarian_Parliament_Building_2023-9.jpg
+- Scotland — CC0, Robert Haverly roberthaverly, https://commons.wikimedia.org/wiki/File:In_the_Scottish_Highlands_(Unsplash).jpg
+- Sweden — CC0, EVREN  AYDIN evrenaydin, https://commons.wikimedia.org/wiki/File:Stockholm,_Sweden_(Unsplash_1eNzThfCPnc).jpg
+- Denmark — CC0, Jebulon, https://commons.wikimedia.org/wiki/File:Nyhavn_55_Copenhagen.jpg
+- Bali — CC0, Lola Guti lolaguti, https://commons.wikimedia.org/wiki/File:Bali,_Indonesia_(Unsplash_KtJpghtFTuI).jpg
+- Georgia — CC0, Sylwia Bartyzel sylwiabartyzel, https://commons.wikimedia.org/wiki/File:Caucasus_Mountains_(Unsplash_N2ZUsECT73U).jpg
+- Vietnam — CC0, Chester Ho chesterho, https://commons.wikimedia.org/wiki/File:Basket_Boat_and_the_Bamboo_forest_(Unsplash).jpg
