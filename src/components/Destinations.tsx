@@ -8,7 +8,9 @@ export type CardData = Pick<Destination, "slug" | "name" | "country" | "tagline"
 export type CardLink =
   | { to: "/destinations/$slug"; params: { slug: string } }
   | { to: "/packages/$destination"; params: { destination: string } }
-  | { to: "/packages/$destination/$package"; params: { destination: string; package: string } };
+  | { to: "/packages/$destination/$package"; params: { destination: string; package: string } }
+  | { to: "/domestic-packages/$destination"; params: { destination: string } }
+  | { to: "/domestic-packages/$destination/$package"; params: { destination: string; package: string } };
 
 export function DestinationCard({
   p,
