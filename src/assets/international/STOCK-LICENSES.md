@@ -1,5 +1,11 @@
 # International stock photographs
 
+## Place-specific replacement set
+
+The active city photographs are recorded in `src/data/international-photo-credits.json`, with original photo pages and free-use licenses. Unsplash photos use the Unsplash License (free commercial reuse, not public domain); Kemi uses CC0; Nice uses CC BY-SA 4.0, photographer Txllxt TxllxT, shown as an attribution link wherever used as a trip cover. Images are displayed cropped to fit; no other alterations are made.
+
+## Previous photographs
+
 Unsplash License: https://unsplash.com/license (free commercial reuse).
 
 - france: Damien Creatz, https://unsplash.com/photos/m8Dbkhe41Ss

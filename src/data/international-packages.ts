@@ -1,6 +1,7 @@
 import source from './international-packages.json';
 import swiss from '@/assets/swiss.webp';
 import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
+import photoCredits from './international-photo-credits.json';
 
 export type SourceTable = { columns: string[]; rows: string[][] };
 export type InternationalOption = { name: string; tables: SourceTable[]; price: string[]; details?: string[] };
@@ -23,6 +24,12 @@ export const internationalImage = (p: InternationalPackage) => {
 export const internationalDestinationImage = (name: string, p: InternationalPackage) => {
   const stop = destinationPhotoStop(name, p.slug);
   return assets[`../assets/international/city-${stop?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg.asset.json`]?.default.url ?? internationalImage(p);
+};
+export const internationalPhotoCredit = (place: string | undefined) => {
+  if (!place) return undefined;
+  const credits: Record<string, { source: string; license: string }> = photoCredits;
+  const credit = credits[place];
+  return credit && !credit.license.includes('unsplash.com') ? credit : undefined;
 };
 export const internationalPrice = (p: InternationalPackage, option = 0) => p.options[option]?.price[0] ?? 'On request';
 const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
