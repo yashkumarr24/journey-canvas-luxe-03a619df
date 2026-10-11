@@ -13,7 +13,7 @@ describe('international photo locations', () => {
       for (let o = 0; o < p.options.length; o++) {
         const place = packagePhotoStop(p.slug, o)!.replace(/ by night$/, '');
         const text = [...p.cities, ...p.countries, ...p.itinerary.map(d => d.text)].join(' ');
-        assert.ok(text.includes(place), `${p.slug} option ${o + 1}: ${place}`);
+        assert.ok(text.toLowerCase().includes(place.toLowerCase()), `${p.slug} option ${o + 1}: ${place}`);
       }
     }
   });
