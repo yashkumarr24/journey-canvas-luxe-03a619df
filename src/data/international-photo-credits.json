@@ -395,5 +395,13 @@
   "Norway (country)": {
     "source": "https://unsplash.com/photos/WGJEiYW8LgU",
     "license": "https://unsplash.com/license"
+  },
+  "Finland (country)": {
+    "source": "https://unsplash.com/photos/-l6Dl_NBu00",
+    "license": "https://unsplash.com/license"
+  },
+  "Croatia (country)": {
+    "source": "https://unsplash.com/photos/rfRa7uuKCxE",
+    "license": "https://unsplash.com/license"
   }
 }
