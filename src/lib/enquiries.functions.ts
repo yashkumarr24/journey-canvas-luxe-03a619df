@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { buildEnquiryEmails } from "./enquiry-email";
+import { saveEnquiry } from "./enquiry-store";
 
 const enquirySchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -32,8 +33,6 @@ export const submitEnquiry = createServerFn({ method: "POST" })
     // Spam: honeypot filled → pretend success, store nothing.
     if (data.company) return { ok: true as const };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     const row = {
       name: data.name,
       email: data.email,
@@ -44,8 +43,11 @@ export const submitEnquiry = createServerFn({ method: "POST" })
       source_page: data.sourcePage || "contact",
     };
 
-    const { error } = await supabaseAdmin.from("enquiries").insert(row);
-    if (error) throw new Error("Could not save your enquiry. Please try again.");
+    try {
+      await saveEnquiry(row);
+    } catch {
+      throw new Error("Could not save your enquiry. Please try again.");
+    }
 
     // Emails are best-effort: the saved record is the source of truth.
     const apiKey = process.env.RESEND_API_KEY;
