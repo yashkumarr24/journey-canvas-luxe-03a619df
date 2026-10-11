@@ -13,7 +13,6 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { SectionTitle } from "@/components/Section";
 import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { posts } from "@/data/posts";
-import heroImage from "@/assets/hero.webp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,7 +26,6 @@ export const Route = createFileRoute("/")({
     ],
     links: [
       { rel: "canonical", href: "/" },
-      { rel: "preload", as: "image", href: heroImage, fetchPriority: "high" },
     ],
   }),
   component: Index,
