@@ -10,7 +10,9 @@ import { internationalDestinations } from "@/data/destinations";
 import { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 import { formatPrice } from "@/lib/packages/types";
 import vietnamHero from "@/assets/vietnam.webp";
-import { internationalPackageDestinations, internationalImage, internationalPrice } from "@/data/international-packages";
+import { internationalPackageDestinations, internationalDestinationImage, internationalPrice } from "@/data/international-packages";
+import { destinationPhotoStop } from "@/data/international-photo-selection";
+import { InternationalPhotoCredit } from "@/components/InternationalPhotoCredit";
 
 export const Route = createFileRoute("/international")({
   loader: async () => {
@@ -61,7 +63,7 @@ function InternationalPage() {
           {internationalPackageDestinations.map((d, i) => {
             const p = d.packages[0];
             if (!p) return null;
-            return <DestinationCard key={d.slug} index={i} badge={null} cta="View Packages" link={{ to: "/international-packages/$destination", params: { destination: d.slug } }} p={{ slug: d.slug, name: d.name, country: p.countries.join(" · "), tagline: `${d.packages.length} packages`, price: internationalPrice(p), nights: "", img: internationalImage(p) }} />;
+            return <div key={d.slug}><DestinationCard index={i} badge={null} cta="View Packages" link={{ to: "/international-packages/$destination", params: { destination: d.slug } }} p={{ slug: d.slug, name: d.name, country: p.countries.join(" · "), tagline: `${d.packages.length} packages`, price: internationalPrice(p), nights: "", img: internationalDestinationImage(d.name, p) }} /><InternationalPhotoCredit place={destinationPhotoStop(d.name, p.slug)} /></div>;
           })}
         </div>
       </section>
