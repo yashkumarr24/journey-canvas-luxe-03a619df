@@ -208,3 +208,24 @@ body:has(header > nav.rounded-full) .rounded-full:not(header *) {
   border: 1.5px solid transparent;
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--ai-glow-to) 70%, transparent), var(--shadow-card);
 }
+
+/* Ask AI welcome popup: unrolls from the left like a roll of paper opening */
+@keyframes ai-unroll {
+  from { clip-path: inset(0 100% 0 0 round 999px); }
+  to { clip-path: inset(0 0 0 0 round 999px); }
+}
+
+@utility ai-unroll {
+  animation: ai-unroll 0.7s ease-out both;
+}
+
+/* Blinking typewriter caret for the example prompt */
+@keyframes ai-caret-blink {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+}
+
+@utility ai-caret {
+  animation: ai-caret-blink 1s step-end infinite;
+  color: var(--muted-foreground);
+}

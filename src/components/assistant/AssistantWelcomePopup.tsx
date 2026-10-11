@@ -2,22 +2,18 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkle, X } from "lucide-react";
 
-const SESSION_KEY = "fnf-ai-welcome-seen";
+const EXAMPLE_TEXT = "Hotels in Dubai with free cancellation";
+const SHOW_DELAY_MS = 2500;
+const UNROLL_MS = 700;
+const TYPE_MS = 45;
 
-/** Shown once per browser session, shortly after the first page load; opens the existing Ask AI drawer. */
+/** Shown on every page load, shortly after load; unrolls from the left like paper and opens the existing Ask AI drawer. */
 export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }) {
   const [visible, setVisible] = useState(false);
+  const [typed, setTyped] = useState("");
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(SESSION_KEY)) return;
-    } catch {
-      return;
-    }
-    const t = window.setTimeout(() => {
-      setVisible(true);
-      try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* ignore */ }
-    }, 2500);
+    const t = window.setTimeout(() => setVisible(true), SHOW_DELAY_MS);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -28,11 +24,29 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
     return () => window.removeEventListener("keydown", onKey);
   }, [visible]);
 
+  // Typewriter for the example prompt, starting once the unroll finishes.
+  useEffect(() => {
+    if (!visible) return;
+    let i = 0;
+    let interval: number | undefined;
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        i += 1;
+        setTyped(EXAMPLE_TEXT.slice(0, i));
+        if (i >= EXAMPLE_TEXT.length && interval) window.clearInterval(interval);
+      }, TYPE_MS);
+    }, UNROLL_MS);
+    return () => {
+      window.clearTimeout(start);
+      if (interval) window.clearInterval(interval);
+    };
+  }, [visible]);
+
   if (!visible) return null;
 
   return createPortal(
-    <div role="dialog" aria-modal="false" aria-label="Ask AI travel assistant" className="fixed inset-x-3 bottom-4 z-40 animate-in fade-in slide-in-from-bottom-4 duration-500 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(36rem,calc(100vw-3rem))]">
-      <div className="ai-glow-ring flex items-center gap-1 rounded-full pr-2">
+    <div role="dialog" aria-modal="false" aria-label="Ask AI travel assistant" className="fixed inset-x-3 bottom-4 z-40 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(36rem,calc(100vw-3rem))]">
+      <div className="ai-glow-ring ai-unroll flex items-center gap-1 rounded-full pr-2">
         <button
           type="button"
           onClick={() => { setVisible(false); onOpenChat(); }}
@@ -40,7 +54,10 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
         >
           <Sparkle className="size-5 shrink-0 fill-foreground text-foreground" aria-hidden="true" />
           <span className="min-w-0">
-            <span className="block truncate text-base font-medium text-foreground/75">Hotels in Dubai with free cancellation</span>
+            <span className="block truncate text-base font-medium text-foreground/75">
+              {typed}
+              <span aria-hidden="true" className="ai-caret">|</span>
+            </span>
             <span className="sr-only">Open the Ask AI travel assistant</span>
           </span>
         </button>
