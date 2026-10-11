@@ -12,7 +12,7 @@ export type InternationalPackage = {
 const assets = import.meta.glob<{ default: { url: string } }>('../assets/international/*.asset.json', { eager: true });
 export const internationalPackages: InternationalPackage[] = source;
 export const internationalImage = (p: InternationalPackage) => {
-  const name = ['bali', 'dubai', 'georgia', 'singapore', 'vietnam'].includes(p.imageKey) ? `${p.imageKey}-source.jpg` : `${p.imageKey}-stock.jpg`;
+  const name = ['netherlands', 'spain', 'belgium'].includes(p.imageKey) ? `${p.imageKey}-landmark.jpg` : ['bali', 'dubai', 'georgia', 'singapore', 'vietnam'].includes(p.imageKey) ? `${p.imageKey}-source.jpg` : `${p.imageKey}-stock.jpg`;
   return assets[`../assets/international/${name}.asset.json`]?.default.url ?? swiss;
 };
 export const internationalPrice = (p: InternationalPackage, option = 0) => p.options[option]?.price[0] ?? 'On request';
