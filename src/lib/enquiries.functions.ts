@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { buildEnquiryEmails } from "./enquiry-email";
+import { saveEnquiry } from "./enquiry-store";
 
 const enquirySchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -31,8 +32,6 @@ export const submitEnquiry = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // Spam: honeypot filled → pretend success, store nothing.
     if (data.company) return { ok: true as const };
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const row = {
       name: data.name,
