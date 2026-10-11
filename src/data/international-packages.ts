@@ -11,11 +11,8 @@ export type InternationalPackage = {
   itinerary: { day: string; text: string; date?: string; meals?: string; remark?: string }[];
   inclusions: string[]; exclusions: string[]; notes: { title: string; items: string[] }[]; flights: SourceTable[];
 };
-const assets = import.meta.glob<{ url: string }>('../assets/international/*.asset.json', { eager: true, import: 'default' });
-const assetUrl = (path: string) => {
-  const asset = assets[`../assets/international/${path}.asset.json`];
-  return asset ? internationalAssetUrl(asset.url) : undefined;
-};
+const photos = import.meta.glob<string>('../assets/international/*.jpg', { eager: true, query: '?url', import: 'default' });
+const assetUrl = (path: string) => photos[`../assets/international/${path}`];
 export const internationalPackages: InternationalPackage[] = source;
 export const internationalImage = (p: InternationalPackage) => {
   const stop = packagePhotoStop(p.slug);
