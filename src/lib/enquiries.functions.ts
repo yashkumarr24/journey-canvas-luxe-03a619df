@@ -43,8 +43,11 @@ export const submitEnquiry = createServerFn({ method: "POST" })
       source_page: data.sourcePage || "contact",
     };
 
-    const { error } = await supabaseAdmin.from("enquiries").insert(row);
-    if (error) throw new Error("Could not save your enquiry. Please try again.");
+    try {
+      await saveEnquiry(row);
+    } catch {
+      throw new Error("Could not save your enquiry. Please try again.");
+    }
 
     // Emails are best-effort: the saved record is the source of truth.
     const apiKey = process.env.RESEND_API_KEY;
