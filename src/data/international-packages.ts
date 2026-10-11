@@ -2,6 +2,7 @@ import source from './international-packages.json';
 import swiss from '@/assets/swiss.webp';
 import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
 import photoCredits from './international-photo-credits.json';
+import { internationalAssetUrl } from './international-asset-url';
 
 export type SourceTable = { columns: string[]; rows: string[][] };
 export type InternationalOption = { name: string; tables: SourceTable[]; price: string[]; details?: string[] };
@@ -11,19 +12,22 @@ export type InternationalPackage = {
   itinerary: { day: string; text: string; date?: string; meals?: string; remark?: string }[];
   inclusions: string[]; exclusions: string[]; notes: { title: string; items: string[] }[]; flights: SourceTable[];
 };
-const assets = import.meta.glob<{ default: { url: string } }>('../assets/international/*.asset.json', { eager: true });
+const assets = import.meta.glob<{ url: string }>('../assets/international/*.asset.json', { eager: true, import: 'default' });
+const assetUrl = (path: string) => {
+  const asset = assets[`../assets/international/${path}.asset.json`];
+  return asset ? internationalAssetUrl(asset.url) : undefined;
+};
 export const internationalPackages: InternationalPackage[] = source;
 export const internationalImage = (p: InternationalPackage) => {
   const stop = packagePhotoStop(p.slug);
-  const photo = stop ? assets[`../assets/international/city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg.asset.json`]?.default.url : undefined;
-  if (p.slug === 'amsterdam-paris-6n-7d') return assets['../assets/international/france-stock.jpg.asset.json']?.default.url ?? photo ?? swiss;
+  const photo = stop ? assetUrl(`city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`) : undefined;
   if (photo) return photo;
   const name = ['netherlands', 'spain', 'belgium'].includes(p.imageKey) ? `${p.imageKey}-landmark.jpg` : ['bali', 'dubai', 'georgia', 'singapore', 'vietnam'].includes(p.imageKey) ? `${p.imageKey}-source.jpg` : `${p.imageKey}-stock.jpg`;
-  return assets[`../assets/international/${name}.asset.json`]?.default.url ?? swiss;
+  return assetUrl(name) ?? swiss;
 };
 export const internationalDestinationImage = (name: string, p: InternationalPackage) => {
   const stop = destinationPhotoStop(name, p.slug);
-  return assets[`../assets/international/city-${stop?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg.asset.json`]?.default.url ?? internationalImage(p);
+  return (stop ? assetUrl(`city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`) : undefined) ?? internationalImage(p);
 };
 export const internationalPhotoCredit = (place: string | undefined) => {
   if (!place) return undefined;
