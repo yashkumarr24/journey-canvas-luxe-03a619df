@@ -12,13 +12,13 @@ export function Hero() {
       />
 
       {/* faded logo pills (reference placeholders) */}
-      <div aria-hidden="true" className="pointer-events-none absolute right-[-3rem] top-24 opacity-[0.97] sm:right-6 sm:top-24 lg:right-[max(1.5rem,calc(50vw-40rem))]">
+      <div aria-hidden="true" className="pointer-events-none absolute right-[-3rem] top-24 sm:right-6 sm:top-24 lg:right-[max(1.5rem,calc(50vw-40rem))]">
         <motion.div
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
           className="grid h-48 w-28 place-items-center rounded-full bg-muted sm:h-60 sm:w-36 lg:h-72 lg:w-44"
         >
-          <img src={logo} alt="" className="w-20 opacity-[0.41] grayscale sm:w-28 lg:w-32" />
+          <img src={logo} alt="" className="w-20 opacity-70 sm:w-28 lg:w-32" />
         </motion.div>
       </div>
 
