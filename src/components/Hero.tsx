@@ -16,14 +16,14 @@ export function Hero() {
         <motion.div
           animate={{ y: [0, -16, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="grid h-64 w-64 place-items-center rounded-full bg-card shadow-[var(--shadow-luxe)] ring-1 ring-foreground/5 sm:h-80 sm:w-80 lg:h-[26rem] lg:w-[26rem]"
+          className="grid h-64 w-64 place-items-center rounded-full bg-card shadow-[var(--shadow-luxe)] ring-1 ring-foreground/5 sm:h-80 sm:w-80 lg:h-[22rem] lg:w-[22rem]"
         >
           <motion.img
             src={logo}
             alt=""
             animate={{ rotate: [0, 3, -3, 0], scale: [1, 1.03, 1] }}
             transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-            className="w-48 opacity-40 sm:w-60 sm:opacity-80 lg:w-80 lg:opacity-90"
+            className="w-48 opacity-40 sm:w-60 sm:opacity-80 lg:w-72 lg:opacity-90"
           />
         </motion.div>
       </div>
@@ -38,7 +38,7 @@ export function Hero() {
           Discover the world, <span className="italic">your way</span> with us.
         </motion.h1>
 
-        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative z-10 mt-10 lg:mt-16">
+        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative z-10 mt-10 lg:mt-32">
           <HomeSearch />
         </motion.div>
       </div>
