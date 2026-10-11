@@ -40,8 +40,18 @@ const selectedStops: Record<string, string> = {
 };
 
 export const packagePhotoStop = (slug: string) => selectedStops[slug];
+const countryStops: Record<string, string> = {
+  Switzerland: 'Lucerne', France: 'Paris', Netherlands: 'Amsterdam', Italy: 'Rome',
+  Belgium: 'Brussels', Germany: 'Frankfurt', 'Czech Republic': 'Prague', Austria: 'Vienna',
+  Hungary: 'Budapest', Iceland: 'Reykjavik', Turkey: 'Istanbul', Greece: 'Athens',
+  Spain: 'Barcelona', 'United Kingdom': 'London', UK: 'London', Scotland: 'Edinburgh',
+  Portugal: 'Lisbon', Ireland: 'Dublin', Norway: 'Oslo', Sweden: 'Stockholm',
+  Denmark: 'Copenhagen', Finland: 'Helsinki', Croatia: 'Dubrovnik', Bali: 'Ubud',
+  Indonesia: 'Ubud', 'United Arab Emirates': 'Dubai', UAE: 'Dubai', Georgia: 'Tbilisi',
+  Singapore: 'Singapore', Vietnam: 'Halong Bay',
+};
 export const destinationPhotoStop = (name: string, slug: string) => {
   const p = packages.find(p => p.slug === slug);
   if (!p) return undefined;
-  return p.cities.includes(name) ? name : packagePhotoStop(slug);
+  return p.cities.includes(name) ? name : countryStops[name] ?? packagePhotoStop(slug);
 };

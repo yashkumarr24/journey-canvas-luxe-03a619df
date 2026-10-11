@@ -14,7 +14,8 @@ describe('international photo locations', () => {
   it('matches city cards to their own city rather than the first trip stop', () => {
     assert.equal(destinationPhotoStop('Lucerne', 'switzerland-7n-8d'), 'Lucerne');
     assert.equal(destinationPhotoStop('Zurich', 'switzerland-7n-8d'), 'Zurich');
-    assert.equal(destinationPhotoStop('Switzerland', 'switzerland-7n-8d'), 'Interlaken');
+    assert.equal(destinationPhotoStop('Switzerland', 'switzerland-7n-8d'), 'Lucerne');
+    assert.equal(destinationPhotoStop('Austria', 'prague-vienna-budapest-6n-7d'), 'Vienna');
     assert.equal(packagePhotoStop('paris-swiss-italy-11n-12d'), 'Venice');
     assert.equal(packagePhotoStop('paris-swiss-italy-12n-13d'), 'Florence');
   });
