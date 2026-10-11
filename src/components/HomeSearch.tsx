@@ -32,7 +32,10 @@ const enquiryServices = [
 export const ENQUIRY_EVENT = "fnf-enquiry-service";
 function openEnquiry(service: string) {
   window.dispatchEvent(new CustomEvent(ENQUIRY_EVENT, { detail: service }));
-  document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const form = document.getElementById("contact");
+  if (form) { form.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  sessionStorage.setItem(ENQUIRY_EVENT, service);
+  window.location.assign("/contact#contact");
 }
 const emptySegment = (): Segment => ({ origin: "", destination: "", date: "" });
 function todayISO() { return new Date().toISOString().slice(0, 10); }

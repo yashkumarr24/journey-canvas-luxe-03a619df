@@ -35,6 +35,8 @@ export function Contact() {
   useEffect(() => {
     const on = (e: Event) => setService(String((e as CustomEvent).detail ?? ""));
     window.addEventListener("fnf-enquiry-service", on);
+    const saved = sessionStorage.getItem("fnf-enquiry-service");
+    if (saved) { setService(saved); sessionStorage.removeItem("fnf-enquiry-service"); }
     return () => window.removeEventListener("fnf-enquiry-service", on);
   }, []);
   return (
