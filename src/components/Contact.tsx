@@ -1,18 +1,33 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { SectionTitle } from "./Section";
+import { submitEnquiry } from "@/lib/enquiries.functions";
 
-function Field({ label, type = "text", as = "input" }: { label: string; type?: string; as?: "input" | "textarea" }) {
-  const [val, setVal] = useState("");
+function Field({
+  label,
+  type = "text",
+  as = "input",
+  value,
+  onChange,
+  required,
+}: {
+  label: string;
+  type?: string;
+  as?: "input" | "textarea";
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+}) {
   const [focused, setFocused] = useState(false);
-  const active = focused || val.length > 0;
+  const active = focused || value.length > 0;
   const Comp: any = as;
   return (
     <div className="relative">
       <Comp
         type={type}
-        value={val}
-        onChange={(e: any) => setVal(e.target.value)}
+        value={value}
+        required={required}
+        onChange={(e: any) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         rows={as === "textarea" ? 4 : undefined}
@@ -30,8 +45,14 @@ function Field({ label, type = "text", as = "input" }: { label: string; type?: s
 }
 
 export function Contact() {
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [service, setService] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [destination, setDestination] = useState("");
+  const [message, setMessage] = useState("");
+  const [company, setCompany] = useState(""); // honeypot
+
   useEffect(() => {
     const on = (e: Event) => setService(String((e as CustomEvent).detail ?? ""));
     window.addEventListener("fnf-enquiry-service", on);
@@ -39,6 +60,29 @@ export function Contact() {
     if (saved) { setService(saved); sessionStorage.removeItem("fnf-enquiry-service"); }
     return () => window.removeEventListener("fnf-enquiry-service", on);
   }, []);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (status === "sending") return;
+    setStatus("sending");
+    try {
+      await submitEnquiry({
+        data: {
+          name,
+          email,
+          service,
+          destination,
+          message,
+          company,
+          sourcePage: window.location.pathname,
+        },
+      });
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
+  };
+
   return (
     <section id="contact" className="relative overflow-hidden px-6 py-28 md:py-40">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(50%_60%_at_50%_50%,oklch(0.18_0.04_260),transparent_70%)]" />
@@ -78,7 +122,7 @@ export function Contact() {
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.9 }}
-          onSubmit={(e) => { e.preventDefault(); setSent(true); }}
+          onSubmit={onSubmit}
           className="glass space-y-6 rounded-3xl p-8 md:p-12"
         >
           <div className="relative">
@@ -88,16 +132,36 @@ export function Contact() {
               {["Flights", "Hotels", "Holidays", "Car Rental", "Visa", "Cruise"].map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <Field label="Your full name" />
-          <Field label="Email address" type="email" />
-          <Field label="Where would you like to go?" />
-          <Field label="Tell us about your trip" as="textarea" />
+          <Field label="Your full name" value={name} onChange={setName} required />
+          <Field label="Email address" type="email" value={email} onChange={setEmail} required />
+          <Field label="Where would you like to go?" value={destination} onChange={setDestination} />
+          <Field label="Tell us about your trip" as="textarea" value={message} onChange={setMessage} />
+
+          {/* Honeypot: hidden from humans, catches bots */}
+          <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden">
+            <label>
+              Company
+              <input type="text" tabIndex={-1} autoComplete="off" value={company} onChange={(e) => setCompany(e.target.value)} />
+            </label>
+          </div>
+
+          {status === "error" && (
+            <p role="alert" className="text-sm text-destructive">
+              Something went wrong while sending. Please try again.
+            </p>
+          )}
+          {status === "sent" && (
+            <p role="status" className="text-sm text-foreground">
+              Thank you — your enquiry has been received. We'll reply within one business day.
+            </p>
+          )}
 
           <button
             type="submit"
-            className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03]"
+            disabled={status === "sending" || status === "sent"}
+            className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-4 text-sm font-medium text-primary-foreground transition-transform hover:scale-[1.03] disabled:opacity-60"
           >
-            {sent ? "✓ Sent — we'll be in touch" : "Send the brief"}
+            {status === "sent" ? "✓ Sent — we'll be in touch" : status === "sending" ? "Sending…" : "Send the brief"}
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </button>
         </motion.form>
