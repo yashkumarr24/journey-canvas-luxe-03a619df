@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Sparkle, X } from "lucide-react";
 
 const SESSION_KEY = "fnf-ai-welcome-seen";
@@ -29,7 +30,7 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
 
   if (!visible) return null;
 
-  return (
+  return createPortal(
     <div role="dialog" aria-modal="false" aria-label="Ask AI travel assistant" className="fixed inset-x-3 bottom-4 z-40 animate-in fade-in slide-in-from-bottom-4 duration-500 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(36rem,calc(100vw-3rem))]">
       <div className="ai-glow-ring flex items-center gap-1 rounded-full pr-2">
         <button
@@ -53,6 +54,7 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
           <X className="size-4" />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
