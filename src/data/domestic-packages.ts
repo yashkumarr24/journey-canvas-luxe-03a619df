@@ -1,12 +1,12 @@
 // Domestic holiday packages transcribed from the FNF Word quotations
 // (Andaman, Gangtok & Darjeeling, Goa, Kashmir, Kerala, Uttarakhand).
 // Source wording and amounts are kept as written; missing details are left out.
-import andamanImg from "@/assets/domestic/andaman.webp.asset.json";
-import gangtokImg from "@/assets/domestic/gangtok.webp.asset.json";
-import goaImg from "@/assets/domestic/goa-1.webp.asset.json";
-import kashmirImg from "@/assets/domestic/kashmir.webp.asset.json";
-import keralaImg from "@/assets/domestic/kerala.webp.asset.json";
-import uttarakhandImg from "@/assets/domestic/uttarakhand.webp.asset.json";
+import andamanImg from "@/assets/domestic/andaman-stock.jpg.asset.json";
+import gangtokImg from "@/assets/domestic/gangtok-stock.jpg.asset.json";
+import goaImg from "@/assets/domestic/goa-stock.jpg.asset.json";
+import kashmirImg from "@/assets/domestic/kashmir-stock.jpg.asset.json";
+import keralaImg from "@/assets/domestic/kerala-stock.jpg.asset.json";
+import uttarakhandImg from "@/assets/domestic/uttarakhand-stock.jpg.asset.json";
 
 export type Fact = { label: string; value: string };
 export type PackageOption = {
