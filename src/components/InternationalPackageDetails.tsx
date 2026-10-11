@@ -5,7 +5,7 @@ import { Footer } from '@/components/Footer';
 import { PageHero } from '@/components/PageHero';
 import { Button } from '@/components/ui/button';
 import { internationalImage, internationalPrice, type InternationalPackage, type SourceTable } from '@/data/international-packages';
-import { internationalPhotoCredit } from '@/data/international-packages';
+import { InternationalPhotoCredit } from '@/components/InternationalPhotoCredit';
 import { packagePhotoStop } from '@/data/international-photo-selection';
 
 function Heading({ children }: { children: React.ReactNode }) {
@@ -20,9 +20,8 @@ function SourceTableView({ table }: { table: SourceTable }) {
 export function InternationalPackageDetails({ p, destination }: { p: InternationalPackage; destination: string }) {
   const [selection, setSelection] = useState(0);
   const opt = p.options[selection] ?? p.options[0];
-  const credit = internationalPhotoCredit(packagePhotoStop(p.slug));
   return <main className="relative bg-background text-foreground"><Nav /><PageHero image={internationalImage(p)} eyebrow={p.countries.join(' · ')} title={<>{p.name}<br /><span className="italic gold-gradient">{p.duration}</span></>} height="80svh" lightText />
-    <section className="mx-auto max-w-6xl px-6 py-20">{credit && <a href={credit.source} target="_blank" rel="noreferrer" className="mb-8 block text-xs text-muted-foreground">Photo: {credit.license}</a>}<div className="grid gap-12 lg:grid-cols-3"><div className="space-y-12 lg:col-span-2">
+    <section className="mx-auto max-w-6xl px-6 py-20"><InternationalPhotoCredit place={packagePhotoStop(p.slug)} /><div className="grid gap-12 lg:grid-cols-3"><div className="space-y-12 lg:col-span-2">
       <div><Heading>Tour Details</Heading><dl className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">{p.tour.map((f,i) => <div key={i} className="border-b border-foreground/10 pb-4"><dt className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{f.label}</dt><dd className="mt-2 whitespace-pre-line">{f.value}</dd></div>)}<div><dt className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Package Price</dt><dd className="mt-2 text-gold">{internationalPrice(p,selection)}</dd></div></dl>{p.flights.length > 0 && <><h3 className="mt-8 font-display text-2xl">Flight Details</h3>{p.flights.map((t,i) => <SourceTableView key={i} table={t} />)}</>}</div>
       <div><Heading>Hotel Details</Heading>{p.options.length > 1 && <div role="tablist" aria-label="Package options" className="mt-6 flex flex-wrap gap-2">{p.options.map((o,i) => <Button key={i} role="tab" aria-selected={i===selection} variant={i===selection ? 'default' : 'outline'} onClick={() => setSelection(i)}>Option {i+1}</Button>)}</div>}{opt && <div className="mt-6"><h3 className="font-display text-2xl">{opt.name}</h3><Lines items={opt.price.length ? opt.price : ['On request']} />{opt.tables.map((t,i) => <SourceTableView key={i} table={t} />)}{opt.details && <Lines items={opt.details} />}</div>}</div>
       <div><Heading>Day-Wise Itinerary</Heading><div className="mt-8 space-y-8">{p.itinerary.map((day,i) => <div key={i} className="border-b border-foreground/10 pb-6"><div className="text-xs uppercase tracking-[0.2em] text-gold">{day.day}{day.date && ` · ${day.date}`}</div><p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{day.text}</p>{day.meals && <p className="mt-3 text-sm">Meals: {day.meals}</p>}{day.remark && <p className="mt-3 text-sm">Remark: {day.remark}</p>}</div>)}</div></div>

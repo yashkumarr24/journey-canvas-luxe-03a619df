@@ -2,10 +2,11 @@ import { createFileRoute, notFound, Link } from '@tanstack/react-router';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
 import { PageHero } from '@/components/PageHero';
-import { destinationPhotoStop } from '@/data/international-photo-selection';
+import { InternationalPhotoCredit } from '@/components/InternationalPhotoCredit';
+import { packagePhotoStop, destinationPhotoStop } from '@/data/international-photo-selection';
 import { SectionTitle } from '@/components/Section';
 import { DestinationCard } from '@/components/Destinations';
-import { findInternationalPackageDestination, internationalImage, internationalDestinationImage, internationalPhotoCredit, internationalPrice } from '@/data/international-packages';
+import { findInternationalPackageDestination, internationalImage, internationalDestinationImage, internationalPrice } from '@/data/international-packages';
 export const Route = createFileRoute('/international-packages/$destination/')({
   loader: ({ params }) => { const d = findInternationalPackageDestination(params.destination); if (!d) throw notFound(); return d; },
   head: ({ loaderData }) => {
@@ -18,6 +19,6 @@ export const Route = createFileRoute('/international-packages/$destination/')({
   component: Page,
 });
 function Page() {
-  const d = Route.useLoaderData(); const first = d.packages[0]; const credit = first ? internationalPhotoCredit(destinationPhotoStop(d.name, first.slug)) : undefined;
-  return <main className="relative bg-background text-foreground"><Nav />{first && <PageHero image={internationalDestinationImage(d.name, first)} eyebrow="International Holidays" title={d.name} height="80svh" lightText />}<section className="mx-auto max-w-7xl px-6 py-24"><>{credit && <a href={credit.source} target="_blank" rel="noreferrer" className="mb-8 block text-xs text-muted-foreground">Photo: {credit.license}</a>}</><SectionTitle eyebrow={`${d.packages.length} packages`} title={<>{d.name} <span className="italic gold-gradient">packages</span></>} subtitle="Prices shown are as quoted, subject to availability. Enquire for a confirmed quote." /><div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">{d.packages.map((p,i) => <DestinationCard key={p.slug} index={i} badge={null} cta="View Package" link={{ to: '/international-packages/$destination/$package', params: { destination: d.slug, package: p.slug } }} p={{ slug: p.slug, name: p.name, country: p.countries.join(' · '), tagline: p.cities.join(' · '), price: internationalPrice(p), nights: p.duration, img: internationalImage(p) }} />)}</div></section><Footer /></main>;
+  const d = Route.useLoaderData(); const first = d.packages[0];
+  return <main className="relative bg-background text-foreground"><Nav />{first && <PageHero image={internationalDestinationImage(d.name, first)} eyebrow="International Holidays" title={d.name} height="80svh" lightText />}<section className="mx-auto max-w-7xl px-6 py-24"><InternationalPhotoCredit place={first ? destinationPhotoStop(d.name, first.slug) : undefined} /><SectionTitle eyebrow={`${d.packages.length} packages`} title={<>{d.name} <span className="italic gold-gradient">packages</span></>} subtitle="Prices shown are as quoted, subject to availability. Enquire for a confirmed quote." /><div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">{d.packages.map((p,i) => <div key={p.slug}><DestinationCard index={i} badge={null} cta="View Package" link={{ to: '/international-packages/$destination/$package', params: { destination: d.slug, package: p.slug } }} p={{ slug: p.slug, name: p.name, country: p.countries.join(' · '), tagline: p.cities.join(' · '), price: internationalPrice(p), nights: p.duration, img: internationalImage(p) }} /><InternationalPhotoCredit place={packagePhotoStop(p.slug)} /></div>)}</div></section><Footer /></main>;
 }
