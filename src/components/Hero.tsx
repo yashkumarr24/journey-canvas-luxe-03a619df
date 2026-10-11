@@ -12,25 +12,25 @@ export function Hero() {
       />
 
       {/* faded logo pills (reference placeholders) */}
-      <div aria-hidden="true" className="pointer-events-none absolute right-[-6rem] top-24 flex gap-4 opacity-60 sm:right-4 sm:top-28 lg:right-[max(1.5rem,calc(50vw-40rem))]">
+      <div aria-hidden="true" className="pointer-events-none absolute right-[-6rem] top-24 flex gap-4 opacity-[0.78] sm:right-4 sm:top-28 lg:right-[max(1.5rem,calc(50vw-40rem))]">
         <motion.div
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="grid h-44 w-24 place-items-center rounded-full bg-muted sm:h-56 sm:w-28 lg:h-64 lg:w-36"
+          className="grid h-48 w-28 place-items-center rounded-full bg-muted sm:h-60 sm:w-32 lg:h-72 lg:w-40"
         >
-          <img src={logo} alt="" className="w-16 opacity-25 grayscale sm:w-20 lg:w-24" />
+          <img src={logo} alt="" className="w-[4.5rem] opacity-[0.33] grayscale sm:w-24 lg:w-28" />
         </motion.div>
         <motion.div
           animate={{ y: [0, 14, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-          className="mt-10 grid h-52 w-28 place-items-center rounded-full bg-muted sm:h-64 sm:w-32 lg:h-80 lg:w-48"
+          className="mt-10 grid h-56 w-32 place-items-center rounded-full bg-muted sm:h-72 sm:w-36 lg:h-[22rem] lg:w-52"
         >
           <motion.img
             src={logo}
             alt=""
             animate={{ rotate: [0, 4, -4, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="w-20 opacity-30 sm:w-24 lg:w-32"
+            className="w-24 opacity-[0.39] sm:w-28 lg:w-36"
           />
         </motion.div>
       </div>
