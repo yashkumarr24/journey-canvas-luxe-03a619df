@@ -64,7 +64,7 @@ function DomesticPackageDestinationPage() {
                 slug: p.slug,
                 name: p.name,
                 country: d.region,
-                tagline: p.tour.find((f) => /date|month|check-in/i.test(f.label))?.value ?? "",
+                 tagline: p.tour.find((f) => /pax|persons|guests/i.test(f.label))?.value ?? "",
                 price: p.priceFrom ?? "Price on request",
                 nights: p.duration,
                 img: d.img,

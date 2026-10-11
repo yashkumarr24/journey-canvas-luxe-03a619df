@@ -1,12 +1,12 @@
 // Domestic holiday packages transcribed from the FNF Word quotations
 // (Andaman, Gangtok & Darjeeling, Goa, Kashmir, Kerala, Uttarakhand).
 // Source wording and amounts are kept as written; missing details are left out.
-import andamanImg from "@/assets/domestic/andaman.webp.asset.json";
-import gangtokImg from "@/assets/domestic/gangtok.webp.asset.json";
-import goaImg from "@/assets/domestic/goa-1.webp.asset.json";
-import kashmirImg from "@/assets/domestic/kashmir.webp.asset.json";
-import keralaImg from "@/assets/domestic/kerala.webp.asset.json";
-import uttarakhandImg from "@/assets/domestic/uttarakhand.webp.asset.json";
+import andamanImg from "@/assets/domestic/andaman-stock.jpg.asset.json";
+import gangtokImg from "@/assets/domestic/gangtok-stock.jpg.asset.json";
+import goaImg from "@/assets/domestic/goa-stock.jpg.asset.json";
+import kashmirImg from "@/assets/domestic/kashmir-stock.jpg.asset.json";
+import keralaImg from "@/assets/domestic/kerala-stock.jpg.asset.json";
+import uttarakhandImg from "@/assets/domestic/uttarakhand-stock.jpg.asset.json";
 
 export type Fact = { label: string; value: string };
 export type PackageOption = {
@@ -56,7 +56,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         priceFrom: "INR 63,510 for 2 Pax",
         tour: [
           { label: "Quotation ID", value: "FNF/2025/1395" },
-          { label: "Travel Dates", value: "05 November 2025 – 10 November 2025" },
           { label: "Duration", value: "5 Nights / 6 Days" },
           { label: "No. of Persons", value: "2 Adults" },
           { label: "Arrival", value: "Port Blair Airport" },
@@ -67,23 +66,23 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           {
             name: "Package",
             price: ["Land Package: INR 63,510 for 2 Pax Including Taxes"],
-            columns: ["Day", "Date", "Destination", "Hotel Name", "Room Type", "No. of Rooms", "Meal Plan"],
+            columns: ["Day", "Destination", "Hotel Name", "Room Type", "No. of Rooms", "Meal Plan"],
             hotels: [
-              ["1", "05-Nov-2025", "Port Blair", "Heritage MNR Resort (N K Group) or similar", "Heritage Club A/C", "1", "CP"],
-              ["2", "06-Nov-2025", "Havelock Island", "Haywizz Havelock Island Resorts or similar", "Premium A/C", "1", "CP"],
-              ["3", "07-Nov-2025", "Havelock Island", "Haywizz Havelock Island Resorts or similar", "Premium A/C", "1", "CP"],
-              ["4", "08-Nov-2025", "Neil Island", "TSG Aura or similar", "Seaside Room A/C", "1", "CP"],
-              ["5", "09-Nov-2025", "Port Blair", "Heritage MNR Resort (N K Group) or similar", "Heritage Club A/C", "1", "CP"],
+              ["1", "Port Blair", "Heritage MNR Resort (N K Group) or similar", "Heritage Club A/C", "1", "CP"],
+              ["2", "Havelock Island", "Haywizz Havelock Island Resorts or similar", "Premium A/C", "1", "CP"],
+              ["3", "Havelock Island", "Haywizz Havelock Island Resorts or similar", "Premium A/C", "1", "CP"],
+              ["4", "Neil Island", "TSG Aura or similar", "Seaside Room A/C", "1", "CP"],
+              ["5", "Port Blair", "Heritage MNR Resort (N K Group) or similar", "Heritage Club A/C", "1", "CP"],
             ],
           },
         ],
         itinerary: [
-          { day: "Day 1 – 05 Nov 2025", title: "Port Blair Arrival", text: "Arrival at Port Blair Airport → Transfer to hotel → Visit Corbyn Cove Beach & Cellular Jail → Evening Sound & Light Show at Cellular Jail → Overnight at Hotel.\nNote: Museums closed on public holidays; visits adjusted accordingly." },
-          { day: "Day 2 – 06 Nov 2025", title: "Port Blair → Havelock Island", text: "Ferry transfer to Havelock → Check-in to hotel → Visit Radhanagar Beach (Asia’s best beach) → Enjoy leisure time → Overnight stay at hotel." },
-          { day: "Day 3 – 07 Nov 2025", title: "Havelock Island (Elephant Beach)", text: "Visit Elephant Beach (by boat, ~30 mins) → Snorkeling & water activities (optional) → Return to hotel → Overnight stay." },
-          { day: "Day 4 – 08 Nov 2025", title: "Havelock → Neil Island", text: "Ferry to Neil Island → Check-in → Visit Bharatpur Beach, Laxmanpur Beach & Howrah Bridge → Overnight stay at hotel." },
-          { day: "Day 5 – 09 Nov 2025", title: "Neil Island → Port Blair", text: "Ferry transfer to Port Blair → Transfer to hotel → Day at leisure → Overnight stay." },
-          { day: "Day 6 – 10 Nov 2025", title: "Departure", text: "Check-out → Transfer to Airport → Departure with beautiful memories." },
+          { day: "Day 1", title: "Port Blair Arrival", text: "Arrival at Port Blair Airport → Transfer to hotel → Visit Corbyn Cove Beach & Cellular Jail → Evening Sound & Light Show at Cellular Jail → Overnight at Hotel.\nNote: Museums closed on public holidays; visits adjusted accordingly." },
+          { day: "Day 2", title: "Port Blair → Havelock Island", text: "Ferry transfer to Havelock → Check-in to hotel → Visit Radhanagar Beach (Asia’s best beach) → Enjoy leisure time → Overnight stay at hotel." },
+          { day: "Day 3", title: "Havelock Island (Elephant Beach)", text: "Visit Elephant Beach (by boat, ~30 mins) → Snorkeling & water activities (optional) → Return to hotel → Overnight stay." },
+          { day: "Day 4", title: "Havelock → Neil Island", text: "Ferry to Neil Island → Check-in → Visit Bharatpur Beach, Laxmanpur Beach & Howrah Bridge → Overnight stay at hotel." },
+          { day: "Day 5", title: "Neil Island → Port Blair", text: "Ferry transfer to Port Blair → Transfer to hotel → Day at leisure → Overnight stay." },
+          { day: "Day 6", title: "Departure", text: "Check-out → Transfer to Airport → Departure with beautiful memories." },
         ],
         inclusions: [
           "Airport transfers & sightseeing by A/C vehicle (point-to-point, not on disposal)",
@@ -123,7 +122,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "06 Nights / 07 Days",
         tour: [
           { label: "No. of Pax", value: "15 Pax" },
-          { label: "Travel Date", value: "10 Nov 2026" },
           { label: "Duration", value: "06 Nights / 07 Days" },
           { label: "Rooms", value: "6 Double & 1 Triple" },
           { label: "Meal Plan", value: "MAP Plan (Breakfast & Dinner)" },
@@ -211,7 +209,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "05 Nights / 06 Days",
         tour: [
           { label: "Quotation ID", value: "FNF/2026/1092" },
-          { label: "Travel Date", value: "15 Jun – 20 Jun 2026" },
           { label: "Duration", value: "05 Nights / 06 Days" },
           { label: "Vehicle", value: "1-Innova/Xylo" },
           { label: "Total Pax", value: "04 Adults" },
@@ -227,12 +224,12 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 1 – 15 Jun", text: "Arrival at Bagdogra Airport / NJP → Transfer to Gangtok (Approx. 4–5 hrs). Check-in & leisure stay." },
-          { day: "Day 2 – 16 Jun", text: "Full day Gangtok Sightseeing: Tashi View Point, Hanuman Tok, Ganesh Tok, Enchey Monastery, Flower Exhibition Centre, Do Drul Chorten, Namgyal Institute of Tibetology, Ropeway & Bakthang Falls." },
-          { day: "Day 3 – 17 Jun", text: "Excursion to Tsomgo Lake & Baba Mandir (Approx. 8 hrs). Optional Nathula Pass (extra cost)." },
-          { day: "Day 4 – 18 Jun", text: "Transfer from Gangtok → Darjeeling (Approx. 4 hrs). Check-in & leisure." },
-          { day: "Day 5 – 19 Jun", text: "Early morning Tiger Hill Sunrise → Ghoom Monastery → Batasia Loop. Later city tour: Himalayan Mountaineering Institute, Zoo, Tea Estate (outside), Japanese Peace Pagoda." },
-          { day: "Day 6 – 20 Jun", text: "Transfer from Darjeeling → Bagdogra Airport / NJP (Approx. 3 hrs). Departure." },
+          { day: "Day 1", text: "Arrival at Bagdogra Airport / NJP → Transfer to Gangtok (Approx. 4–5 hrs). Check-in & leisure stay." },
+          { day: "Day 2", text: "Full day Gangtok Sightseeing: Tashi View Point, Hanuman Tok, Ganesh Tok, Enchey Monastery, Flower Exhibition Centre, Do Drul Chorten, Namgyal Institute of Tibetology, Ropeway & Bakthang Falls." },
+          { day: "Day 3", text: "Excursion to Tsomgo Lake & Baba Mandir (Approx. 8 hrs). Optional Nathula Pass (extra cost)." },
+          { day: "Day 4", text: "Transfer from Gangtok → Darjeeling (Approx. 4 hrs). Check-in & leisure." },
+          { day: "Day 5", text: "Early morning Tiger Hill Sunrise → Ghoom Monastery → Batasia Loop. Later city tour: Himalayan Mountaineering Institute, Zoo, Tea Estate (outside), Japanese Peace Pagoda." },
+          { day: "Day 6", text: "Transfer from Darjeeling → Bagdogra Airport / NJP (Approx. 3 hrs). Departure." },
         ],
         inclusions: [
           "Accommodation as per itinerary",
@@ -269,7 +266,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "07 Nights / 08 Days",
         tour: [
           { label: "Quotation ID", value: "FNF/2026/1092" },
-          { label: "Travel Date", value: "15 Jun – 22 Jun 2026" },
           { label: "Duration", value: "07 Nights / 08 Days" },
           { label: "Vehicle", value: "1-Innova/Xylo" },
           { label: "Total Pax", value: "04 Adults" },
@@ -279,9 +275,9 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
             name: "Package",
             columns: ["Nights", "Destination", "Hotel Name", "Category", "Room Type", "Meal Plan"],
             hotels: [
-              ["1st – 3rd Night (15–18 Jun)", "Gangtok", "7 Mirror", "3 Star", "2 Executive Rooms", "Breakfast"],
-              ["4th – 5th Night (18–20 Jun)", "Pelling", "Divsai Retreat", "3 Star", "2 Super Deluxe Rooms", "Breakfast"],
-              ["6th – 7th Night (20–22 Jun)", "Darjeeling", "Raj Ville", "3 Star", "2 Premium Rooms", "Breakfast"],
+              ["1st – 3rd Night", "Gangtok", "7 Mirror", "3 Star", "2 Executive Rooms", "Breakfast"],
+              ["4th – 5th Night", "Pelling", "Divsai Retreat", "3 Star", "2 Super Deluxe Rooms", "Breakfast"],
+              ["6th – 7th Night", "Darjeeling", "Raj Ville", "3 Star", "2 Premium Rooms", "Breakfast"],
             ],
           },
         ],
@@ -330,7 +326,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "06 Nights / 07 Days",
         priceFrom: "Rs 1,37,800/- Grand Total",
         tour: [
-          { label: "Travel Date", value: "23 May 2026" },
           { label: "Duration", value: "06 Nights / 07 Days" },
           { label: "Vehicle", value: "Innova/Xylo/Similar" },
           { label: "Meal Plan", value: "Mapai (Breakfast & Dinner)" },
@@ -354,13 +349,13 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 1 – 23 May 2026", text: "Meet & greet at NJP Railway Station / Bagdogra Airport. Transfer to Gangtok (128 kms / 5 hrs). Check-in & overnight stay." },
-          { day: "Day 2 – 24 May 2026", text: "Excursion to Tsomgo Lake (12,400 ft, 34 kms) & Baba Mandir. Enjoy snow, yak ride. Optional Nathula Pass (extra cost, closed Monday). Overnight Gangtok." },
-          { day: "Day 3 – 25 May 2026", text: "Visit Samdruptse, Siddheswar Dham (Char Dham replica), Buddha Park. Continue to Pelling. Overnight stay." },
-          { day: "Day 4 – 26 May 2026", text: "Visit Darap Village, Rimbi Waterfalls, Kanchenjunga Falls, Khecheopalri Lake. Later Pemayangtse Monastery, Rabdentse Ruins & Skywalk. Overnight stay." },
-          { day: "Day 5 – 27 May 2026", text: "After breakfast drive to Darjeeling. Check-in & overnight stay." },
-          { day: "Day 6 – 28 May 2026", text: "Early sunrise at Tiger Hill. Visit Ghoom Monastery, Batasia Loop. Later Japanese Temple, Peace Pagoda, Zoo, HMI, Ropeway, Tea Gardens. Overnight stay." },
-          { day: "Day 7 – 29 May 2026", text: "Transfer to NJP Railway Station / Bagdogra Airport as per schedule. Tour ends." },
+          { day: "Day 1", text: "Meet & greet at NJP Railway Station / Bagdogra Airport. Transfer to Gangtok (128 kms / 5 hrs). Check-in & overnight stay." },
+          { day: "Day 2", text: "Excursion to Tsomgo Lake (12,400 ft, 34 kms) & Baba Mandir. Enjoy snow, yak ride. Optional Nathula Pass (extra cost, closed Monday). Overnight Gangtok." },
+          { day: "Day 3", text: "Visit Samdruptse, Siddheswar Dham (Char Dham replica), Buddha Park. Continue to Pelling. Overnight stay." },
+          { day: "Day 4", text: "Visit Darap Village, Rimbi Waterfalls, Kanchenjunga Falls, Khecheopalri Lake. Later Pemayangtse Monastery, Rabdentse Ruins & Skywalk. Overnight stay." },
+          { day: "Day 5", text: "After breakfast drive to Darjeeling. Check-in & overnight stay." },
+          { day: "Day 6", text: "Early sunrise at Tiger Hill. Visit Ghoom Monastery, Batasia Loop. Later Japanese Temple, Peace Pagoda, Zoo, HMI, Ropeway, Tea Gardens. Overnight stay." },
+          { day: "Day 7", text: "Transfer to NJP Railway Station / Bagdogra Airport as per schedule. Tour ends." },
         ],
         inclusions: [
           "Accommodation as per itinerary",
@@ -409,8 +404,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "2 Nights / 3 Days",
         priceFrom: "INR 11,100/- Per Person",
         tour: [
-          { label: "Check-in", value: "08 Aug 2026" },
-          { label: "Check-out", value: "10 Aug 2026" },
           { label: "Duration", value: "2 Nights / 3 Days" },
           { label: "Hotel Category", value: "4★" },
           { label: "Total Pax", value: "25 Adults" },
@@ -450,7 +443,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         priceFrom: "₹ 13,999/- Per Person",
         tour: [
           { label: "Destination", value: "Goa" },
-          { label: "Travel Dates", value: "12 Nov 2026 – 15 Nov 2026" },
           { label: "Pax", value: "4 Adults" },
           { label: "Trip Duration", value: "3 Nights / 4 Days" },
           { label: "Vehicle", value: "01 Innova Crysta / Similar" },
@@ -473,10 +465,10 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 1 – 11 Nov 2026", title: "Arrival in Goa – Hotel Check-in", text: "Airport arrival, meet & assist, transfer to hotel. Check-in and rest. Evening free for leisure.\nAirport → Hotel: Approx. 30–45 km / 1–1.5 hrs, depending on airport & hotel location" },
-          { day: "Day 2 – 12 Nov 2026", title: "North Goa Sightseeing", text: "After breakfast, proceed for North Goa sightseeing covering Calangute Beach, Baga Beach, Anjuna Beach, Vagator Beach, Chapora Fort, Candolim Beach & Fort Aguada. Approx. sightseeing distance 40–50 km / 3–4 hrs driving, excluding sightseeing time. Return to hotel." },
-          { day: "Day 3 – 13 Nov 2026", title: "South Goa Sightseeing", text: "After breakfast, proceed for South Goa sightseeing covering Old Goa Churches, Basilica of Bom Jesus, Se Cathedral, Miramar Beach, Dona Paula & Colva Beach. Approx. sightseeing distance 130–145 km / 4–5 hrs driving, excluding sightseeing time. Return to hotel" },
-          { day: "Day 4 – 15 Nov 2026", title: "Departure", text: "Check-out After breakfast, check out from the hotel by 11:00 AM and proceed for Goa Railway Station drop as per the departure schedule. Tour ends with beautiful memories of Goa." },
+          { day: "Day 1", title: "Arrival in Goa – Hotel Check-in", text: "Airport arrival, meet & assist, transfer to hotel. Check-in and rest. Evening free for leisure.\nAirport → Hotel: Approx. 30–45 km / 1–1.5 hrs, depending on airport & hotel location" },
+          { day: "Day 2", title: "North Goa Sightseeing", text: "After breakfast, proceed for North Goa sightseeing covering Calangute Beach, Baga Beach, Anjuna Beach, Vagator Beach, Chapora Fort, Candolim Beach & Fort Aguada. Approx. sightseeing distance 40–50 km / 3–4 hrs driving, excluding sightseeing time. Return to hotel." },
+          { day: "Day 3", title: "South Goa Sightseeing", text: "After breakfast, proceed for South Goa sightseeing covering Old Goa Churches, Basilica of Bom Jesus, Se Cathedral, Miramar Beach, Dona Paula & Colva Beach. Approx. sightseeing distance 130–145 km / 4–5 hrs driving, excluding sightseeing time. Return to hotel" },
+          { day: "Day 4", title: "Departure", text: "Check-out After breakfast, check out from the hotel by 11:00 AM and proceed for Goa Railway Station drop as per the departure schedule. Tour ends with beautiful memories of Goa." },
         ],
         inclusions: [
           "03 Nights’ accommodation on double/twin sharing basis",
@@ -517,8 +509,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         name: "Goa Group Tour",
         duration: "4 Nights / 5 Days",
         tour: [
-          { label: "Check-in", value: "19 Jul 2026" },
-          { label: "Check-out", value: "23 Jul 2026" },
           { label: "Duration", value: "4 Nights / 5 Days" },
           { label: "Hotel Category", value: "4★" },
           { label: "Total Pax", value: "50 Adults" },
@@ -566,7 +556,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         name: "Kashmir Package",
         duration: "04 Nights / 05 Days",
         tour: [
-          { label: "Travel Month", value: "16 November 2026" },
           { label: "Guests", value: "08 Adults + 01 Kids (8 Years)" },
           { label: "Rooms", value: "03 Rooms" },
           { label: "Duration", value: "04 Nights / 05 Days" },
@@ -584,11 +573,11 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 01 – 16 Nov 2026", title: "Arrival in Srinagar & Local Sightseeing", text: "Arrival at Srinagar Railway Station, meet & greet and transfer to the hotel. After check-in, proceed for Srinagar local sightseeing covering Mughal Gardens, Nishat Garden, Shalimar Garden, Chashme Shahi and Pari Mahal. Srinagar" },
-          { day: "Day 02 – 17 Nov 2026", title: "Srinagar – Sonmarg – Srinagar", text: "After breakfast, proceed for a full-day excursion to Sonmarg, known for its scenic mountain landscapes and beautiful meadows. Enjoy the surroundings and optional local activities. Return to Srinagar in the evening. Srinagar" },
-          { day: "Day 03 – 18 Nov 2026", title: "Srinagar – Pahalgam – Srinagar", text: "After breakfast, proceed for a day trip to Pahalgam, the Valley of Shepherds. Enjoy the scenic journey and explore the beautiful surroundings. Later return to Srinagar. Srinagar" },
-          { day: "Day 04 – 19 Nov 2026", title: "Srinagar – Gulmarg", text: "After breakfast, check out and proceed to Gulmarg. Enjoy local sightseeing and explore the scenic beauty of Gulmarg. Later check in at the hotel. Gulmarg" },
-          { day: "Day 05 – 20 Nov 2026", title: "Gulmarg – Srinagar", text: "After breakfast, check out and proceed towards Srinagar. Enjoy en-route/local sightseeing, subject to available time. Later transfer to Srinagar Railway Station for your onward journey. Tour Ends" },
+          { day: "Day 01", title: "Arrival in Srinagar & Local Sightseeing", text: "Arrival at Srinagar Railway Station, meet & greet and transfer to the hotel. After check-in, proceed for Srinagar local sightseeing covering Mughal Gardens, Nishat Garden, Shalimar Garden, Chashme Shahi and Pari Mahal. Srinagar" },
+          { day: "Day 02", title: "Srinagar – Sonmarg – Srinagar", text: "After breakfast, proceed for a full-day excursion to Sonmarg, known for its scenic mountain landscapes and beautiful meadows. Enjoy the surroundings and optional local activities. Return to Srinagar in the evening. Srinagar" },
+          { day: "Day 03", title: "Srinagar – Pahalgam – Srinagar", text: "After breakfast, proceed for a day trip to Pahalgam, the Valley of Shepherds. Enjoy the scenic journey and explore the beautiful surroundings. Later return to Srinagar. Srinagar" },
+          { day: "Day 04", title: "Srinagar – Gulmarg", text: "After breakfast, check out and proceed to Gulmarg. Enjoy local sightseeing and explore the scenic beauty of Gulmarg. Later check in at the hotel. Gulmarg" },
+          { day: "Day 05", title: "Gulmarg – Srinagar", text: "After breakfast, check out and proceed towards Srinagar. Enjoy en-route/local sightseeing, subject to available time. Later transfer to Srinagar Railway Station for your onward journey. Tour Ends" },
         ],
         inclusions: [
           "Accommodation in 3-Star category hotels on twin/triple sharing basis.",
@@ -629,7 +618,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "5 Nights / 6 Days",
         tour: [
           { label: "Duration", value: "5 Nights / 6 Days" },
-          { label: "Travel Month", value: "10 Nov 2026" },
           { label: "Guests", value: "16 adults" },
           { label: "Rooms", value: "8 Rooms" },
           { label: "Vehicle", value: "1 Tempo Traveler" },
@@ -705,7 +693,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         name: "Kashmir Family Package",
         duration: "06 Nights / 07 Days",
         tour: [
-          { label: "Travel Month", value: "November 2026" },
           { label: "Guests", value: "06 Adults + 03 Kids (6, 12 & 13 Years)" },
           { label: "Rooms", value: "03 Rooms + 02 Extra Beds + 01 CNB" },
           { label: "Duration", value: "06 Nights / 07 Days" },
@@ -797,7 +784,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         tour: [
           { label: "Destination", value: "Kerala – Cochin - Thekkady – Alleppey - Kovalam" },
           { label: "Duration", value: "05 Nights / 06 Days" },
-          { label: "Travel Date", value: "15 Oct 2026" },
           { label: "No. of Pax", value: "2 Adults & 2 Child ( 5 Years )" },
           { label: "Vehicle", value: "Innova AC" },
           { label: "Meal Plan", value: "Breakfast Included" },
@@ -869,7 +855,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         tour: [
           { label: "Destination", value: "Kerala" },
           { label: "Duration", value: "06 Nights / 07 Days" },
-          { label: "Travel Date", value: "10 Nov 2026" },
           { label: "No. of Pax", value: "09 Adults + 03 Infants" },
           { label: "Vehicle", value: "Tempo Traveler 17-seater A/c" },
           { label: "Meal Plan", value: "Breakfast + Dinner Included" },
@@ -890,7 +875,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         itinerary: [
           { day: "Day 1", title: "Cochin – Arrival in Cochin and Cochin Sightseeing", text: "Upon your arrival in Cochin (Kochi), check in at your chosen hotel. Your afternoon is dedicated to exploring the historical gems of Fort Kochi, including St. Francis Church, the Dutch Palace (Mattancherry Palace- Closed on Fridays) with its vibrant murals, and the enchanting Jewish Synagogue (Closed on Fridays, Saturdays and Jewish Holidays). As evening falls, visit Ernakulam, the business capital of Kerala for some shopping. Overnight at Cochin." },
           { day: "Day 2", title: "Munnar", text: "Morning after breakfast proceed to Munnar. During this scenic journey, you'll be captivated by the lush landscapes and will have the opportunity to visit the mesmerizing Valara and Cheeyappara Waterfalls, adding an extra layer of beauty to your trip. You will also enjoy a Spice Plantation visit, where you can learn about the cultivation of aromatic herbs and spices that make the region world-famous.Upon reaching Munnar, youll check in to your chosen hotel or resort, where you can unwind amidst the tranquil surroundings. The evening is yours to spend at your leisure simply relaxing at your cozy accommodation." },
-          { day: "Day 3", title: "Munnar – Munnar Exploration", text: "After a delicious breakfast at your hotel, you'll set out to explore the charming attractions of Munnar. Your days itinerary includes a visit to the Mattupetty Dam and Lake, where you can enjoy boating and the stunning landscape. Echo Point offers a unique experience with its echo phenomenon. The day continues with a tour of lush tea gardens, providing insights into tea processing. After lunch you'll head to Eravikulam National Park. (Book entry tickets to Eravikulam National Park directly through the following Link https://www.eravikulamnationalpark.in/landing/axRegister.php to avoid rush) (The park is closed from Feb 1 to Mar 31, 2026 due to calving season of mountain goat) As the day winds down, return to your comfortable Munnar accommodation for a tranquil evening." },
+          { day: "Day 3", title: "Munnar – Munnar Exploration", text: "After a delicious breakfast at your hotel, you'll set out to explore the charming attractions of Munnar. Your days itinerary includes a visit to the Mattupetty Dam and Lake, where you can enjoy boating and the stunning landscape. Echo Point offers a unique experience with its echo phenomenon. The day continues with a tour of lush tea gardens, providing insights into tea processing. After lunch you'll head to Eravikulam National Park. (Book entry tickets to Eravikulam National Park directly through the following Link https://www.eravikulamnationalpark.in/landing/axRegister.php to avoid rush) As the day winds down, return to your comfortable Munnar accommodation for a tranquil evening." },
           { day: "Day 4", title: "Thekkady", text: "Morning after breakfast embark on a scenic drive to Thekkady. The journey treats you to spectacular views of Kerala's landscapes and typically spans around 4-5 hours. Upon reaching Thekkady, check in at your selected hotel or resort, and immerse yourself in the serene surroundings. In the late afternoon, set off to explore the Periyar Wildlife Sanctuary, renowned for its boat safaris on Periyar Lake. Here, you can spot elephants, bison, and various bird species in their natural habitat.(Please book online in advance https://www.periyartigerreserve.org OR http://ktdc-boating. to avoid rush) Enjoy dinner at your Thekkady accommodation and spend the night in this captivating destination." },
           { day: "Day 5", title: "Trivandrum", text: "Morning after breakfast proceed to Trivandrum, also known as Thiruvananthapuram which is the capital city of Kerala. Start exploring Trivandrum by visiting the iconic Padmanabhaswamy Temple and the Napier Museum (Monday Holiday), which houses a vast collection of historical artifacts. Evening immerse yourself in the vibrant markets of Trivandrum, where you can shop for traditional handicrafts and spices. Overnight at Trivandrum." },
           { day: "Day 6", title: "Kovalam", text: "Morning after breakfast proceed to Kovalam, a coastal paradise famous for its pristine beaches. Upon arrival, check in to your Kovalam hotel or resort and soak in the vibrant beach culture. The rest of the day is at your leisure to relax on the sandy shores, explore the local markets, or dine by the sea." },
@@ -913,7 +898,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         notes: [
           {
             items: [
-              "This quotation is valid for the mentioned travel dates and is subject to hotel and vehicle availability at the time of confirmation.",
+              "This quotation is subject to hotel and vehicle availability at the time of confirmation.",
               "Accommodation is based on the room configuration mentioned above and the selected meal plan (MAP – Breakfast & Dinner).",
               "17-seater A/C Tempo Traveller will be provided for transfers and sightseeing, with 1,000 km usage included.",
               "Vehicle usage and sightseeing will be strictly as per the itinerary; any additional usage or changes will be charged extra.",
@@ -938,7 +923,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         tour: [
           { label: "Destination", value: "Kerala – Munnar - Thekkady – Kovalam – Kanyakumari – Alleppey – Cochin" },
           { label: "Duration", value: "08 Nights / 09 Days" },
-          { label: "Travel Date", value: "25 Dec 2026" },
           { label: "No. of Pax", value: "2 Adults 3 Children (18, 13 & 8 Years)" },
           { label: "Vehicle", value: "Innova AC" },
           { label: "Meal Plan", value: "Breakfast & Dinner Included" },
@@ -969,15 +953,15 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 1 – 25 Dec 2026", title: "Arrival – Munnar", text: "Arrive at Cochin Airport/Railway Station and proceed towards Munnar. En route, enjoy the scenic beauty of Kerala and visit Valara and Cheeyappara Waterfalls along with a Spice Plantation visit. Continue to Munnar and check in to the hotel. Evening at leisure for relaxation.\nOvernight: Munnar." },
-          { day: "Day 2 – 26 Dec 2026", title: "Munnar Sightseeing", text: "After breakfast, proceed for Munnar sightseeing covering Mattupetty Dam & Lake, Echo Point and Tea Gardens. Later visit Eravikulam National Park, subject to operational conditions and availability. Return to the hotel and spend the evening at leisure.\nOvernight: Munnar." },
-          { day: "Day 3 – 27 Dec 2026", title: "Munnar – Thekkady", text: "After breakfast, check out and proceed to Thekkady through the scenic Western Ghats. On arrival, check in to the hotel. Later, you may visit Periyar Wildlife Sanctuary and enjoy a boat safari, subject to availability and direct booking.\nOvernight: Thekkady." },
-          { day: "Day 4 – 28 Dec 2026", title: "Thekkady – Kovalam", text: "After breakfast, check out from Thekkady and proceed towards Kovalam, the beautiful coastal destination of Kerala. On arrival, check in to the resort. The rest of the day is free to relax at the resort or enjoy the beach and surrounding areas.\nOvernight: Kovalam." },
-          { day: "Day 5 – 29 Dec 2026", title: "Kovalam – Trivandrum – Kovalam", text: "After breakfast, proceed for a day excursion to Trivandrum. Visit Padmanabhaswamy Temple, Art Gallery and Napier Museum, subject to their respective opening days. Later return to Kovalam and enjoy a relaxing evening.\nOvernight: Kovalam." },
-          { day: "Day 6 – 30 Dec 2026", title: "Kovalam – Kanyakumari – Kovalam", text: "After breakfast, proceed for a full-day excursion to Kanyakumari, the southernmost tip of India. Visit Vivekananda Rock Memorial, Thiruvalluvar Statue and Kanyakumari Beach and enjoy the scenic confluence of the three seas. Return to Kovalam.\nOvernight: Kovalam." },
-          { day: "Day 7 – 31 Dec 2026", title: "Kovalam – Alleppey Houseboat", text: "After breakfast, check out and proceed to Alleppey. By noon, board your houseboat for a relaxing backwater cruise through Kerala's scenic waterways. Enjoy the lush surroundings, traditional Kerala cuisine and sunset views during the cruise.\nOvernight: Houseboat." },
-          { day: "Day 8 – 01 Jan 2027", title: "Alleppey – Cochin", text: "After breakfast, disembark from the houseboat and proceed to Cochin. After check-in, explore Fort Kochi, including St. Francis Church, Dutch Palace and Jewish Synagogue, subject to their opening days. Later visit Ernakulam for shopping.\nOvernight: Cochin." },
-          { day: "Day 9 – 02 Jan 2027", title: "Cochin – Departure", text: "After breakfast, check out from the hotel and proceed to Ernakulam Railway Station for your onward journey, carrying back wonderful memories of your Kerala holiday." },
+          { day: "Day 1", title: "Arrival – Munnar", text: "Arrive at Cochin Airport/Railway Station and proceed towards Munnar. En route, enjoy the scenic beauty of Kerala and visit Valara and Cheeyappara Waterfalls along with a Spice Plantation visit. Continue to Munnar and check in to the hotel. Evening at leisure for relaxation.\nOvernight: Munnar." },
+          { day: "Day 2", title: "Munnar Sightseeing", text: "After breakfast, proceed for Munnar sightseeing covering Mattupetty Dam & Lake, Echo Point and Tea Gardens. Later visit Eravikulam National Park, subject to operational conditions and availability. Return to the hotel and spend the evening at leisure.\nOvernight: Munnar." },
+          { day: "Day 3", title: "Munnar – Thekkady", text: "After breakfast, check out and proceed to Thekkady through the scenic Western Ghats. On arrival, check in to the hotel. Later, you may visit Periyar Wildlife Sanctuary and enjoy a boat safari, subject to availability and direct booking.\nOvernight: Thekkady." },
+          { day: "Day 4", title: "Thekkady – Kovalam", text: "After breakfast, check out from Thekkady and proceed towards Kovalam, the beautiful coastal destination of Kerala. On arrival, check in to the resort. The rest of the day is free to relax at the resort or enjoy the beach and surrounding areas.\nOvernight: Kovalam." },
+          { day: "Day 5", title: "Kovalam – Trivandrum – Kovalam", text: "After breakfast, proceed for a day excursion to Trivandrum. Visit Padmanabhaswamy Temple, Art Gallery and Napier Museum, subject to their respective opening days. Later return to Kovalam and enjoy a relaxing evening.\nOvernight: Kovalam." },
+          { day: "Day 6", title: "Kovalam – Kanyakumari – Kovalam", text: "After breakfast, proceed for a full-day excursion to Kanyakumari, the southernmost tip of India. Visit Vivekananda Rock Memorial, Thiruvalluvar Statue and Kanyakumari Beach and enjoy the scenic confluence of the three seas. Return to Kovalam.\nOvernight: Kovalam." },
+          { day: "Day 7", title: "Kovalam – Alleppey Houseboat", text: "After breakfast, check out and proceed to Alleppey. By noon, board your houseboat for a relaxing backwater cruise through Kerala's scenic waterways. Enjoy the lush surroundings, traditional Kerala cuisine and sunset views during the cruise.\nOvernight: Houseboat." },
+          { day: "Day 8", title: "Alleppey – Cochin", text: "After breakfast, disembark from the houseboat and proceed to Cochin. After check-in, explore Fort Kochi, including St. Francis Church, Dutch Palace and Jewish Synagogue, subject to their opening days. Later visit Ernakulam for shopping.\nOvernight: Cochin." },
+          { day: "Day 9", title: "Cochin – Departure", text: "After breakfast, check out from the hotel and proceed to Ernakulam Railway Station for your onward journey, carrying back wonderful memories of your Kerala holiday." },
         ],
         inclusions: [
           "Accommodation at selected hotels on twin-sharing basis.",
@@ -1023,7 +1007,6 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         duration: "7 Nights / 8 Days",
         tour: [
           { label: "Pax", value: "23 Guests" },
-          { label: "Travel Date", value: "07 June 2026" },
           { label: "Pickup", value: "Rishikesh Railway Station – 12:30 PM" },
           { label: "Vehicle", value: "27-Seater AC Traveler & 4 Innova for Nainital Local Sightseeing" },
           { label: "Rooms", value: "7 Triple Rooms + 1 Double" },
@@ -1032,11 +1015,11 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         options: [
           {
             name: "Package",
-            columns: ["Destination", "Hotel", "Check-in", "Check-out", "No. of Rooms"],
+            columns: ["Destination", "Hotel", "No. of Rooms"],
             hotels: [
-              ["Rishikesh", "Hotel Ganesha Inn Rishikesh", "07 Jun 2026", "10 Jun 2026", "08 Rooms (01 Family Suite Room + 04 Super Deluxe Rooms + 03 Ganga View Rooms + 05 Extra Mattress in Rishikesh)"],
-              ["Nainital (Bhimtal)", "Hotel Royal Court Bhimtal", "10 Jun 2026", "12 Jun 2026", "07 Super Deluxe Rooms + 09 Extra Mattress in Nainital"],
-              ["Jim Corbett", "Corbett Machan Resort", "12 Jun 2026", "14 Jun 2026", "07 Woodland Cottage + 09 Extra Mattress in Jim Corbett"],
+              ["Rishikesh", "Hotel Ganesha Inn Rishikesh", "08 Rooms (01 Family Suite Room + 04 Super Deluxe Rooms + 03 Ganga View Rooms + 05 Extra Mattress in Rishikesh)"],
+              ["Nainital (Bhimtal)", "Hotel Royal Court Bhimtal", "07 Super Deluxe Rooms + 09 Extra Mattress in Nainital"],
+              ["Jim Corbett", "Corbett Machan Resort", "07 Woodland Cottage + 09 Extra Mattress in Jim Corbett"],
             ],
           },
         ],
@@ -1085,9 +1068,8 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
         tour: [
           { label: "Quotation ID", value: "FNF/2026/1129" },
           { label: "Duration", value: "04 Nights / 05 Days" },
-          { label: "Travel Dates", value: "04 June 2026 – 09 June 2026" },
-          { label: "Pickup", value: "New Delhi Railway Station – 04 June 2026 (07:00 AM)" },
-          { label: "Drop", value: "New Delhi Railway Station – 09 June 2026 (07:00 PM)" },
+          { label: "Pickup", value: "New Delhi Railway Station – 07:00 AM" },
+          { label: "Drop", value: "New Delhi Railway Station – 07:00 PM" },
           { label: "Pax", value: "12 Adults + 03 Children (06 yrs)" },
           { label: "Rooms", value: "06 Deluxe Rooms (03 Child without mattress)" },
           { label: "Meal Plan", value: "EP Plan (Room Only)" },
@@ -1106,12 +1088,12 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
           },
         ],
         itinerary: [
-          { day: "Day 1 (04 June)", title: "Delhi – Nainital (Overnight)", text: "Pickup from New Delhi Railway Station (07:00 AM) → Visit Swaminarayan Akshardham → Delhi Sightseeing (Drive Pass) → Overnight journey to Nainital\nStay: Overnight Journey" },
-          { day: "Day 2 (05 June)", title: "Nainital", text: "Arrival & Check-in → Visit Naini Lake → Local sightseeing → Evening at Mall Road Nainital\nStay: Nainital" },
-          { day: "Day 3 (06 June)", title: "Nainital – Corbett – Haridwar", text: "Breakfast → Travel to Jim Corbett National Park → Jungle Safari (02:00 PM) (Subject to Availability and Extra Charges) → Proceed to Haridwar → Check-in / Dharamshala stay\nStay: Haridwar" },
-          { day: "Day 4 (07 June)", title: "Haridwar – Mussoorie", text: "Early morning travel to Mussoorie → Hotel Check-in → Local sightseeing → Visit Mall Road Mussoorie\nStay: Mussoorie" },
-          { day: "Day 5 (08 June)", title: "Mussoorie – Rishikesh", text: "Travel to Rishikesh → Check-in → River rafting at Rishikesh River Rafting → Evening Ganga Aarti Haridwar → Shopping\nStay: Rishikesh" },
-          { day: "Day 6 (09 June)", title: "Rishikesh – Hastinapur – Delhi", text: "Breakfast → Travel to Hastinapur → Continue to Delhi → Drop at Railway Station (07:00 PM)\nTour Ends" },
+          { day: "Day 1", title: "Delhi – Nainital (Overnight)", text: "Pickup from New Delhi Railway Station (07:00 AM) → Visit Swaminarayan Akshardham → Delhi Sightseeing (Drive Pass) → Overnight journey to Nainital\nStay: Overnight Journey" },
+          { day: "Day 2", title: "Nainital", text: "Arrival & Check-in → Visit Naini Lake → Local sightseeing → Evening at Mall Road Nainital\nStay: Nainital" },
+          { day: "Day 3", title: "Nainital – Corbett – Haridwar", text: "Breakfast → Travel to Jim Corbett National Park → Jungle Safari (02:00 PM) (Subject to Availability and Extra Charges) → Proceed to Haridwar → Check-in / Dharamshala stay\nStay: Haridwar" },
+          { day: "Day 4", title: "Haridwar – Mussoorie", text: "Early morning travel to Mussoorie → Hotel Check-in → Local sightseeing → Visit Mall Road Mussoorie\nStay: Mussoorie" },
+          { day: "Day 5", title: "Mussoorie – Rishikesh", text: "Travel to Rishikesh → Check-in → River rafting at Rishikesh River Rafting → Evening Ganga Aarti Haridwar → Shopping\nStay: Rishikesh" },
+          { day: "Day 6", title: "Rishikesh – Hastinapur – Delhi", text: "Breakfast → Travel to Hastinapur → Continue to Delhi → Drop at Railway Station (07:00 PM)\nTour Ends" },
         ],
         inclusions: [
           "03 Nights’ Accommodation (as per itinerary)",
