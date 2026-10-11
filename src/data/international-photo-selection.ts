@@ -53,5 +53,5 @@ const countryStops: Record<string, string> = {
 export const destinationPhotoStop = (name: string, slug: string) => {
   const p = packages.find(p => p.slug === slug);
   if (!p) return undefined;
-  return p.cities.includes(name) ? name : countryStops[name] ?? packagePhotoStop(slug);
+  return p.cities.some(city => city === name) ? name : countryStops[name] ?? packagePhotoStop(slug);
 };
