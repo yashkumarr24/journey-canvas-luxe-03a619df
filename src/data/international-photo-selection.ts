@@ -9,7 +9,7 @@ const selectedStops: Record<string, string> = {
   'paris-switzerland-6n-7d': 'Paris',
   'paris-switzerland-7n-8d': 'Zurich',
   'amsterdam-paris-swiss-9n-10d': 'Amsterdam',
-  'amsterdam-paris-6n-7d': 'Paris',
+  'amsterdam-paris-6n-7d': 'Paris by night',
   'paris-swiss-italy-11n-12d': 'Venice',
   'paris-swiss-italy-12n-13d': 'Florence',
   'italy-7n-8d': 'Rome',
@@ -39,7 +39,16 @@ const selectedStops: Record<string, string> = {
   'vietnam-holiday-package-1320': 'Halong Bay',
 };
 
-export const packagePhotoStop = (slug: string) => selectedStops[slug];
+// Multi-option trips get one distinct included stop per selectable option (option 1 is the trip thumbnail).
+const optionStops: Record<string, string[]> = {
+  'bali-holiday-package-1295': ['Ubud', 'Kuta', 'Uluwatu', 'Tegenungan Waterfall'],
+  'dubai-abu-dhabi-holiday-package-1416': ['Abu Dhabi', 'Dubai'],
+  'georgia-holiday-package-1423': ['Tbilisi', 'Batumi', 'Gudauri', 'Kazbegi'],
+  'singapore-holiday-package-1329': ['Singapore', 'Gardens by the Bay', 'Singapore Flyer'],
+};
+const photoFiles: Record<string, string> = { 'Paris by night': 'france-stock.jpg' };
+export const packagePhotoStop = (slug: string, option = 0) => optionStops[slug]?.[option] ?? optionStops[slug]?.[0] ?? selectedStops[slug];
+export const photoFileForStop = (stop: string) => photoFiles[stop] ?? `city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
 const countryStops: Record<string, string> = {
   Switzerland: 'Lucerne', France: 'Paris', Netherlands: 'Amsterdam', Italy: 'Rome',
   Belgium: 'Brussels', Germany: 'Frankfurt', 'Czech Republic': 'Prague', Austria: 'Vienna',

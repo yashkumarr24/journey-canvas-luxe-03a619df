@@ -1,6 +1,6 @@
 import source from './international-packages.json';
 import swiss from '@/assets/swiss.webp';
-import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
+import { packagePhotoStop, destinationPhotoStop, photoFileForStop } from './international-photo-selection';
 import photoCredits from './international-photo-credits.json';
 
 export type SourceTable = { columns: string[]; rows: string[][] };
@@ -14,16 +14,16 @@ export type InternationalPackage = {
 const photos = import.meta.glob<string>('../assets/international/*.jpg', { eager: true, query: '?url', import: 'default' });
 const assetUrl = (path: string) => photos[`../assets/international/${path}`];
 export const internationalPackages: InternationalPackage[] = source;
-export const internationalImage = (p: InternationalPackage) => {
-  const stop = packagePhotoStop(p.slug);
-  const photo = stop ? assetUrl(`city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`) : undefined;
+export const internationalImage = (p: InternationalPackage, option = 0) => {
+  const stop = packagePhotoStop(p.slug, option);
+  const photo = stop ? assetUrl(photoFileForStop(stop)) : undefined;
   if (photo) return photo;
   const name = ['netherlands', 'spain', 'belgium'].includes(p.imageKey) ? `${p.imageKey}-landmark.jpg` : ['bali', 'dubai', 'georgia', 'singapore', 'vietnam'].includes(p.imageKey) ? `${p.imageKey}-source.jpg` : `${p.imageKey}-stock.jpg`;
   return assetUrl(name) ?? swiss;
 };
 export const internationalDestinationImage = (name: string, p: InternationalPackage) => {
   const stop = destinationPhotoStop(name, p.slug);
-  return (stop ? assetUrl(`city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`) : undefined) ?? internationalImage(p);
+  return (stop ? assetUrl(photoFileForStop(stop)) : undefined) ?? internationalImage(p);
 };
 export const internationalPhotoCredit = (place: string | undefined) => {
   if (!place) return undefined;
