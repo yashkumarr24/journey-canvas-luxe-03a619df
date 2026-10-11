@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
+import { AssistantWelcomePopup } from "@/components/assistant/AssistantWelcomePopup";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -76,6 +77,7 @@ export function Nav() {
           <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0"><img src={logo} alt="Fly n Feel Holidays" width={560} height={200} loading="eager" decoding="async" className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px]" /></Link>
           <button type="button" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Open Ask AI travel assistant" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</button>
           <AssistantDrawer open={aiOpen} onOpenChange={setAiOpen} />
+          {!aiOpen && <AssistantWelcomePopup onOpenChat={() => { setOpen(false); setAiOpen(true); }} />}
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Button type="button" variant="ghost" size="icon" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Ask AI" className="size-9 border border-foreground/15 text-gold hover:text-gold md:hidden"><Bot className="size-5" /></Button>

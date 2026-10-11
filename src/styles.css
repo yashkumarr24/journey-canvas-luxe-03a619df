@@ -81,6 +81,8 @@
   /* Legacy tokens, remapped for the new theme */
   --gold: #d62828;          /* logo red — used as the brand accent everywhere */
   --gold-soft: #f25c5c;
+  --ai-glow-from: #f6a07a;
+  --ai-glow-to: #f472d0;
 
   --ink: #F8F8F6;           /* image-overlay gradients fade to pearl */
   --navy: #FAFAF7;
@@ -196,4 +198,13 @@ body:has(header > nav.rounded-full) .rounded-full:not(header *) {
     padding-top: 9rem;
     padding-bottom: 2rem;
   }
+}
+
+/* Ask AI welcome popup: soft peach-to-pink glow ring like a search prompt pill */
+@utility ai-glow-ring {
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(180deg, var(--ai-glow-from), color-mix(in oklab, var(--ai-glow-from) 40%, var(--ai-glow-to)) 70%, var(--ai-glow-to)) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--ai-glow-to) 70%, transparent), var(--shadow-card);
 }
