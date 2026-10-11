@@ -59,6 +59,45 @@ export type Database = {
         }
         Relationships: []
       }
+      enquiries: {
+        Row: {
+          created_at: string
+          destination: string | null
+          email: string
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          service: string
+          source_page: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          destination?: string | null
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          service?: string
+          source_page?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          service?: string
+          source_page?: string
+          status?: string
+        }
+        Relationships: []
+      }
       package_departures: {
         Row: {
           departure_date: string
