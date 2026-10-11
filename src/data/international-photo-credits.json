@@ -252,5 +252,38 @@
     "license": "CC BY-SA 4.0",
     "author": "Txllxt TxllxT",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  "Paris by night": {
+    "source": "https://unsplash.com/photos/m8Dbkhe41Ss",
+    "license": "https://unsplash.com/license"
+  },
+  "Uluwatu": {
+    "source": "https://commons.wikimedia.org/wiki/File:Uluwatu_Temple,_Indonesia_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "author": "Jenn Evelyn-Ann",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Tegenungan Waterfall": {
+    "source": "https://commons.wikimedia.org/wiki/File:Tegenungan_Waterfall_in_the_jungle_of_Bali_island._Indonesia._(27813152747).jpg",
+    "license": "CC0 1.0",
+    "author": "Artem Beliaikin",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Kazbegi": {
+    "source": "https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_and_road_2023.jpg",
+    "license": "Public domain",
+    "author": "Alexander Roumega"
+  },
+  "Gardens by the Bay": {
+    "source": "https://commons.wikimedia.org/wiki/File:Supertree_Grove,_Gardens_by_the_Bay,_Singapore1.jpg",
+    "license": "CC0 1.0",
+    "author": "Mustang Joe",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "Singapore Flyer": {
+    "source": "https://commons.wikimedia.org/wiki/File:Singapore_Flyer,_Singapore;_May_2012.jpg",
+    "license": "CC0 1.0",
+    "author": "Bernard Spragg. NZ",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
   }
 }

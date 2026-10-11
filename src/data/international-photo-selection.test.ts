@@ -1,15 +1,31 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import packages from './international-packages.json';
-import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { packagePhotoStop, destinationPhotoStop, photoFileForStop } from './international-photo-selection';
 
 describe('international photo locations', () => {
   it('selects only a stop actually included in each trip', () => {
     for (const p of packages) {
       const stop = packagePhotoStop(p.slug);
       assert.ok(stop, p.slug);
-      assert.ok([...p.cities, ...p.countries].includes(stop), `${p.slug}: ${stop}`);
+      for (let o = 0; o < p.options.length; o++) {
+        const place = packagePhotoStop(p.slug, o)!.replace(/ by night$/, '');
+        const text = [...p.cities, ...p.countries, ...p.itinerary.map(d => d.text)].join(' ');
+        assert.ok(text.includes(place), `${p.slug} option ${o + 1}: ${place}`);
+      }
     }
+  });
+  it('never reuses a photo across packages or options', () => {
+    const seen = new Map<string, string>();
+    for (const p of packages) for (let o = 0; o < p.options.length; o++) {
+      const file = photoFileForStop(packagePhotoStop(p.slug, o)!);
+      const hash = createHash('md5').update(readFileSync(new URL(`../assets/international/${file}`, import.meta.url))).digest('hex');
+      assert.ok(!seen.has(hash), `${p.slug} option ${o + 1} reuses photo of ${seen.get(hash)}`);
+      seen.set(hash, `${p.slug} option ${o + 1}`);
+    }
+    assert.equal(seen.size, 44);
   });
   it('matches city cards to their own city rather than the first trip stop', () => {
     assert.equal(destinationPhotoStop('Lucerne', 'switzerland-7n-8d'), 'Lucerne');

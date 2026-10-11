@@ -27,3 +27,10 @@ Unsplash License: https://unsplash.com/license (free commercial reuse).
 - croatia: Mateusz Suski, https://unsplash.com/photos/rfRa7uuKCxE
 
 Other five photographs were supplied within the user’s source quotations.
+
+## Option photos (added 2026-10-11)
+- Uluwatu — CC0, Jenn Evelyn-Ann, https://commons.wikimedia.org/wiki/File:Uluwatu_Temple,_Indonesia_(Unsplash).jpg
+- Tegenungan Waterfall — CC0, Artem Beliaikin, https://commons.wikimedia.org/wiki/File:Tegenungan_Waterfall_in_the_jungle_of_Bali_island._Indonesia._(27813152747).jpg
+- Kazbegi (Gergeti Trinity Church) — Public domain, Alexander Roumega, https://commons.wikimedia.org/wiki/File:Gergeti_Trinity_Church_and_road_2023.jpg
+- Gardens by the Bay — CC0, Mustang Joe, https://commons.wikimedia.org/wiki/File:Supertree_Grove,_Gardens_by_the_Bay,_Singapore1.jpg
+- Singapore Flyer — CC0, Bernard Spragg. NZ, https://commons.wikimedia.org/wiki/File:Singapore_Flyer,_Singapore;_May_2012.jpg
