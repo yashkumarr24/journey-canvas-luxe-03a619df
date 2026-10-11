@@ -1,5 +1,6 @@
 import source from './international-packages.json';
 import swiss from '@/assets/swiss.webp';
+import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
 
 export type SourceTable = { columns: string[]; rows: string[][] };
 export type InternationalOption = { name: string; tables: SourceTable[]; price: string[]; details?: string[] };
@@ -12,8 +13,16 @@ export type InternationalPackage = {
 const assets = import.meta.glob<{ default: { url: string } }>('../assets/international/*.asset.json', { eager: true });
 export const internationalPackages: InternationalPackage[] = source;
 export const internationalImage = (p: InternationalPackage) => {
+  const stop = packagePhotoStop(p.slug);
+  const photo = stop ? assets[`../assets/international/city-${stop.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg.asset.json`]?.default.url : undefined;
+  if (p.slug === 'amsterdam-paris-6n-7d') return assets['../assets/international/france-stock.jpg.asset.json']?.default.url ?? photo ?? swiss;
+  if (photo) return photo;
   const name = ['netherlands', 'spain', 'belgium'].includes(p.imageKey) ? `${p.imageKey}-landmark.jpg` : ['bali', 'dubai', 'georgia', 'singapore', 'vietnam'].includes(p.imageKey) ? `${p.imageKey}-source.jpg` : `${p.imageKey}-stock.jpg`;
   return assets[`../assets/international/${name}.asset.json`]?.default.url ?? swiss;
+};
+export const internationalDestinationImage = (name: string, p: InternationalPackage) => {
+  const stop = destinationPhotoStop(name, p.slug);
+  return assets[`../assets/international/city-${stop?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg.asset.json`]?.default.url ?? internationalImage(p);
 };
 export const internationalPrice = (p: InternationalPackage, option = 0) => p.options[option]?.price[0] ?? 'On request';
 const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

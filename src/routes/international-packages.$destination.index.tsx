@@ -4,13 +4,13 @@ import { Footer } from '@/components/Footer';
 import { PageHero } from '@/components/PageHero';
 import { SectionTitle } from '@/components/Section';
 import { DestinationCard } from '@/components/Destinations';
-import { findInternationalPackageDestination, internationalImage, internationalPrice } from '@/data/international-packages';
+import { findInternationalPackageDestination, internationalImage, internationalDestinationImage, internationalPrice } from '@/data/international-packages';
 export const Route = createFileRoute('/international-packages/$destination/')({
   loader: ({ params }) => { const d = findInternationalPackageDestination(params.destination); if (!d) throw notFound(); return d; },
   head: ({ loaderData }) => {
     const title = `${loaderData?.name ?? 'International'} Holiday Packages | Fly n Feel Holidays`;
     const description = `${loaderData?.name ?? 'International'} source-quoted holidays with hotels, prices and complete day-wise itineraries. Enquire with Fly n Feel.`;
-    const p = loaderData?.packages[0]; const image = p ? internationalImage(p) : '';
+    const p = loaderData?.packages[0]; const image = p && loaderData ? internationalDestinationImage(loaderData.name, p) : '';
     return { meta: [{ title }, { name: 'description', content: description }, { property: 'og:title', content: title }, { property: 'og:description', content: description }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, ...(image.startsWith('https://') ? [{ property: 'og:image', content: image }, { name: 'twitter:image', content: image }] : [])] };
   },
   notFoundComponent: () => <div className="grid min-h-screen place-items-center"><Link to="/international">See all international holidays →</Link></div>,
