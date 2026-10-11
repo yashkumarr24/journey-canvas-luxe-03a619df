@@ -9,4 +9,4 @@
 - [x] Preserve international dates, prices, hotel options, flights and special notes without guessing unclear associations.
 - [x] Verify international package navigation, option switching and single-photo rendering.
 - [x] Replace international package photos with distinct free-use stock photos of included stops and match city cards to their cities.
-- [ ] Correct new international photo addresses and verify destination-to-package photo rendering.
+- [x] Correct new international photo addresses and verify destination-to-package photo rendering.
