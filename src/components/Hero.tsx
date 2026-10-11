@@ -11,26 +11,19 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:radial-gradient(color-mix(in_oklab,var(--foreground)_10%,transparent)_1px,transparent_1px)] [background-size:22px_22px]"
       />
 
-      {/* faded logo pills (reference placeholders) */}
-      <div aria-hidden="true" className="pointer-events-none absolute right-[-6rem] top-24 flex gap-4 opacity-60 sm:right-4 sm:top-28 lg:right-[max(1.5rem,calc(50vw-40rem))]">
+      {/* single brand logo with gentle motion */}
+      <div aria-hidden="true" className="pointer-events-none absolute right-[-5rem] top-20 sm:right-0 sm:top-24 lg:right-[max(1.5rem,calc(50vw-40rem))]">
         <motion.div
-          animate={{ y: [0, -14, 0] }}
+          animate={{ y: [0, -16, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="grid h-44 w-24 place-items-center rounded-full bg-muted sm:h-56 sm:w-28 lg:h-64 lg:w-36"
-        >
-          <img src={logo} alt="" className="w-16 opacity-25 grayscale sm:w-20 lg:w-24" />
-        </motion.div>
-        <motion.div
-          animate={{ y: [0, 14, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-          className="mt-10 grid h-52 w-28 place-items-center rounded-full bg-muted sm:h-64 sm:w-32 lg:h-80 lg:w-48"
+          className="grid h-64 w-64 place-items-center rounded-full bg-card shadow-[var(--shadow-luxe)] ring-1 ring-foreground/5 sm:h-80 sm:w-80 lg:h-[26rem] lg:w-[26rem]"
         >
           <motion.img
             src={logo}
             alt=""
-            animate={{ rotate: [0, 4, -4, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="w-20 opacity-30 sm:w-24 lg:w-32"
+            animate={{ rotate: [0, 3, -3, 0], scale: [1, 1.03, 1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+            className="w-48 opacity-40 sm:w-60 sm:opacity-80 lg:w-80 lg:opacity-90"
           />
         </motion.div>
       </div>
