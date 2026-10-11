@@ -55,6 +55,8 @@ import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authe
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
 import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
+import { Route as DomesticPackagesDestinationIndexRouteImport } from './routes/domestic-packages.$destination.index'
+import { Route as DomesticPackagesDestinationPackageRouteImport } from './routes/domestic-packages.$destination.$package'
 import { Route as PackagesDestinationIndexRouteImport } from './routes/packages.$destination.index'
 import { Route as PackagesDestinationPackageRouteImport } from './routes/packages.$destination.$package'
 import { Route as AuthenticatedAccountBookingsIndexRouteImport } from './routes/_authenticated/account.bookings.index'
@@ -294,6 +296,18 @@ const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
   path: '/admin/bookings/$reference',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DomesticPackagesDestinationIndexRoute =
+  DomesticPackagesDestinationIndexRouteImport.update({
+    id: '/domestic-packages/$destination/',
+    path: '/domestic-packages/$destination/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DomesticPackagesDestinationPackageRoute =
+  DomesticPackagesDestinationPackageRouteImport.update({
+    id: '/domestic-packages/$destination/$package',
+    path: '/domestic-packages/$destination/$package',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PackagesDestinationIndexRoute =
   PackagesDestinationIndexRouteImport.update({
     id: '/packages/$destination/',
@@ -363,9 +377,11 @@ export interface FileRoutesByFullPath {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/domestic-packages/$destination/': typeof DomesticPackagesDestinationIndexRoute
   '/packages/$destination/': typeof PackagesDestinationIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
@@ -413,9 +429,11 @@ export interface FileRoutesByTo {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
+  '/domestic-packages/$destination': typeof DomesticPackagesDestinationIndexRoute
   '/packages/$destination': typeof PackagesDestinationIndexRoute
   '/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/account/bookings': typeof AuthenticatedAccountBookingsIndexRoute
@@ -466,9 +484,11 @@ export interface FileRoutesById {
   '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/domestic-packages/$destination/': typeof DomesticPackagesDestinationIndexRoute
   '/packages/$destination/': typeof PackagesDestinationIndexRoute
   '/_authenticated/account/bookings/$reference': typeof AuthenticatedAccountBookingsReferenceRoute
   '/_authenticated/account/bookings/': typeof AuthenticatedAccountBookingsIndexRoute
@@ -519,9 +539,11 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/domestic-packages/$destination/$package'
     | '/packages/$destination/$package'
     | '/account/'
     | '/admin/bookings/'
+    | '/domestic-packages/$destination/'
     | '/packages/$destination/'
     | '/account/bookings/$reference'
     | '/account/bookings/'
@@ -569,9 +591,11 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/domestic-packages/$destination/$package'
     | '/packages/$destination/$package'
     | '/account'
     | '/admin/bookings'
+    | '/domestic-packages/$destination'
     | '/packages/$destination'
     | '/account/bookings/$reference'
     | '/account/bookings'
@@ -621,9 +645,11 @@ export interface FileRouteTypes {
     | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
     | '/admin/bookings/$reference'
+    | '/domestic-packages/$destination/$package'
     | '/packages/$destination/$package'
     | '/_authenticated/account/'
     | '/admin/bookings/'
+    | '/domestic-packages/$destination/'
     | '/packages/$destination/'
     | '/_authenticated/account/bookings/$reference'
     | '/_authenticated/account/bookings/'
@@ -669,8 +695,10 @@ export interface RootRouteChildren {
   FlightsIndexRoute: typeof FlightsIndexRoute
   HotelsIndexRoute: typeof HotelsIndexRoute
   AdminBookingsReferenceRoute: typeof AdminBookingsReferenceRoute
+  DomesticPackagesDestinationPackageRoute: typeof DomesticPackagesDestinationPackageRoute
   PackagesDestinationPackageRoute: typeof PackagesDestinationPackageRoute
   AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
+  DomesticPackagesDestinationIndexRoute: typeof DomesticPackagesDestinationIndexRoute
   PackagesDestinationIndexRoute: typeof PackagesDestinationIndexRoute
 }
 
@@ -998,6 +1026,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/domestic-packages/$destination/': {
+      id: '/domestic-packages/$destination/'
+      path: '/domestic-packages/$destination'
+      fullPath: '/domestic-packages/$destination/'
+      preLoaderRoute: typeof DomesticPackagesDestinationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/domestic-packages/$destination/$package': {
+      id: '/domestic-packages/$destination/$package'
+      path: '/domestic-packages/$destination/$package'
+      fullPath: '/domestic-packages/$destination/$package'
+      preLoaderRoute: typeof DomesticPackagesDestinationPackageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/packages/$destination/': {
       id: '/packages/$destination/'
       path: '/packages/$destination'
@@ -1107,8 +1149,11 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsIndexRoute: FlightsIndexRoute,
   HotelsIndexRoute: HotelsIndexRoute,
   AdminBookingsReferenceRoute: AdminBookingsReferenceRoute,
+  DomesticPackagesDestinationPackageRoute:
+    DomesticPackagesDestinationPackageRoute,
   PackagesDestinationPackageRoute: PackagesDestinationPackageRoute,
   AdminBookingsIndexRoute: AdminBookingsIndexRoute,
+  DomesticPackagesDestinationIndexRoute: DomesticPackagesDestinationIndexRoute,
   PackagesDestinationIndexRoute: PackagesDestinationIndexRoute,
 }
 export const routeTree = rootRouteImport
