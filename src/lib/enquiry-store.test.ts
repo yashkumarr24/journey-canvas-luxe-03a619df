@@ -24,7 +24,7 @@ describe('saveEnquiry', () => {
     process.env.FNF_SUPABASE_URL = 'https://fnf.example.co/';
     process.env.FNF_SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
 
-    let seen: { url: string; apikey?: string; auth?: string; body: string } | null = null;
+    const seen = {} as { url: string; apikey?: string; auth?: string; body: string };
     globalThis.fetch = (async (input: unknown, init?: RequestInit) => {
       const headers = (init?.headers ?? {}) as Record<string, string>;
       seen = { url: String(input), apikey: headers.apikey, auth: headers.Authorization, body: String(init?.body) };
