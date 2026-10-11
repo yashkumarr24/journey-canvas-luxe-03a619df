@@ -12,3 +12,4 @@
 - Domestic Word-file packages live as static source data in src/data/domestic-packages.ts under /domestic-packages/* routes and share the domestic destination grid with the existing catalogue; keeps older destination routes untouched and options isolated per source quotation.
 - International Word-file trips use a separate static catalogue and /international-packages/* pages, indexed by country and city while retaining complete source itineraries; this preserves existing holidays and avoids inventing city-only prices or mixing hotel options.
 - International photography uses an explicit included-stop selection for trips and exact city matching for destination cards, backed by licensed asset pointers; this prevents unrelated country fallback photography.
+- Resolve international Lovable asset pointers through their public serving origin before rendering; external deployments do not serve Lovable's relative asset path.
