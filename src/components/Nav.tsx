@@ -1,91 +1,76 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bot, BriefcaseBusiness, CircleHelp, Coins, Compass, Gift, Languages, Menu, MessageSquare, PlaneTakeoff, UserRound, BedDouble, ArrowUpRight } from "lucide-react";
+import { Bot, CircleHelp, Mail, UserRound } from "lucide-react";
 import logo from "@/assets/flynfeel-logo.webp";
 import { useAuth } from "@/lib/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AssistantDrawer } from "@/components/assistant/AssistantDrawer";
 import { AssistantWelcomePopup } from "@/components/assistant/AssistantWelcomePopup";
 
 export function Nav() {
-  const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const { isAuthenticated } = useAuth();
-  const close = () => setOpen(false);
-
-  useEffect(() => {
-    if (!open) return;
-    const html = document.documentElement;
-    const prevBody = document.body.style.overflow;
-    const prevHtml = html.style.overflow;
-    document.body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevBody;
-      html.style.overflow = prevHtml;
-    };
-  }, [open]);
-  const entries = [
-    { label: "Flights", to: "/flights" as const, icon: PlaneTakeoff },
-    { label: "Hotels", to: "/hotels" as const, icon: BedDouble },
-    { label: "Holidays", to: "/holidays" as const, icon: Gift },
-    { label: "Plan with AI", to: "/assistant" as const, icon: Bot },
-    { label: "Destinations", to: "/domestic" as const, icon: Compass },
-    { label: "Offers", to: "/holidays" as const, icon: Gift },
-    { label: "Help & Support", to: "/contact" as const, icon: CircleHelp },
-    { label: "Trips / My Bookings", to: "/account/bookings" as const, icon: BriefcaseBusiness },
-    { label: isAuthenticated ? "My Account" : "Sign In / Sign Up", to: (isAuthenticated ? "/account" : "/auth/login") as "/account" | "/auth/login", icon: UserRound },
-  ];
+  const openAi = () => setAiOpen(true);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-[60] border-b border-foreground/10 bg-background/95 shadow-[var(--shadow-soft)] backdrop-blur-md">
-      <nav aria-label="Main navigation" className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:h-20 sm:gap-5 sm:px-6 lg:px-10">
-        <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu" className="size-10 shrink-0 border border-foreground/10 hover:bg-secondary"><Menu className="size-5" /></Button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              overlayClassName="bg-foreground/40"
-              className="bottom-0 left-0 top-16 flex h-[calc(100dvh-4rem)] w-[min(86vw,330px)] flex-col gap-0 overflow-hidden border-r border-foreground/10 bg-background px-0 shadow-[var(--shadow-luxe)] sm:top-20 sm:h-[calc(100dvh-5rem)]"
-            >
-              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-              <SheetDescription className="sr-only">Explore travel and account pages.</SheetDescription>
-              <div data-nav-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 pt-4 [scrollbar-width:thin]" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
-              <div className="space-y-1 px-3">
-                {entries.slice(0, 4).map(({ label, to, icon: Icon }) => (
-                  <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
-                ))}
-              </div>
-              <div className="mx-5 my-4 border-t border-border" />
-              <div className="space-y-1 px-3">
-                {entries.slice(4, 9).map(({ label, to, icon: Icon }) => (
-                  <Link key={label} to={to} onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium text-foreground transition-colors hover:border-gold hover:bg-secondary" activeProps={{ className: "border-gold bg-secondary" }}><Icon className="size-4 shrink-0 text-gold" aria-hidden="true" />{label}</Link>
-                ))}
-              </div>
-              <div className="mx-5 my-4 border-t border-border" />
-              <div className="space-y-1 px-3">
-                <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="English is the current site language"><Languages className="size-4 shrink-0" />Language <span className="ml-auto text-foreground">English</span></div>
-                <div className="flex min-h-12 items-center gap-4 px-4 text-sm text-muted-foreground" title="Hotel search lets you select a quote currency"><Coins className="size-4 shrink-0" />Currency <span className="ml-auto text-foreground">INR</span></div>
-                <Link to="/contact" onClick={close} className="flex min-h-12 items-center gap-4 border-l-2 border-transparent px-4 text-sm font-medium hover:border-gold hover:bg-secondary"><MessageSquare className="size-4 shrink-0 text-gold" />Feedback</Link>
-              </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-          <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0"><img src={logo} alt="Fly n Feel Holidays" width={560} height={200} loading="eager" decoding="async" className="h-12 w-auto sm:h-14 md:h-16 lg:h-[72px]" /></Link>
-          <button type="button" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Open Ask AI travel assistant" className="hidden items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:text-gold md:inline-flex"><Bot className="size-4 text-gold" />Ask AI</button>
-          <AssistantDrawer open={aiOpen} onOpenChange={setAiOpen} />
-          {!aiOpen && <AssistantWelcomePopup onOpenChat={() => { setOpen(false); setAiOpen(true); }} />}
-        </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Button type="button" variant="ghost" size="icon" onClick={() => { setOpen(false); setAiOpen(true); }} aria-label="Ask AI" className="size-9 border border-foreground/15 text-gold hover:text-gold md:hidden"><Bot className="size-5" /></Button>
-          <Button asChild className="hidden rounded-none bg-gold px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-px hover:bg-primary hover:shadow-[var(--shadow-luxe)] sm:inline-flex"><Link to="/contact">Plan a Journey</Link></Button>
-          <Button asChild variant="ghost" size="icon" className="size-9 border border-foreground/15 text-gold hover:text-gold sm:hidden"><Link to="/contact" aria-label="Plan a Journey" title="Plan a Journey"><ArrowUpRight className="size-5" /></Link></Button>
-          <Link to={isAuthenticated ? "/account" : "/auth/login"} aria-label={isAuthenticated ? "My account" : "Sign in or sign up"} className="grid size-10 shrink-0 place-items-center border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold"><UserRound className="size-5" /></Link>
+    <header className="fixed inset-x-0 top-0 z-[60] px-3 pt-3 sm:px-6 sm:pt-4">
+      <nav
+        aria-label="Main navigation"
+        className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-2 rounded-full border border-foreground/10 bg-background/95 pl-4 pr-2 shadow-[var(--shadow-soft)] backdrop-blur-md sm:h-16 sm:gap-4 sm:pl-6 sm:pr-3"
+      >
+        <Link to="/" aria-label="Fly n Feel Holidays — Home" className="shrink-0">
+          <img
+            src={logo}
+            alt="Fly n Feel Holidays"
+            width={560}
+            height={200}
+            loading="eager"
+            decoding="async"
+            className="h-10 w-auto sm:h-12"
+          />
+        </Link>
+
+        <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            onClick={openAi}
+            aria-label="Open Ask AI travel assistant"
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-secondary hover:text-gold"
+          >
+            <Bot className="size-4 shrink-0 text-gold" aria-hidden="true" />
+            <span className="hidden sm:inline">Ask AI</span>
+          </button>
+
+          <Link
+            to="/contact"
+            aria-label="Help and support"
+            className="hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-foreground transition-colors hover:bg-secondary hover:text-gold md:inline-flex"
+          >
+            <CircleHelp className="size-4 shrink-0 text-gold" aria-hidden="true" />
+            Help &amp; Support
+          </Link>
+
+          <Link
+            to="/contact"
+            aria-label="Contact us"
+            title="Contact us"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-foreground/15 text-foreground transition-colors hover:border-gold hover:text-gold sm:size-10"
+          >
+            <Mail className="size-4 sm:size-5" aria-hidden="true" />
+          </Link>
+
+          <Link
+            to={isAuthenticated ? "/account" : "/auth/login"}
+            aria-label={isAuthenticated ? "My account" : "Sign in or sign up"}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary-foreground shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-px hover:bg-primary hover:shadow-[var(--shadow-luxe)] sm:px-5"
+          >
+            <UserRound className="size-4 shrink-0" aria-hidden="true" />
+            <span className="hidden sm:inline">{isAuthenticated ? "My Account" : "Login / Sign Up"}</span>
+          </Link>
         </div>
       </nav>
+
+      <AssistantDrawer open={aiOpen} onOpenChange={setAiOpen} />
+      {!aiOpen && <AssistantWelcomePopup onOpenChat={openAi} />}
     </header>
   );
 }
