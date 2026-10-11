@@ -35,9 +35,8 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
       <div className="ai-glow-ring flex items-center gap-1 rounded-full pr-2">
         <button
           type="button"
-          autoFocus
           onClick={() => { setVisible(false); onOpenChat(); }}
-          className="flex min-h-14 flex-1 items-center gap-4 rounded-full px-6 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          className="flex min-h-14 min-w-0 flex-1 items-center gap-4 rounded-full px-6 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           <Sparkle className="size-5 shrink-0 fill-foreground text-foreground" aria-hidden="true" />
           <span className="min-w-0">
