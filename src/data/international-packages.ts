@@ -2,7 +2,6 @@ import source from './international-packages.json';
 import swiss from '@/assets/swiss.webp';
 import { packagePhotoStop, destinationPhotoStop } from './international-photo-selection';
 import photoCredits from './international-photo-credits.json';
-import { internationalAssetUrl } from './international-asset-url';
 
 export type SourceTable = { columns: string[]; rows: string[][] };
 export type InternationalOption = { name: string; tables: SourceTable[]; price: string[]; details?: string[] };
