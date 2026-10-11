@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { SectionTitle } from "./Section";
 
@@ -31,6 +31,14 @@ function Field({ label, type = "text", as = "input" }: { label: string; type?: s
 
 export function Contact() {
   const [sent, setSent] = useState(false);
+  const [service, setService] = useState("");
+  useEffect(() => {
+    const on = (e: Event) => setService(String((e as CustomEvent).detail ?? ""));
+    window.addEventListener("fnf-enquiry-service", on);
+    const saved = sessionStorage.getItem("fnf-enquiry-service");
+    if (saved) { setService(saved); sessionStorage.removeItem("fnf-enquiry-service"); }
+    return () => window.removeEventListener("fnf-enquiry-service", on);
+  }, []);
   return (
     <section id="contact" className="relative overflow-hidden px-6 py-28 md:py-40">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(50%_60%_at_50%_50%,oklch(0.18_0.04_260),transparent_70%)]" />
@@ -73,6 +81,13 @@ export function Contact() {
           onSubmit={(e) => { e.preventDefault(); setSent(true); }}
           className="glass space-y-6 rounded-3xl p-8 md:p-12"
         >
+          <div className="relative">
+            <label htmlFor="enquiry-service" className="text-xs text-gold">Service</label>
+            <select id="enquiry-service" value={service} onChange={(e) => setService(e.target.value)} className="mt-1 w-full border-b border-foreground/15 bg-transparent pb-3 pt-2 text-base text-foreground outline-none focus:border-gold">
+              <option value="">Holiday / general enquiry</option>
+              {["Flights", "Hotels", "Holidays", "Car Rental", "Visa", "Cruise"].map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
           <Field label="Your full name" />
           <Field label="Email address" type="email" />
           <Field label="Where would you like to go?" />

@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BedDouble, Gift, PlaneTakeoff, Plus, Search, Trash2 } from "lucide-react";
+import { BedDouble, Car, FileText, Gift, PlaneTakeoff, Plus, Search, Ship, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,19 @@ const services = [
   { label: "Hotels", value: "hotels", icon: BedDouble },
   { label: "Holidays", value: "holidays", icon: Gift },
 ] as const;
+const enquiryServices = [
+  { label: "Car Rental", icon: Car },
+  { label: "Visa", icon: FileText },
+  { label: "Cruise", icon: Ship },
+] as const;
+export const ENQUIRY_EVENT = "fnf-enquiry-service";
+function openEnquiry(service: string) {
+  window.dispatchEvent(new CustomEvent(ENQUIRY_EVENT, { detail: service }));
+  const form = document.getElementById("contact");
+  if (form) { form.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  sessionStorage.setItem(ENQUIRY_EVENT, service);
+  window.location.assign("/contact#contact");
+}
 const emptySegment = (): Segment => ({ origin: "", destination: "", date: "" });
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
@@ -54,10 +67,17 @@ export function HomeSearch() {
 
   return (
     <div className="w-full">
-      <div role="tablist" aria-label="Booking options" className="grid grid-cols-3 gap-px border border-foreground/10 bg-foreground/10">
-        {services.map(({ label, value, icon: Icon }) => (
-          <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group h-14 min-w-0 rounded-none px-2 text-xs uppercase sm:h-16 sm:gap-3 sm:text-sm ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
-            <Icon className={`size-5 shrink-0 ${service === value ? "text-gold" : ""}`} aria-hidden="true" />{label}
+      <div className="grid grid-cols-3 gap-px border border-foreground/10 bg-foreground/10 sm:grid-cols-6">
+        <div role="tablist" aria-label="Booking options" className="contents">
+          {services.map(({ label, value, icon: Icon }) => (
+            <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group h-14 min-w-0 rounded-none px-2 text-xs uppercase sm:h-16 sm:gap-2 sm:text-sm ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
+              <Icon className={`size-5 shrink-0 ${service === value ? "text-gold" : ""}`} aria-hidden="true" />{label}
+            </Button>
+          ))}
+        </div>
+        {enquiryServices.map(({ label, icon: Icon }) => (
+          <Button key={label} type="button" variant="ghost" onClick={() => openEnquiry(label)} className="h-14 min-w-0 rounded-none bg-background px-2 text-xs uppercase text-muted-foreground hover:bg-card hover:text-foreground sm:h-16 sm:gap-2 sm:text-sm">
+            <Icon className="size-5 shrink-0" aria-hidden="true" />{label}
           </Button>
         ))}
       </div>
