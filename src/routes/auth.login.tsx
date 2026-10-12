@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { AuthLayout, AuthMessage } from "@/components/auth/AuthLayout";
 import { PasswordField } from "@/components/auth/PasswordField";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,6 +106,8 @@ function LoginPage() {
       ) : null}
       {!isConfigured ? <AuthMessage tone="info">{AUTH_MESSAGES.notConfigured}</AuthMessage> : null}
       {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+
+      <GoogleButton destination={destination} onError={setError} />
 
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
