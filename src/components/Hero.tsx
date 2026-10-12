@@ -12,7 +12,7 @@ export function Hero() {
       />
 
       {/* faded logo pills (reference placeholders) */}
-      <div aria-hidden="true" className="pointer-events-none absolute right-3 top-24 sm:right-6 sm:top-24 lg:right-[max(1.5rem,calc(50vw-40rem))]">
+      <div aria-hidden="true" className="pointer-events-none absolute right-3 top-24 hidden sm:right-6 sm:top-24 md:block lg:right-[max(1.5rem,calc(50vw-40rem))]">
         <motion.div
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
