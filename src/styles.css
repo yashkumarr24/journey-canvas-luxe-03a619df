@@ -181,8 +181,13 @@ body:has(header > nav.rounded-full) .rounded-lg:not(header *) {
   border-radius: 0.25rem !important;
 }
 
-body:has(header > nav.rounded-full) .rounded-full:not(header *) {
+body:has(header > nav.rounded-full) .rounded-full:not(header *):not(.hero-logo-pill) {
   border-radius: 0.25rem !important;
+}
+
+/* The hero logo panel keeps its curved pill shape (see Hero.tsx). */
+body:has(header > nav.rounded-full) .hero-logo-pill {
+  border-radius: 9999px !important;
 }
 
 @keyframes marquee {

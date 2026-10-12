@@ -16,7 +16,7 @@ export function Hero() {
         <motion.div
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="grid h-48 w-28 place-items-center rounded-full bg-muted sm:h-60 sm:w-36 lg:h-72 lg:w-44"
+          className="hero-logo-pill grid h-48 w-28 place-items-center rounded-full bg-muted sm:h-60 sm:w-36 lg:h-72 lg:w-44"
         >
           <img src={logo} alt="" className="w-20 opacity-70 sm:w-28 lg:w-32" />
         </motion.div>
