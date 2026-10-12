@@ -12,11 +12,11 @@ export function Hero() {
       />
 
       {/* faded logo pills (reference placeholders) */}
-      <div aria-hidden="true" className="pointer-events-none absolute right-3 top-20 hidden sm:right-6 sm:top-20 md:block lg:right-[max(1.5rem,calc(50vw-40rem))]">
+      <div aria-hidden="true" className="pointer-events-none absolute right-3 top-20 hidden lg:block lg:right-[max(1.5rem,calc(50vw-40rem))]">
         <motion.div
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="hero-logo-pill grid h-48 w-28 place-items-center overflow-hidden rounded-full bg-muted sm:h-60 sm:w-36 lg:h-60 lg:w-40"
+          className="hero-logo-pill grid h-60 w-40 place-items-center overflow-hidden rounded-full bg-muted"
         >
           <img src={logo} alt="" className="w-20 opacity-70 sm:w-28 lg:w-32" />
         </motion.div>
