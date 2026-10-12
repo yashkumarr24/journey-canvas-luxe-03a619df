@@ -18,5 +18,5 @@ test("zero amount is free, missing amount is not", () => {
 test("a penalty slab keeps its exact amount", () => {
   const text = formatPolicyRule({ from: "2026-05-19T00:00:00", to: "2026-05-26T00:00:00", charge: { amount: 1234.5, currency: "INR" } });
   assert.match(text, /^19 May 2026, 00:00:00 IST – 26 May 2026, 00:00:00 IST: charge /);
-  assert.match(text, /1,234\.5/);
+  assert.match(text, /₹1,234\.50$/);
 });

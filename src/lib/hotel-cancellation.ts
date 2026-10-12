@@ -1,4 +1,3 @@
-import { formatMoney } from "@/lib/flight-search";
 import type { HotelCancellationRule } from "@/types/booking";
 
 /**
@@ -21,7 +20,9 @@ export function formatPolicyTime(value: string | undefined, fallback: string): s
 export function formatPolicyCharge(rule: HotelCancellationRule): string {
   if (!rule.charge) return "charge not specified by the hotel";
   if (rule.charge.amount === 0) return "free cancellation (no charge)";
-  return `charge ${formatMoney(rule.charge.amount, rule.charge.currency)}`;
+  const { amount, currency } = rule.charge;
+  const n = amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `charge ${currency === "INR" ? "₹" : `${currency} `}${n}`;
 }
 
 export function formatPolicyRule(rule: HotelCancellationRule): string {
