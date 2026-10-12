@@ -18,7 +18,7 @@ export function Hero() {
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
           className="hero-logo-pill grid h-60 w-40 place-items-center overflow-hidden rounded-full bg-muted"
         >
-          <img src={logo} alt="" className="w-20 opacity-70 sm:w-28 lg:w-32" />
+          <img src={logo} alt="" className="w-20 opacity-80 sm:w-28 lg:w-32" />
         </motion.div>
       </div>
 
