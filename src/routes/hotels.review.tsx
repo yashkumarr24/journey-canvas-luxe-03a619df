@@ -218,13 +218,7 @@ function HotelReviewPage() {
               {data.room.cancellation?.rules && data.room.cancellation.rules.length > 0 && (
                 <ul className="mt-2 space-y-1 pl-5">
                   {data.room.cancellation.rules.map((rule, i) => (
-                    <li key={i}>
-                      {rule.from ? new Date(rule.from).toLocaleString("en-IN") : "Now"} –{" "}
-                      {rule.to ? new Date(rule.to).toLocaleString("en-IN") : "check-in"}:{" "}
-                      {rule.charge && rule.charge.amount > 0
-                        ? `charge ${formatMoney(rule.charge.amount, rule.charge.currency)}`
-                        : "free cancellation"}
-                    </li>
+                    <li key={i}>{formatPolicyRule(rule)}</li>
                   ))}
                 </ul>
               )}
