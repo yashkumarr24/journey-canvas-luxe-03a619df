@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { AuthLayout, AuthMessage } from "@/components/auth/AuthLayout";
 import { PasswordField } from "@/components/auth/PasswordField";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
