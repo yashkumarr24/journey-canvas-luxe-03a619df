@@ -106,6 +106,8 @@ function LoginPage() {
       {!isConfigured ? <AuthMessage tone="info">{AUTH_MESSAGES.notConfigured}</AuthMessage> : null}
       {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
 
+      <GoogleButton destination={destination} onError={setError} />
+
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="login-email">Email address</Label>

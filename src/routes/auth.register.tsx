@@ -123,6 +123,8 @@ function RegisterPage() {
       {notice ? <AuthMessage tone="success">{notice}</AuthMessage> : null}
       {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
 
+      {!notice ? <GoogleButton destination={destination} onError={setError} /> : null}
+
       {!notice ? (
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
