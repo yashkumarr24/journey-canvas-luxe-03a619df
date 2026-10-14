@@ -243,6 +243,15 @@ body:has(header > nav.rounded-full) .hero-logo-pill {
   textarea {
     font-size: 16px;
   }
+  /* Enlarge footer link tap areas to ~44px without moving anything. */
+  footer a {
+    position: relative;
+  }
+  footer a::after {
+    content: "";
+    position: absolute;
+    inset: -14px -6px;
+  }
 }
 /* Keep content clear of phone notches / rounded corners when viewport-fit=cover. */
 body {
