@@ -47,7 +47,7 @@ function AssistantPage() {
   return (
     <main className="min-h-screen bg-muted/40">
       <Nav />
-      <div className="mx-auto flex min-h-screen max-w-[1600px] pt-20 lg:h-screen lg:overflow-hidden">
+      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col pt-20 lg:h-screen lg:flex-row lg:overflow-hidden">
         <aside
           className={`${panelCompact ? "lg:w-20" : "lg:w-[390px] xl:w-[430px]"} relative flex min-h-[calc(100vh-5rem)] w-full shrink-0 flex-col border-r border-border bg-background transition-[width] duration-300 lg:min-h-0`}
         >
@@ -142,7 +142,7 @@ function AssistantPage() {
           </div>
         </section>
 
-        <section className="w-full px-4 py-5 lg:hidden">
+        <section className="w-full min-w-0 px-4 py-5 lg:hidden">
           <div className="space-y-5">
             <TravelSummaryCard
               requirements={assistant.requirements}

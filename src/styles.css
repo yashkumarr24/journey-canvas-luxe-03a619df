@@ -234,3 +234,21 @@ body:has(header > nav.rounded-full) .hero-logo-pill {
   animation: ai-caret-blink 1s step-end infinite;
   color: var(--muted-foreground);
 }
+
+/* Mobile/tablet polish (touch devices only; desktop mouse layouts unchanged). */
+@media (pointer: coarse) {
+  /* 16px text stops iOS Safari zooming the page when a field is focused. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+/* Keep content clear of phone notches / rounded corners when viewport-fit=cover. */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+header:has(> nav) > nav {
+  margin-top: env(safe-area-inset-top);
+}
