@@ -87,9 +87,27 @@ class Settings(BaseSettings):
     # X-Forwarded-For and bypass rate limiting.
     trust_proxy_headers: bool = Field(default=False, alias="TRUST_PROXY_HEADERS")
 
-    # ---- future integrations (declared, intentionally unused) ---------------
+    # ---- legacy (replaced by PayU; kept until PayU passes UAT) --------------
     razorpay_key_id: str = Field(default="", alias="RAZORPAY_KEY_ID")
     razorpay_key_secret: str = Field(default="", alias="RAZORPAY_KEY_SECRET")
+
+    # ---- PayU Hosted Checkout (BACKEND ONLY — never a VITE_ variable) -------
+    # Payments are OFF unless PAYMENTS_ENABLED=true. PAYU_ENV=production is
+    # refused until PAYU_PRODUCTION_APPROVED=true is set after UAT sign-off.
+    payments_enabled: bool = Field(default=False, alias="PAYMENTS_ENABLED")
+    payu_env: str = Field(default="test", alias="PAYU_ENV")
+    payu_production_approved: bool = Field(default=False, alias="PAYU_PRODUCTION_APPROVED")
+    payu_merchant_key: str = Field(default="", alias="PAYU_MERCHANT_KEY")
+    payu_merchant_salt: str = Field(default="", alias="PAYU_MERCHANT_SALT")
+    # Public HTTPS base of THIS backend; PayU posts surl/furl here.
+    payu_return_base_url: str = Field(default="", alias="PAYU_RETURN_BASE_URL")
+    # Unguessable path segment for the webhook URL configured in the PayU dashboard.
+    payu_webhook_secret_path: str = Field(default="", alias="PAYU_WEBHOOK_SECRET_PATH")
+    payu_timeout: float = Field(default=15.0, alias="PAYU_TIMEOUT")
+    # Canonical customer-facing site (payment returns, app links).
+    public_site_url: str = Field(
+        default="https://www.flynfeelholiday.com", alias="PUBLIC_SITE_URL"
+    )
 
     # ---- AI travel assistant (BACKEND ONLY — never a VITE_ variable) -------
     # "demo" (rule-based, no credentials) or "openai" once a key is configured.
