@@ -15,6 +15,7 @@ from app.api.v1 import (
     hotels,
     notifications,
     operations,
+    payments,
     review,
 )
 
@@ -28,5 +29,6 @@ api_router.include_router(admin.router)
 api_router.include_router(operations.router)
 api_router.include_router(assistant.router)
 api_router.include_router(notifications.router)
+api_router.include_router(payments.router)
 
 __all__ = ["api_router"]
