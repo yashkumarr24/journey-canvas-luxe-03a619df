@@ -15,6 +15,7 @@ import { AuthProvider } from "../lib/auth/auth-context";
 import { AnalyticsProvider } from "../lib/analytics/tracker";
 import { AdminAuthProvider } from "../lib/admin/admin-context";
 import { AssistantProvider } from "../lib/assistant/use-assistant";
+import { isNativeApp } from "../lib/native/is-native";
 
 function NotFoundComponent() {
   return (
@@ -133,6 +134,15 @@ function RootComponent() {
       }
     });
     return () => unsub();
+  }, [router]);
+
+  // Android/iOS app only: the native shell module (and Capacitor) is loaded
+  // on demand, so the website never downloads or runs it.
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    void import("../lib/native/native-shell").then((m) =>
+      m.startNativeShell((path) => void router.navigate({ href: path })),
+    );
   }, [router]);
 
   return (
