@@ -261,3 +261,41 @@ body {
 header:has(> nav) > nav {
   margin-top: env(safe-area-inset-top);
 }
+
+/* ---- Android/iOS app shell only (classes added by src/lib/native) ------- */
+.native-app body {
+  padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.native-ios header.fixed {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+}
+.native-ios main,
+.native-ios body > div:first-of-type {
+  scroll-padding-top: env(safe-area-inset-top);
+}
+.native-offline {
+  position: fixed;
+  inset-inline: 0.75rem;
+  bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.875rem;
+}
+.native-offline[hidden] { display: none; }
+.native-offline button {
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: var(--primary-foreground);
+  color: var(--primary);
+  font-weight: 600;
+}

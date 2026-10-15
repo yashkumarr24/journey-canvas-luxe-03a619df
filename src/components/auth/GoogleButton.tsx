@@ -3,11 +3,17 @@
  * Supabase project the browser auth client points at (on Vercel: FNF).
  * Returns to the public /auth/login page; the PKCE code in the URL is
  * exchanged automatically and login forwards the user to `destination`.
+ *
+ * Inside the Android/iOS app Google refuses embedded web views, so the
+ * consent page opens in the system browser instead; it returns to the same
+ * https://www.flynfeelholiday.com/auth/login URL, which the app receives as an
+ * App Link / Universal Link and loads in-app (where the PKCE verifier lives).
  */
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
+import { isNativeApp } from "@/lib/native/is-native";
 
 export function GoogleButton({ destination, onError }: { destination: string; onError: (m: string) => void }) {
   const [busy, setBusy] = useState(false);
@@ -15,7 +21,21 @@ export function GoogleButton({ destination, onError }: { destination: string; on
     if (!supabase || busy) return;
     setBusy(true);
     const redirectTo = `${window.location.origin}/auth/login?redirect=${encodeURIComponent(destination)}`;
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+    const native = isNativeApp();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo, skipBrowserRedirect: native },
+    });
+    if (!error && native && data?.url) {
+      try {
+        const { openInSystemBrowser } = await import("@/lib/native/native-shell");
+        await openInSystemBrowser(data.url);
+      } catch {
+        onError("Google sign-in is unavailable right now. Please try again or use email.");
+      }
+      setBusy(false);
+      return;
+    }
     if (error) {
       setBusy(false);
       onError("Google sign-in is unavailable right now. Please try again or use email.");

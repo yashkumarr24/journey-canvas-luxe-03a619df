@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Fly n Feel — connection problem</title>
+    <style>
+      :root { color-scheme: light; }
+      html, body { margin: 0; height: 100%; background: #F8F8F6; color: #111111;
+        font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+      main { min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center; gap: 12px;
+        padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom)); }
+      h1 { font-size: 20px; font-weight: 600; margin: 8px 0 0; }
+      p { margin: 0; max-width: 320px; color: #777777; font-size: 15px; line-height: 1.5; }
+      button { margin-top: 12px; border: 0; border-radius: 999px; background: #111111; color: #F8F8F6;
+        font-size: 15px; font-weight: 600; padding: 14px 28px; min-height: 48px; }
+      button[disabled] { opacity: .6; }
+      svg { width: 48px; height: 48px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M19 12.86a10 10 0 0 0-2-1.4"/><path d="M2 8.82a15 15 0 0 1 4.18-2.65"/><path d="M22 8.82a15 15 0 0 0-11.29-3.76"/><path d="m2 2 20 20"/>
+      </svg>
+      <h1>We can't reach Fly n Feel</h1>
+      <p>Check your internet connection and try again. Your bookings and enquiries are safe.</p>
+      <button id="retry" type="button">Try again</button>
+    </main>
+    <script>
+      var SITE = "https://www.flynfeelholiday.com/";
+      var btn = document.getElementById("retry");
+      btn.addEventListener("click", function () {
+        btn.disabled = true; btn.textContent = "Connecting…";
+        window.location.replace(SITE);
+        setTimeout(function () { btn.disabled = false; btn.textContent = "Try again"; }, 8000);
+      });
+      // Hide the native splash if the plugin bridge is present on this page.
+      try { window.Capacitor && window.Capacitor.Plugins.SplashScreen.hide(); } catch (e) {}
+    </script>
+  </body>
+</html>
