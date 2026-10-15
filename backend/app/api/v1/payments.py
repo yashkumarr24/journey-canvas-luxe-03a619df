@@ -53,7 +53,8 @@ async def create_order(payload: OrderRequest, auth: AuthContext = Depends(option
                                   guest_token=payload.guestToken)
     return {
         "provider": "payu", "bookingReference": form.booking_reference, "orderId": form.txnid,
-        "amount": {"amount": form.amount, "currency": form.currency},
+        # Display only; the signed PayU field `amount` is the exact decimal string.
+        "amount": {"amount": float(form.amount), "currency": form.currency},
         "action": form.action, "fields": form.fields,
     }
 
