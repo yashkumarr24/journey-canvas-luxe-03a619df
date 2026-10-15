@@ -65,7 +65,7 @@
 - **Severity:** High (launch blocker) · **Confidence:** High
 - **Evidence:** all payment tests use fakes (`backend/tests/test_payu_payments.py`).
 - **Impact:** the real PayU field formats (`verify_payment` amount, `check_action_status` shape, webhook fields) are unconfirmed.
-- **Fix and verify:** run the staging plan in `scalability-readiness.md` §7 with PayU test credentials.
+- **Fix and verify:** run the staging plan in `scalability-readiness.md` §8 with PayU test credentials.
 
 **F-OPS-01: Migrations 0023/0024 and the worker timer not confirmed deployed**
 - **Classification:** Potential risk
