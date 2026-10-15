@@ -563,7 +563,36 @@ async def book(
         raise HotelBookingValidationError()
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
+    return await _book_loaded(settings, store, b, mode=mode, idempotency_key=idempotency_key,
+                              payment_verified=payment_verified, gst_info=gst_info)
 
+
+async def book_for_verified_payment(*, settings: Settings, reference: str,
+                                    idempotency_key: str) -> HotelBooking:
+    """Instant book, called ONLY by the payment fulfilment worker after PayU
+    capture was verified server-to-server. Ownership was enforced when the
+    payment was created; the key is derived from the payment id, so a retried
+    job replays the existing attempt and never books twice."""
+    store = BookingStore(settings)
+    b = await store.get(reference)
+    if b is None:
+        raise HotelBookingNotFoundError()
+    return await _book_loaded(settings, store, b, mode="instant", idempotency_key=idempotency_key,
+                              payment_verified=True, gst_info=None)
+
+
+async def refresh_for_payment(*, settings: Settings, reference: str) -> Optional[HotelBooking]:
+    """One Booking Details check for the fulfilment reconciler (no ownership; server-only)."""
+    store = BookingStore(settings)
+    b = await store.get(reference)
+    if b is not None and b.provider_booking_id:
+        await _sync_from_details(store, provider_factory(settings), b)
+    return b
+
+
+async def _book_loaded(settings: Settings, store: BookingStore, b: HotelBooking, *, mode: str,
+                       idempotency_key: Optional[str], payment_verified: bool,
+                       gst_info: Optional[dict]) -> HotelBooking:
     # Idempotent replay: same key returns the existing attempt, never re-books.
     if b.status != DRAFT:
         if idempotency_key and b.idempotency_key == idempotency_key:
