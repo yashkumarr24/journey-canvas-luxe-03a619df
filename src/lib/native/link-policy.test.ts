@@ -31,12 +31,12 @@ describe("app link policy", () => {
     assert.equal(deepLinkPath("https://flynfeelholiday.com/auth/login#access_token=t"), 
       "/auth/login#access_token=t",
     );
-    assert.equal(deepLinkPath("https://evil.example/auth/login")).toBeNull();
+    assert.equal(deepLinkPath("https://evil.example/auth/login"), null);
     assert.equal(deepLinkPath("http://www.flynfeelholiday.com/"), null);
   });
 
   it("leaves the app from the home page on back", () => {
-    expect(isRootPath("/"), true);
+    assert.equal(isRootPath("/"), true);
     assert.equal(isRootPath("/holidays"), false);
   });
 });
