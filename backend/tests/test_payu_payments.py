@@ -412,6 +412,7 @@ def test_reconcile_marks_old_unknown_attempt_abandoned():
 # ---- fulfilment ------------------------------------------------------------
 
 class FakeHotel:
+    available = True  # stands in for a future, reviewed hotel port
     def __init__(self, status="DRAFT", book_result="CONFIRMED", book_raises=None, after_raise="DRAFT"):
         self.b = SimpleNamespace(status=status)
         self.book_result, self.book_raises, self.after_raise = book_result, book_raises, after_raise
