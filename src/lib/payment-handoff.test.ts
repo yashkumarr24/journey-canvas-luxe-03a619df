@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import { resolvePaymentHandoff, simulatedCheckoutAllowed } from "./payment-handoff";
 import type { PaymentOrder } from "@/types/booking";
 
@@ -9,22 +10,21 @@ const payu = {
 } as unknown as PaymentOrder;
 const other = { provider: "razorpay" } as unknown as PaymentOrder;
 
-describe("payment handoff", () => {
-  it("posts signed PayU orders to PayU", () => {
-    expect(resolvePaymentHandoff(payu, { dev: false })).toBe("payu");
+test("posts signed PayU orders to PayU", () => {
+    assert.equal(resolvePaymentHandoff(payu, { dev: false }), "payu");
   });
 
-  it("never falls back to a simulated sheet on a deployed site", () => {
-    expect(resolvePaymentHandoff(other, { dev: false })).toBe("unavailable");
+test("never falls back to a simulated sheet on a deployed site", () => {
+    assert.equal(resolvePaymentHandoff(other, { dev: false }), "unavailable");
   });
 
-  it("rejects PayU orders pointing at an unknown host", () => {
+test("rejects PayU orders pointing at an unknown host", () => {
     const bad = { ...payu, action: "https://evil.example/_payment" } as PaymentOrder;
-    expect(resolvePaymentHandoff(bad, { dev: false })).toBe("unavailable");
+    assert.equal(resolvePaymentHandoff(bad, { dev: false }), "unavailable");
   });
 
-  it("allows simulation only in local development", () => {
-    expect(resolvePaymentHandoff(other, { dev: true })).toBe("simulated");
-    expect(simulatedCheckoutAllowed(false, true)).toBe(false);
+test("allows simulation only in local development", () => {
+    assert.equal(resolvePaymentHandoff(other, { dev: true }), "simulated");
+    assert.equal(simulatedCheckoutAllowed(false, true), false);
   });
-});
+
