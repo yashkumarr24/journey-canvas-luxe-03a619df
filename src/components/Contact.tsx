@@ -108,7 +108,7 @@ export function Contact() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-[0.25em] text-gold">Email</div>
-              <a className="mt-1 block text-foreground hover:text-gold" href="mailto:hello@loremipsum.com">hello@loremipsum.com</a>
+              <a className="mt-1 block text-foreground hover:text-gold" href="mailto:Yashworks.x@gmail.com">Yashworks.x@gmail.com</a>
             </div>
             <div>
               <div className="text-xs uppercase tracking-[0.25em] text-gold">Studio</div>
