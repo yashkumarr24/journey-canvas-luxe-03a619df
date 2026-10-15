@@ -16,8 +16,8 @@ import { TestPaymentSheet } from "@/components/booking/TestPaymentSheet";
 import { hotelApi, useMockHotels } from "@/lib/hotel-api";
 import { readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { newIdempotencyKey } from "@/lib/review-session";
-import { openRazorpayCheckout } from "@/lib/razorpay";
 import { submitPayuForm } from "@/lib/payu";
+import { PAYMENTS_UNAVAILABLE_MESSAGE, resolvePaymentHandoff } from "@/lib/payment-handoff";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
@@ -206,30 +206,27 @@ function HotelCheckoutPage() {
       setStage("awaiting_payment");
 
       // PayU: leave for the hosted page; the server verifies and redirects back.
-      if (submitPayuForm(created)) return;
-
-      const opened = await openRazorpayCheckout(created, {
-        onAuthorised: (result) => confirm.mutate(result),
-        onFailed: (reason) => {
-          setStage("failed");
-          setMessage(reason ?? "The payment did not go through. No money has been taken.");
-          track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "failed" });
-          reportFailure("failed", reason);
-        },
-        onDismissed: () => {
-          setStage("cancelled");
-          setMessage("You closed the payment window before paying. Your room is still held.");
-          track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "cancelled" });
-          reportFailure("cancelled");
-        },
-      });
-
-      // No provider sheet available yet — rehearse the same journey locally.
-      if (!opened) setTestSheet(created);
+      const handoff = resolvePaymentHandoff(created, { dev: import.meta.env.DEV && useTestCheckoutLocal });
+      if (handoff === "payu" && submitPayuForm(created)) return;
+      if (handoff === "simulated") {
+        // Local development only; a simulated payment never triggers a booking.
+        setTestSheet(created);
+        return;
+      }
+      setStage("failed");
+      setMessage(PAYMENTS_UNAVAILABLE_MESSAGE);
+      track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "order_failed" });
     },
     onError: (error) => {
       setStage("failed");
-      setMessage(toBookingError(error).message);
+      const failure = toBookingError(error);
+      // Only booking-state answers are shown verbatim; any payment-side
+      // problem reads as unavailable. Never a fallback provider.
+      setMessage(
+        failure.code === "BOOKING_NOT_PAYABLE" || failure.kind === "not_found"
+          ? failure.message
+          : PAYMENTS_UNAVAILABLE_MESSAGE,
+      );
       track(ANALYTICS_EVENTS.hotelPaymentFailed, { outcome: "order_failed" });
     },
   });

@@ -175,7 +175,10 @@ export const hotelApi = {
   /** Payment orders are shared with flights: the backend resolves the amount. */
   createOrder(payload: PaymentOrderRequest): Promise<PaymentOrder> {
     return guard(() =>
-      useMockHotels ? mockHotelProvider.createOrder(payload) : bookingApi.createPaymentOrder(payload),
+      // Simulated orders exist only in local development.
+      useMockHotels && import.meta.env.DEV
+        ? mockHotelProvider.createOrder(payload)
+        : bookingApi.createPaymentOrder(payload),
     );
   },
 

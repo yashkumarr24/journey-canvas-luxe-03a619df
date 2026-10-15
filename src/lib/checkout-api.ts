@@ -21,9 +21,12 @@ import type {
   PaymentResult,
 } from "@/types/booking";
 
-/** True while the payment endpoints are simulated locally. */
+/**
+ * True only in local development when the payment endpoints are simulated.
+ * A deployed site never simulates payments: if PayU is unavailable it says so.
+ */
 export const useTestCheckout =
-  !isBookingApiConfigured || import.meta.env.VITE_BOOKING_TEST_CHECKOUT === "true";
+  import.meta.env.DEV && (!isBookingApiConfigured || import.meta.env.VITE_BOOKING_TEST_CHECKOUT === "true");
 
 /** Normalises adapter failures into the same error shape the API client uses. */
 function asBookingError(error: unknown): BookingApiError {
