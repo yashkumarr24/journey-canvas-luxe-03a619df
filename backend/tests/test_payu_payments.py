@@ -38,7 +38,7 @@ def settings(**kw):
 
 
 class FakeRepo:
-    def __init__(self, total="4999.50", status="pending", kind="flight", user_id="u1", guest_hash=None):
+    def __init__(self, total="4999.50", status="DRAFT", kind="hotel", user_id="u1", guest_hash=None):
         ref = "FF-ABCD1234" if kind == "flight" else "FNFHABC123"
         self.subject = {"kind": kind, "id": "b1", "reference": ref, "user_id": user_id,
                         "guest_token_hash": guest_hash, "status": status, "currency": "INR",
@@ -438,7 +438,7 @@ class FakeHotel:
         return self.b
 
 
-def _captured(kind="flight", status="pending"):
+def _captured(kind="hotel", status="DRAFT"):
     repo = FakeRepo(kind=kind, status=status)
     c = FakeClient(("success", "4999.50", "MIH1"))
     run(svc.settle(repo, c, signed_return(order(repo, c).fields), source="return"))
