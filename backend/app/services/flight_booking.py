@@ -285,6 +285,8 @@ async def submit_travellers(
         # Server-resolved. The request could not have influenced this value.
         total_amount=session.total_amount,
         currency=session.currency,
+        # Guest ownership for payment/status: hashed server-issued token (0023).
+        guest_token_hash=None if auth.user_id else session.guest_token_hash,
     )
     if not booking:
         raise ReviewUnavailableError()
