@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["<APPLE_TEAM_ID>.com.flynfeelholiday.app"],
+        "components": [
+          { "/": "/auth/*" },
+          { "/": "/flights/confirmation*" },
+          { "/": "/hotels/confirmation*" },
+          { "/": "/booking-lookup*" },
+          { "/": "/account/*" },
+          { "/": "/holidays*" },
+          { "/": "/international-packages/*" },
+          { "/": "/domestic-packages/*" },
+          { "/": "/" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": { "apps": ["<APPLE_TEAM_ID>.com.flynfeelholiday.app"] }
+}
