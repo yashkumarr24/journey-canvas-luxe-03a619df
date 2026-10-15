@@ -562,7 +562,7 @@ export interface BookingSummary {
   isTestMode?: boolean;
 }
 
-export type PaymentProvider = "razorpay" | "test";
+export type PaymentProvider = "payu" | "razorpay" | "test";
 
 export interface PaymentOrder {
   provider: PaymentProvider;
@@ -574,6 +574,9 @@ export interface PaymentOrder {
   keyId?: string;
   prefill?: { name?: string; email?: string; phone?: string };
   expiresAt?: string;
+  /** PayU only: hosted checkout URL and server-signed form fields. */
+  action?: string;
+  fields?: Record<string, string>;
 }
 
 export interface PaymentOrderRequest {

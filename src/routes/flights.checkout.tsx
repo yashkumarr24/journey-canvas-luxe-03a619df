@@ -19,6 +19,7 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { readBookingGuestToken } from "@/lib/checkout-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { openRazorpayCheckout } from "@/lib/razorpay";
+import { submitPayuForm } from "@/lib/payu";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -174,6 +175,9 @@ function CheckoutPage() {
     onSuccess: async (created) => {
       setOrder(created);
       setStage("awaiting_payment");
+
+      // PayU: leave for the hosted page; the server verifies and redirects back.
+      if (submitPayuForm(created)) return;
 
       const opened = await openRazorpayCheckout(created, {
         onAuthorised: (result) => confirm.mutate(result),

@@ -17,6 +17,7 @@ import { hotelApi, useMockHotels } from "@/lib/hotel-api";
 import { readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { openRazorpayCheckout } from "@/lib/razorpay";
+import { submitPayuForm } from "@/lib/payu";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
@@ -203,6 +204,9 @@ function HotelCheckoutPage() {
     onSuccess: async (created) => {
       setOrder(created);
       setStage("awaiting_payment");
+
+      // PayU: leave for the hosted page; the server verifies and redirects back.
+      if (submitPayuForm(created)) return;
 
       const opened = await openRazorpayCheckout(created, {
         onAuthorised: (result) => confirm.mutate(result),
