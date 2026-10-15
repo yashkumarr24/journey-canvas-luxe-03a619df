@@ -206,7 +206,7 @@ function HotelCheckoutPage() {
       setStage("awaiting_payment");
 
       // PayU: leave for the hosted page; the server verifies and redirects back.
-      const handoff = resolvePaymentHandoff(created, { dev: import.meta.env.DEV && useTestCheckoutLocal });
+      const handoff = resolvePaymentHandoff(created, { dev: import.meta.env.DEV && useMockHotels });
       if (handoff === "payu" && submitPayuForm(created)) return;
       if (handoff === "simulated") {
         // Local development only; a simulated payment never triggers a booking.
@@ -300,7 +300,7 @@ function HotelCheckoutPage() {
           <p className="mt-6 font-display text-2xl">{formatMoney(payable.amount, payable.currency)}</p>
         </div>
 
-        {useMockHotels && (
+        {useMockHotels && import.meta.env.DEV && (
           <TestPaymentSheet
             order={testSheet}
             onAuthorise={(paymentId) => {
@@ -328,7 +328,7 @@ function HotelCheckoutPage() {
 
   return (
     <Shell>
-      {useMockHotels && (
+      {useMockHotels && import.meta.env.DEV && (
         <Alert className="mb-6" role="status">
           <FlaskConical className="size-4" aria-hidden="true" />
           <AlertTitle>Test payment mode</AlertTitle>

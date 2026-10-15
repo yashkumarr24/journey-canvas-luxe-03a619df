@@ -177,7 +177,7 @@ function CheckoutPage() {
       setStage("awaiting_payment");
 
       // PayU: leave for the hosted page; the server verifies and redirects back.
-      const handoff = resolvePaymentHandoff(created, { dev: import.meta.env.DEV && useTestCheckoutLocal });
+      const handoff = resolvePaymentHandoff(created, { dev: import.meta.env.DEV && useTestCheckout });
       if (handoff === "payu" && submitPayuForm(created)) return;
       if (handoff === "simulated") {
         // Local development only; a simulated payment never triggers a booking.
