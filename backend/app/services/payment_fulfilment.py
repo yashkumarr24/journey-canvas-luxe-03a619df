@@ -1,5 +1,10 @@
 """Durable fulfilment of verified PayU payments.
 
+ISOLATED TEST PACKAGE: the hotel/flight booking modules are protected and
+unchanged, so the live port (UninstalledHotelPort) is unavailable and run_once
+never claims a job, whatever PAYMENT_FULFILMENT_ENABLED says. The booking logic
+below is kept and unit-tested with fakes for a later, reviewed merge.
+
 A job row is created by the database in the same transaction as the capture
 (payu_capture, migration 0024). Workers claim jobs with FOR UPDATE SKIP LOCKED
 and a lock expiry, so a crashed worker's job is picked up again.
@@ -40,6 +45,7 @@ class JobRepo(Protocol):
 
 
 class HotelPort(Protocol):
+    available: bool  # False -> the worker never claims a job
     async def get(self, reference: str) -> Optional[Any]: ...
     async def book(self, reference: str, idempotency_key: str) -> Any: ...
     async def refresh(self, reference: str) -> Optional[Any]: ...
@@ -86,6 +92,11 @@ async def run_once(repo: JobRepo, settings: Settings, *, hotel: HotelPort, limit
     if not pay.fulfilment_allowed(settings):
         logger.info("payment_fulfilment_disabled")
         return []
+    if not getattr(hotel, "available", False):
+        # This package keeps the protected hotel module unchanged, so there is
+        # no paid-booking entry point. Jobs stay queued (never claimed).
+        logger.info("payment_fulfilment_not_installed")
+        return []
     results = []
     for job in await repo.claim_jobs(limit, LOCK_SECONDS):
         status, code = "manual_review", None
@@ -105,38 +116,44 @@ async def run_once(repo: JobRepo, settings: Settings, *, hotel: HotelPort, limit
     return results
 
 
-def refund_eligibility(repo: Any, *, hotel: HotelPort) -> pay.RefundEligibility:
-    """Refund only when the booking side is reconciled as not delivered/cancelled."""
+def refund_eligibility(repo: Any) -> pay.RefundEligibility:
+    """Refund only when it is provable that no provider booking exists.
+
+    - job failed_confirmed: the provider confirmed there is no booking; or
+    - hotel job withdrawn (or withdrawable now): the job was never claimed, so
+      no TripJack call was ever made; withdrawing it atomically (DB function
+      payu_withdraw_job, requires hotel booking still DRAFT) stops any later
+      worker from booking. Booking status is never edited to permit a refund.
+    Flights: never (flight payments are disabled).
+    No TripJack call is made here.
+    """
     async def eligible(payment: dict, subject: dict) -> bool:
         job = await repo.job_for_payment(payment["id"])
-        if job and job.get("status") == "failed_confirmed":
+        if job and job.get("status") in ("failed_confirmed", "withdrawn"):
             return True
-        if subject["kind"] == "hotel":
-            fresh = await hotel.refresh(subject["reference"])
-            return fresh is not None and fresh.status in ("FAILED", "CANCELLED")
-        # Flights: staff set the booking failed/cancelled after checking TripJack.
-        return subject.get("status") in ("failed", "cancelled")
+        if subject["kind"] != "hotel" or not job:
+            return False
+        return await repo.withdraw_job(payment["id"])
     return eligible
 
 
-class LiveHotelPort:
-    """Adapter onto services.hotel_booking (real TripJack calls; gated by run_once)."""
+class UninstalledHotelPort:
+    """Live port for this package: the protected hotel module has no
+    paid-booking function, so this port never calls TripJack."""
+
+    available = False
 
     def __init__(self, settings: Settings) -> None:
         self._s = settings
 
     async def get(self, reference: str):
-        from app.services.hotel_booking import BookingStore
-        return await BookingStore(self._s).get(reference)
+        raise RuntimeError("hotel_fulfilment_not_installed")
 
     async def book(self, reference: str, idempotency_key: str):
-        from app.services.hotel_booking import book_for_verified_payment
-        return await book_for_verified_payment(settings=self._s, reference=reference,
-                                               idempotency_key=idempotency_key)
+        raise RuntimeError("hotel_fulfilment_not_installed")
 
     async def refresh(self, reference: str):
-        from app.services.hotel_booking import refresh_for_payment
-        return await refresh_for_payment(settings=self._s, reference=reference)
+        raise RuntimeError("hotel_fulfilment_not_installed")
 
 
 Runner = Callable[[], Awaitable[Any]]

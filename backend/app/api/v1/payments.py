@@ -112,5 +112,5 @@ async def create_refund(payload: RefundRequest, settings: Settings = Depends(get
     row = await svc.refund(repo, client, payment_id=str(payload.paymentId), amount=payload.amount,
                            reason=payload.reason, staff_id=str(getattr(admin, "user_id", "") or ""),
                            request_token=payload.requestToken,
-                           eligible=fulfil.refund_eligibility(repo, hotel=fulfil.LiveHotelPort(settings)))
+                           eligible=fulfil.refund_eligibility(repo))
     return {"id": row.get("id"), "status": row.get("status")}

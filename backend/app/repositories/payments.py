@@ -158,6 +158,11 @@ class PaymentsRepo:
     async def update_job(self, job_id: str, values: dict[str, Any]) -> None:
         await self._db.update(JOBS, values, filters={"id": f"eq.{job_id}"})
 
+    async def withdraw_job(self, payment_id: str) -> bool:
+        """Atomically stop a never-claimed hotel job (payu_withdraw_job)."""
+        res = await self._db.rpc("payu_withdraw_job", {"p_payment_id": payment_id})
+        return bool(res[0] if isinstance(res, list) and res else res)
+
     async def job_for_payment(self, payment_id: str) -> Optional[dict[str, Any]]:
         rows = await self._db.select(JOBS, filters={"payment_id": f"eq.{payment_id}"})
         return rows[0] if rows else None

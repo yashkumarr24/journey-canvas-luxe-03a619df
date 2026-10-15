@@ -65,6 +65,14 @@ class PaymentNotPayable(AppError):
     message = "This booking can't be paid for right now."
 
 
+class FlightPaymentsDisabled(AppError):
+    # Flight fulfilment (TripJack book/ticket after payment) is not implemented,
+    # so a flight can never be paid for. No flag turns this on.
+    status_code = 409
+    code = "FLIGHT_PAYMENTS_DISABLED"
+    message = "Online payment for flights isn't available yet."
+
+
 class RefundNotAllowed(AppError):
     status_code = 409
     code = "REFUND_NOT_ALLOWED"
@@ -183,6 +191,8 @@ async def create_order(repo: Repo, client: PayUClient, settings: Settings, *,
     subject = await repo.subject_by_reference(booking_reference)
     if not subject or not owns(subject, auth, guest_token):
         raise PaymentBookingNotFound()
+    if subject["kind"] != "hotel":
+        raise FlightPaymentsDisabled()
     payable = FLIGHT_PAYABLE if subject["kind"] == "flight" else HOTEL_PAYABLE
     if subject.get("status") not in payable or subject.get("currency", "INR") != "INR":
         raise PaymentNotPayable()
