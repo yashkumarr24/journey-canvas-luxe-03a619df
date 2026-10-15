@@ -142,7 +142,7 @@ def test_request_hash_matches_documented_formula():
 def test_response_hash_matches_documented_reverse_formula():
     f = {"status": "success", "txnid": "T1", "amount": "10.00", "productinfo": "P",
          "firstname": "A", "email": "a@b.co", "udf1": "FF-1"}
-    raw = f"{SALT}|success|||||||||FF-1|a@b.co|A|P|10.00|T1|{KEY}"
+    raw = f"{SALT}|success||||||||||FF-1|a@b.co|A|P|10.00|T1|{KEY}"
     assert payu.response_hash(KEY, SALT, f) == hashlib.sha512(raw.encode()).hexdigest()
 
 
