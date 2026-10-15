@@ -1,41 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "node:test";
+import { strict as assert } from "node:assert";
 
 import { classifyLink, deepLinkPath, isRootPath } from "./link-policy";
 
 describe("app link policy", () => {
   it("keeps our own site inside the app", () => {
-    expect(classifyLink("https://www.flynfeelholiday.com/holidays")).toBe("in-app");
-    expect(classifyLink("/flights")).toBe("in-app");
+    assert.equal(classifyLink("https://www.flynfeelholiday.com/holidays"), "in-app");
+    assert.equal(classifyLink("/flights"), "in-app");
   });
 
   it("opens other sites, including Google, in the system browser", () => {
-    expect(classifyLink("https://accounts.google.com/o/oauth2/auth")).toBe("system-browser");
-    expect(classifyLink("https://maps.google.com/?q=goa")).toBe("system-browser");
-    expect(classifyLink("http://www.flynfeelholiday.com/")).toBe("system-browser");
+    assert.equal(classifyLink("https://accounts.google.com/o/oauth2/auth"), "system-browser");
+    assert.equal(classifyLink("https://maps.google.com/?q=goa"), "system-browser");
+    assert.equal(classifyLink("http://www.flynfeelholiday.com/"), "system-browser");
   });
 
   it("hands phone and email links to the phone", () => {
-    expect(classifyLink("tel:+911234567890")).toBe("os-handler");
-    expect(classifyLink("mailto:a@b.co")).toBe("os-handler");
+    assert.equal(classifyLink("tel:+911234567890"), "os-handler");
+    assert.equal(classifyLink("mailto:a@b.co"), "os-handler");
   });
 
   it("ignores script links", () => {
-    expect(classifyLink("javascript:alert(1)")).toBe("ignore");
+    assert.equal(classifyLink("javascript:alert(1)"), "ignore");
   });
 
   it("opens only our own https links from App/Universal Links", () => {
-    expect(deepLinkPath("https://www.flynfeelholiday.com/auth/reset-password?code=x")).toBe(
+    assert.equal(deepLinkPath("https://www.flynfeelholiday.com/auth/reset-password?code=x"), 
       "/auth/reset-password?code=x",
     );
-    expect(deepLinkPath("https://flynfeelholiday.com/auth/login#access_token=t")).toBe(
+    assert.equal(deepLinkPath("https://flynfeelholiday.com/auth/login#access_token=t"), 
       "/auth/login#access_token=t",
     );
-    expect(deepLinkPath("https://evil.example/auth/login")).toBeNull();
-    expect(deepLinkPath("http://www.flynfeelholiday.com/")).toBeNull();
+    assert.equal(deepLinkPath("https://evil.example/auth/login")).toBeNull();
+    assert.equal(deepLinkPath("http://www.flynfeelholiday.com/"), null);
   });
 
   it("leaves the app from the home page on back", () => {
-    expect(isRootPath("/")).toBe(true);
-    expect(isRootPath("/holidays")).toBe(false);
+    expect(isRootPath("/"), true);
+    assert.equal(isRootPath("/holidays"), false);
   });
 });
