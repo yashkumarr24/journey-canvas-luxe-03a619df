@@ -104,6 +104,9 @@ class Settings(BaseSettings):
     # Unguessable path segment for the webhook URL configured in the PayU dashboard.
     payu_webhook_secret_path: str = Field(default="", alias="PAYU_WEBHOOK_SECRET_PATH")
     payu_timeout: float = Field(default=15.0, alias="PAYU_TIMEOUT")
+    # Verified payments create provider bookings ONLY when this is true. In
+    # PayU test mode every TripJack host must also be a UAT host.
+    payment_fulfilment_enabled: bool = Field(default=False, alias="PAYMENT_FULFILMENT_ENABLED")
     # Canonical customer-facing site (payment returns, app links).
     public_site_url: str = Field(
         default="https://www.flynfeelholiday.com", alias="PUBLIC_SITE_URL"
