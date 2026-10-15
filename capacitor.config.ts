@@ -27,11 +27,9 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: false,
-    webContentsDebuggingEnabled: false,
   },
   ios: {
     contentInset: "never",
-    limitsNavigationsToAppBoundDomains: true,
   },
   plugins: {
     SplashScreen: {
