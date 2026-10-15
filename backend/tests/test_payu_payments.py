@@ -38,7 +38,7 @@ def settings(**kw):
 
 
 class FakeRepo:
-    def __init__(self, total="4999.50", status="pending", kind="flight", user_id="u1", guest_hash=None):
+    def __init__(self, total="4999.50", status="DRAFT", kind="hotel", user_id="u1", guest_hash=None):
         ref = "FF-ABCD1234" if kind == "flight" else "FNFHABC123"
         self.subject = {"kind": kind, "id": "b1", "reference": ref, "user_id": user_id,
                         "guest_token_hash": guest_hash, "status": status, "currency": "INR",
@@ -133,6 +133,14 @@ class FakeRepo:
 
     async def update_job(self, jid, values):
         next(j for j in self.jobs if j["id"] == jid).update(values)
+
+    async def withdraw_job(self, pid):
+        # Mirrors payu_withdraw_job: never-claimed hotel job + booking still DRAFT.
+        j = next((j for j in self.jobs if j["payment_id"] == pid), None)
+        if j and j["status"] == "queued" and j["attempts"] == 0 and j["subject_type"] == "hotel" \
+                and self.subject["status"] == "DRAFT":
+            j["status"] = "withdrawn"
+        return bool(j and j["status"] == "withdrawn")
 
     async def job_for_payment(self, pid):
         return next((j for j in self.jobs if j["payment_id"] == pid), None)
@@ -338,7 +346,7 @@ def test_verified_success_captures_once_across_return_and_webhook():
     assert run(svc.handle_webhook(repo, c, f)).status == "captured"
     assert repo.events.count("payment_succeeded") == 1
     assert len(repo.jobs) == 1
-    assert repo.subject["status"] == "payment_processing"
+    assert repo.subject["status"] == "DRAFT"  # capture never edits the hotel booking
 
 
 def test_tampered_hash_rejected_without_capture():
@@ -355,7 +363,7 @@ def test_valid_hash_but_verify_says_failure_is_not_captured():
     c = FakeClient(("failure", "4999.50", "MIH1"))
     f = signed_return(order(repo, c).fields)
     assert run(svc.settle(repo, c, f, source="return")).status == "failed"
-    assert repo.subject["status"] == "pending" and not repo.jobs
+    assert repo.subject["status"] == "DRAFT" and not repo.jobs
 
 
 def test_delayed_failure_never_downgrades_capture():
@@ -412,6 +420,7 @@ def test_reconcile_marks_old_unknown_attempt_abandoned():
 # ---- fulfilment ------------------------------------------------------------
 
 class FakeHotel:
+    available = True  # stands in for a future, reviewed hotel port
     def __init__(self, status="DRAFT", book_result="CONFIRMED", book_raises=None, after_raise="DRAFT"):
         self.b = SimpleNamespace(status=status)
         self.book_result, self.book_raises, self.after_raise = book_result, book_raises, after_raise
@@ -438,7 +447,7 @@ class FakeHotel:
         return self.b
 
 
-def _captured(kind="flight", status="pending"):
+def _captured(kind="hotel", status="DRAFT"):
     repo = FakeRepo(kind=kind, status=status)
     c = FakeClient(("success", "4999.50", "MIH1"))
     run(svc.settle(repo, c, signed_return(order(repo, c).fields), source="return"))
@@ -486,7 +495,9 @@ def test_hotel_refused_before_send_is_failed_confirmed():
 
 
 def test_flight_jobs_go_to_staff():
-    repo, _ = _captured()
+    repo = FakeRepo(kind="flight", status="payment_processing")
+    repo.jobs.append({"id": "j1", "payment_id": "p1", "subject_type": "flight",
+                      "subject_ref": "FF-ABCD1234", "status": "queued", "attempts": 0})
     assert run(fulfil.run_once(repo, settings(), hotel=FakeHotel())) == ["manual_review"]
 
 
@@ -552,11 +563,44 @@ def test_refund_status_success_updates_payment():
     assert repo.payments[0]["amount_refunded"] == "4999.50"
 
 
-def test_hotel_refund_eligibility_requires_provider_confirmed_failure():
-    repo, _ = _captured("hotel", "DRAFT")
-    hotel = FakeHotel(status="BOOKING_IN_PROGRESS")
-    eligible = fulfil.refund_eligibility(repo, hotel=hotel)
-    p = repo.payments[0]
-    assert not run(eligible(p, repo.subject))
-    hotel.refresh_to = "FAILED"
-    assert run(eligible(p, repo.subject))
+def test_flight_order_is_refused():
+    repo, c = FakeRepo(kind="flight", status="pending"), FakeClient()
+    with pytest.raises(svc.FlightPaymentsDisabled):
+        order(repo, c)
+    assert not repo.payments
+
+
+def test_unfulfilled_hotel_test_payment_is_refundable_and_job_withdrawn():
+    # Fulfilment off: the job is never claimed, the booking stays DRAFT (true:
+    # nothing was sent to TripJack). The refund withdraws the job atomically.
+    repo, c = _captured("hotel", "DRAFT")
+    assert run(fulfil.run_once(repo, settings(payment_fulfilment_enabled=False), hotel=FakeHotel())) == []
+    row = _refund(repo, c, amount="4999.50", eligible=fulfil.refund_eligibility(repo))
+    assert row["status"] == "queued" and c.refund_calls == 1
+    assert repo.jobs[0]["status"] == "withdrawn"
+    assert repo.subject["status"] == "DRAFT"
+    # A worker enabled later can never book a withdrawn job.
+    hotel = FakeHotel()
+    assert run(fulfil.run_once(repo, settings(), hotel=hotel)) == [] and hotel.book_calls == 0
+
+
+def test_refund_refused_once_a_job_was_ever_claimed():
+    repo, c = _captured("hotel", "DRAFT")
+    repo.jobs[0].update(status="uncertain", attempts=1)
+    with pytest.raises(svc.RefundNotAllowed):
+        _refund(repo, c, eligible=fulfil.refund_eligibility(repo))
+    assert c.refund_calls == 0
+
+
+def test_refund_refused_when_hotel_booking_left_draft():
+    repo, c = _captured("hotel", "DRAFT")
+    repo.subject["status"] = "BOOKING_IN_PROGRESS"
+    with pytest.raises(svc.RefundNotAllowed):
+        _refund(repo, c, eligible=fulfil.refund_eligibility(repo))
+    assert c.refund_calls == 0 and repo.jobs[0]["status"] == "queued"
+
+
+def test_failed_confirmed_job_is_refundable():
+    repo, c = _captured("hotel", "DRAFT")
+    repo.jobs[0].update(status="failed_confirmed", attempts=1)
+    assert run(fulfil.refund_eligibility(repo)(repo.payments[0], repo.subject))

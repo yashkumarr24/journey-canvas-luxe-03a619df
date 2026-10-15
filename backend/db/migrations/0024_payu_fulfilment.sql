@@ -39,7 +39,7 @@ create table if not exists public.payment_fulfilment_jobs (
   updated_at     timestamptz not null default now(),
   constraint payment_fulfilment_jobs_subject_chk check (subject_type in ('flight', 'hotel')),
   constraint payment_fulfilment_jobs_status_chk check (status in (
-    'queued', 'running', 'succeeded', 'uncertain', 'failed_confirmed', 'manual_review'))
+    'queued', 'running', 'succeeded', 'uncertain', 'failed_confirmed', 'manual_review', 'withdrawn'))
 );
 create index if not exists payment_fulfilment_jobs_status_idx
   on public.payment_fulfilment_jobs (status, updated_at);
@@ -137,9 +137,28 @@ begin
   return v_row;
 end $$;
 
+-- ---- withdraw a never-claimed hotel job before a refund -------------------
+-- True only if the job was never claimed (attempts = 0, so no provider call
+-- was ever made) and the hotel booking is still DRAFT. Idempotent.
+create or replace function public.payu_withdraw_job(p_payment_id uuid)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.payment_fulfilment_jobs j
+     set status = 'withdrawn', last_code = 'refund_unfulfilled', locked_until = null
+    from public.payments p, public.hotel_bookings h
+   where j.payment_id = p_payment_id and j.status = 'queued' and j.attempts = 0
+     and j.subject_type = 'hotel' and p.id = j.payment_id
+     and h.id = p.hotel_booking_id and h.status = 'DRAFT';
+  return exists (select 1 from public.payment_fulfilment_jobs
+                  where payment_id = p_payment_id and status = 'withdrawn');
+end $$;
+
 revoke all on function public.payu_capture(uuid, text[], text, text, text) from public, anon, authenticated;
 revoke all on function public.payu_claim_jobs(integer, integer) from public, anon, authenticated;
 revoke all on function public.payu_reserve_refund(uuid, numeric, text, text, uuid) from public, anon, authenticated;
+revoke all on function public.payu_withdraw_job(uuid) from public, anon, authenticated;
+grant execute on function public.payu_withdraw_job(uuid) to service_role;
 grant execute on function public.payu_capture(uuid, text[], text, text, text) to service_role;
 grant execute on function public.payu_claim_jobs(integer, integer) to service_role;
 grant execute on function public.payu_reserve_refund(uuid, numeric, text, text, uuid) to service_role;

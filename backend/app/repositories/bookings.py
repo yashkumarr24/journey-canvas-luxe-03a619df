@@ -88,13 +88,10 @@ class BookingRepository:
         contact_phone: str,
         total_amount: Decimal,
         currency: str,
-        guest_token_hash: Optional[str] = None,
     ) -> Optional[DraftBooking]:
-        extra = {"guest_token_hash": guest_token_hash} if guest_token_hash and not user_id else {}
         rows = await self._db.insert(
             BOOKINGS,
             {
-                **extra,
                 # NULL for a guest. Never taken from the request body.
                 "user_id": user_id,
                 "booking_type": "flight",
