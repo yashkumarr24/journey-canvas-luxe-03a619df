@@ -147,7 +147,7 @@ public class StartupChecks {
     a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
     a.retryWebsite();
     v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
-    check(v.loads == 4 && v.url.equals(a.getBridge().getErrorUrl()), "second failed retry still returns to branded page");
+    check(v.loads == 5 && v.url.equals(a.getBridge().getErrorUrl()), "second failed retry still returns to branded page");
     a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
     a.retryWebsite();
     v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageLoaded(v);
