@@ -16,6 +16,35 @@ Payments and automatic booking stay disabled; the app adds no payment code.
 - iOS project is NOT committed: it must be created on a Mac (below).
 
 ## First Android test build (needs Android Studio)
+### Offline navigation fix (full pages and client routes)
+- MainActivity now installs a BridgeWebViewClient subclass: Capacitor's local asset
+  serving, navigation intents, bridge resets and OAuth behaviour remain inherited.
+  Main-frame network/HTTP errors stop the failed load and queue the local fallback
+  after the callback. Failed images and other subresources never replace the page.
+- Android-only offline link clicks and route-load network failures call the
+  OfflineNavigation plugin, which uses the same fallback. Dynamic module failures
+  are covered separately; background fetches and image error events are not trapped.
+- Offline Back exits the activity. Fallback completion and successful recovery
+  clear WebView navigation history only, so raw error and offline entries cannot
+  reappear. Cookies, localStorage, sessionStorage and Google PKCE data are untouched.
+- Retry still makes one canonical-site attempt with the native 15-second deadline;
+  the offline banner uses the same bounded native retry. No network-change retry.
+- Both the hosted website changes and a rebuilt APK are required; deploying the
+  site alone does not install the new plugin or WebView callback handling.
+
+After GitHub sync and the connected Vercel deployment finish, use the exact
+PowerShell sync/rebuild commands below, with JDK 21 and SDK 35, updating in place
+with the original signing key. Never uninstall or clear app data.
+
+New device checks: sign in online, disable Wi-Fi/mobile data, then navigate to
+Holidays using both a normal in-app link and a full-page link. The branded page
+must appear without Back. Back from it must exit, not show Android's error page.
+Restore connectivity and tap Retry; verify the home page, saved session, Back,
+and another Google login. Block only an image while online: keep the current page.
+Repeat on a connected Wi-Fi network with no internet, including stalled Retry.
+Automated results for this change are recorded below after verification; they
+do not establish behaviour on a OnePlus phone or verify a real Google exchange.
+
 ### Offline startup fix: sync, rebuild, and install over the existing app
 The launch splash now auto-hides natively after 3 seconds (plus its fade), whether
 or not the website's JavaScript runs. `src/lib/native/native-shell.ts` still hides
