@@ -1,4 +1,5 @@
 # Current tasks
+- [ ] Fix package/nav/assistant overflow and intended package image delivery; verify 360/390/430/768/desktop listings and details with before/after evidence, without native or backend changes.
 - [x] Fix offline full-page/client navigation and error-history handling; 20 JS tests, 21 JVM checks, browser simulation and cap sync passed.
 - [x] Offline Holidays fallback, repeated offline Retry, double-tap and online recovery with saved login — user-verified on a physical Android phone, build 8429d27.
 - [x] Fix Android offline startup: native auto-hide, bounded startup/Retry, bundled page; 14 JS tests, 10 JVM controller checks, browser offline/Retry checks, cap sync completed; rebuild guide in mobile/README.md.

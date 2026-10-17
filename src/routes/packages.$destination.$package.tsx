@@ -72,7 +72,7 @@ function PackagePage() {
   ].filter((m) => m.v);
 
   return (
-    <main className="relative bg-background text-foreground">
+    <main className="package-detail relative bg-background text-foreground">
       <ScrollProgress />
       <SmoothScroll />
       <Nav />
@@ -106,8 +106,8 @@ function PackagePage() {
       )}
 
       <section className="mx-auto max-w-6xl px-6 pb-12">
-        <div className="grid gap-12 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-12">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-3 lg:gap-12">
+          <div className="min-w-0 lg:col-span-2 space-y-12">
             {d.overview && (
               <div>
                 <h2 className="font-display text-3xl md:text-5xl">Overview</h2>
@@ -137,7 +137,7 @@ function PackagePage() {
                 <div className="mt-8 space-y-6">
                   {d.options.map((o, i) => (
                     <div key={i} className="rounded-2xl border border-foreground/10 bg-card/60 p-6 md:p-8">
-                      <div className="flex flex-wrap items-baseline justify-between gap-4">
+                      <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
                         <h3 className="font-display text-2xl">{o.option_name}</h3>
                         {o.indicative_price != null && (
                           <div className="text-right">
@@ -148,7 +148,7 @@ function PackagePage() {
                       </div>
                       {o.price_basis && <p className="mt-2 text-xs text-muted-foreground">{o.price_basis}</p>}
                       {o.hotels.length > 0 && (
-                        <div className="mt-5 overflow-x-auto">
+                        <div role="region" aria-label="Hotel or flight details, scroll horizontally" tabIndex={0} className="package-table mt-5 max-w-full overflow-x-auto">
                           <table className="w-full min-w-[480px] text-left text-sm">
                             <thead className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                               <tr className="border-b border-foreground/10">
@@ -225,7 +225,7 @@ function PackagePage() {
                       transition={{ duration: 0.7, delay: Math.min(i, 6) * 0.05 }}
                       className="relative rounded-2xl border border-foreground/10 bg-card/60 p-6 md:p-8"
                     >
-                      <div className="flex items-baseline gap-4">
+                      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-4">
                         <span className="font-display text-3xl text-gold">{String(day.day_number).padStart(2, "0")}</span>
                         <h3 className="font-display text-xl md:text-2xl">{day.title}</h3>
                       </div>
@@ -290,7 +290,7 @@ function PackagePage() {
             )}
           </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          <aside className="min-w-0 space-y-6 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-3xl border border-gold/30 bg-gradient-to-b from-card to-card/40 p-7 shadow-[var(--shadow-luxe)]">
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Indicative starting from</div>
               <div className="mt-1 font-display text-4xl text-gold">{fromPrice ?? "On request"}</div>

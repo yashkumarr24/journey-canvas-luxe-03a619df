@@ -1,6 +1,6 @@
 # Domestic destination stock photography
 
-These photos are free to download and use commercially under the [Unsplash License](https://unsplash.com/license). They are licensed photographs, not public-domain images. Source pages identify them as “Download free” and “Free to use under the Unsplash License.” Downloaded copies are served through the project's asset storage, not hotlinked.
+These photos are free to download and use commercially under the [Unsplash License](https://unsplash.com/license). They are licensed photographs, not public-domain images. Source pages identify them as “Download free” and “Free to use under the Unsplash License.” Bundled `*-stock.webp` files are optimized copies of these same existing photos, retrieved from the project's original assets; they are not replacement imagery or hotlinks. Original asset pointers remain intact.
 
 | Asset | Photographer | Source page | Location |
 | --- | --- | --- | --- |

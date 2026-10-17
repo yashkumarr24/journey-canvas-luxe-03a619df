@@ -59,7 +59,7 @@ function DomesticPackagePage() {
   const multi = p.options.length > 1;
 
   return (
-    <main className="relative bg-background text-foreground">
+    <main className="package-detail relative bg-background text-foreground">
       <ScrollProgress />
       <SmoothScroll />
       <Nav />
@@ -72,8 +72,8 @@ function DomesticPackagePage() {
       />
 
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="grid gap-12 lg:grid-cols-3">
-          <div className="space-y-12 lg:col-span-2">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-3 lg:gap-12">
+          <div className="min-w-0 space-y-12 lg:col-span-2">
             <div>
               <Heading>Tour Details</Heading>
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -114,7 +114,7 @@ function DomesticPackagePage() {
                     ))}
                   </ul>
                 )}
-                <div className="mt-5 overflow-x-auto">
+                <div role="region" aria-label="Hotel or flight details, scroll horizontally" tabIndex={0} className="package-table mt-5 max-w-full overflow-x-auto">
                   <table className="w-full min-w-[520px] text-left text-sm">
                     <thead className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                       <tr className="border-b border-foreground/10">
@@ -187,7 +187,7 @@ function DomesticPackagePage() {
             )}
           </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          <aside className="min-w-0 space-y-6 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-3xl border border-gold/30 bg-gradient-to-b from-card to-card/40 p-7 shadow-[var(--shadow-luxe)]">
               <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
                 {multi ? `Price · ${opt.name}` : "Price"}

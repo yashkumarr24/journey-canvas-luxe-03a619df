@@ -36,7 +36,7 @@ export function DestinationCard({
       whileInView={{ y: 0, opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.9, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative overflow-hidden rounded-sm border border-foreground/10 bg-card shadow-[var(--shadow-card)] transition-all duration-500 hover:-translate-y-1 hover:border-gold/40 hover:shadow-[var(--shadow-luxe)]"
+      className="group relative min-w-0 overflow-hidden rounded-sm border border-foreground/10 bg-card [overflow-wrap:anywhere] shadow-[var(--shadow-card)] transition-all duration-500 hover:-translate-y-1 hover:border-gold/40 hover:shadow-[var(--shadow-luxe)]"
     >
       <Link {...(target as any)} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden">
@@ -65,12 +65,12 @@ export function DestinationCard({
           </h3>
           <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{p.tagline}</p>
 
-          <div className="mt-5 flex items-end justify-between gap-4 border-t border-foreground/10 pt-4">
-            <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground transition-colors group-hover:text-gold">
+          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-3 border-t border-foreground/10 pt-4">
+            <div className="inline-flex min-w-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground transition-colors group-hover:text-gold">
               {cta}
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </div>
-            <div className="text-right">
+            <div className="min-w-0 text-right">
               {priceNote && (
                 <div className="mb-1 text-[9px] uppercase tracking-[0.22em] text-muted-foreground">{priceNote}</div>
               )}

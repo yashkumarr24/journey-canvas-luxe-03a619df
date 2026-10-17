@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkle, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const EXAMPLE_TEXT = "Hotels in Dubai with free cancellation";
 const SHOW_DELAY_MS = 2500;
@@ -11,6 +12,12 @@ const TYPE_MS = 45;
 export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }) {
   const [visible, setVisible] = useState(false);
   const [typed, setTyped] = useState("");
+
+  useEffect(() => {
+    if (!visible) return;
+    document.body.classList.add("assistant-suggestion-visible");
+    return () => document.body.classList.remove("assistant-suggestion-visible");
+  }, [visible]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setVisible(true), SHOW_DELAY_MS);
@@ -45,12 +52,12 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
   if (!visible) return null;
 
   return createPortal(
-    <div role="dialog" aria-modal="false" aria-label="Ask AI travel assistant" className="fixed inset-x-3 bottom-4 z-40 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(36rem,calc(100vw-3rem))]">
-      <div className="ai-glow-ring ai-unroll flex items-center gap-1 rounded-full pr-2">
-        <button
+    <div role="dialog" aria-modal="false" aria-label="Ask AI travel assistant" className="assistant-suggestion fixed inset-x-3 z-40 sm:inset-x-auto sm:left-6 sm:w-[min(36rem,calc(100vw-3rem))]">
+      <div className="ai-glow-ring ai-unroll grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1 rounded-full pr-2">
+        <Button variant="ghost"
           type="button"
           onClick={() => { setVisible(false); onOpenChat(); }}
-          className="flex min-h-14 min-w-0 flex-1 items-center gap-4 rounded-full px-6 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          className="h-14 min-w-0 justify-start gap-3 rounded-full px-3 py-3 text-left focus-visible:ring-gold sm:px-6"
         >
           <Sparkle className="size-5 shrink-0 fill-foreground text-foreground" aria-hidden="true" />
           <span className="min-w-0">
@@ -60,15 +67,15 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
             </span>
             <span className="sr-only">Open the Ask AI travel assistant</span>
           </span>
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost"
           type="button"
           onClick={() => setVisible(false)}
           aria-label="Close Ask AI suggestion"
           className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           <X className="size-4" />
-        </button>
+        </Button>
       </div>
     </div>,
     document.body,
