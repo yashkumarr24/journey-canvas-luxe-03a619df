@@ -18,7 +18,7 @@ function offlinePage(capacitor?: unknown) {
     addEventListener: (_event: string, handler: () => void) => { click = handler; },
   };
   runInNewContext(script as string, {
-    window: { Capacitor: capacitor, location: { replace: (url: string) => navigations.push(url) } },
+    window: { Capacitor: capacitor, location: { replace: (url: string) => navigations.push(url), set href(url: string) { navigations.push(url); } } },
     document: { getElementById: () => button },
     setTimeout: (callback: () => void, delay: number) => timers.push({ callback, delay }),
     Promise,
@@ -45,11 +45,11 @@ describe("offline startup", () => {
     assert.equal(page.button.disabled, false);
   });
 
-  it("manual Retry loads the canonical site once, then permits a later manual attempt", () => {
+  it("bridge-absent Retry sends the offline-only native request once per tap window", () => {
     const page = offlinePage();
     page.retry();
     page.retry();
-    assert.deepEqual(page.navigations, ["https://www.flynfeelholiday.com/"]);
+    assert.deepEqual(page.navigations, ["fnf-offline://retry"]);
     assert.equal(page.button.disabled, true);
     assert.equal(page.timers.length, 1);
     assert.equal(page.timers[0]?.delay, 8000);
