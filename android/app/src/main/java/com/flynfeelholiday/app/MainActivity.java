@@ -137,7 +137,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     /** True only when the sentinel came from the bundled offline page on screen. */
-    boolean handleOfflineRetryRequest(WebView view, String target) {
+    public boolean handleOfflineRetryRequest(WebView view, String target) {
         if (bridge == null || !RETRY_URL.equals(target)) return false;
         if (!isOnOfflinePage(view)) return false;
         retryWebsite();
