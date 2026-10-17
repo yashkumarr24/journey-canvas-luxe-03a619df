@@ -70,6 +70,7 @@ function DomesticPackagePage() {
         height="80svh"
         lightText
       />
+      <div data-package-assistant />
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-3 lg:gap-12">

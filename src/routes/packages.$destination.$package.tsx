@@ -84,6 +84,7 @@ function PackagePage() {
         height="80svh"
         lightText
       />
+      <div data-package-assistant />
 
       {facts.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 py-20">
