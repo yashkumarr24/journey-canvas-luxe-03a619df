@@ -30,7 +30,9 @@ public class WebView {
   public void clearHistory() { clears++; }
   public boolean post(Runnable r) { r.run(); return true; }
 }""",
-    "android/webkit/WebResourceRequest.java": "package android.webkit; public interface WebResourceRequest { boolean isForMainFrame(); }",
+    "android/webkit/WebResourceRequest.java": "package android.webkit; public interface WebResourceRequest { boolean isForMainFrame(); default android.net.Uri getUrl() { return null; } }",
+    "android/net/Uri.java": "package android.net; public class Uri { final String s; public Uri(String s) { this.s=s; } public String toString() { return s; } }",
+    "android/graphics/Bitmap.java": "package android.graphics; public class Bitmap {}",
     "android/webkit/WebResourceError.java": "package android.webkit; public class WebResourceError {}",
     "android/webkit/WebResourceResponse.java": "package android.webkit; public class WebResourceResponse {}",
     "androidx/activity/OnBackPressedCallback.java": "package androidx.activity; public abstract class OnBackPressedCallback { public boolean enabled; public OnBackPressedCallback(boolean e) { enabled=e; } public void setEnabled(boolean e) { enabled=e; } public abstract void handleOnBackPressed(); }",
@@ -42,6 +44,9 @@ public class BridgeWebViewClient {
   public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {}
   public void onReceivedHttpError(WebView v, WebResourceRequest r, WebResourceResponse e) {}
   public void onPageFinished(WebView v, String u) { bridge.listener.onPageLoaded(v); }
+  public void onPageStarted(WebView v, String u, android.graphics.Bitmap f) { bridge.listener.onPageStarted(v); }
+  public int passedThrough = 0;
+  public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { passedThrough++; return false; }
 }""",
     "com/flynfeelholiday/app/OfflineNavigation.java": "package com.flynfeelholiday.app; public class OfflineNavigation {}",
     "com/getcapacitor/WebViewListener.java": """package com.getcapacitor;
@@ -86,26 +91,30 @@ import android.webkit.WebView;
 import com.flynfeelholiday.app.MainActivity;
 public class StartupChecks {
   static void check(boolean condition, String rule) { if (!condition) throw new AssertionError(rule); }
+  static android.webkit.WebResourceRequest req(String u) {
+    return new android.webkit.WebResourceRequest() { public boolean isForMainFrame() { return true; } public android.net.Uri getUrl() { return new android.net.Uri(u); } };
+  }
+  static void tap(WebView v) { v.client.shouldOverrideUrlLoading(v, req("fnf-offline://retry")); }
   static MainActivity start() { Handler.pending = null; MainActivity a = new MainActivity(); a.onCreate(null); return a; }
   public static void main(String[] args) {
     MainActivity a = start(); WebView v = a.getBridge().getWebView();
     check(Handler.pending != null && Handler.delay == 15000, "cold startup deadline is 15 seconds");
     Runnable original = Handler.pending;
-    v.url = "https://www.flynfeelholiday.com/redirect"; a.listener().onPageStarted(v);
+    v.url = "https://www.flynfeelholiday.com/redirect"; v.client.onPageStarted(v, v.url, null);
     check(Handler.pending == original, "redirect does not extend startup wait");
     Handler.fire();
     check(v.stops == 1 && v.loads == 1 && v.url.equals(a.getBridge().getErrorUrl()), "stall loads local fallback once");
     Handler.fire(); check(v.loads == 1, "no automatic retry loop");
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
     check(Handler.pending == null, "local fallback cancels deadline");
-    v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageStarted(v);
+    v.url = "https://www.flynfeelholiday.com/"; v.client.onPageStarted(v, v.url, null);
     check(Handler.pending != null && Handler.delay == 15000, "manual offline retry gets a fresh deadline");
     a.listener().onPageLoaded(v); check(Handler.pending == null, "successful retry cancels deadline");
-    v.url = "https://www.flynfeelholiday.com/auth/login?code=test"; a.listener().onPageStarted(v);
+    v.url = "https://www.flynfeelholiday.com/auth/login?code=test"; v.client.onPageStarted(v, v.url, null);
     check(Handler.pending == null, "warm OAuth and ordinary navigation are not timed");
     a = start(); a.onDestroy(); check(Handler.pending == null, "destroy cancels pending deadline");
     a = start(); v = a.getBridge().getWebView(); v.url = a.getBridge().getErrorUrl();
-    a.listener().onPageStarted(v); check(Handler.pending == null, "immediate native load error cancels startup timeout");
+    v.client.onPageStarted(v, v.url, null); check(Handler.pending == null, "immediate native load error cancels startup timeout");
     a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
     android.webkit.WebResourceRequest image = () -> false;
     android.webkit.WebResourceRequest document = () -> true;
@@ -120,14 +129,14 @@ public class StartupChecks {
     check(v.loads == 1, "repeated error cannot loop");
     v.client.onPageFinished(v, "https://www.flynfeelholiday.com/holidays");
     check(v.clears == 0 && a.dispatcher.callback.enabled, "failed-document finish cannot cancel fallback");
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
     check(v.clears == 1, "offline completion removes raw error history");
     a.dispatcher.callback.handleOnBackPressed(); check(a.finished, "offline Back exits instead of revisiting raw error");
     a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
     v.client.onReceivedHttpError(v, document, new android.webkit.WebResourceResponse());
     check(v.loads == 1, "main-frame HTTP failure loads branded page");
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
-    v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageStarted(v);
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
+    v.url = "https://www.flynfeelholiday.com/"; v.client.onPageStarted(v, v.url, null);
     check(Handler.delay == 15000 && !a.dispatcher.callback.enabled, "retry bounded and normal Back restored");
     a.listener().onPageLoaded(v);
     check(v.clears == 2 && Handler.pending == null, "successful recovery removes offline history without touching storage");
@@ -136,23 +145,38 @@ public class StartupChecks {
     // Repeated offline retries through the native retry lifecycle.
     a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
     v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
     check(v.loads == 1 && v.url.equals(a.getBridge().getErrorUrl()), "first failure shows branded page");
-    a.retryWebsite();
-    check(Handler.pending != null && Handler.delay == 15000, "native retry arms a fresh 15 second deadline");
-    a.retryWebsite();
+    tap(v);
+    check(Handler.pending != null && Handler.delay == 15000, "bridge-absent sentinel retry arms a fresh 15 second deadline");
+    tap(v);
     check(v.loads == 2, "double-tap retry cannot stack loads");
     v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
     check(v.loads == 3 && v.url.equals(a.getBridge().getErrorUrl()), "failed retry returns to branded page, never the raw error");
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
-    a.retryWebsite();
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
+    tap(v);
     v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
     check(v.loads == 5 && v.url.equals(a.getBridge().getErrorUrl()), "second failed retry still returns to branded page");
-    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
-    a.retryWebsite();
-    v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageLoaded(v);
-    check(Handler.pending == null, "retry after reconnecting succeeds and cancels the deadline");
-    System.out.println("29 native offline controller checks passed (JVM fakes; not a device test).");
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
+    tap(v);
+    check(v.url.equals("https://www.flynfeelholiday.com/"), "online tap loads the canonical site");
+    v.client.onPageStarted(v, v.url, null); v.client.onPageFinished(v, v.url);
+    check(Handler.pending == null && !a.dispatcher.callback.enabled, "retry after reconnecting succeeds and cancels the deadline");
+    // Ordinary website pages cannot trigger the offline-only mechanism.
+    int loads = v.loads;
+    v.url = "https://www.flynfeelholiday.com/holidays";
+    check(v.client.shouldOverrideUrlLoading(v, req("fnf-offline://retry")) && v.loads == loads && Handler.pending == null, "website page sentinel is swallowed and ignored");
+    a.retryWebsite(); check(v.loads == loads && Handler.pending == null, "plugin retry from a website page is ignored");
+    check(!a.handleOfflineRetryRequest(v, "fnf-offline://retry"), "sentinel refused off the offline page");
+    int passed = v.client.passedThrough;
+    check(!v.client.shouldOverrideUrlLoading(v, req("https://www.flynfeelholiday.com/domestic")) && v.client.passedThrough == passed + 1, "ordinary links keep Capacitor handling");
+    // Stale flag: offline flag set but a website page is on screen.
+    a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    v.client.onPageStarted(v, v.url, null); a.listener().onPageLoaded(v);
+    v.url = "https://www.flynfeelholiday.com/"; // view.getUrl() moved on before onPageStarted
+    check(!a.handleOfflineRetryRequest(v, "fnf-offline://retry"), "stale offline flag cannot retry from website page");
+    System.out.println("38 native offline controller checks passed (JVM fakes; not a device test).");
   }
 }""",
 }

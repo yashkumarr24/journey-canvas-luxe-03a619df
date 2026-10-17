@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -31,13 +30,8 @@ public class MainActivity extends BridgeActivity {
         showOffline();
     };
 
-    /** Works on the bundled offline page even when Capacitor's JS bridge is not injected. */
-    public class OfflineBridge {
-        @JavascriptInterface
-        public void retry() {
-            runOnUiThread(MainActivity.this::retryWebsite);
-        }
-    }
+    /** Navigation sentinel used only by the bundled offline page; needs no JS bridge. */
+    static final String RETRY_URL = "fnf-offline://retry";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,7 +65,6 @@ public class MainActivity extends BridgeActivity {
     protected void load() {
         super.load();
         if (bridge == null) return;
-        bridge.getWebView().addJavascriptInterface(new OfflineBridge(), "FlyNFeelOffline");
         // Keep Capacitor interception, bridge resets and OAuth intents. Override only
         // main-document failures; its stock handler can leave a raw error history entry.
         bridge.setWebViewClient(new BridgeWebViewClient(bridge) {
@@ -91,6 +84,17 @@ public class MainActivity extends BridgeActivity {
                     if (offlineBack != null) offlineBack.setEnabled(false);
                     armStartupTimeout();
                 }
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String target = request.getUrl() == null ? null : request.getUrl().toString();
+                if (target != null && target.startsWith("fnf-offline:")) {
+                    // Always swallowed; acts only when the offline page itself asks.
+                    handleOfflineRetryRequest(view, target);
+                    return true;
+                }
+                return super.shouldOverrideUrlLoading(view, request);
             }
 
             @Override
@@ -132,8 +136,23 @@ public class MainActivity extends BridgeActivity {
         });
     }
 
+    /** True only when the sentinel came from the bundled offline page on screen. */
+    public boolean handleOfflineRetryRequest(WebView view, String target) {
+        if (bridge == null || !RETRY_URL.equals(target)) return false;
+        if (!isOnOfflinePage(view)) return false;
+        retryWebsite();
+        return true;
+    }
+
+    private boolean isOnOfflinePage(WebView view) {
+        String errorUrl = bridge == null ? null : bridge.getErrorUrl();
+        return errorUrl != null && showingOffline && errorUrl.equals(view.getUrl());
+    }
+
     public void retryWebsite() {
         if (bridge == null || isFinishing() || startupPending) return;
+        // Offline-only: ordinary website pages can never start this lifecycle.
+        if (!isOnOfflinePage(bridge.getWebView())) return;
         // Clear stale flags first: a failed retry must be allowed to reach
         // showOffline() again, so the branded page returns within the deadline.
         fallbackRequested = false;
