@@ -1,5 +1,6 @@
 # Current tasks
-- [ ] Fix Android offline startup with bounded native splash/startup waits and a bundled manual Retry page; verify automated checks and document rebuild/device checks.
+- [x] Fix Android offline startup: native auto-hide, bounded startup/Retry, bundled page; 14 JS tests, 10 JVM controller checks, browser offline/Retry checks, cap sync completed; rebuild guide in mobile/README.md.
+- [ ] Verify OnePlus offline splash/fallback, Retry recovery, persisted session and Google return after rebuilding (requires user's phone and original signing key).
 - [x] Restore Domestic/International choices in homepage Holidays; verified both catalogue links and mobile layout.
 - [x] Complete the AI paper-roll outline in brand red with subtle glow; verified appearance and removed persistent clipping.
 - [x] Serve supplied Android test certificate and check app-link configuration (local anonymous HTTP 200 JSON, no redirect; eight tests pass).

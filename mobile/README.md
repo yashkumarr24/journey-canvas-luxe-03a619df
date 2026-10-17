@@ -69,6 +69,17 @@ Device checks still required (no phone testing is claimed here):
 4. Repeat offline startup with airplane mode and with a connected Wi-Fi network
    that cannot reach the internet (stalled requests).
 
+Automated checks performed for this fix: 14 tests across
+`offline-startup.test.ts`, `link-policy.test.ts` and `assetlinks.test.ts`; 10 JVM
+checks against the actual `MainActivity.java` with simulated Android APIs
+(`python3 mobile/tests/check_android_startup.py`, JDK 21 required); `cap sync
+android` succeeded and the generated assets match the updated configuration and
+offline page. Browser simulation at 390×844 displayed the offline page without
+Capacitor, made no automatic navigation while offline, and Retry reached the
+actual canonical website after connectivity was restored, with no page errors.
+These checks do **not** compile an APK or verify native splash rendering, Google
+login, session persistence, or any behaviour on the OnePlus phone.
+
 1. Install Android Studio (with SDK 35) and JDK 21. Clone the repo, run `npm install`.
 2. `npx cap sync android`
 3. `npx cap open android` → let Gradle sync finish.
