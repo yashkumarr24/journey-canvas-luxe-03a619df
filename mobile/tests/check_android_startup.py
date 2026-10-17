@@ -133,7 +133,26 @@ public class StartupChecks {
     check(v.clears == 2 && Handler.pending == null, "successful recovery removes offline history without touching storage");
     a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v); a.showOffline();
     check(v.loads == 1, "client navigation plugin uses same native fallback");
-    System.out.println("21 native offline controller checks passed (JVM fakes; not a device test).");
+    // Repeated offline retries through the native retry lifecycle.
+    a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    check(v.loads == 1 && v.url.equals(a.getBridge().getErrorUrl()), "first failure shows branded page");
+    a.retryWebsite();
+    check(Handler.pending != null && Handler.delay == 15000, "native retry arms a fresh 15 second deadline");
+    a.retryWebsite();
+    check(v.loads == 2, "double-tap retry cannot stack loads");
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    check(v.loads == 3 && v.url.equals(a.getBridge().getErrorUrl()), "failed retry returns to branded page, never the raw error");
+    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    a.retryWebsite();
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    check(v.loads == 4 && v.url.equals(a.getBridge().getErrorUrl()), "second failed retry still returns to branded page");
+    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    a.retryWebsite();
+    v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageLoaded(v);
+    check(Handler.pending == null, "retry after reconnecting succeeds and cancels the deadline");
+    System.out.println("29 native offline controller checks passed (JVM fakes; not a device test).");
   }
 }""",
 }
