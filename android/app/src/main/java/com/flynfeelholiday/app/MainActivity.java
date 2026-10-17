@@ -1,8 +1,10 @@
 package com.flynfeelholiday.app;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -16,6 +18,7 @@ public class MainActivity extends BridgeActivity {
     // Only cold startup and a manual Retry from the bundled error page are timed.
     // Ordinary navigation and OAuth returns keep Capacitor's existing behaviour.
     private static final long STARTUP_TIMEOUT_MS = 15000;
+    private static final String SITE = "https://www.flynfeelholiday.com/";
     private final Handler startupHandler = new Handler(Looper.getMainLooper());
     private boolean startupPending = true;
     private boolean showingOffline = false;
@@ -28,35 +31,25 @@ public class MainActivity extends BridgeActivity {
         showOffline();
     };
 
+    /** Works on the bundled offline page even when Capacitor's JS bridge is not injected. */
+    public class OfflineBridge {
+        @JavascriptInterface
+        public void retry() {
+            runOnUiThread(MainActivity.this::retryWebsite);
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(OfflineNavigation.class);
         bridgeBuilder.addWebViewListener(new WebViewListener() {
-            @Override
-            public void onPageStarted(WebView view) {
-                if (bridge == null) return;
-                String url = view.getUrl();
-                if (url != null && url.equals(bridge.getErrorUrl())) {
-                    startupPending = false;
-                    showingOffline = true;
-                    startupHandler.removeCallbacks(startupTimeout);
-                } else if (showingOffline) {
-                    startupPending = true;
-                    showingOffline = false;
-                    clearHistoryAfterRecovery = true;
-                    if (offlineBack != null) offlineBack.setEnabled(false);
-                    armStartupTimeout();
-                }
-            }
-
             @Override
             public void onPageLoaded(WebView view) {
                 if (bridge == null || view.getUrl() == null) return;
                 if (fallbackRequested && !view.getUrl().equals(bridge.getErrorUrl())) return;
                 startupHandler.removeCallbacks(startupTimeout);
                 startupPending = false;
-                showingOffline = bridge != null && view.getUrl() != null
-                    && view.getUrl().equals(bridge.getErrorUrl());
+                showingOffline = view.getUrl().equals(bridge.getErrorUrl());
                 if (showingOffline || clearHistoryAfterRecovery) {
                     // Remove navigation entries, not cookies/localStorage or the OAuth verifier.
                     view.clearHistory();
@@ -78,9 +71,28 @@ public class MainActivity extends BridgeActivity {
     protected void load() {
         super.load();
         if (bridge == null) return;
+        bridge.getWebView().addJavascriptInterface(new OfflineBridge(), "FlyNFeelOffline");
         // Keep Capacitor interception, bridge resets and OAuth intents. Override only
         // main-document failures; its stock handler can leave a raw error history entry.
         bridge.setWebViewClient(new BridgeWebViewClient(bridge) {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                // Use the starting URL: view.getUrl() can still report the offline page here,
+                // which previously left showingOffline stale and blocked the fallback.
+                if (url != null && url.equals(bridge.getErrorUrl())) {
+                    startupPending = false;
+                    showingOffline = true;
+                    startupHandler.removeCallbacks(startupTimeout);
+                } else if (showingOffline) {
+                    startupPending = true;
+                    showingOffline = false;
+                    clearHistoryAfterRecovery = true;
+                    if (offlineBack != null) offlineBack.setEnabled(false);
+                    armStartupTimeout();
+                }
+            }
+
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) showOffline();
@@ -102,14 +114,17 @@ public class MainActivity extends BridgeActivity {
     }
 
     public void showOffline() {
-        if (bridge == null || isFinishing() || fallbackRequested || showingOffline) return;
+        if (bridge == null || isFinishing() || fallbackRequested) return;
         String errorUrl = bridge.getErrorUrl();
         if (errorUrl == null) return;
+        WebView view = bridge.getWebView();
+        // Trust the flag only when the offline page is really what is on screen.
+        if (showingOffline && errorUrl.equals(view.getUrl()) && !startupPending) return;
         fallbackRequested = true;
+        showingOffline = false;
         startupPending = false;
         startupHandler.removeCallbacks(startupTimeout);
         if (offlineBack != null) offlineBack.setEnabled(true);
-        WebView view = bridge.getWebView();
         view.stopLoading();
         // Queue after the failing WebView callback, so its default error cannot win.
         view.post(() -> {
@@ -127,7 +142,7 @@ public class MainActivity extends BridgeActivity {
         clearHistoryAfterRecovery = true;
         if (offlineBack != null) offlineBack.setEnabled(false);
         armStartupTimeout();
-        bridge.getWebView().loadUrl("https://www.flynfeelholiday.com/");
+        bridge.getWebView().loadUrl(SITE);
     }
 
     private void armStartupTimeout() {
