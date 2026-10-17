@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.flynfeelholiday.app",
+      "sha256_cert_fingerprints": [
+        "79:93:9F:84:5D:F4:3D:67:90:92:6B:46:4C:49:F5:C3:4C:AE:6D:23:EA:F8:58:4A:73:AE:A2:D1:57:17:B7:CD"
+      ]
+    }
+  }
+]

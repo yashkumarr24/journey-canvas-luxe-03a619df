@@ -23,10 +23,17 @@ Payments and automatic booking stay disabled; the app adds no payment code.
 5. Test: home loads; back button goes back and leaves on home; airplane mode shows the offline banner / connection page and Try again recovers; a WhatsApp/maps link opens outside the app; tel:/mailto: open the phone's apps.
 6. Google sign-in and email links return into the app only after step "App Links" below is live; before that they finish in Chrome.
 
-## App Links (Android) — needs your values
-1. Play Console → app → Setup → App signing: copy the **SHA-256** of the app signing key (and of your upload/debug key for test builds: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
-2. Fill `mobile/well-known/assetlinks.template.json`, then it must be served at `https://www.flynfeelholiday.com/.well-known/assetlinks.json` (and on the apex) as `application/json`, no redirect.
-3. Verify on device: `adb shell pm get-app-links com.flynfeelholiday.app`.
+## App Links (Android)
+`public/.well-known/assetlinks.json` is the deployable verification file; Vercel explicitly sets `application/json`. It contains package `com.flynfeelholiday.app` and the supplied **currently installed local test build** certificate:
+`79:93:9F:84:5D:F4:3D:67:90:92:6B:46:4C:49:F5:C3:4C:AE:6D:23:EA:F8:58:4A:73:AE:A2:D1:57:17:B7:CD`.
+This is **not a confirmed Play Store signing certificate**. Add the real Play app-signing certificate before testing a Play-distributed build. The template is reference-only.
+
+After the connected Vercel deployment:
+1. Check `curl -i https://www.flynfeelholiday.com/.well-known/assetlinks.json`: expect HTTP 200, `application/json`, the supplied JSON, and no redirect or authentication.
+2. Run `adb shell pm verify-app-links --re-verify com.flynfeelholiday.app`; allow verification to finish, then run `adb shell pm get-app-links com.flynfeelholiday.app` and check that `www.flynfeelholiday.com` is verified.
+3. Test opening a www link and Google sign-in on the installed build. The shell loads www, so OAuth returns to `https://www.flynfeelholiday.com/auth/login?redirect=...`; the manifest accepts that host and the native handler preserves query/hash codes.
+
+On 2026-10-17, live www returned 404 before deployment; non-www returned HTTP 308 to the same path on www. The apex redirect is managed outside this repository's `vercel.json` and is unchanged. Android verification requires a direct response, so the apex is not established as verified even though the manifest declares both hosts. Serve JSON directly on apex through hosting domain configuration if apex verification is required; ordinary apex web links still redirect to www. Phone verification and a complete OAuth return remain separate checks.
 
 ## iOS (needs macOS + Xcode + Apple Developer account)
 1. On a Mac: `npm install && npx cap add ios && npx cap sync ios && npx cap open ios`.
