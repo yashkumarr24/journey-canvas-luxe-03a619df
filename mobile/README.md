@@ -15,6 +15,22 @@ Payments and automatic booking stay disabled; the app adds no payment code.
 - `android/` — generated Android project (App Links intent filter, `adjustResize`, icons/splash).
 - iOS project is NOT committed: it must be created on a Mac (below).
 
+## Mobile testing checklist (status)
+User-verified on a physical Android phone (OnePlus), build `8429d27`:
+- [x] Offline: opening Holidays shows the branded offline page directly and stays there.
+- [x] Try again while still offline returns to the branded page within 15 seconds, repeatedly, with no loop.
+- [x] Double-tapping Try again starts only one attempt.
+- [x] After reconnecting, Try again loads the live site and the saved login is kept.
+
+Still unverified:
+- [ ] Email confirmation and password-reset links opening in the app.
+- [ ] Additional devices / Android versions (only one phone tested).
+- [ ] Release signing (Play signing certificate and its App Links fingerprint).
+- [ ] Store readiness (Play Store listing/review; iOS not built).
+
+Separate and pending (not part of app testing): booking/payment testing (PayU paused)
+and TripJack certification.
+
 ## First Android test build (needs Android Studio)
 ### Offline navigation fix (full pages and client routes)
 - MainActivity now installs a BridgeWebViewClient subclass: Capacitor's local asset
