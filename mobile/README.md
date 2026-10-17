@@ -16,6 +16,70 @@ Payments and automatic booking stay disabled; the app adds no payment code.
 - iOS project is NOT committed: it must be created on a Mac (below).
 
 ## First Android test build (needs Android Studio)
+### Offline startup fix: sync, rebuild, and install over the existing app
+The launch splash now auto-hides natively after 3 seconds (plus its fade), whether
+or not the website's JavaScript runs. `src/lib/native/native-shell.ts` still hides
+it early after a successful website render. `server.errorPath: "index.html"`
+continues to load the entirely bundled `mobile/www/index.html` on a main-page
+network/HTTP failure; that error page is served locally by Capacitor, with no
+network assets required. Its plugin hide call is best effort, not a dependency.
+
+`MainActivity.java` adds a 15-second native deadline for cold startup and each
+manual Retry from the offline page. A stalled load is stopped once and sent to
+the local error page. Normal page navigation and warm Google login returns do
+not start this deadline. It is cancelled after page load, on the local error
+page, and when the activity is destroyed. Redirects do not extend the deadline.
+Retry navigates once to `https://www.flynfeelholiday.com/`; no connectivity event,
+timer or page load automatically retries. Its 8-second timer only re-enables the
+button if the current page remains visible.
+
+After the changes have reached your connected GitHub branch, in Windows PowerShell:
+```powershell
+# From your existing repository folder: obtain the newest changes first.
+git pull --ff-only
+bun install --frozen-lockfile
+bunx cap sync android
+bunx cap open android
+```
+In Android Studio let Gradle sync finish, select the same connected OnePlus phone,
+and press Run. Or, from the repository root:
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+Push-Location android
+.\gradlew.bat assembleDebug
+Pop-Location
+adb install -r android\app\build\outputs\apk\debug\app-debug.apk
+```
+Use JDK 21 and SDK 35. Use the **same signing key** as the currently installed
+app and retain the same package id. `adb install -r` updates in place; do not
+uninstall or clear app data. If Android reports a signature mismatch, stop and
+rebuild with the original key rather than uninstalling. A different signing
+certificate also needs its own App Links fingerprint. Merely deploying the
+website or reopening the old installed app will not update these native settings.
+
+Device checks still required (no phone testing is claimed here):
+1. Sign in while online; force-stop the app. Turn off Wi-Fi and mobile data, then
+   reopen: the logo must disappear and the offline page must appear, immediately
+   on a load failure or within the 15-second deadline if the request stalls.
+2. Remain offline for 30 seconds: no repeated loads. Tap Retry offline: return to
+   the offline page without getting stuck. Restore data and tap Retry without
+   restarting: the canonical website must load.
+3. Force-stop/reopen online: the previous session must remain. Complete Google
+   sign-in and test its App Link return, normal navigation, and Android back.
+4. Repeat offline startup with airplane mode and with a connected Wi-Fi network
+   that cannot reach the internet (stalled requests).
+
+Automated checks performed for this fix: 14 tests across
+`offline-startup.test.ts`, `link-policy.test.ts` and `assetlinks.test.ts`; 10 JVM
+checks against the actual `MainActivity.java` with simulated Android APIs
+(`python3 mobile/tests/check_android_startup.py`, JDK 21 required); `cap sync
+android` succeeded and the generated assets match the updated configuration and
+offline page. Browser simulation at 390×844 displayed the offline page without
+Capacitor, made no automatic navigation while offline, and Retry reached the
+actual canonical website after connectivity was restored, with no page errors.
+These checks do **not** compile an APK or verify native splash rendering, Google
+login, session persistence, or any behaviour on the OnePlus phone.
+
 1. Install Android Studio (with SDK 35) and JDK 21. Clone the repo, run `npm install`.
 2. `npx cap sync android`
 3. `npx cap open android` → let Gradle sync finish.

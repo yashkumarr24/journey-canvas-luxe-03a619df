@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import { KeyboardResize } from "@capacitor/keyboard";
 
 /**
  * Fly n Feel Android/iOS shell.
@@ -34,7 +35,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
-      launchAutoHide: false, // hidden by the site once it has rendered
+      launchAutoHide: true, // native deadline; never depend on the hosted site loading
       backgroundColor: "#F8F8F6",
       showSpinner: false,
       androidScaleType: "CENTER_INSIDE",
@@ -45,7 +46,7 @@ const config: CapacitorConfig = {
       backgroundColor: "#F8F8F6",
     },
     Keyboard: {
-      resize: "native",
+      resize: KeyboardResize.Native,
       resizeOnFullScreen: true,
     },
   },
