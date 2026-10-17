@@ -16,6 +16,8 @@ export const Route = createFileRoute("/holidays")({
       { name: "description", content: "Choose from curated India domestic getaways and tailor-made international holidays — all with hand-crafted itineraries and guaranteed best prices." },
       { property: "og:title", content: "Holiday Packages — Fly n Feel Holidays" },
       { property: "og:description", content: "Domestic and international holiday packages designed around you." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HolidaysPage,

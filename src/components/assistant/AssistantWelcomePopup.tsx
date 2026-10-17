@@ -12,6 +12,11 @@ const TYPE_MS = 45;
 export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }) {
   const [visible, setVisible] = useState(false);
   const [typed, setTyped] = useState("");
+  const [packageHost, setPackageHost] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setPackageHost(document.querySelector('[data-package-assistant]'));
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
@@ -78,6 +83,6 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
         </Button>
       </div>
     </div>,
-    document.body,
+    packageHost ?? document.body,
   );
 }
