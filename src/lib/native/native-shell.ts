@@ -20,6 +20,7 @@ import { SplashScreen } from "@capacitor/splash-screen";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 import { classifyLink, deepLinkPath, isRootPath } from "./link-policy";
+import { isNavigationNetworkError, showNativeOffline, retryNativeWebsite } from "./offline-navigation";
 
 let started = false;
 
@@ -66,6 +67,16 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
       const a = (event.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
       if (!a) return;
       const action = classifyLink(a.href, window.location.href);
+      if (Capacitor.getPlatform() === "android" && action === "in-app" && !navigator.onLine) {
+        const target = new URL(a.href);
+        const current = new URL(window.location.href);
+        if (target.pathname !== current.pathname || target.search !== current.search) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          void showNativeOffline();
+          return;
+        }
+      }
       if (action === "system-browser") {
         event.preventDefault();
         void Browser.open({ url: a.href });
@@ -76,6 +87,14 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
     },
     true,
   );
+  // Failed dynamic imports can escape route boundaries. Do not listen to image
+  // error events or wrap fetch: background requests must not replace the page.
+  if (Capacitor.getPlatform() === "android") {
+    window.addEventListener("unhandledrejection", (event) => {
+      if (/chunk|dynamically imported module|module script/i.test(String(event.reason)) &&
+          isNavigationNetworkError(event.reason)) void showNativeOffline();
+    });
+  }
   // window.open from scripts (e.g. maps, share links)
   const nativeOpen = window.open.bind(window);
   window.open = (url?: string | URL, target?: string, features?: string) => {
@@ -96,7 +115,10 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
     '<span>You\u2019re offline. Some pages may not load.</span><button type="button">Retry</button>';
   banner.querySelector("button")?.addEventListener("click", async () => {
     const s = await Network.getStatus();
-    if (s.connected) window.location.reload();
+    if (s.connected) {
+      if (Capacitor.getPlatform() === "android") void retryNativeWebsite();
+      else window.location.reload();
+    }
   });
   document.body.appendChild(banner);
   const show = (connected: boolean) => {

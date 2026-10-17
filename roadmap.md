@@ -1,4 +1,6 @@
 # Current tasks
+- [x] Fix offline full-page/client navigation and error-history handling; 20 JS tests, 21 JVM checks, browser simulation and cap sync passed.
+- [ ] Verify offline Holidays navigation, Back, Retry, session and Google login on the OnePlus phone (requires rebuild and phone).
 - [x] Fix Android offline startup: native auto-hide, bounded startup/Retry, bundled page; 14 JS tests, 10 JVM controller checks, browser offline/Retry checks, cap sync completed; rebuild guide in mobile/README.md.
 - [ ] Verify OnePlus offline splash/fallback, Retry recovery, persisted session and Google return after rebuilding (requires user's phone and original signing key).
 - [x] Restore Domestic/International choices in homepage Holidays; verified both catalogue links and mobile layout.

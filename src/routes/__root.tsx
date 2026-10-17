@@ -44,6 +44,10 @@ function ErrorComponent({ error, reset }: import("@tanstack/react-router").Error
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    if (!isNativeApp()) return;
+    void import("../lib/native/offline-navigation").then((m) => {
+      if (m.isNavigationNetworkError(error)) void m.showNativeOffline();
+    });
   }, [error]);
 
   return (
@@ -140,9 +144,17 @@ function RootComponent() {
   // on demand, so the website never downloads or runs it.
   useEffect(() => {
     if (!isNativeApp()) return;
+    const unsubscribe = router.subscribe("onLoad", () => {
+      const errors = router.state.matches.filter((match) => match.status === "error").map((match) => match.error);
+      if (!errors.length) return;
+      void import("../lib/native/offline-navigation").then((m) => {
+        if (errors.some(m.isNavigationNetworkError)) void m.showNativeOffline();
+      });
+    });
     void import("../lib/native/native-shell").then((m) =>
       m.startNativeShell((path) => void router.navigate({ href: path })),
     );
+    return unsubscribe;
   }, [router]);
 
   return (

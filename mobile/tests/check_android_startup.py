@@ -23,10 +23,27 @@ public class Handler {
 public class WebView {
   public String url = "https://www.flynfeelholiday.com/";
   public int stops = 0; public int loads = 0;
+  public int clears = 0; public com.getcapacitor.BridgeWebViewClient client;
   public String getUrl() { return url; }
   public void stopLoading() { stops++; }
   public void loadUrl(String next) { url = next; loads++; }
+  public void clearHistory() { clears++; }
+  public boolean post(Runnable r) { r.run(); return true; }
 }""",
+    "android/webkit/WebResourceRequest.java": "package android.webkit; public interface WebResourceRequest { boolean isForMainFrame(); }",
+    "android/webkit/WebResourceError.java": "package android.webkit; public class WebResourceError {}",
+    "android/webkit/WebResourceResponse.java": "package android.webkit; public class WebResourceResponse {}",
+    "androidx/activity/OnBackPressedCallback.java": "package androidx.activity; public abstract class OnBackPressedCallback { public boolean enabled; public OnBackPressedCallback(boolean e) { enabled=e; } public void setEnabled(boolean e) { enabled=e; } public abstract void handleOnBackPressed(); }",
+    "com/getcapacitor/BridgeWebViewClient.java": """package com.getcapacitor;
+import android.webkit.*;
+public class BridgeWebViewClient {
+  protected BridgeActivity.Bridge bridge;
+  public BridgeWebViewClient(BridgeActivity.Bridge b) { bridge=b; }
+  public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {}
+  public void onReceivedHttpError(WebView v, WebResourceRequest r, WebResourceResponse e) {}
+  public void onPageFinished(WebView v, String u) { bridge.listener.onPageLoaded(v); }
+}""",
+    "com/flynfeelholiday/app/OfflineNavigation.java": "package com.flynfeelholiday.app; public class OfflineNavigation {}",
     "com/getcapacitor/WebViewListener.java": """package com.getcapacitor;
 import android.webkit.WebView;
 public abstract class WebViewListener {
@@ -37,7 +54,17 @@ public abstract class WebViewListener {
 import android.os.Bundle; import android.webkit.WebView;
 public class BridgeActivity {
   protected Bridge bridge; protected Builder bridgeBuilder = new Builder();
-  public void onCreate(Bundle state) { bridge = new Bridge(); }
+  public void onCreate(Bundle state) { load(); }
+  protected void load() { bridge = new Bridge(); bridge.listener=bridgeBuilder.listener; }
+  public void registerPlugin(Class<?> p) {}
+  public boolean finished = false;
+  public void finish() { finished=true; }
+  public Dispatcher dispatcher=new Dispatcher();
+  public Dispatcher getOnBackPressedDispatcher() { return dispatcher; }
+  public static class Dispatcher {
+    public androidx.activity.OnBackPressedCallback callback;
+    public void addCallback(Object owner, androidx.activity.OnBackPressedCallback c) { callback=c; }
+  }
   public void onDestroy() {}
   public boolean isFinishing() { return false; }
   public Bridge getBridge() { return bridge; }
@@ -47,9 +74,11 @@ public class BridgeActivity {
     public Builder addWebViewListener(WebViewListener value) { listener = value; return this; }
   }
   public static class Bridge {
+    WebViewListener listener;
     WebView view = new WebView();
     public String getErrorUrl() { return "https://localhost/index.html"; }
     public WebView getWebView() { return view; }
+    public void setWebViewClient(BridgeWebViewClient c) { view.client=c; }
   }
 }""",
     "StartupChecks.java": """import android.os.Handler;
@@ -77,7 +106,34 @@ public class StartupChecks {
     a = start(); a.onDestroy(); check(Handler.pending == null, "destroy cancels pending deadline");
     a = start(); v = a.getBridge().getWebView(); v.url = a.getBridge().getErrorUrl();
     a.listener().onPageStarted(v); check(Handler.pending == null, "immediate native load error cancels startup timeout");
-    System.out.println("10 native startup controller checks passed (JVM fakes; not a device test).");
+    a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
+    android.webkit.WebResourceRequest image = () -> false;
+    android.webkit.WebResourceRequest document = () -> true;
+    v.client.onReceivedError(v, image, new android.webkit.WebResourceError());
+    check(v.loads == 0, "failed image never replaces page");
+    v.client.onReceivedHttpError(v, image, new android.webkit.WebResourceResponse());
+    check(v.loads == 0, "HTTP image error never replaces page");
+    v.url = "https://www.flynfeelholiday.com/holidays";
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    check(v.loads == 1 && v.url.equals(a.getBridge().getErrorUrl()), "warm main-frame failure loads branded page directly");
+    v.client.onReceivedError(v, document, new android.webkit.WebResourceError());
+    check(v.loads == 1, "repeated error cannot loop");
+    v.client.onPageFinished(v, "https://www.flynfeelholiday.com/holidays");
+    check(v.clears == 0 && a.dispatcher.callback.enabled, "failed-document finish cannot cancel fallback");
+    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    check(v.clears == 1, "offline completion removes raw error history");
+    a.dispatcher.callback.handleOnBackPressed(); check(a.finished, "offline Back exits instead of revisiting raw error");
+    a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v);
+    v.client.onReceivedHttpError(v, document, new android.webkit.WebResourceResponse());
+    check(v.loads == 1, "main-frame HTTP failure loads branded page");
+    a.listener().onPageStarted(v); a.listener().onPageLoaded(v);
+    v.url = "https://www.flynfeelholiday.com/"; a.listener().onPageStarted(v);
+    check(Handler.delay == 15000 && !a.dispatcher.callback.enabled, "retry bounded and normal Back restored");
+    a.listener().onPageLoaded(v);
+    check(v.clears == 2 && Handler.pending == null, "successful recovery removes offline history without touching storage");
+    a = start(); v = a.getBridge().getWebView(); a.listener().onPageLoaded(v); a.showOffline();
+    check(v.loads == 1, "client navigation plugin uses same native fallback");
+    System.out.println("21 native offline controller checks passed (JVM fakes; not a device test).");
   }
 }""",
 }
