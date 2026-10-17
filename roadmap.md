@@ -1,4 +1,5 @@
 # Current tasks
+- [x] Fix frontend large-text wrapping, navbar visibility, 48px mobile controls and keyboard focus; 32 page/width/text browser cases plus keyboard/assistant overlap checks passed, 26 regression tests passed; no TalkBack or physical-device verification. See FRONTEND_ACCESSIBILITY_VERIFICATION.md.
 - [x] Fix package/nav/assistant overflow and restore the six original domestic photos; 40 browser checks at 360/390/430/768/1280, 32 tests pass; browser evidence only, no new physical-phone verification. See PACKAGE_DISPLAY_VERIFICATION.md.
 - [ ] Investigate any remaining private /packages/* image failure using an exact affected live URL and failed signed-image response; no storage/server changes authorized or made.
 - [x] Fix offline full-page/client navigation and error-history handling; 20 JS tests, 21 JVM checks, browser simulation and cap sync passed.

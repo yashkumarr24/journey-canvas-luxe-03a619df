@@ -36,7 +36,7 @@ export function AssistantDrawer({
             Describe your trip and view validated flight and hotel results beside the conversation.
           </SheetDescription>
         </div>
-        <aside className="flex h-[64dvh] min-h-[520px] flex-col border-b border-border bg-background lg:h-dvh lg:min-h-0 lg:border-b-0 lg:border-r">
+        <aside className="flex h-[64dvh] min-h-[520px] flex-col border-b border-border bg-background [&_header]:pr-20 lg:h-dvh lg:min-h-0 lg:border-b-0 lg:border-r lg:[&_header]:pr-5">
           <div className="min-h-0 flex-1">
             <AssistantChat
               messages={assistant.messages}

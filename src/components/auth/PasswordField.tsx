@@ -11,6 +11,7 @@ import { useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface PasswordFieldProps {
   label: string;
@@ -52,17 +53,18 @@ export function PasswordField({
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
-          className="pr-11"
+          className="pr-12"
         />
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-pressed={visible}
           aria-label={visible ? "Hide password" : "Show password"}
-          className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-md p-0 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {visible ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-        </button>
+        </Button>
       </div>
       {hint ? (
         <p id={hintId} className="text-xs text-muted-foreground">

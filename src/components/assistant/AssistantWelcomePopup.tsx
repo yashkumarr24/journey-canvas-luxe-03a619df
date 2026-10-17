@@ -62,11 +62,11 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
         <Button variant="ghost"
           type="button"
           onClick={() => { setVisible(false); onOpenChat(); }}
-          className="h-14 min-w-0 justify-start gap-3 rounded-full px-3 py-3 text-left focus-visible:ring-gold sm:px-6"
+          className="min-h-14 min-w-0 justify-start gap-3 rounded-full px-3 py-3 text-left focus-visible:ring-gold sm:px-6"
         >
           <Sparkle className="size-5 shrink-0 fill-foreground text-foreground" aria-hidden="true" />
           <span className="min-w-0">
-            <span className="block truncate text-base font-medium text-foreground/75">
+            <span className="block whitespace-normal break-words text-base font-medium text-foreground/75">
               {typed}
               <span aria-hidden="true" className="ai-caret">|</span>
             </span>
@@ -77,7 +77,7 @@ export function AssistantWelcomePopup({ onOpenChat }: { onOpenChat: () => void }
           type="button"
           onClick={() => setVisible(false)}
           aria-label="Close Ask AI suggestion"
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          className="inline-flex size-12 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           <X className="size-4" />
         </Button>

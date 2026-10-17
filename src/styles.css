@@ -334,3 +334,34 @@ html:has(body.assistant-suggestion-visible) {
 @media (prefers-reduced-motion: reduce) {
   .ai-unroll, .ai-caret { animation: none; }
 }
+
+/* Visible keyboard focus for links and controls outside the Button primitive. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Phone controls grow with text, rather than clipping inside fixed heights. */
+@media (max-width: 767px) {
+  body :where(button, [role="button"], [role="tab"], [role="menuitem"]):not(.native-offline *) {
+    min-width: 48px;
+    min-height: 48px;
+    height: auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  body :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select) {
+    min-height: 48px;
+    height: max(48px, 2.5em);
+  }
+  header > nav a {
+    min-height: 48px;
+  }
+  header > nav > a:first-child {
+    display: flex;
+    align-items: center;
+  }
+  header > nav > div > a {
+    min-width: 48px;
+  }
+}

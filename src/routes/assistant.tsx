@@ -94,6 +94,7 @@ function AssistantPage() {
             onClick={() => setPanelCompact((value) => !value)}
             className="absolute -right-4 top-5 z-10 hidden rounded-full bg-background lg:inline-flex"
             title={panelCompact ? "Expand assistant" : "Collapse assistant"}
+            aria-label={panelCompact ? "Expand assistant" : "Collapse assistant"}
           >
             {panelCompact ? <ChevronRight /> : <ChevronLeft />}
           </Button>
