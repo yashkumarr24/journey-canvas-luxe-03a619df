@@ -39,6 +39,15 @@
         // Prefer the native retry lifecycle (clears stale flags, arms the 15s
         // deadline, and shows this page again on failure). Fall back to a plain
         // navigation when the Capacitor bridge is absent on the error page.
+        // 1) Native interface injected by MainActivity: present even when the
+        //    Capacitor bridge is not injected into this error page.
+        try {
+          if (window.FlyNFeelOffline && typeof window.FlyNFeelOffline.retry === "function") {
+            window.FlyNFeelOffline.retry();
+            return;
+          }
+        } catch (e) {}
+        // 2) Capacitor plugin, when the bridge is present.
         try {
           var nav = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.OfflineNavigation;
           if (nav && typeof nav.retry === "function") {
@@ -46,6 +55,7 @@
             return;
           }
         } catch (e) {}
+        // 3) Older app builds: plain navigation (native error handling still applies).
         window.location.replace(SITE);
       });
       // Best effort only: Capacitor may not inject plugins on an error page.
