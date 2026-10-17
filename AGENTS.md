@@ -1,7 +1,7 @@
 # Project architecture rules
 
 - Use numbered additive DB migrations; preserve catalogue sync and data.
-- Frontend buttons wrap and grow; global phone target/focus CSS excludes native offline controls to preserve recovery and auth.
+- Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
 - Keep homepage search modes in the presentation layer and hand validated flight/hotel requests to existing search flows; this protects provider and booking logic from navigation redesigns.
 - Hotel Book/Details/Confirm/Cancel live in backend services/hotel_booking.py with compare-and-set status transitions on hotel_bookings (0018); prevents duplicate provider bookings and keeps provider handles server-side.
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
