@@ -20,7 +20,7 @@ import { SplashScreen } from "@capacitor/splash-screen";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
 import { classifyLink, deepLinkPath, isRootPath } from "./link-policy";
-import { isNavigationNetworkError, showNativeOffline, retryNativeWebsite } from "./offline-navigation";
+import { isNavigationNetworkError, showNativeOffline } from "./offline-navigation";
 
 let started = false;
 
@@ -115,10 +115,8 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
     '<span>You\u2019re offline. Some pages may not load.</span><button type="button">Retry</button>';
   banner.querySelector("button")?.addEventListener("click", async () => {
     const s = await Network.getStatus();
-    if (s.connected) {
-      if (Capacitor.getPlatform() === "android") void retryNativeWebsite();
-      else window.location.reload();
-    }
+    // Website pages reload normally; native retry is reserved for the offline page.
+    if (s.connected) window.location.reload();
   });
   document.body.appendChild(banner);
   const show = (connected: boolean) => {
