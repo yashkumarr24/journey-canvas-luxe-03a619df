@@ -51,6 +51,7 @@ public class MainActivity extends BridgeActivity {
 
             @Override
             public void onPageLoaded(WebView view) {
+                if (bridge == null || view.getUrl() == null) return;
                 if (fallbackRequested && !view.getUrl().equals(bridge.getErrorUrl())) return;
                 startupHandler.removeCallbacks(startupTimeout);
                 startupPending = false;
@@ -114,6 +115,16 @@ public class MainActivity extends BridgeActivity {
         view.post(() -> {
             if (!isFinishing()) view.loadUrl(errorUrl);
         });
+    }
+
+    public void retryWebsite() {
+        if (bridge == null || isFinishing() || startupPending || fallbackRequested) return;
+        startupPending = true;
+        showingOffline = false;
+        clearHistoryAfterRecovery = true;
+        if (offlineBack != null) offlineBack.setEnabled(false);
+        armStartupTimeout();
+        bridge.getWebView().loadUrl("https://www.flynfeelholiday.com/");
     }
 
     private void armStartupTimeout() {

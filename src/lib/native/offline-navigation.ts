@@ -1,7 +1,11 @@
 import { registerPlugin } from "@capacitor/core";
 
-const offlineNavigation = registerPlugin<{ showOffline(): Promise<void> }>("OfflineNavigation");
+const offlineNavigation = registerPlugin<{ showOffline(): Promise<void>; retry(): Promise<void> }>("OfflineNavigation");
 let requested = false;
+
+export async function retryNativeWebsite(): Promise<void> {
+  try { await offlineNavigation.retry(); } catch { /* Older shells remain on the current page. */ }
+}
 
 /** Only route-load/network errors, never resource element errors or business responses. */
 export function isNavigationNetworkError(error: unknown): boolean {

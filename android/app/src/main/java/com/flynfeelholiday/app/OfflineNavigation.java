@@ -8,6 +8,18 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "OfflineNavigation")
 public class OfflineNavigation extends Plugin {
     @PluginMethod
+    public void retry(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).retryWebsite();
+                call.resolve();
+            } else {
+                call.reject("Offline navigation unavailable");
+            }
+        });
+    }
+
+    @PluginMethod
     public void showOffline(PluginCall call) {
         getActivity().runOnUiThread(() -> {
             if (getActivity() instanceof MainActivity) {
