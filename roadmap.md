@@ -1,4 +1,5 @@
 # Current tasks
+- [ ] Fix Android offline startup with bounded native splash/startup waits and a bundled manual Retry page; verify automated checks and document rebuild/device checks.
 - [x] Restore Domestic/International choices in homepage Holidays; verified both catalogue links and mobile layout.
 - [x] Complete the AI paper-roll outline in brand red with subtle glow; verified appearance and removed persistent clipping.
 - [x] Serve supplied Android test certificate and check app-link configuration (local anonymous HTTP 200 JSON, no redirect; eight tests pass).

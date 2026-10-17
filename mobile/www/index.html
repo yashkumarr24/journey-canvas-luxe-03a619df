@@ -32,12 +32,20 @@
       var SITE = "https://www.flynfeelholiday.com/";
       var btn = document.getElementById("retry");
       btn.addEventListener("click", function () {
+        if (btn.disabled) return;
         btn.disabled = true; btn.textContent = "Connecting…";
-        window.location.replace(SITE);
+        // Manual retry only. The native startup deadline returns here if it fails.
         setTimeout(function () { btn.disabled = false; btn.textContent = "Try again"; }, 8000);
+        window.location.replace(SITE);
       });
-      // Hide the native splash if the plugin bridge is present on this page.
-      try { window.Capacitor && window.Capacitor.Plugins.SplashScreen.hide(); } catch (e) {}
+      // Best effort only: Capacitor may not inject plugins on an error page.
+      // Native launchAutoHide is the independent splash dismissal guarantee.
+      try {
+        var splash = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen;
+        if (splash && typeof splash.hide === "function") {
+          Promise.resolve(splash.hide()).catch(function () {});
+        }
+      } catch (e) {}
     </script>
   </body>
 </html>
