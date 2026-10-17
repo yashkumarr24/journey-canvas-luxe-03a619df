@@ -37,7 +37,7 @@ export function AssistantChat({ messages, pending, error, suggestions, suggested
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Compass className="size-4" /></span>
           <div className="min-w-0"><p className="truncate font-display text-lg">Trip finder</p><p className="truncate text-xs text-muted-foreground">{isDemo ? "Demo mode · guided search" : "Flights and stays from live results"}</p></div>
         </div>
-        <Button variant="ghost" size="icon-sm" onClick={onReset} title="New trip"><RotateCcw /></Button>
+        <Button variant="ghost" size="icon-sm" onClick={onReset} title="New trip" aria-label="New trip"><RotateCcw /></Button>
       </header>
 
       <Conversation className="min-h-0">
@@ -61,7 +61,7 @@ export function AssistantChat({ messages, pending, error, suggestions, suggested
 
       <div className="border-t border-border p-3 sm:p-4">
         <PromptInput onSubmit={({ text }) => { const trimmed = text.trim(); if (!trimmed || pending) return; setValue(""); onSend(trimmed); }} className="rounded-lg border-border bg-card shadow-none">
-          <PromptInputTextarea ref={inputRef} value={value} onChange={(event) => setValue(event.target.value.slice(0, MAX_ASSISTANT_MESSAGE_LENGTH))} placeholder="Ask for flights, stays, timing or price…" className="min-h-20" />
+          <PromptInputTextarea ref={inputRef} value={value} onChange={(event) => setValue(event.target.value.slice(0, MAX_ASSISTANT_MESSAGE_LENGTH))} aria-label="Your travel request" placeholder="Ask for flights, stays, timing or price…" className="min-h-20" />
           <PromptInputFooter className="justify-end"><PromptInputSubmit status={pending ? "submitted" : "ready"} disabled={pending || value.trim().length === 0} /></PromptInputFooter>
         </PromptInput>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">Search details are checked before any provider request.</p>

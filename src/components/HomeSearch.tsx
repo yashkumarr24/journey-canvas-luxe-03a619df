@@ -66,13 +66,13 @@ export function HomeSearch() {
       <div className="grid grid-cols-3 gap-px border border-foreground/10 bg-foreground/10 sm:grid-cols-6">
         <div role="tablist" aria-label="Booking options" className="contents">
           {services.map(({ label, value, icon: Icon }) => (
-            <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group h-14 min-w-0 rounded-none px-2 text-xs uppercase sm:h-16 sm:gap-2 sm:text-sm ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
+            <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group min-h-14 min-w-0 flex-col rounded-none px-2 text-xs uppercase sm:min-h-16 sm:flex-row sm:gap-2 sm:text-sm ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
               <Icon className={`size-5 shrink-0 ${service === value ? "text-gold" : ""}`} aria-hidden="true" />{label}
             </Button>
           ))}
         </div>
         {enquiryServices.map(({ label, icon: Icon }) => (
-          <Button key={label} type="button" variant="ghost" onClick={() => openEnquiry(label)} className="h-14 min-w-0 rounded-none bg-background px-2 text-xs uppercase text-muted-foreground hover:bg-card hover:text-foreground sm:h-16 sm:gap-2 sm:text-sm">
+          <Button key={label} type="button" variant="ghost" onClick={() => openEnquiry(label)} className="min-h-14 min-w-0 flex-col rounded-none bg-background px-2 text-xs uppercase text-muted-foreground hover:bg-card hover:text-foreground sm:min-h-16 sm:flex-row sm:gap-2 sm:text-sm">
             <Icon className="size-5 shrink-0" aria-hidden="true" />{label}
           </Button>
         ))}
