@@ -118,9 +118,12 @@ public class MainActivity extends BridgeActivity {
     }
 
     public void retryWebsite() {
-        if (bridge == null || isFinishing() || startupPending || fallbackRequested) return;
-        startupPending = true;
+        if (bridge == null || isFinishing() || startupPending) return;
+        // Clear stale flags first: a failed retry must be allowed to reach
+        // showOffline() again, so the branded page returns within the deadline.
+        fallbackRequested = false;
         showingOffline = false;
+        startupPending = true;
         clearHistoryAfterRecovery = true;
         if (offlineBack != null) offlineBack.setEnabled(false);
         armStartupTimeout();

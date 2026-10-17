@@ -36,6 +36,16 @@
         btn.disabled = true; btn.textContent = "Connecting…";
         // Manual retry only. The native startup deadline returns here if it fails.
         setTimeout(function () { btn.disabled = false; btn.textContent = "Try again"; }, 8000);
+        // Prefer the native retry lifecycle (clears stale flags, arms the 15s
+        // deadline, and shows this page again on failure). Fall back to a plain
+        // navigation when the Capacitor bridge is absent on the error page.
+        try {
+          var nav = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.OfflineNavigation;
+          if (nav && typeof nav.retry === "function") {
+            Promise.resolve(nav.retry()).catch(function () { window.location.replace(SITE); });
+            return;
+          }
+        } catch (e) {}
         window.location.replace(SITE);
       });
       // Best effort only: Capacitor may not inject plugins on an error page.
