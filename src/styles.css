@@ -91,6 +91,7 @@
   --shadow-luxe: 0 30px 80px -30px rgba(17, 17, 17, 0.18), 0 8px 24px -12px rgba(17, 17, 17, 0.08);
   --shadow-soft: 0 20px 60px -28px rgba(17, 17, 17, 0.12);
   --shadow-card: 0 1px 2px rgba(17, 17, 17, 0.04), 0 8px 24px -12px rgba(17, 17, 17, 0.08);
+  --shadow-hero-text: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
 .dark {
@@ -295,4 +296,41 @@ header:has(> nav) > nav {
   background: var(--primary-foreground);
   color: var(--primary);
   font-weight: 600;
+}
+
+/* Package columns shrink; source tables keep an independent scrollport. */
+.package-detail section :where(div, aside, dl, ul, li, p, h2, h3, dd) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.package-table {
+  overscroll-behavior-inline: contain;
+  scrollbar-width: auto;
+  border-bottom: 2px solid var(--border);
+}
+.package-table table { min-width: 640px; }
+.package-table :where(th, td) { overflow-wrap: break-word; }
+[data-package-assistant] .assistant-suggestion {
+  position: relative;
+  inset: auto;
+  width: calc(100% - 3rem);
+  max-width: 36rem;
+  margin: 1.5rem auto 0;
+}
+.package-table:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.assistant-suggestion {
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  max-width: calc(100% - 1.5rem);
+}
+body.assistant-suggestion-visible main {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+html:has(body.assistant-suggestion-visible) {
+  scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-unroll, .ai-caret { animation: none; }
 }

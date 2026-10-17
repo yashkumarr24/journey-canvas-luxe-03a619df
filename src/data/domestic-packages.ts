@@ -1,12 +1,12 @@
 // Domestic holiday packages transcribed from the FNF Word quotations
 // (Andaman, Gangtok & Darjeeling, Goa, Kashmir, Kerala, Uttarakhand).
 // Source wording and amounts are kept as written; missing details are left out.
-import andamanImg from "@/assets/domestic/andaman-stock.jpg.asset.json";
-import gangtokImg from "@/assets/domestic/gangtok-stock.jpg.asset.json";
-import goaImg from "@/assets/domestic/goa-stock.jpg.asset.json";
-import kashmirImg from "@/assets/domestic/kashmir-stock.jpg.asset.json";
-import keralaImg from "@/assets/domestic/kerala-stock.jpg.asset.json";
-import uttarakhandImg from "@/assets/domestic/uttarakhand-stock.jpg.asset.json";
+import andamanImg from "@/assets/domestic/andaman-stock.webp";
+import gangtokImg from "@/assets/domestic/gangtok-stock.webp";
+import goaImg from "@/assets/domestic/goa-stock.webp";
+import kashmirImg from "@/assets/domestic/kashmir-stock.webp";
+import keralaImg from "@/assets/domestic/kerala-stock.webp";
+import uttarakhandImg from "@/assets/domestic/uttarakhand-stock.webp";
 
 export type Fact = { label: string; value: string };
 export type PackageOption = {
@@ -47,7 +47,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "andaman",
     name: "Andaman Islands",
     region: "Andaman & Nicobar",
-    img: andamanImg.url,
+    img: andamanImg,
     packages: [
       {
         slug: "andaman-5n-6d",
@@ -201,7 +201,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "gangtok-darjeeling",
     name: "Gangtok with Darjeeling",
     region: "Sikkim & West Bengal",
-    img: gangtokImg.url,
+    img: gangtokImg,
     packages: [
       {
         slug: "gangtok-darjeeling-5n-6d",
@@ -396,7 +396,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "goa",
     name: "Goa",
     region: "Goa",
-    img: goaImg.url,
+    img: goaImg,
     packages: [
       {
         slug: "goa-2n-3d-group",
@@ -549,7 +549,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "kashmir",
     name: "Kashmir",
     region: "Jammu & Kashmir",
-    img: kashmirImg.url,
+    img: kashmirImg,
     packages: [
       {
         slug: "kashmir-4n-5d",
@@ -775,7 +775,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "kerala",
     name: "Kerala",
     region: "Kerala",
-    img: keralaImg.url,
+    img: keralaImg,
     packages: [
       {
         slug: "kerala-5n-6d",
@@ -999,7 +999,7 @@ export const domesticPackageDestinations: DomesticPackageDestination[] = [
     slug: "uttarakhand",
     name: "Uttarakhand",
     region: "Uttarakhand",
-    img: uttarakhandImg.url,
+    img: uttarakhandImg,
     packages: [
       {
         slug: "rishikesh-nainital-jim-corbett-7n-8d",

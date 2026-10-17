@@ -1,4 +1,6 @@
 # Current tasks
+- [x] Fix package/nav/assistant overflow and restore the six original domestic photos; 40 browser checks at 360/390/430/768/1280, 32 tests pass; browser evidence only, no new physical-phone verification. See PACKAGE_DISPLAY_VERIFICATION.md.
+- [ ] Investigate any remaining private /packages/* image failure using an exact affected live URL and failed signed-image response; no storage/server changes authorized or made.
 - [x] Fix offline full-page/client navigation and error-history handling; 20 JS tests, 21 JVM checks, browser simulation and cap sync passed.
 - [x] Offline Holidays fallback, repeated offline Retry, double-tap and online recovery with saved login — user-verified on a physical Android phone, build 8429d27.
 - [x] Fix Android offline startup: native auto-hide, bounded startup/Retry, bundled page; 14 JS tests, 10 JVM controller checks, browser offline/Retry checks, cap sync completed; rebuild guide in mobile/README.md.
