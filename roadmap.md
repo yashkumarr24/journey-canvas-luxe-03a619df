@@ -1,5 +1,5 @@
 # Current tasks
-- [ ] Serve supplied Android test certificate and check app-link configuration.
+- [x] Serve supplied Android test certificate and check app-link configuration (local anonymous HTTP 200 JSON, no redirect; eight tests pass).
 - [ ] Verify live Vercel response and Android OAuth return (blocked on deployment and a test phone).
 - [x] Refresh Fly n Feel header and left slide-out menu without replacing branding.
 - [x] Switch Flights, Hotels, and Holidays forms on the homepage; preserve existing booking logic and routes.
