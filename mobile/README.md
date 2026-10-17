@@ -42,8 +42,14 @@ must appear without Back. Back from it must exit, not show Android's error page.
 Restore connectivity and tap Retry; verify the home page, saved session, Back,
 and another Google login. Block only an image while online: keep the current page.
 Repeat on a connected Wi-Fi network with no internet, including stalled Retry.
-Automated results for this change are recorded below after verification; they
-do not establish behaviour on a OnePlus phone or verify a real Google exchange.
+Automated checks: 20 JS tests passed (startup/Retry, route errors, native link
+handling, Google external links and App Links), plus 21 checks compiling the actual
+MainActivity with JVM Android/WebView fakes. Capacitor sync succeeded. At 390×844,
+a browser simulation using the real native shell click handler and a fake plugin
+showed the bundled page directly, retained a non-secret localStorage marker,
+kept the website after an image failure and reached the canonical site on Retry,
+with no page errors. This did not compile an APK, run on OnePlus, verify a real
+login session or complete Google sign-in; those remain real-device checks.
 
 ### Offline startup fix: sync, rebuild, and install over the existing app
 The launch splash now auto-hides natively after 3 seconds (plus its fade), whether

@@ -1,4 +1,4 @@
-import { registerPlugin } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 const offlineNavigation = registerPlugin<{ showOffline(): Promise<void>; retry(): Promise<void> }>("OfflineNavigation");
 let requested = false;
@@ -14,7 +14,7 @@ export function isNavigationNetworkError(error: unknown): boolean {
 }
 
 export async function showNativeOffline(): Promise<void> {
-  if (requested) return;
+  if (Capacitor.getPlatform() !== "android" || requested) return;
   requested = true;
   try {
     await offlineNavigation.showOffline();
