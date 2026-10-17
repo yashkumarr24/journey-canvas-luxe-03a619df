@@ -29,9 +29,10 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         bridgeBuilder.addWebViewListener(new WebViewListener() {
             @Override
-            public void onPageStarted(WebView view, String url) {
+            public void onPageStarted(WebView view) {
                 if (bridge == null) return;
-                if (url.equals(bridge.getErrorUrl())) {
+                String url = view.getUrl();
+                if (url != null && url.equals(bridge.getErrorUrl())) {
                     startupPending = false;
                     showingOffline = true;
                     startupHandler.removeCallbacks(startupTimeout);
