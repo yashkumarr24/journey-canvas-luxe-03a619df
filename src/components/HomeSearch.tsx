@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BedDouble, Car, FileText, Gift, PlaneTakeoff, Plus, Search, Ship, Trash2 } from "lucide-react";
+import { ArrowRight, BedDouble, Car, FileText, Gift, Globe2, MapPinned, PlaneTakeoff, Plus, Search, Ship, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,6 @@ import { hotelSearchQueryOptions, toHotelSearchRequest, type HotelSearchFormValu
 import { toBookingError } from "@/lib/booking-api";
 import { cabinClassOptions, defaultFlightSearchValues, flightSearchSchema, type FlightSearchFormValues } from "@/lib/flight-search";
 import type { HotelSearchRequest } from "@/types/booking";
-import { destinations } from "@/data/destinations";
 
 type Service = "flights" | "hotels" | "holidays";
 type FlightMode = FlightSearchFormValues["tripType"] | "multicity";
@@ -49,9 +48,6 @@ export function HomeSearch() {
   const [error, setError] = useState<string | null>(null);
   const [hotelRequest, setHotelRequest] = useState<HotelSearchRequest | null>(null);
   const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
-  const [holidayDestination, setHolidayDestination] = useState("");
-  const [holidaySearched, setHolidaySearched] = useState(false);
-  const matchingHolidays = destinations.filter((item) => `${item.name} ${item.country} ${item.region}`.toLowerCase().includes(holidayDestination.trim().toLowerCase()));
   const patch = (next: Partial<FlightSearchFormValues>) => setValues((current) => ({ ...current, ...next }));
   const submitFlight = (event: FormEvent) => {
     event.preventDefault();
@@ -123,10 +119,14 @@ export function HomeSearch() {
           </div>
         )}
         {service === "hotels" && <div className="[&_form]:border-0 [&_form]:p-0 [&_form]:shadow-none"><HotelSearchForm onSearch={submitHotel} isSearching={hotelQuery.isFetching} /></div>}
-        {service === "holidays" && <form onSubmit={(event) => { event.preventDefault(); setHolidaySearched(true); }} className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <SearchField label="Where would you like to go?"><Input aria-label="Holiday destination" placeholder="Kashmir, Dubai, Maldives…" value={holidayDestination} onChange={(event) => { setHolidayDestination(event.target.value); setHolidaySearched(false); }} /></SearchField>
-          <Button type="submit" size="lg" className="min-h-14 bg-gold px-6 text-primary-foreground hover:bg-primary"><Search className="size-4" />Explore holidays</Button>
-        </form>}
+        {service === "holidays" && <div className="grid gap-3 sm:grid-cols-2">
+          <Button asChild variant="outline" className="h-auto min-h-20 justify-start gap-4 whitespace-normal rounded-none border-border px-5 py-4 text-left hover:border-gold">
+            <Link to="/domestic"><MapPinned className="size-6 shrink-0 text-gold" aria-hidden="true" /><span className="flex-1"><strong className="block text-base font-medium">Domestic Holidays</strong><span className="mt-1 block text-xs text-muted-foreground">India’s signature destinations</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
+          </Button>
+          <Button asChild variant="outline" className="h-auto min-h-20 justify-start gap-4 whitespace-normal rounded-none border-border px-5 py-4 text-left hover:border-gold">
+            <Link to="/international"><Globe2 className="size-6 shrink-0 text-gold" aria-hidden="true" /><span className="flex-1"><strong className="block text-base font-medium">International Holidays</strong><span className="mt-1 block text-xs text-muted-foreground">Escapes around the world</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
+          </Button>
+        </div>}
       </div>
       {service === "hotels" && hotelRequest && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">
         {useMockHotels && <p className="text-sm text-muted-foreground">Preview mode · Sample stays only; no reservation is made.</p>}
@@ -134,7 +134,6 @@ export function HomeSearch() {
         {hotelQuery.isError && <p role="alert" className="text-sm text-destructive">{toBookingError(hotelQuery.error).message}</p>}
         {!hotelQuery.isFetching && hotelQuery.data && <><p className="text-sm font-medium">{hotelQuery.data.results.length} stays in {hotelRequest.destination}</p>{hotelQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No stays found for these dates. Try another destination or date.</p>}{hotelQuery.data.results.slice(0, 3).map((result) => <HotelResultCard key={result.id} result={result} nights={hotelQuery.data.nights ?? 0} roomCount={hotelRequest.rooms.length} onSelect={hotelQuery.data.searchId ? () => void navigate({ to: "/hotels/detail", search: { searchId: hotelQuery.data.searchId, hotelId: result.id } }) : undefined} />)}{hotelQuery.data.results.length > 3 && <Button asChild variant="outline"><Link to="/hotels">Explore more stays</Link></Button>}</>}
       </div>}
-      {service === "holidays" && holidaySearched && <div className="mt-4 bg-card p-4 sm:p-6" aria-live="polite"><p className="mb-4 text-sm font-medium">{matchingHolidays.length ? `${matchingHolidays.length} journeys` : "No matching journeys"}</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{matchingHolidays.slice(0, 6).map((item) => <Link key={item.slug} to="/destinations/$slug" params={{ slug: item.slug }} className="group flex items-center gap-3 border border-border p-2 transition-colors hover:border-gold"><img src={item.img} alt="" className="size-16 shrink-0 object-cover" /><span className="min-w-0"><strong className="block truncate text-sm">{item.name}</strong><small className="text-muted-foreground">{item.nights}</small></span></Link>)}</div>{matchingHolidays.length === 0 && <Link to="/holidays" className="text-sm text-gold underline">Browse all holidays</Link>}</div>}
     </div>
   );
 }

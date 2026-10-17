@@ -81,8 +81,7 @@
   /* Legacy tokens, remapped for the new theme */
   --gold: #d62828;          /* logo red — used as the brand accent everywhere */
   --gold-soft: #f25c5c;
-  --ai-glow-from: #f6a07a;
-  --ai-glow-to: #f472d0;
+  --shadow-ai-outline: 0 0 12px color-mix(in oklab, var(--gold) 18%, transparent);
 
   --ink: #F8F8F6;           /* image-overlay gradients fade to pearl */
   --navy: #FAFAF7;
@@ -181,7 +180,7 @@ body:has(header > nav.rounded-full) .rounded-lg:not(header *) {
   border-radius: 0.25rem !important;
 }
 
-body:has(header > nav.rounded-full) .rounded-full:not(header *):not(.hero-logo-pill) {
+body:has(header > nav.rounded-full) .rounded-full:not(header *):not(.hero-logo-pill):not(.ai-glow-ring):not(.ai-glow-ring *) {
   border-radius: 0.25rem !important;
 }
 
@@ -205,13 +204,11 @@ body:has(header > nav.rounded-full) .hero-logo-pill {
   }
 }
 
-/* Ask AI welcome popup: soft peach-to-pink glow ring like a search prompt pill */
+/* Ask AI welcome popup: complete brand-red outline with a subtle glow. */
 @utility ai-glow-ring {
-  background:
-    linear-gradient(var(--card), var(--card)) padding-box,
-    linear-gradient(180deg, var(--ai-glow-from), color-mix(in oklab, var(--ai-glow-from) 40%, var(--ai-glow-to)) 70%, var(--ai-glow-to)) border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--ai-glow-to) 70%, transparent), var(--shadow-card);
+  background: var(--card);
+  border: 1.5px solid var(--gold);
+  box-shadow: var(--shadow-ai-outline), var(--shadow-card);
 }
 
 /* Ask AI welcome popup: unrolls from the left like a roll of paper opening */
@@ -221,7 +218,7 @@ body:has(header > nav.rounded-full) .hero-logo-pill {
 }
 
 @utility ai-unroll {
-  animation: ai-unroll 0.7s ease-out both;
+  animation: ai-unroll 0.7s ease-out backwards;
 }
 
 /* Blinking typewriter caret for the example prompt */
