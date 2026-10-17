@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import { KeyboardResize } from "@capacitor/keyboard";
 
 /**
  * Fly n Feel Android/iOS shell.
@@ -45,7 +46,7 @@ const config: CapacitorConfig = {
       backgroundColor: "#F8F8F6",
     },
     Keyboard: {
-      resize: "native",
+      resize: KeyboardResize.Native,
       resizeOnFullScreen: true,
     },
   },

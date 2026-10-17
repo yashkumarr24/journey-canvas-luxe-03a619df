@@ -28,8 +28,8 @@ function offlinePage(capacitor?: unknown) {
 
 describe("offline startup", () => {
   it("dismisses the launch splash natively after three seconds without hosted JavaScript", () => {
-    assert.equal(config.plugins?.SplashScreen.launchAutoHide, true);
-    assert.equal(config.plugins?.SplashScreen.launchShowDuration, 3000);
+    assert.equal(config.plugins?.SplashScreen?.launchAutoHide, true);
+    assert.equal(config.plugins?.SplashScreen?.launchShowDuration, 3000);
   });
 
   it("keeps the offline fallback bundled and the canonical website unchanged", () => {
