@@ -42,6 +42,6 @@ Other five photographs were supplied within the user’s source quotations.
 - Scotland — CC0, Robert Haverly roberthaverly, https://commons.wikimedia.org/wiki/File:In_the_Scottish_Highlands_(Unsplash).jpg
 - Sweden — CC0, EVREN  AYDIN evrenaydin, https://commons.wikimedia.org/wiki/File:Stockholm,_Sweden_(Unsplash_1eNzThfCPnc).jpg
 - Denmark — CC0, Jebulon, https://commons.wikimedia.org/wiki/File:Nyhavn_55_Copenhagen.jpg
-- Bali — CC0, Lola Guti lolaguti, https://commons.wikimedia.org/wiki/File:Bali,_Indonesia_(Unsplash_KtJpghtFTuI).jpg
+- Indonesia (Bali) — CC0, Lola Guti lolaguti, https://commons.wikimedia.org/wiki/File:Bali,_Indonesia_(Unsplash_KtJpghtFTuI).jpg
 - Georgia — CC0, Sylwia Bartyzel sylwiabartyzel, https://commons.wikimedia.org/wiki/File:Caucasus_Mountains_(Unsplash_N2ZUsECT73U).jpg
 - Vietnam — CC0, Chester Ho chesterho, https://commons.wikimedia.org/wiki/File:Basket_Boat_and_the_Bamboo_forest_(Unsplash).jpg

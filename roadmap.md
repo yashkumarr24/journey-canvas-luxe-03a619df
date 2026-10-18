@@ -1,27 +1,13 @@
-# Current tasks
-- [x] Fix frontend large-text wrapping, navbar visibility, 48px mobile controls and keyboard focus; 32 page/width/text browser cases plus keyboard/assistant overlap checks passed, 26 regression tests passed; no TalkBack or physical-device verification. See FRONTEND_ACCESSIBILITY_VERIFICATION.md.
-- [x] Fix package/nav/assistant overflow and restore the six original domestic photos; 40 browser checks at 360/390/430/768/1280, 32 tests pass; browser evidence only, no new physical-phone verification. See PACKAGE_DISPLAY_VERIFICATION.md.
-- [ ] Investigate any remaining private /packages/* image failure using an exact affected live URL and failed signed-image response; no storage/server changes authorized or made.
-- [x] Fix offline full-page/client navigation and error-history handling; 20 JS tests, 21 JVM checks, browser simulation and cap sync passed.
-- [x] Offline Holidays fallback, repeated offline Retry, double-tap and online recovery with saved login — user-verified on a physical Android phone, build 8429d27.
-- [x] Fix Android offline startup: native auto-hide, bounded startup/Retry, bundled page; 14 JS tests, 10 JVM controller checks, browser offline/Retry checks, cap sync completed; rebuild guide in mobile/README.md.
-- [ ] Verify email confirmation and password-reset links in the app (unverified).
-- [ ] Test on additional devices / Android versions (unverified).
-- [ ] Release signing and Play signing App Links fingerprint (unverified; needs Play Console).
-- [ ] Store readiness (unverified).
-- [ ] Booking/payment testing (separate; PayU paused) and TripJack certification (separate) — pending.
-- [x] Restore Domestic/International choices in homepage Holidays; verified both catalogue links and mobile layout.
-- [x] Complete the AI paper-roll outline in brand red with subtle glow; verified appearance and removed persistent clipping.
-- [x] Serve supplied Android test certificate and check app-link configuration (local anonymous HTTP 200 JSON, no redirect; eight tests pass).
-- [ ] Verify live Vercel response and Android OAuth return (blocked on deployment and a test phone).
-- [x] Refresh Fly n Feel header and left slide-out menu without replacing branding.
-- [x] Switch Flights, Hotels, and Holidays forms on the homepage; preserve existing booking logic and routes.
-- [x] Resolve the mobile hook issue and verify desktop/mobile interactions and current preview health.
-- [x] Replace domestic package photos with licensed free-use stock images and verify rendering.
-- [x] Remove domestic package calendar dates while retaining day numbers and durations.
-- [x] Continue the existing India destinations section with domestic package entries.
-- [x] Add international Word-file packages while preserving existing holidays and complete source itineraries.
-- [x] Preserve international dates, prices, hotel options, flights and special notes without guessing unclear associations.
-- [x] Verify international package navigation, option switching and single-photo rendering.
-- [x] Replace international package photos with distinct free-use stock photos of included stops and match city cards to their cities.
-- [x] Correct new international photo addresses and verify destination-to-package photo rendering.
+# Roadmap
+
+## Done: Imagery & organisation for recently added (Oct 11) Domestic/International catalogues
+
+- [x] Identified recent additions from git history: domestic-packages.ts + international-packages.json (2026-10-11); domestic images already corrected 2026-10-17 — left unchanged.
+- [x] International grouping: one destination card per country (26 countries); packages listed inside; legacy city/country slugs (bali, dubai, uk, lucerne, …) alias to their country so old links keep working.
+- [x] Accurate names: Bali→Indonesia, Dubai/Abu Dhabi→United Arab Emirates, UK→United Kingdom (Scotland folded in), "Swiss"→Switzerland in package names, Danang→Da Nang, Halong Bay→Ha Long Bay. Source itinerary text untouched.
+- [x] Imagery: existing licensed bundled photos verified accurate per stop/country; no replacements needed; credits register + STOCK-LICENSES.md updated to corrected names; UAE country card uses dubai-source.jpg; bundled assets kept (Lovable-relative CDN URLs fail cross-host on Vercel).
+- [x] Tests updated + new geographic-names test; 13 node/tsx tests + 1 bun domestic test pass.
+- [x] Browser-verified /international, Switzerland/Indonesia/UAE/UK/Vietnam country pages, legacy /bali and /lucerne links, domestic page at 390 and 1280: no broken images, correct grouping and names.
+- [x] AGENTS.md rule updated (country grouping + aliases).
+
+Deployment: Vercel deploy required for the live site; no Android rebuild, no backend/DB changes.

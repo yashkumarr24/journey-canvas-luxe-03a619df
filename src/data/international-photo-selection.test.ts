@@ -12,8 +12,9 @@ describe('international photo locations', () => {
       assert.ok(stop, p.slug);
       for (let o = 0; o < p.options.length; o++) {
         const place = packagePhotoStop(p.slug, o)!.replace(/ by night$/, '');
-        const text = [...p.cities, ...p.countries, ...p.itinerary.map(d => d.text)].join(' ');
-        assert.ok(text.toLowerCase().includes(place.toLowerCase()), `${p.slug} option ${o + 1}: ${place}`);
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+        const text = norm([...p.cities, ...p.countries, ...p.itinerary.map(d => d.text)].join(' '));
+        assert.ok(text.includes(norm(place)), `${p.slug} option ${o + 1}: ${place}`);
       }
     }
   });
@@ -35,15 +36,24 @@ describe('international photo locations', () => {
     assert.equal(packagePhotoStop('paris-swiss-italy-11n-12d'), 'Venice');
     assert.equal(packagePhotoStop('paris-swiss-italy-12n-13d'), 'Florence');
   });
-  it('gives every country and city card on the International page its own photo', () => {
-    const names = Array.from(new Set(packages.flatMap(p => [...p.countries, ...p.cities])));
+  it('gives every country card on the International page its own photo', () => {
+    const names = Array.from(new Set(packages.flatMap(p => p.countries)));
     const seen = new Map<string, string>();
     for (const name of names) {
-      const p = packages.find(p => [...p.countries, ...p.cities].includes(name))!;
+      const p = packages.find(p => p.countries.includes(name))!;
       const file = photoFileForStop(destinationPhotoStop(name, p.slug)!);
       const hash = createHash('md5').update(readFileSync(new URL(`../assets/international/${file}`, import.meta.url))).digest('hex');
       assert.ok(!seen.has(hash), `${name} repeats the photo of ${seen.get(hash)}`);
       seen.set(hash, name);
     }
+  });
+  it('uses correct geographic names at country and city level', () => {
+    const countries = new Set(packages.flatMap(p => p.countries));
+    assert.ok(countries.has('Indonesia') && countries.has('United Arab Emirates') && countries.has('United Kingdom'));
+    for (const wrong of ['Bali', 'Dubai', 'Abu Dhabi', 'UK', 'Scotland']) assert.ok(!countries.has(wrong), `${wrong} is not a country entry`);
+    const vietnam = packages.find(p => p.slug === 'vietnam-holiday-package-1320')!;
+    const vietnamCities: string[] = vietnam.cities;
+    assert.ok(vietnamCities.includes('Da Nang') && vietnamCities.includes('Ha Long Bay'));
+    assert.ok(!packages.some(p => p.name.includes('Swiss Holiday') || p.name.includes('Swiss &')));
   });
 });

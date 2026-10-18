@@ -33,7 +33,20 @@ export const internationalPhotoCredit = (place: string | undefined) => {
 };
 export const internationalPrice = (p: InternationalPackage, option = 0) => p.options[option]?.price[0] ?? 'On request';
 const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-export const internationalPackageDestinations = Array.from(new Set(internationalPackages.flatMap(p => [...p.countries, ...p.cities]))).map(name => ({
-  name, slug: slugify(name), packages: internationalPackages.filter(p => [...p.countries, ...p.cities].includes(name)),
+// One destination entry per country; every package visiting that country is listed inside it.
+export const internationalPackageDestinations = Array.from(new Set(internationalPackages.flatMap(p => p.countries))).map(name => ({
+  name, slug: slugify(name), packages: internationalPackages.filter(p => p.countries.includes(name)),
 }));
-export const findInternationalPackageDestination = (slug: string) => internationalPackageDestinations.find(d => d.slug === slug);
+// Legacy city/country slugs keep working: they resolve to the country entry that now holds them.
+const legacyDestinationSlugs: Record<string, string> = {
+  uk: 'united-kingdom', scotland: 'united-kingdom',
+  bali: 'indonesia', dubai: 'united-arab-emirates', 'abu-dhabi': 'united-arab-emirates',
+};
+export const findInternationalPackageDestination = (slug: string) => {
+  const direct = internationalPackageDestinations.find(d => d.slug === slug);
+  if (direct) return direct;
+  const alias = legacyDestinationSlugs[slug];
+  if (alias) return internationalPackageDestinations.find(d => d.slug === alias);
+  const p = internationalPackages.find(p => p.cities.some(c => slugify(c) === slug));
+  return p ? internationalPackageDestinations.find(d => d.slug === slugify(p.countries[0])) : undefined;
+};
