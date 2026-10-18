@@ -23,7 +23,7 @@ describe('catalogue destination search', () => {
     const swiss = countries.find(c => c.name === 'Switzerland'); assert.ok(swiss);
     const filtered = filterPackagesByPlace(swiss.packages, ' LUCERNE ');
     assert.equal(filtered.length, 9);
-    assert.ok(filtered.every(p => p.cities.includes('Lucerne')));
+    assert.ok(filtered.every(p => p.cities.some(city => city === 'Lucerne')));
     const interlaken = filterPackagesByPlace(swiss.packages, 'Interlaken');
     assert.equal(interlaken.length, 2);
   });

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { domesticDestinations, internationalDestinations } from './destinations';
 import { domesticPackageDestinations } from './domestic-packages';
-import { internationalPackageDestinations } from './international-packages';
+import trips from './international-packages.json';
 import { domesticSearchIndex, internationalSearchIndex, matchDestinations } from '../lib/packages/destination-search';
 
 test('complete current domestic catalogue supplies every group, region and hotel city', () => {
@@ -23,6 +23,7 @@ test('complete current domestic catalogue supplies every group, region and hotel
 });
 
 test('complete international catalogue retains old destinations alongside every country and city', () => {
+  const internationalPackageDestinations = [...new Set(trips.flatMap(p => p.countries))].map(name => ({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), packages: trips.filter(p => p.countries.includes(name)) }));
   const items = internationalSearchIndex(internationalDestinations, internationalPackageDestinations, []);
   for (const d of internationalDestinations) assert.ok(items.some(item => item.name === d.name), d.name);
   assert.equal(matchDestinations(items, 'Lucerne').length, 1);
