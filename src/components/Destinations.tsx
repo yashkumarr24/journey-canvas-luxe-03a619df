@@ -94,16 +94,19 @@ export function Destinations({
   title,
   subtitle,
   id,
+  children,
 }: {
   items: Destination[];
   eyebrow: string;
   title: React.ReactNode;
   subtitle?: string;
   id?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <section id={id} className="relative mx-auto max-w-7xl border-t border-foreground/10 px-6 py-24 md:py-32">
       <SectionTitle eyebrow={eyebrow} title={title} subtitle={subtitle} />
+      {children}
       <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
         {items.map((p, i) => (
           <DestinationCard key={p.slug} p={p} index={i} />
