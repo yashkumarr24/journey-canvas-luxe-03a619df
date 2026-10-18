@@ -36,7 +36,7 @@ const selectedStops: Record<string, string> = {
   'dubai-abu-dhabi-holiday-package-1416': 'Abu Dhabi',
   'georgia-holiday-package-1423': 'Tbilisi',
   'singapore-holiday-package-1329': 'Singapore',
-  'vietnam-holiday-package-1320': 'Halong Bay',
+  'vietnam-holiday-package-1320': 'Ha Long Bay',
 };
 
 // Multi-option trips get one distinct included stop per selectable option (option 1 is the trip thumbnail).
