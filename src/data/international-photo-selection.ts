@@ -52,13 +52,16 @@ const countryPhotos: Record<string, string> = {
   Italy: 'italy-stock.jpg', Belgium: 'belgium-landmark.jpg', Germany: 'germany-stock.jpg',
   'Czech Republic': 'czech-republic-stock.jpg', Austria: 'austria-stock.jpg', Hungary: 'country-hungary.jpg',
   Iceland: 'iceland-stock.jpg', Turkey: 'turkey-stock.jpg', Greece: 'greece-stock.jpg', Spain: 'spain-landmark.jpg',
-  UK: 'uk-stock.jpg', Scotland: 'country-scotland.jpg', Portugal: 'portugal-stock.jpg', Ireland: 'ireland-stock.jpg',
+  'United Kingdom': 'uk-stock.jpg', Portugal: 'portugal-stock.jpg', Ireland: 'ireland-stock.jpg',
   Norway: 'norway-stock.jpg', Sweden: 'country-sweden.jpg', Denmark: 'country-denmark.jpg', Finland: 'finland-stock.jpg',
-  Croatia: 'croatia-stock.jpg', Bali: 'country-bali.jpg', Georgia: 'country-georgia.jpg', Vietnam: 'country-vietnam.jpg',
+  Croatia: 'croatia-stock.jpg', Indonesia: 'country-bali.jpg', 'United Arab Emirates': 'dubai-source.jpg',
+  Georgia: 'country-georgia.jpg', Vietnam: 'country-vietnam.jpg',
 };
 const countryKey = (name: string) => `${name} (country)`;
 const photoFiles: Record<string, string> = {
   'Paris by night': 'france-stock.jpg',
+  'Da Nang': 'city-danang.jpg',
+  'Ha Long Bay': 'city-halong-bay.jpg',
   ...Object.fromEntries(Object.entries(countryPhotos).map(([c, f]) => [countryKey(c), f])),
 };
 export const packagePhotoStop = (slug: string, option = 0) => optionStops[slug]?.[option] ?? optionStops[slug]?.[0] ?? selectedStops[slug];
@@ -67,11 +70,11 @@ const countryStops: Record<string, string> = {
   Switzerland: 'Lucerne', France: 'Paris', Netherlands: 'Amsterdam', Italy: 'Rome',
   Belgium: 'Brussels', Germany: 'Frankfurt', 'Czech Republic': 'Prague', Austria: 'Vienna',
   Hungary: 'Budapest', Iceland: 'Reykjavik', Turkey: 'Istanbul', Greece: 'Athens',
-  Spain: 'Barcelona', 'United Kingdom': 'London', UK: 'London', Scotland: 'Edinburgh',
+  Spain: 'Barcelona', 'United Kingdom': 'London',
   Portugal: 'Lisbon', Ireland: 'Dublin', Norway: 'Oslo', Sweden: 'Stockholm',
-  Denmark: 'Copenhagen', Finland: 'Helsinki', Croatia: 'Dubrovnik', Bali: 'Ubud',
-  Indonesia: 'Ubud', 'United Arab Emirates': 'Dubai', UAE: 'Dubai', Georgia: 'Tbilisi',
-  Singapore: 'Singapore', Vietnam: 'Halong Bay',
+  Denmark: 'Copenhagen', Finland: 'Helsinki', Croatia: 'Dubrovnik',
+  Indonesia: 'Ubud', 'United Arab Emirates': 'Dubai', Georgia: 'Tbilisi',
+  Singapore: 'Singapore', Vietnam: 'Ha Long Bay',
 };
 export const destinationPhotoStop = (name: string, slug: string) => {
   const p = packages.find(p => p.slug === slug);
