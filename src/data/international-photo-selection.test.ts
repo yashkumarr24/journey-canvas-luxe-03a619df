@@ -52,7 +52,8 @@ describe('international photo locations', () => {
     assert.ok(countries.has('Indonesia') && countries.has('United Arab Emirates') && countries.has('United Kingdom'));
     for (const wrong of ['Bali', 'Dubai', 'Abu Dhabi', 'UK', 'Scotland']) assert.ok(!countries.has(wrong), `${wrong} is not a country entry`);
     const vietnam = packages.find(p => p.slug === 'vietnam-holiday-package-1320')!;
-    assert.ok(vietnam.cities.includes('Da Nang') && vietnam.cities.includes('Ha Long Bay'));
+    const vietnamCities: string[] = vietnam.cities;
+    assert.ok(vietnamCities.includes('Da Nang') && vietnamCities.includes('Ha Long Bay'));
     assert.ok(!packages.some(p => p.name.includes('Swiss Holiday') || p.name.includes('Swiss &')));
   });
 });
