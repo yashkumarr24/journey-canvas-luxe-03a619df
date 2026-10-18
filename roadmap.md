@@ -1,5 +1,10 @@
 # Roadmap
 
+## Destination autocomplete
+- [ ] Index complete domestic and international destination/package catalogues separately.
+- [ ] Add accessible autocomplete above listing cards and international city package filtering.
+- [ ] Test search rules and navigation on desktop/mobile; document files, checks and deployment.
+
 ## Done: Imagery & organisation for recently added (Oct 11) Domestic/International catalogues
 
 - [x] Identified recent additions from git history: domestic-packages.ts + international-packages.json (2026-10-11); domestic images already corrected 2026-10-17 — left unchanged.
