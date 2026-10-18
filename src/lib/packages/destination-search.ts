@@ -18,7 +18,7 @@ export const normalizeDestination = (text: string) => text.trim().replace(/\s+/g
 export function deduplicateDestinations(items: DestinationSuggestion[]) {
   const unique = new Map<string, DestinationSuggestion>();
   for (const item of items) {
-    const key = normalizeDestination(`${item.name}|${item.location}`);
+    const key = `${normalizeDestination(item.name)}|${normalizeDestination(item.location)}`;
     if (item.name.trim() && !unique.has(key)) unique.set(key, item);
   }
   return [...unique.values()];
@@ -48,6 +48,8 @@ function classicSuggestions(destinations: Classic[]): DestinationSuggestion[] {
     const name = d.name.split(',')[0].trim();
     return [
       { name: d.name, location: d.country, kind: 'Destination', target },
+      ...d.name.split(/\s*[,&]\s*/).filter(part => part !== d.name).map(part => ({ name: part, location: d.country, kind: 'Destination', target })),
+      { name: d.country, location: d.name, kind: 'Country / region', target },
       ...d.itinerary.flatMap(day => headingPlaces(day.title)).map(place => ({ name: place, location: name, kind: 'City / region', target })),
     ];
   });
