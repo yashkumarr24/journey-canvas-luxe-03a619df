@@ -628,7 +628,7 @@
   },
   {
     "slug": "amsterdam-paris-swiss-9n-10d",
-    "name": "Amsterdam, Paris & Swiss Holiday Package",
+    "name": "Amsterdam, Paris & Switzerland Holiday Package",
     "duration": "09 Nights & 10 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
@@ -855,7 +855,7 @@
   },
   {
     "slug": "paris-swiss-italy-11n-12d",
-    "name": "Paris, Swiss & Italy Holiday Package",
+    "name": "Paris, Switzerland & Italy Holiday Package",
     "duration": "11 Nights & 12 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
@@ -1010,7 +1010,7 @@
   },
   {
     "slug": "paris-swiss-italy-12n-13d",
-    "name": "Paris, Swiss & Italy Holiday Package",
+    "name": "Paris, Switzerland & Italy Holiday Package",
     "duration": "12 Nights & 13 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
@@ -1765,7 +1765,7 @@
   },
   {
     "slug": "austria-swiss-9n-10d",
-    "name": "Austria & Swiss Holiday Package",
+    "name": "Austria & Switzerland Holiday Package",
     "duration": "09 Nights & 10 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
@@ -2561,7 +2561,7 @@
     "duration": "07 Nights & 08 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
-      "UK"
+      "United Kingdom"
     ],
     "cities": [
       "London",
@@ -2674,8 +2674,7 @@
     "duration": "13 Nights & 14 Days",
     "source": "All_Europe_Scandinavian_Packages.docx",
     "countries": [
-      "UK",
-      "Scotland"
+      "United Kingdom"
     ],
     "cities": [
       "London",
@@ -3487,7 +3486,7 @@
     "duration": "6 Nights / 7 Days",
     "source": "Bali_Holiday_Package_6_Nights_7_Days_-_FNF-2026-1295.docx",
     "countries": [
-      "Bali"
+      "Indonesia"
     ],
     "cities": [
       "Kuta",
@@ -3753,8 +3752,7 @@
     "duration": "07 Nights & 8 Days",
     "source": "Dubai_Abu_Dhabi_Holiday_Package_7_Nights_8_Days_-_FNF-2026-1416_-_Revised_1.docx",
     "countries": [
-      "Dubai",
-      "Abu Dhabi"
+      "United Arab Emirates"
     ],
     "cities": [
       "Dubai",
@@ -4717,10 +4715,10 @@
       "Vietnam"
     ],
     "cities": [
-      "Danang",
+      "Da Nang",
       "Sapa",
       "Hanoi",
-      "Halong Bay"
+      "Ha Long Bay"
     ],
     "tour": [
       {
