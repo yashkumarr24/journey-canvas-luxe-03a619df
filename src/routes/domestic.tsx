@@ -9,6 +9,10 @@ import { SectionTitle } from "@/components/Section";
 import { domesticDestinations } from "@/data/destinations";
 import { domesticPackageDestinations } from "@/data/domestic-packages";
 import kashmirHero from "@/assets/kashmir.webp";
+import { PackageDestinationSearch } from "@/components/PackageDestinationSearch";
+import { domesticSearchIndex } from "@/lib/packages/destination-search";
+
+const searchItems = domesticSearchIndex(domesticDestinations, domesticPackageDestinations);
 
 export const Route = createFileRoute("/domestic")({
   head: () => ({
@@ -43,6 +47,7 @@ function DomesticPage() {
           title={<>India's signature <span className="italic gold-gradient">destinations.</span></>}
           subtitle="Prices are quoted from destination airports for clarity. We can build a complete door‑to‑door package from your home city on request."
         />
+        <PackageDestinationSearch items={searchItems} />
         <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
           {domesticDestinations.map((d, i) => (
             <DestinationCard key={`existing-${d.slug}`} p={d} index={i} />

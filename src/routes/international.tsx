@@ -13,6 +13,8 @@ import vietnamHero from "@/assets/vietnam.webp";
 import { internationalPackageDestinations, internationalDestinationImage, internationalPrice } from "@/data/international-packages";
 import { destinationPhotoStop } from "@/data/international-photo-selection";
 import { InternationalPhotoCredit } from "@/components/InternationalPhotoCredit";
+import { PackageDestinationSearch } from "@/components/PackageDestinationSearch";
+import { internationalSearchIndex } from "@/lib/packages/destination-search";
 
 export const Route = createFileRoute("/international")({
   loader: async () => {
@@ -56,7 +58,9 @@ function InternationalPage() {
         eyebrow={`${internationalDestinations.length} international destinations`}
         title={<>Curated <span className="italic gold-gradient">international</span> escapes</>}
         subtitle="Prices are quoted from destination airports. We can build a complete package from Ahmedabad or any Indian city with the best airfares, visa and insurance."
-      />
+      >
+        <PackageDestinationSearch items={internationalSearchIndex(internationalDestinations, internationalPackageDestinations, catalogue)} />
+      </Destinations>
       <section className="relative mx-auto max-w-7xl border-t border-foreground/10 px-6 py-24 md:py-32">
         <SectionTitle eyebrow="Countries" title={<>Explore <span className="italic gold-gradient">international holidays</span></>} subtitle="Complete itineraries with source-quoted hotels and prices. Enquire for a confirmed quote." />
         <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
