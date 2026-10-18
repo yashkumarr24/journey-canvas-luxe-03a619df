@@ -58,7 +58,7 @@ function InternationalPage() {
         subtitle="Prices are quoted from destination airports. We can build a complete package from Ahmedabad or any Indian city with the best airfares, visa and insurance."
       />
       <section className="relative mx-auto max-w-7xl border-t border-foreground/10 px-6 py-24 md:py-32">
-        <SectionTitle eyebrow="Countries & cities" title={<>Explore <span className="italic gold-gradient">international holidays</span></>} subtitle="Complete itineraries with source-quoted hotels and prices. Enquire for a confirmed quote." />
+        <SectionTitle eyebrow="Countries" title={<>Explore <span className="italic gold-gradient">international holidays</span></>} subtitle="Complete itineraries with source-quoted hotels and prices. Enquire for a confirmed quote." />
         <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
           {internationalPackageDestinations.map((d, i) => {
             const p = d.packages[0];
