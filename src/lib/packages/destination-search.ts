@@ -87,17 +87,23 @@ export function internationalSearchIndex(classic: Classic[], groups: CountryGrou
     }
   }
   const countryItems: DestinationSuggestion[] = groups.map(g => ({ name: g.name, location: 'International', kind: 'Country', target: { to: '/international-packages/$destination', params: { destination: g.slug } } }));
-  const cities: DestinationSuggestion[] = allTrips.flatMap(p => p.cities.flatMap(city => {
-    const known = [...(countriesByCity.get(normalizeDestination(city)) ?? [])].filter(country => p.countries.includes(country));
+  const cityNames = [...new Set(allTrips.flatMap(p => p.cities))];
+  const cities: DestinationSuggestion[] = cityNames.flatMap(city => {
+    const covering = allTrips.filter(p => p.cities.includes(city)).sort((a, b) => a.countries.length - b.countries.length);
+    const p = covering[0];
+    if (!p) return [];
+    const known = [...(countriesByCity.get(normalizeDestination(city)) ?? [])];
     const countries = known.length ? known : [p.countries[0]];
     return countries.flatMap(country => {
       const group = groups.find(g => g.name === country);
       return group ? [{ name: city, location: known.length ? country : p.countries.join(' · '), kind: 'City / region', target: { to: '/international-packages/$destination' as const, params: { destination: group.slug }, search: { place: city } } }] : [];
     });
-  }));
+  });
+  const structuredNames = new Set([...countryItems, ...cities].map(item => normalizeDestination(item.name)));
   return deduplicateDestinations([
-    ...countryItems, ...cities, ...classicSuggestions(classic),
+    ...countryItems, ...cities, ...classicSuggestions(classic).filter(item => !structuredNames.has(normalizeDestination(item.name))),
     ...catalogue.map(d => ({ name: d.name, location: d.country, kind: 'Destination', target: { to: '/packages/$destination' as const, params: { destination: d.slug } } })),
+    ...catalogue.filter(d => !structuredNames.has(normalizeDestination(d.country))).map(d => ({ name: d.country, location: d.name, kind: 'Country / region', target: { to: '/packages/$destination' as const, params: { destination: d.slug } } })),
   ]);
 }
 
