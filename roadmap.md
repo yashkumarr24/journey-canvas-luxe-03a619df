@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Destination autocomplete
-- [ ] Index complete domestic and international destination/package catalogues separately.
-- [ ] Add accessible autocomplete above listing cards and international city package filtering.
-- [ ] Test search rules and navigation on desktop/mobile; document files, checks and deployment.
+- [x] Index complete domestic and international destination/package catalogues separately.
+- [x] Add accessible autocomplete above listing cards and international city package filtering.
+- [x] Test search rules and navigation on desktop/mobile; document files, checks and deployment in DESTINATION_SEARCH_VERIFICATION.md.
 
 ## Done: Imagery & organisation for recently added (Oct 11) Domestic/International catalogues
 

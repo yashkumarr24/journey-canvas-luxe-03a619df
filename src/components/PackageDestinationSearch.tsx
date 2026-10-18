@@ -50,11 +50,11 @@ export function PackageDestinationSearch({ items }: { items: DestinationSuggesti
 
   return <div className="relative z-20 mt-10 w-full max-w-2xl" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
     <label htmlFor={id} className="mb-3 block text-sm font-medium text-foreground">Search destinations</label>
-    <div className="relative">
-      <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-4 size-5 text-gold" />
+    <div className="flex min-h-14 items-center gap-2 rounded-sm border border-input bg-card px-3 focus-within:ring-1 focus-within:ring-ring">
+      <Search aria-hidden="true" className="pointer-events-none size-5 shrink-0 text-gold" />
       <Input id={id} ref={input} role="combobox" aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-list`} aria-activedescendant={expanded && active >= 0 && results[active] ? `${id}-option-${active}` : undefined}
         autoComplete="off" autoCorrect="off" spellCheck={false} placeholder="Country, city or state / region" value={text}
-        className="min-h-14 bg-card pl-12 pr-14 text-base md:text-base" onFocus={() => setOpen(true)}
+        className="min-h-14 min-w-0 flex-1 border-0 px-1 text-base shadow-none focus-visible:ring-0 md:text-base" onFocus={() => setOpen(true)}
         onChange={event => { setText(event.target.value); setActive(-1); setOpen(true); }}
         onKeyDown={event => {
           if (event.nativeEvent.isComposing) return;
@@ -65,7 +65,7 @@ export function PackageDestinationSearch({ items }: { items: DestinationSuggesti
           }
           if (event.key === 'Enter' && expanded && results.length) { event.preventDefault(); choose(results[active < 0 ? 0 : active]); }
         }} />
-      {text && <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1 size-12 text-muted-foreground" aria-label="Clear destination search" title="Clear search" onClick={clear}><X /></Button>}
+      {text && <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 text-muted-foreground" aria-label="Clear destination search" title="Clear search" onClick={clear}><X /></Button>}
     </div>
     <span role="status" aria-live="polite" className="sr-only">{expanded ? results.length ? `${results.length} matching destinations` : 'No matching destinations' : ''}</span>
     {expanded && <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-sm border border-input bg-card shadow-[var(--shadow-card)]">
