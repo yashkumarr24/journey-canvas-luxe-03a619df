@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { AlertCircle, FlaskConical, Info, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -24,6 +25,8 @@ import {
   applyHotelFilters,
   collectAmenities,
   collectPropertyTypes,
+  defaultHotelSearchValues,
+  hotelSearchSchema,
   hotelPriceRange,
   hotelSearchQueryOptions,
   hotelSortOptions,
@@ -174,7 +177,7 @@ function HotelsPage() {
         />
 
         <div className="mt-10">
-          <HotelSearchForm onSearch={handleSearch} isSearching={query.isFetching} />
+          <HotelSearchForm onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </div>
 
         {useMockHotels && (
