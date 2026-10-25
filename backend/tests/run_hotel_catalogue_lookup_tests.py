@@ -58,7 +58,9 @@ def main():
               insert into public.hotel_mappings(tj_hotel_id,region_id)
               select 'background-' || lpad(i::text,7,'0'),'bench-other' from generate_series(1,740000) i;
               insert into public.hotel_mappings(tj_hotel_id,region_id)
-              select 'target-' || lpad(i::text,4,'0'),'bench-city' from generate_series(1,620) i;
+              select 'target-' || lpad(i::text,5,'0'),'bench-city' from generate_series(1,20620) i;
+              insert into public.hotels(tj_hotel_id,name)
+              select tj_hotel_id,'Synthetic property' from public.hotel_mappings;
               analyze public.hotel_mappings; analyze public.hotel_regions; analyze public.hotels;
             """)
             # Explain the exact city branch (PL/pgSQL EXPLAIN otherwise hides nested plans).
@@ -77,7 +79,7 @@ def main():
                 count = sql(f"set plan_cache_mode=force_generic_plan; set role service_role; select count(*) from public.{name}('Dubai, United Arab Emirates','city','bench-city','',500);").splitlines()[-1]
                 assert count == '500'
                 print(f'{name}: 500 IDs, {(time.monotonic()-started)*1000:.1f} ms (includes psql startup)')
-            print(f'PASS: 740,620-mapping city lookup uses composite index; {buffers} buffers; EXPLAIN {plan["Execution Time"]:.3f} ms.')
+            print(f'PASS: 760,620-mapping city lookup uses composite index; {buffers} buffers; EXPLAIN {plan["Execution Time"]:.3f} ms.')
         finally:
             run(['pg_ctl', '-D', str(data), '-m', 'immediate', '-w', 'stop'])
 
