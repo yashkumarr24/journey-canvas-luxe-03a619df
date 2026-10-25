@@ -2,7 +2,7 @@
 
 - Use numbered additive DB migrations; preserve catalogue sync and data.
 - Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
-- Keep homepage search modes in the presentation layer and hand validated flight/hotel requests to existing search flows; this protects provider and booking logic from navigation redesigns.
+- Keep homepage modes and compact results-page forms in presentation; hand validated requests to existing search flows, protecting provider and booking logic.
 - Hotel Book/Details/Confirm/Cancel live in backend services/hotel_booking.py with compare-and-set status transitions on hotel_bookings (0018); prevents duplicate provider bookings and keeps provider handles server-side.
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
 - Holiday packages (0019) are enquiry-only catalogue tables with indicative prices and no booking/payment fields; writes go through FastAPI service_role, clients read published rows only, so packages can never be booked or charged directly.

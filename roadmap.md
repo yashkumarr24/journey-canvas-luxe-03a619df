@@ -1,5 +1,9 @@
 # Roadmap
 
+## Results-page search layout
+- [x] Replace expanded flight/hotel search boxes with compact rows, combined dates and traveller/room popovers; preserve existing handoff.
+- [x] Browser-verified populated details, multi-room and traveller controls at 360/390/430/768/1280/1440; no overflow or page errors. Live provider result handoff not re-tested; provider logic unchanged.
+
 ## Done: Compact hero booking card
 - [x] Compact service tabs and single-row flight/hotel fields with travellers/rooms popovers.
 - [x] Shared holiday search over both catalogues with Domestic/International labels.
