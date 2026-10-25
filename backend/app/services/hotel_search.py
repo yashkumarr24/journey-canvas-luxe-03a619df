@@ -240,7 +240,8 @@ async def search_hotels(
     static: dict = {}
     if catalogue.enabled:
         try:
-            static = await catalogue.static_for(hids)
+            for offset in range(0, len(hids), 100):
+                static.update(await catalogue.static_for(hids[offset:offset + 100]))
         except Exception:
             logger.warning("hotel_catalogue_static_failed")
     names_token = tripjack_hotels.STATIC_NAMES.set(

@@ -130,9 +130,9 @@ async def search_hotels(
 ) -> tuple[list[HotelResult], str | None, str]:
     """Run /hms/v3/hotel/listing in sequential batches of <=100 hids.
 
-    Returns (results, correlationId, currency). No pagination is attempted:
-    the confirmed v3 listing has no continuation fields. The first batch's
-    failure propagates; a later batch failing keeps what earlier batches gave.
+    Returns (results, first correlationId, currency). The results list holds
+    each property's correlationId server-side. All planned batches are checked;
+    successful results survive a failed batch, explicitly marked partial.
     """
     currency = request.currency or DEFAULT_CURRENCY
     nights = (request.check_out - request.check_in).days or None
@@ -168,11 +168,19 @@ async def search_hotels(
             logger.warning("hotel_listing_batch_failed", extra=log_extra(batch=index + 1))
             continue
 
+        if not isinstance(body, dict) or not isinstance(body.get("hotels"), list) or (
+            isinstance(body.get("status"), dict) and body["status"].get("success") is False
+        ):
+            from app.integrations.tripjack.exceptions import TripJackUpstreamError
+            first_error = first_error or TripJackUpstreamError("invalid_listing_response")
+            results.failed_batches += 1
+            continue
         page = normalize_listing_response(body, currency=currency, nights=nights)
         logger.info(
             "tripjack_hotel_listing_shape",
             extra=log_extra(batch=index + 1, hids_sent=len(batch),
-                            normalized=len(page.results), **listing_shape(body)),
+                            normalized=len(page.results), returned_not_submitted=sum(
+                                r.id not in set(batch) for r in page.results), **listing_shape(body)),
         )
         batch_id = page.search_id or payload["correlationId"]
         search_id = search_id or batch_id

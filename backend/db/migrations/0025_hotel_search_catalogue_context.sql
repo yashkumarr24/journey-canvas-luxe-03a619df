@@ -16,7 +16,7 @@ language sql stable security invoker set search_path = public as $$
       r.country_name location, r.city_name || ', ' || r.country_name label
     from public.hotel_regions r, q
     where length(q.term) >= 2 and r.city_name is not null and r.country_name is not null
-      and lower(r.city_name) like '%' || q.term || '%'
+      and lower(r.city_name) like '%' || replace(replace(replace(q.term, '\', '\\'), '%', '\%'), '_', '\_') || '%'
       and exists (select 1 from public.hotel_mappings m where m.region_id = r.city_region_id
         and not m.is_deleted)
     union all
@@ -26,11 +26,14 @@ language sql stable security invoker set search_path = public as $$
     from public.hotels h join public.hotel_mappings m using (tj_hotel_id)
       left join public.hotel_regions r on r.city_region_id = m.region_id, q
     where length(q.term) >= 2 and h.is_active and not m.is_deleted
-      and lower(h.name) like '%' || q.term || '%'
+      and lower(h.name) like '%' || replace(replace(replace(q.term, '\', '\\'), '%', '\%'), '_', '\_') || '%'
   )
-  select distinct on (lower(c.label), c.kind) c.kind, c.id, c.name, c.location, c.label
-  from candidates c, q
-  order by lower(c.label), c.kind, c.id
+  select d.kind, d.id, d.name, d.location, d.label from (
+    select distinct on (lower(c.label), c.kind) c.* from candidates c
+    order by lower(c.label), c.kind, c.id
+  ) d, q
+  order by case when lower(d.name) like q.term || '%' then 0 else 1 end,
+    lower(d.name), lower(d.label), d.kind
   limit least(greatest(p_limit, 1), 24);
 $$;
 

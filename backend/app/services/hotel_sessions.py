@@ -47,7 +47,6 @@ SEARCH_TTL = timedelta(minutes=20)
 REVIEW_TTL = timedelta(minutes=12)
 
 MAX_SESSIONS = 2000
-MAX_STORED_RESULTS = 100000
 
 
 def _token() -> str:
@@ -188,7 +187,7 @@ async def create_search_session(
         rooms=list(rooms),
         nationality=nationality,
         currency=currency,
-        results={result.id: result for result in results[:MAX_STORED_RESULTS]},
+        results={result.id: result for result in results},
         provider_search_id=provider_search_id,
         provider_search_ids=provider_search_ids or {},
         expires_at=_now() + SEARCH_TTL,
