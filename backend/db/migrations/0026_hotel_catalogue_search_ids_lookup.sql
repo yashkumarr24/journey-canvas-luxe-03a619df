@@ -23,9 +23,12 @@ begin
     end if;
     return query
       select m.tj_hotel_id from public.hotel_mappings m
-      left join public.hotels h on h.tj_hotel_id = m.tj_hotel_id
       where m.region_id = p_id and not m.is_deleted
-        and m.tj_hotel_id > p_after and coalesce(h.is_active, true)
+        and m.tj_hotel_id > p_after
+        -- Scalar PK lookup avoids a global hotels hash join before LIMIT.
+        -- Missing content remains eligible; an inactive property does not.
+        and coalesce((select h.is_active from public.hotels h
+          where h.tj_hotel_id = m.tj_hotel_id), true)
       order by m.tj_hotel_id limit v_limit;
   elsif p_kind = 'hotel' then
     -- A property selection starts from one mapping/hotel primary key.

@@ -66,9 +66,9 @@ def main():
             # Explain the exact city branch (PL/pgSQL EXPLAIN otherwise hides nested plans).
             plan = json.loads(sql("""explain (analyze,buffers,format json)
               select m.tj_hotel_id from public.hotel_mappings m
-              left join public.hotels h on h.tj_hotel_id=m.tj_hotel_id
               where m.region_id='bench-city' and not m.is_deleted
-                and m.tj_hotel_id>'' and coalesce(h.is_active,true)
+                and m.tj_hotel_id>'' and coalesce((select h.is_active
+                  from public.hotels h where h.tj_hotel_id=m.tj_hotel_id),true)
               order by m.tj_hotel_id limit 500;"""))[0]
             encoded = json.dumps(plan)
             assert 'hotel_mappings_live_region_hotel_idx' in encoded, f'city query did not use composite index: {encoded}'
