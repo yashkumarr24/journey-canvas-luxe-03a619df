@@ -6,6 +6,7 @@ export type SearchTarget =
 
 export type DestinationSuggestion = {
   name: string; location: string; kind: string; target: SearchTarget;
+  catalogue?: 'Domestic' | 'International';
 };
 type Classic = { slug: string; name: string; country: string; itinerary: { title: string }[] };
 type Domestic = { slug: string; name: string; region: string; packages: { options: { columns: string[]; hotels: string[][] }[] }[] };
@@ -104,6 +105,16 @@ export function internationalSearchIndex(classic: Classic[], groups: CountryGrou
     ...countryItems, ...cities, ...classicSuggestions(classic).filter(item => !structuredNames.has(normalizeDestination(item.name))),
     ...catalogue.map(d => ({ name: d.name, location: d.country, kind: 'Destination', target: { to: '/packages/$destination' as const, params: { destination: d.slug } } })),
     ...catalogue.filter(d => !structuredNames.has(normalizeDestination(d.country))).map(d => ({ name: d.country, location: d.name, kind: 'Country / region', target: { to: '/packages/$destination' as const, params: { destination: d.slug } } })),
+  ]);
+}
+
+// Homepage holiday search: one field over both catalogues. The per-catalogue
+// indexes are still built separately, then tagged and merged so suggestions can
+// be labelled Domestic/International and keep their existing navigation targets.
+export function combinedSearchIndex(domestic: DestinationSuggestion[], international: DestinationSuggestion[]) {
+  return deduplicateDestinations([
+    ...domestic.map(item => ({ ...item, catalogue: 'Domestic' as const })),
+    ...international.map(item => ({ ...item, catalogue: 'International' as const })),
   ]);
 }
 
