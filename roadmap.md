@@ -1,5 +1,9 @@
 # Roadmap
 
+## Catalogue lookup timeout
+- [x] Add 0026 with indexed, branch-specific exact selection and unchanged legacy/keyset behavior.
+- [x] Run isolated SQL equivalence, pagination, permissions and large-catalogue checks; document deployment without applying to production in HOTEL_CATALOGUE_LOOKUP_OPTIMIZATION.md.
+
 ## Hotel catalogue search
 - [x] Add synchronized hotel/city suggestions with selection validation and stale-ID clearing.
 - [x] Audit synchronization and fix confirmed Listing batching/context issues.

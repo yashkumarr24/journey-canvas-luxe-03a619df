@@ -2,7 +2,7 @@
 
 - Use numbered additive DB migrations; preserve catalogue sync and data.
 - Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
-- Keep search editors mounted. Hotel catalogue lookup uses FastAPI-only RPCs; Listing retains per-hotel batch context for correct pricing and handoff.
+- Keep search editors mounted. Catalogue RPCs are FastAPI-only; branch exact selections before joins with a live (region_id, tj_hotel_id) index to bound city paging. Listing retains per-hotel batch context.
 - Hotel Book/Details/Confirm/Cancel live in backend services/hotel_booking.py with compare-and-set status transitions on hotel_bookings (0018); prevents duplicate provider bookings and keeps provider handles server-side.
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
 - Holiday packages (0019) are enquiry-only catalogue tables with indicative prices and no booking/payment fields; writes go through FastAPI service_role, clients read published rows only, so packages can never be booked or charged directly.
