@@ -1,5 +1,9 @@
 # Roadmap
 
+## Mobile results reference
+- [ ] Collapse submitted searches into editable summaries below desktop; preserve mounted form values.
+- [ ] Use image-left hotel cards and compact filter/sort rows; verify phone/tablet/desktop.
+
 ## Results-page search layout
 - [x] Replace expanded flight/hotel search boxes with compact rows, combined dates and traveller/room popovers; preserve existing handoff.
 - [x] Browser-verified populated details, multi-room and traveller controls at 360/390/430/768/1280/1440; no overflow or page errors. Live provider result handoff not re-tested; provider logic unchanged.
