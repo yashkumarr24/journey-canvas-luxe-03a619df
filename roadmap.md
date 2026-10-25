@@ -1,9 +1,9 @@
 # Roadmap
 
-## Compact hero booking card
-- [ ] Compact service tabs and single-row flight/hotel fields with travellers/rooms popovers.
-- [ ] Shared holiday search over both catalogues with Domestic/International labels.
-- [ ] Test search rules; browser-verify 360/390/430/768/1280/1440, popovers, long names, multi-room; document checks and deployment.
+## Done: Compact hero booking card
+- [x] Compact service tabs and single-row flight/hotel fields with travellers/rooms popovers.
+- [x] Shared holiday search over both catalogues with Domestic/International labels.
+- [x] Test search rules; browser-verify 360/390/430/768/1280/1440, popovers, long names, multi-room; document checks and deployment.
 
 ## Destination autocomplete
 - [x] Index complete domestic and international destination/package catalogues separately.
