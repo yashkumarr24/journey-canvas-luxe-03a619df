@@ -196,7 +196,7 @@ function TravellerCounter({ label, hint, value, min, onChange }: { label: string
       <div className="flex shrink-0 items-center gap-2">
         <Button type="button" variant="outline" size="icon" className="size-8 rounded-sm" aria-label={`Remove one ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}><Minus className="size-3.5" aria-hidden="true" /></Button>
         <span className="w-6 text-center text-sm" aria-live="polite">{value}</span>
-        <Button type="button" variant="outline" size="icon" className="size-8 rounded-sm" aria-label={`Add one ${label.toLowerCase()}`} disabled={value >= MAX_PASSENGERS} onChange={() => onChange(Math.min(MAX_PASSENGERS, value + 1))}><Plus className="size-3.5" aria-hidden="true" /></Button>
+        <Button type="button" variant="outline" size="icon" className="size-8 rounded-sm" aria-label={`Add one ${label.toLowerCase()}`} disabled={value >= MAX_PASSENGERS} onClick={() => onChange(Math.min(MAX_PASSENGERS, value + 1))}><Plus className="size-3.5" aria-hidden="true" /></Button>
       </div>
     </div>
   );
