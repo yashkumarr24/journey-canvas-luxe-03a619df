@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { AlertCircle, FlaskConical, Info, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -24,6 +25,8 @@ import {
   applyHotelFilters,
   collectAmenities,
   collectPropertyTypes,
+  defaultHotelSearchValues,
+  hotelSearchSchema,
   hotelPriceRange,
   hotelSearchQueryOptions,
   hotelSortOptions,
@@ -52,6 +55,15 @@ import {
  */
 
 export const Route = createFileRoute("/hotels/")({
+  // Optional hand-off from the homepage search; re-validated below.
+  validateSearch: z.object({
+    destination: z.string().optional(),
+    checkIn: z.string().optional(),
+    checkOut: z.string().optional(),
+    rooms: z.unknown().optional(),
+    nationality: z.string().optional(),
+    currency: z.string().optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Hotel Search — Fly n Feel Holidays" },
@@ -74,12 +86,16 @@ export const Route = createFileRoute("/hotels/")({
 
 function HotelsPage() {
   const navigate = useNavigate();
-  const [request, setRequest] = useState<HotelSearchRequest | null>(null);
+  const search = Route.useSearch();
+  const initialParsed = hotelSearchSchema.safeParse({ ...defaultHotelSearchValues, ...search, rooms: search.rooms ?? defaultHotelSearchValues.rooms });
+  const initialValues = search.destination && initialParsed.success ? initialParsed.data : undefined;
+  const [request, setRequest] = useState<HotelSearchRequest | null>(() => initialValues ? toHotelSearchRequest(initialValues) : null);
   const [filters, setFilters] = useState<HotelFilters>(defaultHotelFilters);
   const [sort, setSort] = useState<HotelSortKey>("recommended");
   const { track } = useAnalytics();
 
-  const query = useQuery(hotelSearchQueryOptions(request));
+  // refetchOnMount: false keeps results handed over from the homepage.
+  const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false });
 
   const results = query.data?.results ?? [];
   const currency = query.data?.currency ?? request?.currency ?? "INR";
@@ -161,7 +177,7 @@ function HotelsPage() {
         />
 
         <div className="mt-10">
-          <HotelSearchForm onSearch={handleSearch} isSearching={query.isFetching} />
+          <HotelSearchForm onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </div>
 
         {useMockHotels && (
