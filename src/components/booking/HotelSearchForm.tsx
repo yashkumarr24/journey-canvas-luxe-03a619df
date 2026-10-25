@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Loader2, MapPin, Minus, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, Minus, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   currencyOptions,
   defaultHotelSearchValues,
@@ -47,9 +48,11 @@ export interface HotelSearchFormProps {
   onSearch: (values: HotelSearchFormValues) => void;
   isSearching: boolean;
   initialValues?: HotelSearchFormValues;
+  /** Compact single-row layout with rooms/guests in a popover (homepage hero). */
+  compact?: boolean;
 }
 
-export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelSearchFormProps) {
+export function HotelSearchForm({ onSearch, isSearching, initialValues, compact = false }: HotelSearchFormProps) {
   const uid = useId();
   const [values, setValues] = useState<HotelSearchFormValues>(initialValues ?? defaultHotelSearchValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -103,6 +106,251 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelS
     setErrors({});
     onSearch(parsed.data);
   };
+
+  const roomsEditor = (
+    <>
+      <div className="space-y-4">
+        {values.rooms.map((room, index) => (
+          <div
+            key={index}
+            className="rounded-sm border border-foreground/10 p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-6"
+          >
+            <p className="text-sm font-medium sm:w-20">Room {index + 1}</p>
+
+            <Counter
+              label="Adults"
+              hint="18+ years"
+              value={room.adults}
+              min={1}
+              max={MAX_ADULTS_PER_ROOM}
+              onChange={(next) => patchRoom(index, { adults: next })}
+            />
+
+            <Counter
+              label="Children"
+              hint={`Under ${MAX_CHILD_AGE + 1}`}
+              value={room.childAges.length}
+              min={0}
+              max={MAX_CHILDREN_PER_ROOM}
+              onChange={(next) => setChildren(index, next)}
+            />
+
+            {room.childAges.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-3 sm:mt-0">
+                {room.childAges.map((age, childIndex) => (
+                  <div key={childIndex}>
+                    <Label htmlFor={fid(`age-${index}-${childIndex}`)} className="text-xs">
+                      Child {childIndex + 1} age
+                    </Label>
+                    <Input
+                      id={fid(`age-${index}-${childIndex}`)}
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={MAX_CHILD_AGE}
+                      className="mt-1 w-20"
+                      value={age}
+                      onChange={(event) =>
+                        patchRoom(index, {
+                          childAges: room.childAges.map((current, i) =>
+                            i === childIndex ? Number(event.target.value || 0) : current,
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {values.rooms.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-4 sm:ml-auto sm:mt-0"
+                onClick={() => removeRoom(index)}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                Remove room
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {values.rooms.length < MAX_ROOMS && (
+        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={addRoom}>
+          <Plus className="size-4" aria-hidden="true" />
+          Add another room
+        </Button>
+      )}
+      <FieldError message={errors.rooms} />
+    </>
+  );
+
+  const optionSelects = (
+    <>
+      <div>
+        <Label htmlFor={fid("nationality")}>Guest nationality</Label>
+        <Select value={values.nationality} onValueChange={(value) => patch({ nationality: value })}>
+          <SelectTrigger id={fid("nationality")} className="mt-1.5 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {nationalityOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-1.5 text-xs text-muted-foreground">Affects rates and local taxes.</p>
+      </div>
+
+      <div>
+        <Label htmlFor={fid("currency")}>Currency</Label>
+        <Select value={values.currency} onValueChange={(value) => patch({ currency: value })}>
+          <SelectTrigger id={fid("currency")} className="mt-1.5 w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {currencyOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+
+  const submitButton = (
+    <Button
+      type="submit"
+      size={compact ? "default" : "lg"}
+      disabled={isSearching}
+      className={
+        compact
+          ? "h-10 w-full rounded-sm bg-gold px-6 text-primary-foreground hover:bg-primary lg:w-auto"
+          : "mt-4 w-full rounded-sm bg-gold px-8 text-primary-foreground hover:bg-primary sm:mt-0 sm:w-auto"
+      }
+    >
+      {isSearching ? (
+        <>
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Searching…
+        </>
+      ) : (
+        <>
+          <Search className="size-4" aria-hidden="true" />
+          Search hotels
+        </>
+      )}
+    </Button>
+  );
+
+  if (compact) {
+    return (
+      <form noValidate onSubmit={handleSubmit} aria-busy={isSearching}>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_minmax(0,auto)_auto] lg:items-end">
+          <div className="min-w-0">
+            <Label htmlFor={fid("destination")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
+              Destination
+            </Label>
+            <div className="relative">
+              <MapPin
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                id={fid("destination")}
+                className="h-10 pl-9"
+                placeholder="Goa, Dubai, Maldives…"
+                autoComplete="off"
+                maxLength={80}
+                value={values.destination}
+                aria-invalid={!!errors.destination}
+                onChange={(event) => patch({ destination: event.target.value })}
+              />
+            </div>
+            <FieldError message={errors.destination} />
+          </div>
+
+          <div className="min-w-0">
+            <Label htmlFor={fid("checkIn")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
+              Check-in
+            </Label>
+            <Input
+              id={fid("checkIn")}
+              type="date"
+              className="h-10"
+              min={todayISO()}
+              value={values.checkIn}
+              aria-invalid={!!errors.checkIn}
+              onChange={(event) => {
+                const checkIn = event.target.value;
+                patch({
+                  checkIn,
+                  checkOut: values.checkOut && values.checkOut > checkIn ? values.checkOut : tomorrowISO(checkIn),
+                });
+              }}
+            />
+            <FieldError message={errors.checkIn} />
+          </div>
+
+          <div className="min-w-0">
+            <Label htmlFor={fid("checkOut")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
+              Check-out
+            </Label>
+            <Input
+              id={fid("checkOut")}
+              type="date"
+              className="h-10"
+              min={tomorrowISO(values.checkIn || todayISO())}
+              value={values.checkOut}
+              aria-invalid={!!errors.checkOut}
+              onChange={(event) => patch({ checkOut: event.target.value })}
+            />
+            <FieldError message={errors.checkOut} />
+          </div>
+
+          <div className="min-w-0">
+            <Label id={fid("rooms-label")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
+              Rooms & guests
+            </Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-labelledby={fid("rooms-label")}
+                  className="h-10 w-full min-w-0 justify-between gap-2 rounded-sm px-3 font-normal lg:w-auto lg:min-w-44"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Users className="size-4 shrink-0 text-gold" aria-hidden="true" />
+                    <span className="truncate">{occupancyLabel(values.rooms)}</span>
+                  </span>
+                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="max-h-[min(60vh,30rem)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain">
+                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Rooms & guests</p>
+                {roomsEditor}
+                <div className="mt-5 space-y-4 border-t border-foreground/10 pt-4">{optionSelects}</div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {submitButton}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {nights > 0 ? `${nights} night${nights > 1 ? "s" : ""}` : "Pick your dates"}
+        </p>
+      </form>
+    );
+  }
 
   return (
     <form
@@ -171,142 +419,18 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues }: HotelS
       <fieldset className="mt-6">
         <legend className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Rooms & guests</legend>
 
-        <div className="mt-4 space-y-4">
-          {values.rooms.map((room, index) => (
-            <div
-              key={index}
-              className="rounded-sm border border-foreground/10 p-4 sm:flex sm:flex-wrap sm:items-end sm:gap-6"
-            >
-              <p className="text-sm font-medium sm:w-20">Room {index + 1}</p>
-
-              <Counter
-                label="Adults"
-                hint="18+ years"
-                value={room.adults}
-                min={1}
-                max={MAX_ADULTS_PER_ROOM}
-                onChange={(next) => patchRoom(index, { adults: next })}
-              />
-
-              <Counter
-                label="Children"
-                hint={`Under ${MAX_CHILD_AGE + 1}`}
-                value={room.childAges.length}
-                min={0}
-                max={MAX_CHILDREN_PER_ROOM}
-                onChange={(next) => setChildren(index, next)}
-              />
-
-              {room.childAges.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-3 sm:mt-0">
-                  {room.childAges.map((age, childIndex) => (
-                    <div key={childIndex}>
-                      <Label htmlFor={fid(`age-${index}-${childIndex}`)} className="text-xs">
-                        Child {childIndex + 1} age
-                      </Label>
-                      <Input
-                        id={fid(`age-${index}-${childIndex}`)}
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        max={MAX_CHILD_AGE}
-                        className="mt-1 w-20"
-                        value={age}
-                        onChange={(event) =>
-                          patchRoom(index, {
-                            childAges: room.childAges.map((current, i) =>
-                              i === childIndex ? Number(event.target.value || 0) : current,
-                            ),
-                          })
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {values.rooms.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="mt-4 sm:ml-auto sm:mt-0"
-                  onClick={() => removeRoom(index)}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  Remove room
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {values.rooms.length < MAX_ROOMS && (
-          <Button type="button" variant="outline" size="sm" className="mt-4" onClick={addRoom}>
-            <Plus className="size-4" aria-hidden="true" />
-            Add another room
-          </Button>
-        )}
-        <FieldError message={errors.rooms} />
+        <div className="mt-4">{roomsEditor}</div>
       </fieldset>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Label htmlFor={fid("nationality")}>Guest nationality</Label>
-          <Select value={values.nationality} onValueChange={(value) => patch({ nationality: value })}>
-            <SelectTrigger id={fid("nationality")} className="mt-1.5 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {nationalityOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="mt-1.5 text-xs text-muted-foreground">Affects rates and local taxes.</p>
-        </div>
-
-        <div>
-          <Label htmlFor={fid("currency")}>Currency</Label>
-          <Select value={values.currency} onValueChange={(value) => patch({ currency: value })}>
-            <SelectTrigger id={fid("currency")} className="mt-1.5 w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {currencyOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {optionSelects}
 
         <div className="sm:col-span-2 sm:flex sm:items-end sm:justify-end">
           <div className="text-sm text-muted-foreground sm:mr-6 sm:text-right">
             <p>{occupancyLabel(values.rooms)}</p>
             <p className="mt-1">{nights > 0 ? `${nights} night${nights > 1 ? "s" : ""}` : "Pick your dates"}</p>
           </div>
-          <Button
-            type="submit"
-            size="lg"
-            disabled={isSearching}
-            className="mt-4 w-full rounded-sm bg-gold px-8 text-primary-foreground hover:bg-primary sm:mt-0 sm:w-auto"
-          >
-            {isSearching ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                Searching…
-              </>
-            ) : (
-              <>
-                <Search className="size-4" aria-hidden="true" />
-                Search hotels
-              </>
-            )}
-          </Button>
+          {submitButton}
         </div>
       </div>
     </form>
