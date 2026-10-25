@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangeField } from "@/components/booking/DateRangeField";
+import { HotelDestinationAutocomplete } from "@/components/booking/HotelDestinationAutocomplete";
 import {
   currencyOptions,
   defaultHotelSearchValues,
@@ -260,22 +261,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues, compact 
             <Label htmlFor={fid("destination")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
               Destination
             </Label>
-            <div className="relative">
-              <MapPin
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                id={fid("destination")}
-                className="h-10 pl-9"
-                placeholder="Goa, Dubai, Maldives…"
-                autoComplete="off"
-                maxLength={80}
-                value={values.destination}
-                aria-invalid={!!errors.destination}
-                onChange={(event) => patch({ destination: event.target.value })}
-              />
-            </div>
+            <HotelDestinationAutocomplete id={fid("destination")} values={values} onChange={patch} invalid={!!errors.destination} compact />
             <FieldError message={errors.destination} />
           </div>
 
@@ -341,22 +327,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues, compact 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Label htmlFor={fid("destination")}>Destination</Label>
-          <div className="relative mt-1.5">
-            <MapPin
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              id={fid("destination")}
-              className="pl-9"
-              placeholder="Goa, Dubai, Maldives…"
-              autoComplete="off"
-              maxLength={80}
-              value={values.destination}
-              aria-invalid={!!errors.destination}
-              onChange={(event) => patch({ destination: event.target.value })}
-            />
-          </div>
+          <div className="mt-1.5"><HotelDestinationAutocomplete id={fid("destination")} values={values} onChange={patch} invalid={!!errors.destination} /></div>
           <FieldError message={errors.destination} />
         </div>
 

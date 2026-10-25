@@ -55,7 +55,9 @@ export const hotelSearchSchema = z
       .string()
       .trim()
       .min(2, "Enter a city, area or hotel name")
-      .max(80, "That destination is too long"),
+      .max(256, "That destination is too long"),
+    destinationKind: z.enum(['hotel', 'city']).optional(),
+    destinationId: z.string().min(1).max(256).optional(),
     checkIn: isoDate,
     checkOut: isoDate,
     rooms: z.array(roomSchema).min(1).max(MAX_ROOMS),
@@ -63,6 +65,9 @@ export const hotelSearchSchema = z
     currency: z.string().length(3),
   })
   .superRefine((value, ctx) => {
+    if (Boolean(value.destinationKind) !== Boolean(value.destinationId)) {
+      ctx.addIssue({ code: 'custom', path: ['destination'], message: 'Choose a hotel or city again' });
+    }
     if (value.checkOut <= value.checkIn) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -98,6 +103,7 @@ export const defaultHotelSearchValues: HotelSearchFormValues = {
 export function toHotelSearchRequest(values: HotelSearchFormValues): HotelSearchRequest {
   return {
     destination: values.destination.trim(),
+    ...(values.destinationId && values.destinationKind ? { destinationId: values.destinationId, destinationKind: values.destinationKind } : {}),
     checkIn: values.checkIn,
     checkOut: values.checkOut,
     rooms: values.rooms.map((room) => ({

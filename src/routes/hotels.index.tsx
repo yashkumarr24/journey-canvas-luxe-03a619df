@@ -59,6 +59,8 @@ export const Route = createFileRoute("/hotels/")({
   // Optional hand-off from the homepage search; re-validated below.
   validateSearch: z.object({
     destination: z.string().optional(),
+    destinationKind: z.enum(['hotel', 'city']).optional(),
+    destinationId: z.string().optional(),
     checkIn: z.string().optional(),
     checkOut: z.string().optional(),
     rooms: z.unknown().optional(),
@@ -96,7 +98,7 @@ function HotelsPage() {
   const { track } = useAnalytics();
 
   // refetchOnMount: false keeps results handed over from the homepage.
-  const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false });
+  const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
 
   const results = query.data?.results ?? [];
   const currency = query.data?.currency ?? request?.currency ?? "INR";
@@ -147,6 +149,7 @@ function HotelsPage() {
 
   const error = query.isError ? toBookingError(query.error) : null;
   const notConfigured = error?.kind === "not_implemented";
+  const unsupported = error?.code === "HOTEL_DESTINATION_UNSUPPORTED";
 
   const filtersPanel = (
     <HotelFiltersPanel
@@ -238,6 +241,7 @@ function HotelsPage() {
               <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start">{filtersPanel}</aside>
 
               <div className="min-w-0">
+                {query.data?.partial && <Alert className="mb-4"><AlertTitle>Some stays could not be checked</AlertTitle><AlertDescription>Available results are shown below. Try again to check the remaining properties.</AlertDescription></Alert>}
                 {query.isFetching && <HotelResultsSkeleton />}
 
                 {!query.isFetching && error && (
@@ -248,7 +252,7 @@ function HotelsPage() {
                       <AlertCircle className="size-4" aria-hidden="true" />
                     )}
                     <AlertTitle>
-                      {notConfigured ? "Live hotel rates aren't connected yet" : "We couldn't complete that search"}
+                      {unsupported ? "Destination not supported" : notConfigured ? "Live hotel rates aren't connected yet" : "Hotel search is temporarily unavailable"}
                     </AlertTitle>
                     <AlertDescription className="space-y-3">
                       <p>{error.message}</p>
