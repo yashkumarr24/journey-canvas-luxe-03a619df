@@ -66,7 +66,7 @@ from contextvars import ContextVar as _ContextVar
 
 STATIC_NAMES: "_ContextVar[dict[str, str] | None]" = _ContextVar("hotel_static_names", default=None)
 
-MAX_RESULTS = 240
+MAX_RESULTS = 100
 MAX_ROOMS_PER_HOTEL = 60
 MAX_IMAGES = 12
 
@@ -112,6 +112,15 @@ def _batches(hids: list[str]) -> list[list[str]]:
     return [unique[i : i + MAX_LISTING_HIDS] for i in range(0, len(unique), MAX_LISTING_HIDS)]
 
 
+class HotelListingResults(list):
+    """Normalized results with server-only per-property correlation context."""
+    def __init__(self):
+        super().__init__()
+        self.provider_search_ids: dict[str, str] = {}
+        self.completed_batches = 0
+        self.failed_batches = 0
+
+
 async def search_hotels(
     client: TripJackClient,
     config: TripJackConfig,
@@ -129,16 +138,15 @@ async def search_hotels(
     nights = (request.check_out - request.check_in).days or None
     rooms = [{"adults": r.adults, "childAges": r.child_ages} for r in request.rooms]
 
-    results: list[HotelResult] = []
+    results = HotelListingResults()
     seen: set[str] = set()
     search_id: str | None = None
     total_results = 0
     batches = _batches(hids)
     done = 0
+    first_error = None
 
     for index, batch in enumerate(batches):
-        if len(results) >= MAX_RESULTS:
-            break
         payload = build_listing_payload(
             hids=batch,
             check_in=request.check_in.isoformat(),
@@ -154,11 +162,11 @@ async def search_hotels(
                 retries=config.search_retries,  # listing is a pure read
                 operation="hotel_listing",
             )
-        except Exception:  # noqa: BLE001
-            if index == 0:
-                raise
+        except Exception as exc:  # noqa: BLE001
+            first_error = first_error or exc
+            results.failed_batches += 1
             logger.warning("hotel_listing_batch_failed", extra=log_extra(batch=index + 1))
-            break
+            continue
 
         page = normalize_listing_response(body, currency=currency, nights=nights)
         logger.info(
@@ -166,7 +174,9 @@ async def search_hotels(
             extra=log_extra(batch=index + 1, hids_sent=len(batch),
                             normalized=len(page.results), **listing_shape(body)),
         )
-        search_id = search_id or page.search_id or payload["correlationId"]
+        batch_id = page.search_id or payload["correlationId"]
+        search_id = search_id or batch_id
+        results.completed_batches += 1
         total_results += page.total_results or 0
         done += 1
         for result in page.results:
@@ -174,7 +184,10 @@ async def search_hotels(
                 continue
             seen.add(result.id)
             results.append(result)
+            results.provider_search_ids[result.id] = batch_id
 
+    if first_error is not None and not results:
+        raise first_error
     logger.info(
         "tripjack_hotel_listing_normalized",
         extra=log_extra(
@@ -184,7 +197,7 @@ async def search_hotels(
             provider_total_results=total_results,
         ),
     )
-    return results[:MAX_RESULTS], search_id, currency
+    return results, search_id, currency
 
 
 def normalize_listing_response(

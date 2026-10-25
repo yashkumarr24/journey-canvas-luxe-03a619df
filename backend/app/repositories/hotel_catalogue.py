@@ -176,34 +176,28 @@ class HotelCatalogueRepository:
 
     # -- search-time reads --------------------------------------------------------
 
-    async def resolve_hids(self, destination: str, limit: int = 200) -> list[str]:
-        term = _SAFE.sub("", destination or "").strip()
-        if len(term) < 2:
-            return []
-        regions = await self._db.select(
-            "hotel_regions",
-            columns="city_region_id",
-            filters={"or": f"(city_name.ilike.{term}*,region_name.ilike.{term}*)"},
-            limit=50,
-        )
-        region_ids = [r["city_region_id"] for r in regions]
-        if not region_ids:
-            return []
-        mappings = await self._db.select(
-            "hotel_mappings",
-            columns="tj_hotel_id",
-            filters={"region_id": _in(region_ids), "is_deleted": "is.false"},
-            limit=limit * 2,
-        )
-        ids = [m["tj_hotel_id"] for m in mappings]
-        if not ids:
-            return []
-        inactive = await self._db.select(
-            "hotels", columns="tj_hotel_id",
-            filters={"tj_hotel_id": _in(ids), "is_active": "is.false"}, limit=len(ids),
-        )
-        blocked = {r["tj_hotel_id"] for r in inactive}
-        return [i for i in ids if i not in blocked][:limit]
+    async def suggestions(self, query: str) -> list[dict]:
+        return await self._db.rpc("hotel_catalogue_suggestions", {"p_query": query, "p_limit": 12})
+
+    async def resolve_hids(self, destination: str, *, kind: str | None = None,
+                           selected_id: str | None = None) -> list[str]:
+        ids: list[str] = []
+        after = ""
+        while True:
+            rows = await self._db.rpc("hotel_catalogue_search_ids", {
+                "p_destination": destination, "p_kind": kind, "p_id": selected_id,
+                "p_after": after, "p_limit": 500,
+            })
+            page = sorted({str(r["tj_hotel_id"]) for r in rows if r.get("tj_hotel_id")})
+            if not page:
+                break
+            if page[-1] <= after:
+                raise RuntimeError("catalogue_pagination_stalled")
+            ids.extend(page)
+            after = page[-1]
+            if len(page) < 500:
+                break
+        return list(dict.fromkeys(ids))
 
     async def static_for(self, ids: list[str]) -> dict[str, dict]:
         if not ids:

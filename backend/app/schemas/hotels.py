@@ -199,7 +199,9 @@ class FareBreakdownLine(CamelModel):
 
 
 class HotelSearchRequest(CamelModel):
-    destination: str = Field(min_length=2, max_length=80)
+    destination: str = Field(min_length=2, max_length=256)
+    destination_kind: Optional[Literal["hotel", "city"]] = None
+    destination_id: Optional[str] = Field(default=None, min_length=1, max_length=256)
     check_in: date
     check_out: date
     rooms: List[HotelOccupancy] = Field(min_length=1, max_length=MAX_ROOMS)
@@ -212,7 +214,7 @@ class HotelSearchRequest(CamelModel):
         cleaned = " ".join(value.split())
         # Free text is resolved server-side; keep it to plain place characters
         # so nothing resembling a payload reaches the provider.
-        if not re.match(r"^[A-Za-z0-9 .,'\-()]{2,80}$", cleaned):
+        if any(ord(c) < 32 for c in cleaned):
             raise ValueError("invalid_destination")
         return cleaned
 
@@ -228,6 +230,8 @@ class HotelSearchRequest(CamelModel):
 
     @model_validator(mode="after")
     def _dates(self) -> "HotelSearchRequest":
+        if bool(self.destination_kind) != bool(self.destination_id):
+            raise ValueError("destination_selection_incomplete")
         today = date.today()
         if self.check_in < today:
             raise ValueError("check_in_in_past")
@@ -244,7 +248,18 @@ class HotelSearchRequest(CamelModel):
         return (self.check_out - self.check_in).days
 
 
+class HotelDestinationSuggestion(CamelModel):
+    kind: Literal["hotel", "city"]
+    id: str
+    name: str
+    location: str
+    label: str
+
+
 class HotelSearchResponse(CamelModel):
+    partial: bool = False
+    completed_batches: int = 0
+    failed_batches: int = 0
     search_id: Optional[str] = None
     results: List[HotelResult] = Field(default_factory=list)
     currency: Optional[str] = None
