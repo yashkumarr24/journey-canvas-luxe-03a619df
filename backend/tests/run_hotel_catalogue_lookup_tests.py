@@ -69,7 +69,7 @@ def main():
                 and m.tj_hotel_id>'' and coalesce(h.is_active,true)
               order by m.tj_hotel_id limit 500;"""))[0]
             encoded = json.dumps(plan)
-            assert 'hotel_mappings_live_region_hotel_idx' in encoded, 'city query did not use composite index'
+            assert 'hotel_mappings_live_region_hotel_idx' in encoded, f'city query did not use composite index: {encoded}'
             buffers = plan['Plan'].get('Shared Hit Blocks', 0) + plan['Plan'].get('Shared Read Blocks', 0)
             assert buffers < 10000, f'city page touched too many buffers: {buffers}'
             for name in ['hotel_catalogue_search_ids_0025', 'hotel_catalogue_search_ids']:
