@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Mobile results reference
-- [ ] Collapse submitted searches into editable summaries below desktop; preserve mounted form values.
-- [ ] Use image-left hotel cards and compact filter/sort rows; verify phone/tablet/desktop.
+- [x] Collapse submitted searches into editable summaries below desktop; preserve mounted form values.
+- [x] Image-left hotel cards and compact filter/sort rows; checked 360/390/430/768/1280/1440 with no overflow/page errors. Hotel checks used existing preview samples; live flight cards unavailable because flight service is not configured. Native Android device not tested.
 
 ## Results-page search layout
 - [x] Replace expanded flight/hotel search boxes with compact rows, combined dates and traveller/room popovers; preserve existing handoff.

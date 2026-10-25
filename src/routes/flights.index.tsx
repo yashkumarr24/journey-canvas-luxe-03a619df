@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FlightSearchForm } from "@/components/booking/FlightSearchForm";
 import { ResultsSearchPanel } from "@/components/booking/ResultsSearchPanel";
-import { stayLabel } from "@/lib/hotel-search";
+import { format, parseISO } from "date-fns";
 import { cabinClassOptions } from "@/lib/flight-search";
 import { FlightResultCard } from "@/components/booking/FlightResultCard";
 import { FlightResultsSkeleton } from "@/components/booking/FlightResultsSkeleton";
@@ -196,7 +196,7 @@ function FlightsPage() {
           subtitle="Tell us where you're headed. Our desk quotes the fare, the routing and the extras — so the journey is handled end to end."
         />}
 
-        <ResultsSearchPanel active={!!request} title={request ? `${request.origin} → ${request.destination}` : "Flights"} detail={request ? `${request.tripType === "roundtrip" ? "Return" : "One-way"} · ${stayLabel(request.departureDate, request.returnDate ?? request.departureDate)} · ${request.passengers.adults + request.passengers.children + request.passengers.infants} travellers · ${cabinClassOptions.find((option) => option.value === request.cabinClass)?.label ?? request.cabinClass}` : ""}>
+        <ResultsSearchPanel active={!!request} title={request ? `${request.origin} → ${request.destination}` : "Flights"} detail={request ? `${request.tripType === "roundtrip" ? "Return" : "One-way"} · ${format(parseISO(request.departureDate), "d MMM")}${request.returnDate ? ` – ${format(parseISO(request.returnDate), "d MMM")}` : ""} · ${request.passengers.adults + request.passengers.children + request.passengers.infants} travellers · ${cabinClassOptions.find((option) => option.value === request.cabinClass)?.label ?? request.cabinClass}` : ""}>
           <FlightSearchForm compact onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </ResultsSearchPanel>
 
