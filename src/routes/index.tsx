@@ -13,8 +13,16 @@ import { ScrollProgress } from "@/components/ScrollProgress";
 import { SectionTitle } from "@/components/Section";
 import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { posts } from "@/data/posts";
+import { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    try {
+      return await listInternationalCatalogue();
+    } catch {
+      return [];
+    }
+  },
   head: () => ({
     meta: [
       { title: "Fly n Feel Holidays — Bespoke Luxury Travel, Since 2012" },
@@ -123,13 +131,14 @@ function CTABand() {
 }
 
 function Index() {
+  const catalogue = Route.useLoaderData();
   return (
     <main className="relative bg-background text-foreground">
       <ScrollProgress />
       <SmoothScroll />
       <Cursor />
       <Nav />
-      <Hero />
+      <Hero catalogue={catalogue} />
       <Marquee />
       <ValueProps />
       <Destinations

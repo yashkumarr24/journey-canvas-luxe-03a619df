@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { HomeSearch } from "@/components/HomeSearch";
+import type { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 import logo from "@/assets/flynfeel-logo.webp";
 
-export function Hero() {
+export function Hero({ catalogue }: { catalogue: Awaited<ReturnType<typeof listInternationalCatalogue>> }) {
   return (
     <section id="top" className="relative overflow-hidden border-b border-foreground/10 bg-background">
       {/* very subtle dot texture */}
@@ -32,8 +33,8 @@ export function Hero() {
           Discover the world, <span className="italic">your way</span> with us.
         </motion.h1>
 
-        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative z-10 mt-10 lg:mt-16">
-          <HomeSearch />
+        <motion.div initial={{ y: 22, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative z-10 mt-8 lg:mt-12">
+          <HomeSearch catalogue={catalogue} />
         </motion.div>
       </div>
     </section>
