@@ -49,19 +49,24 @@ def _list(body: Any, key: str) -> list:
 def _cursor_paging(body: Any) -> tuple[Optional[str], bool]:
     block = body if isinstance(body, dict) else {}
     cursor = _str(block.get("nextCursor"))
-    return cursor, block.get("hasMore") is True and cursor is not None
+    more = block.get("hasMore") is True
+    if more and not cursor:
+        raise ValueError("catalogue_next_cursor_missing")
+    return cursor, more
 
 
 def _page_paging(body: Any, requested_page: int) -> bool:
     """pageable.pageNumber / pageable.totalPages -> more pages remain?"""
     pageable = body.get("pageable") if isinstance(body, dict) else None
     if not isinstance(pageable, dict):
-        return False
+        raise ValueError("catalogue_page_metadata_missing")
     number = pageable.get("pageNumber")
     total = pageable.get("totalPages")
     if not isinstance(total, int) or isinstance(total, bool):
-        return False
+        raise ValueError("catalogue_total_pages_missing")
     current = number if isinstance(number, int) and not isinstance(number, bool) else requested_page
+    if current != requested_page:
+        raise ValueError("catalogue_page_mismatch")
     return current + 1 < total
 
 
@@ -100,6 +105,8 @@ async def fetch_regions_page(
             "full_region_name": _str(raw.get("fullRegionName")),
         })
     next_cursor, has_more = _cursor_paging(body)
+    if has_more and next_cursor == cursor:
+        raise ValueError("catalogue_cursor_stalled")
     return rows, next_cursor, has_more
 
 
@@ -164,6 +171,8 @@ async def fetch_mapping_changes(
     body = await client.post(path, payload, retries=RETRIES, operation=f"hotel_content_{change_type.lower()}")
     rows = _mapping_rows(body)
     next_cursor, has_more = _cursor_paging(body)
+    if has_more and next_cursor == cursor:
+        raise ValueError("catalogue_cursor_stalled")
     return rows, next_cursor, has_more
 
 

@@ -59,7 +59,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
   const [error, setError] = useState<string | null>(null);
   const [hotelValues, setHotelValues] = useState<HotelSearchFormValues | null>(null);
   const hotelRequest = useMemo<HotelSearchRequest | null>(() => hotelValues ? toHotelSearchRequest(hotelValues) : null, [hotelValues]);
-  const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
+  const hotelQuery = useQuery({ ...hotelSearchQueryOptions(hotelRequest), refetchOnWindowFocus: false, refetchOnReconnect: false });
   // Same request + query key as the /flights and /hotels pages, so "Explore
   // more" reuses these cached results instead of searching again.
   const [flightValues, setFlightValues] = useState<FlightSearchFormValues | null>(null);
@@ -194,6 +194,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
         {useMockHotels && <p className="text-sm text-muted-foreground">Preview mode · Sample stays only; no reservation is made.</p>}
         {hotelQuery.isFetching && <HotelResultsSkeleton />}
         {hotelQuery.isError && <p role="alert" className="text-sm text-destructive">{toBookingError(hotelQuery.error).message}</p>}
+        {hotelQuery.data?.partial && <p role="status" className="text-sm text-muted-foreground">Some stays could not be checked. Available results are shown; try again to check the rest.</p>}
         {!hotelQuery.isFetching && hotelQuery.data && <><p className="text-sm font-medium">{hotelQuery.data.results.length} stays in {hotelRequest.destination}</p>{hotelQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No stays found for these dates. Try another destination or date.</p>}{hotelQuery.data.results.slice(0, 3).map((result) => <HotelResultCard key={result.id} result={result} nights={hotelQuery.data.nights ?? 0} roomCount={hotelRequest.rooms.length} onSelect={hotelQuery.data.searchId ? () => void navigate({ to: "/hotels/detail", search: { searchId: hotelQuery.data.searchId, hotelId: result.id } }) : undefined} />)}{hotelQuery.data.results.length > 0 && <Button asChild variant="outline"><Link to="/hotels" search={hotelValues}>Explore more stays<ArrowRight className="size-4" aria-hidden="true" /></Link></Button>}</>}
       </div>}
       {service === "flights" && flightRequest && flightValues && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">

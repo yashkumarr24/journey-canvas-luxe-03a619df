@@ -26,6 +26,7 @@ import type {
   HotelBookingResult,
   HotelBookingSummary,
   HotelDetailRequest,
+  HotelDestinationSuggestion,
   HotelDetailResponse,
   HotelGuestDetailsRequest,
   HotelGuestDetailsResponse,
@@ -370,6 +371,9 @@ export const bookingApi = {
     request<BookingSummary>("POST", "/api/v1/payments/failure", payload, options),
 
   /* --- Hotels (PHASE 9) ------------------------------------------------ */
+
+  hotelDestinations: (query: string, options?: RequestOptions) =>
+    request<HotelDestinationSuggestion[]>("GET", `/api/v1/hotels/destinations?q=${encodeURIComponent(query)}`, undefined, options),
 
   /** Hotel listing/search. Opens a server-held search session. */
   searchHotels: (payload: HotelSearchRequest, options?: RequestOptions) =>

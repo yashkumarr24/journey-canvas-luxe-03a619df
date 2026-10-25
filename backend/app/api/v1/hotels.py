@@ -19,6 +19,7 @@ from app.core.auth import AuthContext, optional_user
 from app.core.config import Settings, get_settings
 from app.schemas.common import ErrorResponse
 from app.schemas.hotels import (
+    HotelDestinationSuggestion,
     HotelDetailRequest,
     HotelDetailResponse,
     HotelGuestDetailsRequest,
@@ -48,6 +49,14 @@ COMMON_ERRORS = {
     503: {"model": ErrorResponse, "description": "Provider unavailable"},
     504: {"model": ErrorResponse, "description": "Provider timeout"},
 }
+
+
+@router.get("/destinations", response_model=list[HotelDestinationSuggestion], responses=COMMON_ERRORS)
+async def hotel_destinations(request: Request, q: str = Query(min_length=2, max_length=80),
+                             auth: AuthContext = Depends(optional_user),
+                             settings: Settings = Depends(get_settings)):
+    return await hotel_service.destination_suggestions(
+        request=request, query=q, auth=auth, settings=settings)
 
 
 @router.post(

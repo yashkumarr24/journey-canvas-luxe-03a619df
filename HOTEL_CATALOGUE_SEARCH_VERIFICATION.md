@@ -1,0 +1,37 @@
+# Hotel catalogue search — October 25, 2026
+
+## Delivered
+- Shared homepage/results hotel destination combobox searches the synchronized catalogue through FastAPI. Suggestions carry Hotel/City labels, location, and authoritative property/region IDs. Partial, mixed-case input is normalized; selection clears on every edit or clear action. Keyboard arrows, Enter, Escape, touch selection, and portal collision/height constraints are implemented.
+- Exact property selection resolves one active mapped property; city selection resolves its authoritative mapping, not similarly named cities. Backend verifies the selected ID against the supplied catalogue label. Free-text searches retain exact city/region/hotel-name support; database failures cannot silently fall back to an unsupported-destination message.
+- Keyset mapping reads replace the old 200-ID cut-off. Listing remains at most 100 IDs per request. Completed batches retain all normalized results, without the old 240-result aggregate/session truncation. Failed batches do not prevent subsequent batches being checked. A 35-second Listing budget returns completed valid results explicitly marked partial; empty results plus failures raise a temporary failure, not no availability.
+- Each hotel's Listing correlation is stored server-side and selected before pricing/review. Nationality now survives durable session restoration alongside dates, rooms, currency and per-property context. Booking/payment modules were not changed.
+- Explore more carries selection IDs with the existing complete search values and identical query key. Results-page focus/reconnect/mount do not trigger an automatic second search. This is the existing same-tab cache handoff, not a new cross-browser persistence guarantee.
+
+## Audit findings
+- Attached `Hotel_V3.pdf`: Listing maximum 100 IDs; pricing correlation must match Listing. Full mapping uses zero-based `page`/`size` plus `pageable`; city regions and incremental NEW/UPDATE/DELETE use `cursor`, `nextCursor`, `hasMore`. The existing sync architecture already follows these contracts and attaches exact requested region IDs. No fabricated provider pagination was added to Listing.
+- Confirmed gaps: 200 mapped-ID cutoff, silent later-batch termination, aggregate/session cap, one shared correlation for independently requested batches, and missing restored nationality. Fixed.
+- Added errors for missing/stalled continuation cursors and mismatched/missing mapping pagination metadata, so incomplete sync cannot silently appear finished. Existing migration 0017 already clears content-unavailable status in the content-save RPC; no duplicate fix was needed.
+- Safe existing/new logs report mapped count, submitted batch size, provider hotel count/total, normalization drops, unexpected-return count and batch completion counts, never raw IDs, correlations, payloads or guest identities. Results facets/filters operate on the complete returned collection and reset on a new submitted search; homepage intentionally previews three cards.
+- The preview uses sample inventory and Dubai has one matching sample property. That is not evidence of a live TripJack defect. The intermittent live one-hotel incident cannot be conclusively attributed without VPS counts from an actual UAT search; no assumption was made that every valid query must return many hotels.
+
+## Checks performed
+- 124 Python tests passed: new catalogue/batch/context tests plus Listing, detail, review, catalogue resilience, content-unavailable, pending IDs, REST timeout.
+- 4 frontend tests passed using `bun test src/lib/hotel-destination.test.ts`: hotel edit invalidation, city selection, complete request/cache handoff, dates/occupancy differences.
+- Migration and persistent SQL regressions ran successfully in a disposable local PostgreSQL database with synthetic fixtures: partial/mixed-case hotel and city suggestions, exact hotel/city scope, stale ID rejection, no matches, and no anonymous RPC access. No managed or VPS database was modified.
+- Browser checked both homepage and hotel results at 360/390/430/768/1280/1440px: destination edits, clear, Escape, temporary-lookup-failure dropdown, restored dates/guest counts and no horizontal page overflow. Screenshots visually inspected at mobile/desktop. No homepage page errors were observed. Preview build/typecheck is clean.
+- Successful live catalogue suggestion selection, live availability with changed dates/guest counts, live Explore-more identity/result readback, actual phone keyboard and native Android WebView remain unverified: preview has no booking API configured, and the connected managed database has no hotel catalogue/session tables. Synthetic tests are not live-provider evidence.
+
+## Deployment and synchronization requirements
+1. Apply `backend/db/migrations/0025_hotel_search_catalogue_context.sql` on the **existing FNF/VPS hotel catalogue database**, after prior numbered migrations. Do not apply it to the preview/auth-only database. It adds server-only context columns and restricted lookup RPCs; client table access stays blocked. SQL was prepared/tested, not deployed.
+2. Deploy the changed FastAPI files to the VPS and restart its existing application service through the established deployment procedure. Confirm the catalogue-only `GET /api/v1/hotels/destinations?q=...` works before deploying the frontend. Keep TripJack configuration UAT-only for verification; do not enable payments/booking.
+3. Deploy the frontend through Vercel with the existing correct `VITE_BOOKING_API_URL`. No Android rebuild is needed for the canonical-site WebView; native device verification is still required.
+4. No synchronization was run. First inspect existing catalogue sync status and whether affected cities have authoritative region mappings and active named static records. If mappings/content are missing, run the existing controlled UAT sync workflow on the VPS after reviewing scope; do not reset or seed inventory. A completed content-only resume will not repair missing region linkage: that requires the existing region mapping phase.
+5. For the reported incident, compare count-only stages for the same city, dates, rooms/nationality/currency: resolved IDs → batch submitted IDs → provider returned hotels → normalization drops → all results → filtered/displayed count. Confirm partial flags and the selected hotel's stored batch context. Recheck Explore more without a second search call.
+
+## Changed files
+- UI/API: `src/components/booking/HotelDestinationAutocomplete.tsx`, `HotelSearchForm.tsx`, `src/components/HomeSearch.tsx`, `src/routes/hotels.index.tsx`, `src/lib/hotel-destination.ts`, `hotel-search.ts`, `hotel-api.ts`, `booking-api.ts`, `src/types/booking.ts`.
+- Backend: `backend/app/api/v1/hotels.py`, `app/schemas/hotels.py`, `app/repositories/hotel_catalogue.py`, `app/services/hotel_search.py`, `hotel_sessions.py`, `hotel_catalogue_sync.py`, `app/integrations/tripjack/hotels.py`, `hotel_content.py`, migration 0025.
+- Tests: `src/lib/hotel-destination.test.ts`, `backend/tests/test_hotel_search_catalogue.py`, `backend/tests/hotel_catalogue_search_regression.sql`.
+- Documentation: this report, `AGENTS.md`, `roadmap.md`.
+
+Branding, navbar, existing responsive search arrangement, auth, offline/Retry, certification files, booking services and payments are unchanged.

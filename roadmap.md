@@ -1,5 +1,12 @@
 # Roadmap
 
+## Hotel catalogue search
+- [x] Add synchronized hotel/city suggestions with selection validation and stale-ID clearing.
+- [x] Audit synchronization and fix confirmed Listing batching/context issues.
+- [x] Preserve Explore more stays details/results and distinguish failure states.
+- [x] Run focused tests and browser checks; report VPS and synchronization requirements in HOTEL_CATALOGUE_SEARCH_VERIFICATION.md.
+- [ ] Live catalogue/availability/handoff and Android verification: blocked until migration 0025 and VPS/frontend deployment; preview has no hotel API and its database has no catalogue tables.
+
 ## Mobile results reference
 - [x] Collapse submitted searches into editable summaries below desktop; preserve mounted form values.
 - [x] Image-left hotel cards and compact filter/sort rows; checked 360/390/430/768/1280/1440 with no overflow/page errors. Hotel checks used existing preview samples; live flight cards unavailable because flight service is not configured. Native Android device not tested.

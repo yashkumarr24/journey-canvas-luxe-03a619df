@@ -47,7 +47,6 @@ SEARCH_TTL = timedelta(minutes=20)
 REVIEW_TTL = timedelta(minutes=12)
 
 MAX_SESSIONS = 2000
-MAX_STORED_RESULTS = 240
 
 
 def _token() -> str:
@@ -98,6 +97,7 @@ class SearchSession:
     provider_search_id: Optional[str]
     expires_at: datetime
     user_id: Optional[str] = None
+    provider_search_ids: Dict[str, str] = field(default_factory=dict)
 
     @property
     def is_expired(self) -> bool:
@@ -175,6 +175,7 @@ async def create_search_session(
     provider_search_id: Optional[str],
     currency: str,
     user_id: Optional[str],
+    provider_search_ids: Optional[Dict[str, str]] = None,
 ) -> SearchSession:
     session = SearchSession(
         id=_token(),
@@ -186,8 +187,9 @@ async def create_search_session(
         rooms=list(rooms),
         nationality=nationality,
         currency=currency,
-        results={result.id: result for result in results[:MAX_STORED_RESULTS]},
+        results={result.id: result for result in results},
         provider_search_id=provider_search_id,
+        provider_search_ids=provider_search_ids or {},
         expires_at=_now() + SEARCH_TTL,
         user_id=user_id,
     )
@@ -200,6 +202,8 @@ async def create_search_session(
                     "search_token": session.id,
                     "user_id": user_id,
                     "provider_search_id": provider_search_id,
+                    "provider_search_ids": session.provider_search_ids,
+                    "nationality": nationality,
                     "destination": destination,
                     "check_in": check_in,
                     "check_out": check_out,
@@ -283,10 +287,11 @@ def _search_from_row(row: dict[str, Any]) -> Optional[SearchSession]:
         check_out=str(row.get("check_out") or ""),
         nights=int(row.get("nights") or 1),
         rooms=rooms or [HotelOccupancy()],
-        nationality=None,
+        nationality=row.get("nationality"),
         currency=str(row.get("currency") or "INR"),
         results=results,
         provider_search_id=row.get("provider_search_id"),
+        provider_search_ids=row.get("provider_search_ids") or {},
         expires_at=expires_at,
         user_id=row.get("user_id"),
     )

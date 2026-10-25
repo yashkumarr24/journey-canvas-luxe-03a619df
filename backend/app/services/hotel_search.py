@@ -152,7 +152,7 @@ class HotelGuestDetailsIncompleteError(AppError):
 
 class HotelDestinationUnsupportedError(AppError):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-    code = "SEARCH_REJECTED"
+    code = "HOTEL_DESTINATION_UNSUPPORTED"
     message = "We don't cover hotels in that destination yet. Please try a nearby city."
 
 
@@ -193,6 +193,18 @@ def _map_provider_error(exc: Exception) -> AppError:
 # ================================ search ===================================
 
 
+async def destination_suggestions(*, request: Request, query: str, auth: AuthContext,
+                                  settings: Settings) -> list[dict]:
+    hotel_session_limiter.check(client_identity(request, auth.user_id))
+    repo = HotelCatalogueRepository(settings)
+    if not repo.enabled:
+        raise HotelSearchNotConfiguredError()
+    try:
+        return await repo.suggestions(" ".join(query.split()))
+    except Exception:
+        raise HotelProviderUnavailableError() from None
+
+
 async def search_hotels(
     *,
     request: Request,
@@ -212,10 +224,12 @@ async def search_hotels(
     hids: list[str] = []
     if catalogue.enabled:
         try:
-            hids = await catalogue.resolve_hids(payload.destination)
+            hids = await catalogue.resolve_hids(payload.destination, kind=payload.destination_kind,
+                                                selected_id=payload.destination_id)
         except Exception:
             logger.warning("hotel_catalogue_lookup_failed")
-    if not hids:
+            raise HotelProviderUnavailableError() from None
+    if not hids and not payload.destination_id:
         entry = hotel_directory.resolve(
             payload.destination, directory_path=settings.tripjack_hotel_directory_path
         )
@@ -226,7 +240,8 @@ async def search_hotels(
     static: dict = {}
     if catalogue.enabled:
         try:
-            static = await catalogue.static_for(hids)
+            for offset in range(0, len(hids), 100):
+                static.update(await catalogue.static_for(hids[offset:offset + 100]))
         except Exception:
             logger.warning("hotel_catalogue_static_failed")
     names_token = tripjack_hotels.STATIC_NAMES.set(
@@ -251,6 +266,9 @@ async def search_hotels(
         raise _map_provider_error(exc) from None
     finally:
         tripjack_hotels.STATIC_NAMES.reset(names_token)
+    provider_search_ids = getattr(results, "provider_search_ids", {})
+    completed_batches = getattr(results, "completed_batches", 1)
+    failed_batches = getattr(results, "failed_batches", 0)
     results = [_merge_static(r, static.get(r.id)) for r in results]
 
     session = await sessions.create_search_session(
@@ -263,6 +281,7 @@ async def search_hotels(
         nationality=payload.nationality,
         results=results,
         provider_search_id=provider_search_id,
+        provider_search_ids=provider_search_ids,
         currency=currency,
         user_id=auth.user_id,
     )
@@ -273,6 +292,7 @@ async def search_hotels(
     logger.info("hotel_search_completed", extra=log_extra(result_count=len(results)))
 
     return HotelSearchResponse(
+        partial=failed_batches > 0, completed_batches=completed_batches, failed_batches=failed_batches,
         search_id=session.id,
         results=results,
         currency=currency,
@@ -301,6 +321,9 @@ async def hotel_detail(
     if session is None:
         raise HotelSearchExpiredError()
 
+    if payload.hotel_id in session.provider_search_ids:
+        from dataclasses import replace
+        session = replace(session, provider_search_id=session.provider_search_ids[payload.hotel_id])
     summary = session.results.get(payload.hotel_id)
     if summary is None:
         raise HotelNotFoundError()
@@ -386,6 +409,9 @@ async def select_room(
     if session is None:
         raise HotelSearchExpiredError()
 
+    if payload.hotel_id in session.provider_search_ids:
+        from dataclasses import replace
+        session = replace(session, provider_search_id=session.provider_search_ids[payload.hotel_id])
     summary = session.results.get(payload.hotel_id)
     if summary is None:
         raise HotelNotFoundError()

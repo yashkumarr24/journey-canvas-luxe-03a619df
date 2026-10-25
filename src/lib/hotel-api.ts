@@ -111,6 +111,10 @@ export function isHotelRoomUnavailable(error: unknown): boolean {
 }
 
 export const hotelApi = {
+  // Catalogue lookup never uses invented mock suggestions.
+  destinations(query: string, options?: RequestOptions) {
+    return guard(() => bookingApi.hotelDestinations(query, options));
+  },
   /* --- Search / detail -------------------------------------------------- */
 
   search(payload: HotelSearchRequest, options?: RequestOptions): Promise<HotelSearchResponse> {

@@ -228,9 +228,19 @@ export interface HotelResult extends HotelSummary {
   rate?: HotelRateSummary;
 }
 
+export interface HotelDestinationSuggestion {
+  kind: 'hotel' | 'city';
+  id: string;
+  name: string;
+  location: string;
+  label: string;
+}
+
 export interface HotelSearchRequest {
   /** Free-text city / area, resolved server-side. */
   destination: string;
+  destinationKind?: 'hotel' | 'city';
+  destinationId?: string;
   /** ISO date, YYYY-MM-DD. */
   checkIn: string;
   checkOut: string;
@@ -242,6 +252,9 @@ export interface HotelSearchRequest {
 }
 
 export interface HotelSearchResponse {
+  partial?: boolean;
+  completedBatches?: number;
+  failedBatches?: number;
   /** Server-side search session id, required by detail and review. */
   searchId?: string;
   results: HotelResult[];

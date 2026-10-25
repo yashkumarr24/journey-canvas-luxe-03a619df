@@ -321,6 +321,8 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                                 country_name=region.get("country_name"),
                                 region_ids=[region_id],
                             )
+                            if mapping_more and not mappings:
+                                raise ValueError("catalogue_empty_mapping_page_with_more")
                             await _upsert_mappings_full(repo, mappings)
                             cursor["region_mapping"] = {
                                 "region_index": region_index,
@@ -337,6 +339,8 @@ async def run_full_sync(settings: Optional[Settings] = None) -> dict:
                     cursor.pop("region_mapping", None)
                     if not more:
                         break
+                    if nxt == cursor.get("region_cursor"):
+                        raise ValueError("catalogue_region_cursor_stalled")
                     cursor["region_cursor"] = nxt
                     await _put_state_full(repo, {"cursor": cursor})
                 # The authoritative region-based mapping is sufficient; there is
@@ -416,6 +420,8 @@ async def run_incremental_sync(settings: Optional[Settings] = None) -> dict:
                     processed += len(rows)
                     if not more:
                         break
+                    if nxt == cursor:
+                        raise ValueError("catalogue_mapping_cursor_stalled")
                     cursor = nxt
                     await repo.put_state(key, {"cursor": {"cursor": cursor}, "processed_count": processed})
                 if change != "DELETE":
