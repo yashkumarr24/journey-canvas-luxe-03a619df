@@ -95,7 +95,7 @@ function FlightsPage() {
   // on page load. Each submitted request has its own key, and TanStack Query
   // aborts the in-flight request via the signal we forward to the API client,
   // so an older search can never overwrite a newer one.
-  const query = useQuery(flightSearchQueryOptions(request));
+  const query = useQuery({ ...flightSearchQueryOptions(request), refetchOnMount: false });
   const navigate = useNavigate();
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const { track } = useAnalytics();
