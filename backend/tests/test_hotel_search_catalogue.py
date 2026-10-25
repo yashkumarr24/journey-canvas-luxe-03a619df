@@ -87,3 +87,28 @@ def test_mapping_uses_documented_zero_based_page_metadata():
     assert not hotel_content._page_paging({'pageable': {'pageNumber': 1, 'totalPages': 2}}, 1)
     with pytest.raises(ValueError):
         hotel_content._page_paging({'pageable': {'pageNumber': 0, 'totalPages': 2}}, 1)
+
+
+def test_detail_uses_selected_hotels_batch_context(monkeypatch):
+    from app.services import hotel_search
+    from app.schemas.hotels import HotelDetailRequest, HotelDetail
+    from app.core.auth import AuthContext
+    result = hotels.normalize_listing_response(body([hotel('one')]), currency='INR').results[0]
+    session = hotel_sessions.SearchSession(id='a' * 48, row_id=None, destination='Test city',
+        check_in='2026-12-01', check_out='2026-12-04', nights=3, rooms=[], nationality='AE',
+        currency='INR', results={'one': result}, provider_search_id='first',
+        expires_at=hotel_sessions._now() + timedelta(minutes=10), provider_search_ids={'one': 'second'})
+    async def get_session(**kwargs): return session
+    async def priced(**kwargs):
+        assert kwargs['session'].provider_search_id == 'second'
+        assert kwargs['session'].nationality == 'AE'
+        return HotelDetail(id='one', name='Test property'), None
+    monkeypatch.setattr(hotel_search.sessions, 'get_search_session', get_session)
+    monkeypatch.setattr(hotel_search, '_priced_hotel', priced)
+    monkeypatch.setattr(hotel_search.hotel_session_limiter, 'check', lambda _: None)
+    monkeypatch.setattr(hotel_search, 'client_identity', lambda *_: 'test')
+    response = asyncio.run(hotel_search.hotel_detail(request=None,
+        payload=HotelDetailRequest(search_id='a' * 48, hotel_id='one'),
+        auth=AuthContext(user_id=None), settings=Settings()))
+    assert response.hotel.id == 'one'
+    assert session.provider_search_id == 'first'
