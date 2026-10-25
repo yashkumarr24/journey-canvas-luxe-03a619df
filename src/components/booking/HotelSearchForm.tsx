@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRangeField } from "@/components/booking/DateRangeField";
 import {
   currencyOptions,
   defaultHotelSearchValues,
@@ -254,7 +255,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues, compact 
   if (compact) {
     return (
       <form noValidate onSubmit={handleSubmit} aria-busy={isSearching}>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_minmax(0,auto)_auto] lg:items-end">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1.2fr_minmax(0,auto)_auto] lg:items-start [&>button]:lg:mt-[1.4rem]">
           <div className="min-w-0">
             <Label htmlFor={fid("destination")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
               Destination
@@ -279,41 +280,19 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues, compact 
           </div>
 
           <div className="min-w-0">
-            <Label htmlFor={fid("checkIn")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
-              Check-in
+            <Label id={fid("dates-label")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
+              Check-in – Check-out
             </Label>
-            <Input
-              id={fid("checkIn")}
-              type="date"
-              className="h-10"
-              min={todayISO()}
-              value={values.checkIn}
-              aria-invalid={!!errors.checkIn}
-              onChange={(event) => {
-                const checkIn = event.target.value;
-                patch({
-                  checkIn,
-                  checkOut: values.checkOut && values.checkOut > checkIn ? values.checkOut : tomorrowISO(checkIn),
-                });
-              }}
+            <DateRangeField
+              start={values.checkIn}
+              end={values.checkOut}
+              minNights={1}
+              labelledBy={fid("dates-label")}
+              placeholder="Select dates"
+              invalid={!!(errors.checkIn || errors.checkOut)}
+              onChange={(checkIn, checkOut) => patch({ checkIn, checkOut })}
             />
-            <FieldError message={errors.checkIn} />
-          </div>
-
-          <div className="min-w-0">
-            <Label htmlFor={fid("checkOut")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
-              Check-out
-            </Label>
-            <Input
-              id={fid("checkOut")}
-              type="date"
-              className="h-10"
-              min={tomorrowISO(values.checkIn || todayISO())}
-              value={values.checkOut}
-              aria-invalid={!!errors.checkOut}
-              onChange={(event) => patch({ checkOut: event.target.value })}
-            />
-            <FieldError message={errors.checkOut} />
+            <FieldError message={errors.checkIn ?? errors.checkOut} />
           </div>
 
           <div className="min-w-0">
