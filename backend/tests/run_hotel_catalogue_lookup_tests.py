@@ -7,7 +7,6 @@ No credentials, environment database URLs, provider calls or network connections
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import time
@@ -22,7 +21,10 @@ def main():
         if prefix:
             os.chown(base, 65534, 65534)
         def run(args, **kwargs):
-            return subprocess.run(prefix + args, check=True, text=True, capture_output=True, **kwargs).stdout
+            result = subprocess.run(prefix + args, text=True, capture_output=True, **kwargs)
+            if result.returncode:
+                raise RuntimeError(result.stderr or result.stdout)
+            return result.stdout
         data = base / 'data'
         run(['initdb', '-D', str(data), '-A', 'trust', '-U', 'postgres', '--no-locale'])
         run(['pg_ctl', '-D', str(data), '-l', str(base / 'postgres.log'), '-o',
