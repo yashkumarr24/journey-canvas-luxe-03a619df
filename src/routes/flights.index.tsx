@@ -17,6 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FlightSearchForm } from "@/components/booking/FlightSearchForm";
+import { ResultsSearchPanel } from "@/components/booking/ResultsSearchPanel";
+import { format, parseISO } from "date-fns";
+import { cabinClassOptions } from "@/lib/flight-search";
 import { FlightResultCard } from "@/components/booking/FlightResultCard";
 import { FlightResultsSkeleton } from "@/components/booking/FlightResultsSkeleton";
 import { FlightFiltersPanel } from "@/components/booking/FlightFiltersPanel";
@@ -179,10 +182,10 @@ function FlightsPage() {
   );
 
   return (
-    <main className="relative min-h-svh bg-background text-foreground">
+    <main className="results-page relative min-h-svh bg-background text-foreground">
       <Nav />
 
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-36 sm:pt-40 lg:pt-44">
+      <section className="mx-auto max-w-7xl px-3 pb-16 pt-28 sm:px-6 sm:pt-32 lg:pt-44">
         {!request && <SectionTitle
           eyebrow="Flights"
           title={
@@ -193,11 +196,11 @@ function FlightsPage() {
           subtitle="Tell us where you're headed. Our desk quotes the fare, the routing and the extras — so the journey is handled end to end."
         />}
 
-        <div className={request ? "border-b border-border pb-6" : "mt-8 border-b border-border pb-6"}>
+        <ResultsSearchPanel active={!!request} title={request ? `${request.origin} → ${request.destination}` : "Flights"} detail={request ? `${request.tripType === "roundtrip" ? "Return" : "One-way"} · ${format(parseISO(request.departureDate), "d MMM")}${request.returnDate ? ` – ${format(parseISO(request.returnDate), "d MMM")}` : ""} · ${request.passengers.adults + request.passengers.children + request.passengers.infants} travellers · ${cabinClassOptions.find((option) => option.value === request.cabinClass)?.label ?? request.cabinClass}` : ""}>
           <FlightSearchForm compact onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
-        </div>
+        </ResultsSearchPanel>
 
-        <div className="mt-12">
+        <div className="mt-4 lg:mt-12">
           {query.isFetching && <FlightResultsSkeleton />}
 
           {!query.isFetching && error && (

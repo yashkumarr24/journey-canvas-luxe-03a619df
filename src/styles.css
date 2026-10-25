@@ -342,6 +342,21 @@ html:has(body.assistant-suggestion-visible) {
 }
 
 /* Phone controls grow with text, rather than clipping inside fixed heights. */
+@media (max-width: 1023px) {
+  .results-page .hotel-result-card {
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+  }
+  .results-page .hotel-result-photo { width: auto; aspect-ratio: auto; min-height: 240px; }
+  .results-page .hotel-result-photo > span { left: 4px; top: 4px; padding: 4px; overflow-wrap: anywhere; max-width: calc(100% - 8px); }
+  .results-page .hotel-result-body { flex-direction: column; padding: 12px; gap: 12px; }
+  .results-page .hotel-result-body h3 { font-size: 20px; overflow-wrap: anywhere; }
+  .results-page .hotel-result-body ul { gap: 4px; }
+  .results-page .hotel-result-body li { padding: 2px 4px; overflow-wrap: anywhere; }
+  .results-page .hotel-result-price { width: auto; border: 0; padding: 0; text-align: right; }
+  .results-page .hotel-result-price .text-3xl { font-size: 24px; overflow-wrap: anywhere; }
+}
+
 @media (max-width: 767px) {
   body :where(button, [role="button"], [role="tab"], [role="menuitem"]):not(.native-offline *) {
     min-width: 48px;

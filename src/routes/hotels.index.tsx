@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { HotelSearchForm } from "@/components/booking/HotelSearchForm";
+import { ResultsSearchPanel } from "@/components/booking/ResultsSearchPanel";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
 import { HotelResultsSkeleton } from "@/components/booking/HotelResultsSkeleton";
 import { HotelFiltersPanel } from "@/components/booking/HotelFiltersPanel";
@@ -162,10 +163,10 @@ function HotelsPage() {
   );
 
   return (
-    <main className="relative min-h-svh bg-background text-foreground">
+    <main className="results-page relative min-h-svh bg-background text-foreground">
       <Nav />
 
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-36 sm:pt-40 lg:pt-44">
+      <section className="mx-auto max-w-7xl px-3 pb-16 pt-28 sm:px-6 sm:pt-32 lg:pt-44">
         {!request && <SectionTitle
           eyebrow="Hotels"
           title={
@@ -176,9 +177,9 @@ function HotelsPage() {
           subtitle="Tell us the city and the dates. We show the room, the meal plan and the cancellation terms before you commit to anything."
         />}
 
-        <div className={request ? "border-b border-border pb-6" : "mt-8 border-b border-border pb-6"}>
+        <ResultsSearchPanel active={!!request} title={request?.destination ?? "Hotels"} detail={request ? `${stayLabel(request.checkIn, request.checkOut)} · ${occupancyLabel(request.rooms)}` : ""}>
           <HotelSearchForm compact onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
-        </div>
+        </ResultsSearchPanel>
 
         {useMockHotels && (
           <Alert className="mt-6" role="status">
@@ -192,9 +193,9 @@ function HotelsPage() {
         )}
 
         {request && (
-          <div className="mt-10">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
+          <div className="mt-4 lg:mt-10">
+            <div className="grid gap-3 lg:flex lg:flex-wrap lg:items-end lg:justify-between">
+              <div className="hidden min-w-0 lg:block">
                 <p className="font-display text-2xl leading-tight">{request.destination}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {stayLabel(request.checkIn, request.checkOut)} · {occupancyLabel(request.rooms)}
@@ -202,7 +203,7 @@ function HotelsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:flex">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button type="button" variant="outline" className="lg:hidden">
@@ -219,7 +220,7 @@ function HotelsPage() {
                 </Sheet>
 
                 <Select value={sort} onValueChange={(value) => setSort(value as HotelSortKey)}>
-                  <SelectTrigger className="w-48" aria-label="Sort results">
+                  <SelectTrigger className="w-full min-w-0 lg:w-48" aria-label="Sort results">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

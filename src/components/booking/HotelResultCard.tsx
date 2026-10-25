@@ -31,8 +31,8 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
   const location = result.location;
 
   return (
-    <article className="overflow-hidden rounded-sm border border-foreground/10 bg-card transition-all hover:border-gold/30 hover:shadow-[var(--shadow-soft)] sm:flex">
-      <div className="relative aspect-[4/3] shrink-0 sm:aspect-auto sm:w-64">
+    <article className="hotel-result-card overflow-hidden rounded-sm border border-foreground/10 bg-card transition-all hover:border-gold/30 hover:shadow-[var(--shadow-soft)] sm:flex">
+      <div className="hotel-result-photo relative aspect-[4/3] shrink-0 sm:aspect-auto sm:w-64">
         {result.thumbnailUrl ? (
           <img
             src={result.thumbnailUrl}
@@ -52,7 +52,7 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-stretch sm:gap-6">
+      <div className="hotel-result-body flex min-w-0 flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-stretch sm:gap-6">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h3 className="font-display text-2xl leading-tight">{result.name}</h3>
@@ -109,7 +109,7 @@ export function HotelResultCard({ result, nights, roomCount, onSelect }: HotelRe
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-foreground/10 pt-4 sm:w-44 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 sm:text-right">
+        <div className="hotel-result-price shrink-0 border-t border-foreground/10 pt-4 sm:w-44 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 sm:text-right">
           {result.reviewScore !== undefined && (
             <p className="text-xs text-muted-foreground">
               <span className="font-display text-xl text-foreground">{result.reviewScore.toFixed(1)}</span>/10
