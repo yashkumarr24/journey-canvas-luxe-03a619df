@@ -55,6 +55,7 @@ import { Route as AuthenticatedAccountSupportRouteImport } from './routes/_authe
 import { Route as AuthenticatedAccountTravellersRouteImport } from './routes/_authenticated/account.travellers'
 import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
 import { Route as AdminBookingsReferenceRouteImport } from './routes/admin.bookings.$reference'
+import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as DomesticPackagesDestinationIndexRouteImport } from './routes/domestic-packages.$destination.index'
 import { Route as DomesticPackagesDestinationPackageRouteImport } from './routes/domestic-packages.$destination.$package'
 import { Route as InternationalPackagesDestinationIndexRouteImport } from './routes/international-packages.$destination.index'
@@ -298,6 +299,11 @@ const AdminBookingsReferenceRoute = AdminBookingsReferenceRouteImport.update({
   path: '/admin/bookings/$reference',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
+  id: '/api/v1/$',
+  path: '/api/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DomesticPackagesDestinationIndexRoute =
   DomesticPackagesDestinationIndexRouteImport.update({
     id: '/domestic-packages/$destination/',
@@ -391,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/international-packages/$destination/$package': typeof InternationalPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
@@ -445,6 +452,7 @@ export interface FileRoutesByTo {
   '/account/support': typeof AuthenticatedAccountSupportRoute
   '/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/international-packages/$destination/$package': typeof InternationalPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
@@ -502,6 +510,7 @@ export interface FileRoutesById {
   '/_authenticated/account/support': typeof AuthenticatedAccountSupportRoute
   '/_authenticated/account/travellers': typeof AuthenticatedAccountTravellersRoute
   '/admin/bookings/$reference': typeof AdminBookingsReferenceRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/domestic-packages/$destination/$package': typeof DomesticPackagesDestinationPackageRoute
   '/international-packages/$destination/$package': typeof InternationalPackagesDestinationPackageRoute
   '/packages/$destination/$package': typeof PackagesDestinationPackageRoute
@@ -559,6 +568,7 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/api/v1/$'
     | '/domestic-packages/$destination/$package'
     | '/international-packages/$destination/$package'
     | '/packages/$destination/$package'
@@ -613,6 +623,7 @@ export interface FileRouteTypes {
     | '/account/support'
     | '/account/travellers'
     | '/admin/bookings/$reference'
+    | '/api/v1/$'
     | '/domestic-packages/$destination/$package'
     | '/international-packages/$destination/$package'
     | '/packages/$destination/$package'
@@ -669,6 +680,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account/support'
     | '/_authenticated/account/travellers'
     | '/admin/bookings/$reference'
+    | '/api/v1/$'
     | '/domestic-packages/$destination/$package'
     | '/international-packages/$destination/$package'
     | '/packages/$destination/$package'
@@ -721,6 +733,7 @@ export interface RootRouteChildren {
   FlightsIndexRoute: typeof FlightsIndexRoute
   HotelsIndexRoute: typeof HotelsIndexRoute
   AdminBookingsReferenceRoute: typeof AdminBookingsReferenceRoute
+  ApiV1SplatRoute: typeof ApiV1SplatRoute
   DomesticPackagesDestinationPackageRoute: typeof DomesticPackagesDestinationPackageRoute
   InternationalPackagesDestinationPackageRoute: typeof InternationalPackagesDestinationPackageRoute
   PackagesDestinationPackageRoute: typeof PackagesDestinationPackageRoute
@@ -1054,6 +1067,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/$': {
+      id: '/api/v1/$'
+      path: '/api/v1/$'
+      fullPath: '/api/v1/$'
+      preLoaderRoute: typeof ApiV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/domestic-packages/$destination/': {
       id: '/domestic-packages/$destination/'
       path: '/domestic-packages/$destination'
@@ -1191,6 +1211,7 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsIndexRoute: FlightsIndexRoute,
   HotelsIndexRoute: HotelsIndexRoute,
   AdminBookingsReferenceRoute: AdminBookingsReferenceRoute,
+  ApiV1SplatRoute: ApiV1SplatRoute,
   DomesticPackagesDestinationPackageRoute:
     DomesticPackagesDestinationPackageRoute,
   InternationalPackagesDestinationPackageRoute:
