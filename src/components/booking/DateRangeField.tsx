@@ -57,7 +57,7 @@ export function DateRangeField({
           aria-labelledby={labelledBy}
           aria-describedby={undefined}
           aria-invalid={invalid}
-          className={`h-10 w-full min-w-0 justify-start gap-2 rounded-sm px-3 font-normal ${start ? "" : "text-muted-foreground"}`}
+          className={`h-10 w-full min-w-0 justify-start gap-2 rounded-sm px-3 font-normal data-[state=open]:bg-background data-[state=open]:text-foreground ${start ? "" : "text-muted-foreground"}`}
         >
           <CalendarDays className="size-4 shrink-0 text-gold" aria-hidden="true" />
           <span className="truncate">{label}</span>
