@@ -7,6 +7,7 @@ No credentials, environment database URLs, provider calls or network connections
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import time
@@ -21,6 +22,10 @@ def main():
         if prefix:
             os.chown(base, 65534, 65534)
         def run(args, **kwargs):
+            # Resolve wrapper symlinks so PostgreSQL finds its own lib/share tree.
+            executable = shutil.which(args[0])
+            if executable:
+                args = [str(Path(executable).resolve()), *args[1:]]
             result = subprocess.run(prefix + args, text=True, capture_output=True, **kwargs)
             if result.returncode:
                 raise RuntimeError(result.stderr or result.stdout)
