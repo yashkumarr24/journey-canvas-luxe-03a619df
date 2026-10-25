@@ -255,7 +255,7 @@ export function HotelSearchForm({ onSearch, isSearching, initialValues, compact 
   if (compact) {
     return (
       <form noValidate onSubmit={handleSubmit} aria-busy={isSearching}>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1.2fr_minmax(0,auto)_auto] lg:items-start [&>button]:lg:mt-[1.4rem]">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_1.2fr_minmax(0,auto)_auto] lg:items-end">
           <div className="min-w-0">
             <Label htmlFor={fid("destination")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">
               Destination
