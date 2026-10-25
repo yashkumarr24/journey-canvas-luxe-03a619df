@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BedDouble, Car, ChevronDown, FileText, Gift, Globe2, MapPinned, Minus, PlaneTakeoff, Plus, Search, Ship, Trash2, Users } from "lucide-react";
+import { Armchair, ArrowLeftRight, ArrowRight, BedDouble, Car, ChevronDown, FileText, Gift, Globe2, Loader2, MapPinned, Minus, PlaneTakeoff, Plus, Search, Ship, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +10,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { HotelSearchForm } from "@/components/booking/HotelSearchForm";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
 import { HotelResultsSkeleton } from "@/components/booking/HotelResultsSkeleton";
+import { FlightResultCard } from "@/components/booking/FlightResultCard";
+import { FlightResultsSkeleton } from "@/components/booking/FlightResultsSkeleton";
+import { DateRangeField } from "@/components/booking/DateRangeField";
 import { PackageDestinationSearch } from "@/components/PackageDestinationSearch";
 import { useMockHotels } from "@/lib/hotel-api";
 import { hotelSearchQueryOptions, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
-import { cabinClassOptions, defaultFlightSearchValues, flightSearchSchema, MAX_PASSENGERS, type FlightSearchFormValues } from "@/lib/flight-search";
+import { cabinClassOptions, defaultFlightSearchValues, flightSearchQueryOptions, flightSearchSchema, MAX_PASSENGERS, toSearchRequest, type FlightSearchFormValues } from "@/lib/flight-search";
 import { combinedSearchIndex, domesticSearchIndex, internationalSearchIndex } from "@/lib/packages/destination-search";
 import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { domesticPackageDestinations } from "@/data/domestic-packages";
@@ -54,18 +57,24 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
   const [values, setValues] = useState<FlightSearchFormValues>(defaultFlightSearchValues);
   const [segments, setSegments] = useState<Segment[]>([emptySegment(), emptySegment()]);
   const [error, setError] = useState<string | null>(null);
-  const [hotelRequest, setHotelRequest] = useState<HotelSearchRequest | null>(null);
+  const [hotelValues, setHotelValues] = useState<HotelSearchFormValues | null>(null);
+  const hotelRequest = useMemo<HotelSearchRequest | null>(() => hotelValues ? toHotelSearchRequest(hotelValues) : null, [hotelValues]);
   const hotelQuery = useQuery(hotelSearchQueryOptions(hotelRequest));
+  // Same request + query key as the /flights and /hotels pages, so "Explore
+  // more" reuses these cached results instead of searching again.
+  const [flightValues, setFlightValues] = useState<FlightSearchFormValues | null>(null);
+  const flightRequest = useMemo(() => flightValues ? toSearchRequest(flightValues) : null, [flightValues]);
+  const flightQuery = useQuery(flightSearchQueryOptions(flightRequest));
   const patch = (next: Partial<FlightSearchFormValues>) => setValues((current) => ({ ...current, ...next }));
   const submitFlight = (event: FormEvent) => {
     event.preventDefault();
     const parsed = flightSearchSchema.safeParse({ ...values, tripType: mode === "multicity" ? "oneway" : mode, returnDate: mode === "roundtrip" ? values.returnDate : "" });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check your search details."); return; }
     setError(null);
-    void navigate({ to: "/flights", search: parsed.data });
+    setFlightValues(parsed.data);
   };
-  const submitHotel = (hotelValues: HotelSearchFormValues) => {
-    setHotelRequest(toHotelSearchRequest(hotelValues));
+  const submitHotel = (next: HotelSearchFormValues) => {
+    setHotelValues(next);
   };
   const patchSegment = (index: number, patch: Partial<Segment>) => setSegments((current) => current.map((segment, i) => i === index ? { ...segment, ...patch } : segment));
 
