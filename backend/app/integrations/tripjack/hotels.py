@@ -17,6 +17,8 @@ Normalization rules (identical to the flight adapter):
 from __future__ import annotations
 
 from typing import Any
+import asyncio
+import time
 
 from app.core.logging import get_logger, log_extra
 from app.integrations.tripjack.client import TripJackClient
@@ -145,8 +147,15 @@ async def search_hotels(
     batches = _batches(hids)
     done = 0
     first_error = None
+    deadline = time.monotonic() + 35
 
     for index, batch in enumerate(batches):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            from app.integrations.tripjack.exceptions import TripJackTimeoutError
+            first_error = first_error or TripJackTimeoutError("listing_budget_exhausted")
+            results.failed_batches += len(batches) - index
+            break
         payload = build_listing_payload(
             hids=batch,
             check_in=request.check_in.isoformat(),
@@ -156,12 +165,13 @@ async def search_hotels(
             currency=request.currency,
         )
         try:
-            body = await client.post(
-                HOTEL_LISTING_PATH,
-                payload,
-                retries=config.search_retries,  # listing is a pure read
-                operation="hotel_listing",
-            )
+            async with asyncio.timeout(remaining):
+                body = await client.post(
+                    HOTEL_LISTING_PATH,
+                    payload,
+                    retries=config.search_retries,  # listing is a pure read
+                    operation="hotel_listing",
+                )
         except Exception as exc:  # noqa: BLE001
             first_error = first_error or exc
             results.failed_batches += 1

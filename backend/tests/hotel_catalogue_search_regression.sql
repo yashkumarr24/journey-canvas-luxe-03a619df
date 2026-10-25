@@ -14,7 +14,7 @@ values ('test-hotel-a','Test Taj Dubai','Test Dubai','Test country'),
 do $$ begin
  if (select count(*) from public.hotel_catalogue_suggestions('  TeST Dub  ',24)) != 2 then
    raise exception 'partial mixed-case city lookup failed'; end if;
- if (select count(*) from public.hotel_catalogue_suggestions('taj dub',24)) != 1 then
+ if (select count(*) from public.hotel_catalogue_suggestions('test taj dub',24)) != 1 then
    raise exception 'partial hotel lookup failed'; end if;
  if (select count(*) from public.hotel_catalogue_search_ids('Test Dubai, Test country','city','test-region-a')) != 2 then
    raise exception 'city scope failed'; end if;
