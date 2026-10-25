@@ -166,7 +166,7 @@ function HotelsPage() {
       <Nav />
 
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-36 sm:pt-40 lg:pt-44">
-        <SectionTitle
+        {!request && <SectionTitle
           eyebrow="Hotels"
           title={
             <>
@@ -174,10 +174,10 @@ function HotelsPage() {
             </>
           }
           subtitle="Tell us the city and the dates. We show the room, the meal plan and the cancellation terms before you commit to anything."
-        />
+        />}
 
-        <div className="mt-10">
-          <HotelSearchForm onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
+        <div className={request ? "border-b border-border pb-6" : "mt-8 border-b border-border pb-6"}>
+          <HotelSearchForm compact onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </div>
 
         {useMockHotels && (

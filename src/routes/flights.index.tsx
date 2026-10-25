@@ -183,7 +183,7 @@ function FlightsPage() {
       <Nav />
 
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-36 sm:pt-40 lg:pt-44">
-        <SectionTitle
+        {!request && <SectionTitle
           eyebrow="Flights"
           title={
             <>
@@ -191,10 +191,10 @@ function FlightsPage() {
             </>
           }
           subtitle="Tell us where you're headed. Our desk quotes the fare, the routing and the extras — so the journey is handled end to end."
-        />
+        />}
 
-        <div className="mt-10">
-          <FlightSearchForm onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
+        <div className={request ? "border-b border-border pb-6" : "mt-8 border-b border-border pb-6"}>
+          <FlightSearchForm compact onSearch={handleSearch} isSearching={query.isFetching} initialValues={initialValues} />
         </div>
 
         <div className="mt-12">

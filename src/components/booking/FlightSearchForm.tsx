@@ -1,10 +1,12 @@
 import { useId } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, PlaneTakeoff } from "lucide-react";
+import { Armchair, ArrowLeftRight, ChevronDown, Loader2, MapPin, PlaneTakeoff, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRangeField } from "@/components/booking/DateRangeField";
 import {
   Select,
   SelectContent,
@@ -38,10 +40,12 @@ export function FlightSearchForm({
   onSearch,
   isSearching,
   initialValues,
+  compact = false,
 }: {
   onSearch: (values: FlightSearchFormValues) => void;
   isSearching: boolean;
   initialValues?: FlightSearchFormValues;
+  compact?: boolean;
 }) {
   const uid = useId();
   const {
@@ -59,9 +63,73 @@ export function FlightSearchForm({
   const tripType = watch("tripType");
   const departureDate = watch("departureDate");
   const cabinClass = watch("cabinClass");
+  const returnDate = watch("returnDate");
+  const travellers = watch("adults") + watch("children") + watch("infants");
   const roundTrip = tripType === "roundtrip";
 
   const fid = (name: string) => `${uid}-${name}`;
+
+  if (compact) {
+    return (
+      <form noValidate onSubmit={handleSubmit(onSearch)} aria-busy={isSearching}>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Select value={tripType} onValueChange={(value) => setValue("tripType", value as FlightSearchFormValues["tripType"])}>
+            <SelectTrigger aria-label="Trip type" className="h-10 w-auto gap-2 border-transparent bg-transparent px-2 shadow-none">
+              <ArrowLeftRight className="size-4 text-gold" aria-hidden="true" /><SelectValue />
+            </SelectTrigger>
+            <SelectContent><SelectItem value="roundtrip">Return</SelectItem><SelectItem value="oneway">One-way</SelectItem></SelectContent>
+          </Select>
+          <Select value={cabinClass} onValueChange={(value) => setValue("cabinClass", value as FlightSearchFormValues["cabinClass"])}>
+            <SelectTrigger aria-label="Cabin class" className="h-10 w-auto gap-2 border-transparent bg-transparent px-2 shadow-none">
+              <Armchair className="size-4 text-gold" aria-hidden="true" /><SelectValue />
+            </SelectTrigger>
+            <SelectContent>{cabinClassOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.3fr_1fr_auto] lg:items-start">
+          {([{ name: "origin", label: "From", placeholder: "AMD" }, { name: "destination", label: "To", placeholder: "DXB" }] as const).map((field) => (
+            <div key={field.name} className="min-w-0">
+              <Label htmlFor={fid(field.name)} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">{field.label}</Label>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gold" aria-hidden="true" />
+                <Input id={fid(field.name)} placeholder={field.placeholder} maxLength={3} autoComplete="off" className="h-10 pl-9 uppercase" aria-invalid={!!errors[field.name]} aria-describedby={errors[field.name] ? fid(`${field.name}-error`) : undefined} {...register(field.name)} />
+              </div>
+              <FieldError id={fid(`${field.name}-error`)} message={errors[field.name]?.message} />
+            </div>
+          ))}
+          <div className="min-w-0">
+            <Label id={fid("dates-label")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">{roundTrip ? "Departure – Return" : "Departure"}</Label>
+            <DateRangeField single={!roundTrip} start={departureDate} end={returnDate} labelledBy={fid("dates-label")} placeholder={roundTrip ? "Select dates" : "Select date"} invalid={!!(errors.departureDate || errors.returnDate)} onChange={(start, end) => { setValue("departureDate", start); setValue("returnDate", end); }} />
+            <FieldError id={fid("dates-error")} message={errors.departureDate?.message ?? errors.returnDate?.message} />
+          </div>
+          <div className="min-w-0">
+            <Label id={fid("travellers-label")} className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">Travellers</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" aria-labelledby={fid("travellers-label")} className="h-10 w-full min-w-0 justify-between gap-2 rounded-sm px-3 font-normal">
+                  <Users className="size-4 shrink-0 text-gold" aria-hidden="true" /><span className="min-w-0 truncate">{travellers} traveller{travellers === 1 ? "" : "s"}</span><ChevronDown className="size-4 shrink-0" aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="max-h-[60svh] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto">
+                <div className="space-y-4">
+                  {([{ name: "adults", label: "Adults", hint: "12+ years", min: 1 }, { name: "children", label: "Children", hint: "2–11 years", min: 0 }, { name: "infants", label: "Infants", hint: "Under 2", min: 0 }] as const).map((field) => (
+                    <div key={field.name} className="flex items-center justify-between gap-3">
+                      <div><Label htmlFor={fid(field.name)}>{field.label}</Label><p className="text-xs text-muted-foreground">{field.hint}</p></div>
+                      <Input id={fid(field.name)} type="number" inputMode="numeric" min={field.min} max={MAX_PASSENGERS} className="h-10 w-20" {...register(field.name, { valueAsNumber: true })} />
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            {(["adults", "children", "infants"] as const).map((name) => <FieldError key={name} id={fid(`${name}-error`)} message={errors[name]?.message} />)}
+          </div>
+          <Button type="submit" disabled={isSearching} className="h-10 w-full rounded-sm bg-gold px-6 text-primary-foreground hover:bg-primary sm:col-span-2 lg:col-span-1 lg:mt-[22px] lg:w-auto">
+            {isSearching ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <PlaneTakeoff className="size-4" aria-hidden="true" />}{isSearching ? "Searching…" : "Search flights"}
+          </Button>
+        </div>
+      </form>
+    );
+  }
 
   return (
     <form

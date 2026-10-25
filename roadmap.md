@@ -1,5 +1,9 @@
 # Roadmap
 
+## Results-page search layout
+- [ ] Replace expanded flight/hotel search boxes with compact rows, combined dates and traveller/room popovers; preserve existing handoff.
+- [ ] Verify populated search details and controls at phone, tablet and desktop widths.
+
 ## Done: Compact hero booking card
 - [x] Compact service tabs and single-row flight/hotel fields with travellers/rooms popovers.
 - [x] Shared holiday search over both catalogues with Domestic/International labels.
