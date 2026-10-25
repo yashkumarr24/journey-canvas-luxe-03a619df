@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import trips from '../../data/international-packages.json';
-import { domesticSearchIndex, internationalSearchIndex, matchDestinations, filterPackagesByPlace, deduplicateDestinations } from './destination-search';
+import { domesticSearchIndex, internationalSearchIndex, combinedSearchIndex, matchDestinations, filterPackagesByPlace, deduplicateDestinations } from './destination-search';
 
 const countries = [...new Set(trips.flatMap(p => p.countries))].map(name => ({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), packages: trips.filter(p => p.countries.includes(name)) }));
 const international = internationalSearchIndex([], countries, []);
@@ -57,6 +57,22 @@ describe('catalogue destination search', () => {
     assert.equal(matchDestinations(domestic, 'WEST   BENGAL')[0]?.target.to, '/domestic-packages/$destination');
     assert.deepEqual(matchDestinations(domestic, 'Switzerland'), []);
     assert.deepEqual(matchDestinations(international, 'Goa'), []);
+  });
+  it('combined homepage index tags every suggestion Domestic or International', () => {
+    const domestic = domesticSearchIndex([], [{ slug: 'goa', name: 'Goa', region: 'Goa', packages: [] }]);
+    const combined = combinedSearchIndex(domestic, international);
+    assert.ok(combined.length);
+    assert.ok(combined.every(item => item.catalogue === 'Domestic' || item.catalogue === 'International'));
+    const swiss = matchDestinations(combined, 'swit')[0];
+    assert.equal(swiss?.name, 'Switzerland');
+    assert.equal(swiss?.catalogue, 'International');
+    const goa = matchDestinations(combined, 'goa').find(item => item.name === 'Goa');
+    assert.equal(goa?.catalogue, 'Domestic');
+    assert.equal(goa?.target.to, '/domestic-packages/$destination');
+    // City suggestions keep their country-group navigation with a place filter.
+    const lucerne = matchDestinations(combined, 'lucerne')[0];
+    assert.equal(lucerne?.catalogue, 'International');
+    assert.deepEqual(lucerne?.target, { to: '/international-packages/$destination', params: { destination: 'switzerland' }, search: { place: 'Lucerne' } });
   });
   it('includes additional live catalogue destinations and older curated destinations', () => {
     const index = internationalSearchIndex([{ slug: 'baku', name: 'Baku, Azerbaijan', country: 'Caucasus', itinerary: [] }], countries, [{ slug: 'new-destination', name: 'New destination', country: 'Country', packages: [{}] }]);

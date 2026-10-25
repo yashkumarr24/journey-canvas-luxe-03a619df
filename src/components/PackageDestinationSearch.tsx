@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { matchDestinations, type DestinationSuggestion } from '@/lib/packages/destination-search';
 
-export function PackageDestinationSearch({ items }: { items: DestinationSuggestion[] }) {
+export function PackageDestinationSearch({ items, className = 'mt-10 max-w-2xl', label = 'Search destinations', placeholder = 'Country, city or state / region' }: { items: DestinationSuggestion[]; className?: string; label?: string; placeholder?: string }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -48,12 +48,12 @@ export function PackageDestinationSearch({ items }: { items: DestinationSuggesti
   }
   function clear() { setText(''); setActive(-1); setOpen(false); input.current?.focus(); }
 
-  return <div className="relative z-20 mt-10 w-full max-w-2xl" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <label htmlFor={id} className="mb-3 block text-sm font-medium text-foreground">Search destinations</label>
+  return <div className={`relative z-20 w-full ${className}`} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
+    <label htmlFor={id} className="mb-3 block text-sm font-medium text-foreground">{label}</label>
     <div className="flex min-h-14 items-center gap-2 rounded-sm border border-input bg-card px-3 focus-within:ring-1 focus-within:ring-ring">
       <Search aria-hidden="true" className="pointer-events-none size-5 shrink-0 text-gold" />
       <Input id={id} ref={input} role="combobox" aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-list`} aria-activedescendant={expanded && active >= 0 && results[active] ? `${id}-option-${active}` : undefined}
-        autoComplete="off" autoCorrect="off" spellCheck={false} placeholder="Country, city or state / region" value={text}
+        autoComplete="off" autoCorrect="off" spellCheck={false} placeholder={placeholder} value={text}
         className="min-h-14 min-w-0 flex-1 border-0 px-1 text-base shadow-none focus-visible:ring-0 md:text-base" onFocus={() => setOpen(true)}
         onChange={event => { setText(event.target.value); setActive(-1); setOpen(true); }}
         onKeyDown={event => {
@@ -74,6 +74,7 @@ export function PackageDestinationSearch({ items }: { items: DestinationSuggesti
           variant="ghost" className={`min-h-14 w-full justify-start rounded-none px-4 py-3 text-left ${active === index ? 'bg-accent text-accent-foreground' : ''}`}
           onPointerDown={event => { if (event.pointerType === 'mouse') event.preventDefault(); }} onClick={() => choose(item)}>
           <MapPin aria-hidden="true" className="text-gold" /><span className="min-w-0 flex-1"><span className="block">{item.name}{item.location !== 'International' && `, ${item.location}`}</span><span className="block text-xs text-muted-foreground">{item.kind}</span></span>
+          {item.catalogue && <span className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${item.catalogue === 'Domestic' ? 'border-gold/40 text-gold' : 'border-foreground/20 text-muted-foreground'}`}>{item.catalogue}</span>}
         </Button>)}
       </div>
       {!results.length && <p className="p-4 text-sm text-muted-foreground">No matching destinations</p>}

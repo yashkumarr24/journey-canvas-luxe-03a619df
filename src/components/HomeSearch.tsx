@@ -1,20 +1,28 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BedDouble, Car, FileText, Gift, Globe2, MapPinned, PlaneTakeoff, Plus, Search, Ship, Trash2 } from "lucide-react";
+import { ArrowRight, BedDouble, Car, ChevronDown, FileText, Gift, Globe2, MapPinned, Minus, PlaneTakeoff, Plus, Search, Ship, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HotelSearchForm } from "@/components/booking/HotelSearchForm";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
 import { HotelResultsSkeleton } from "@/components/booking/HotelResultsSkeleton";
+import { PackageDestinationSearch } from "@/components/PackageDestinationSearch";
 import { useMockHotels } from "@/lib/hotel-api";
 import { hotelSearchQueryOptions, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
-import { cabinClassOptions, defaultFlightSearchValues, flightSearchSchema, type FlightSearchFormValues } from "@/lib/flight-search";
+import { cabinClassOptions, defaultFlightSearchValues, flightSearchSchema, MAX_PASSENGERS, type FlightSearchFormValues } from "@/lib/flight-search";
+import { combinedSearchIndex, domesticSearchIndex, internationalSearchIndex } from "@/lib/packages/destination-search";
+import { domesticDestinations, internationalDestinations } from "@/data/destinations";
+import { domesticPackageDestinations } from "@/data/domestic-packages";
+import { internationalPackageDestinations } from "@/data/international-packages";
+import type { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 import type { HotelSearchRequest } from "@/types/booking";
 
+type Catalogue = Awaited<ReturnType<typeof listInternationalCatalogue>>;
 type Service = "flights" | "hotels" | "holidays";
 type FlightMode = FlightSearchFormValues["tripType"] | "multicity";
 type Segment = { origin: string; destination: string; date: string };
@@ -39,7 +47,7 @@ function openEnquiry(service: string) {
 const emptySegment = (): Segment => ({ origin: "", destination: "", date: "" });
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
-export function HomeSearch() {
+export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
   const navigate = useNavigate();
   const [service, setService] = useState<Service>("flights");
   const [mode, setMode] = useState<FlightMode>("roundtrip");
@@ -61,28 +69,40 @@ export function HomeSearch() {
   };
   const patchSegment = (index: number, patch: Partial<Segment>) => setSegments((current) => current.map((segment, i) => i === index ? { ...segment, ...patch } : segment));
 
+  // One shared holiday search over both catalogues; per-catalogue indexes are
+  // built separately, then tagged and merged for Domestic/International labels.
+  const holidayItems = useMemo(
+    () => combinedSearchIndex(
+      domesticSearchIndex(domesticDestinations, domesticPackageDestinations),
+      internationalSearchIndex(internationalDestinations, internationalPackageDestinations, catalogue),
+    ),
+    [catalogue],
+  );
+
+  const travellers = values.adults + values.children + values.infants;
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-3 gap-px border border-foreground/10 bg-foreground/10 sm:grid-cols-6">
         <div role="tablist" aria-label="Booking options" className="contents">
           {services.map(({ label, value, icon: Icon }) => (
-            <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group min-h-14 min-w-0 flex-col rounded-none px-2 text-xs uppercase sm:min-h-16 sm:flex-row sm:gap-2 sm:text-sm ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
-              <Icon className={`size-5 shrink-0 ${service === value ? "text-gold" : ""}`} aria-hidden="true" />{label}
+            <Button key={value} type="button" role="tab" aria-selected={service === value} aria-controls="home-search-panel" variant="ghost" onClick={() => { setService(value); setError(null); }} className={`group min-h-12 min-w-0 flex-col gap-0.5 rounded-none px-1 text-[10px] uppercase tracking-wide sm:flex-row sm:gap-1.5 sm:text-xs ${service === value ? "border-b-2 border-gold bg-card text-foreground" : "bg-background text-muted-foreground hover:bg-card hover:text-foreground"}`}>
+              <Icon className={`size-4 shrink-0 ${service === value ? "text-gold" : ""}`} aria-hidden="true" />{label}
             </Button>
           ))}
         </div>
         {enquiryServices.map(({ label, icon: Icon }) => (
-          <Button key={label} type="button" variant="ghost" onClick={() => openEnquiry(label)} className="min-h-14 min-w-0 flex-col rounded-none bg-background px-2 text-xs uppercase text-muted-foreground hover:bg-card hover:text-foreground sm:min-h-16 sm:flex-row sm:gap-2 sm:text-sm">
-            <Icon className="size-5 shrink-0" aria-hidden="true" />{label}
+          <Button key={label} type="button" variant="ghost" onClick={() => openEnquiry(label)} className="min-h-12 min-w-0 flex-col gap-0.5 rounded-none bg-background px-1 text-[10px] uppercase tracking-wide text-muted-foreground hover:bg-card hover:text-foreground sm:flex-row sm:gap-1.5 sm:text-xs">
+            <Icon className="size-4 shrink-0" aria-hidden="true" />{label}
           </Button>
         ))}
       </div>
-      <div id="home-search-panel" role="tabpanel" className="border-x border-b border-foreground/10 bg-card p-4 shadow-[var(--shadow-luxe)] sm:p-6">
+      <div id="home-search-panel" role="tabpanel" className="border-x border-b border-foreground/10 bg-card p-4 shadow-[var(--shadow-luxe)] sm:p-5">
         {service === "flights" && (
           <div>
-            <div role="group" aria-label="Flight trip type" className="mb-5 flex flex-wrap gap-1 border-b border-border pb-4">
+            <div role="group" aria-label="Flight trip type" className="mb-4 flex flex-wrap gap-1 border-b border-border pb-3">
               {([ ["roundtrip", "Return"], ["oneway", "One Way"], ["multicity", "Multi-City"] ] as const).map(([value, label]) => (
-                <Button key={value} type="button" variant="ghost" aria-pressed={mode === value} onClick={() => { setMode(value); setError(null); }} className={`rounded-none px-4 text-xs sm:text-sm ${mode === value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "text-muted-foreground"}`}>{label}</Button>
+                <Button key={value} type="button" variant="ghost" size="sm" aria-pressed={mode === value} onClick={() => { setMode(value); setError(null); }} className={`rounded-none px-3 text-xs ${mode === value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "text-muted-foreground"}`}>{label}</Button>
               ))}
             </div>
             {mode === "multicity" ? (
@@ -90,10 +110,10 @@ export function HomeSearch() {
                 {segments.map((segment, index) => (
                   <div key={index} className="border-b border-border pb-4">
                     <div className="mb-3 flex items-center justify-between"><span className="text-xs font-semibold uppercase text-muted-foreground">Flight {index + 1}</span>{segments.length > 2 && <Button type="button" variant="ghost" size="icon-sm" aria-label={`Remove flight ${index + 1}`} onClick={() => setSegments((current) => current.filter((_, i) => i !== index))}><Trash2 className="size-4" /></Button>}</div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <SearchField label={`Flight ${index + 1} from`}><Input aria-label={`Flight ${index + 1} from airport code`} placeholder="AMD" maxLength={3} value={segment.origin} onChange={(event) => patchSegment(index, { origin: event.target.value.toUpperCase() })} className="uppercase" /></SearchField>
-                      <SearchField label={`Flight ${index + 1} to`}><Input aria-label={`Flight ${index + 1} to airport code`} placeholder="DXB" maxLength={3} value={segment.destination} onChange={(event) => patchSegment(index, { destination: event.target.value.toUpperCase() })} className="uppercase" /></SearchField>
-                      <SearchField label={`Flight ${index + 1} departure`}><Input aria-label={`Flight ${index + 1} departure date`} type="date" min={index === 0 ? todayISO() : segments[index - 1]?.date || todayISO()} value={segment.date} onChange={(event) => patchSegment(index, { date: event.target.value })} /></SearchField>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <SearchField label={`Flight ${index + 1} from`}><Input aria-label={`Flight ${index + 1} from airport code`} placeholder="AMD" maxLength={3} value={segment.origin} onChange={(event) => patchSegment(index, { origin: event.target.value.toUpperCase() })} className="h-10 uppercase" /></SearchField>
+                      <SearchField label={`Flight ${index + 1} to`}><Input aria-label={`Flight ${index + 1} to airport code`} placeholder="DXB" maxLength={3} value={segment.destination} onChange={(event) => patchSegment(index, { destination: event.target.value.toUpperCase() })} className="h-10 uppercase" /></SearchField>
+                      <SearchField label={`Flight ${index + 1} departure`}><Input aria-label={`Flight ${index + 1} departure date`} type="date" min={index === 0 ? todayISO() : segments[index - 1]?.date || todayISO()} value={segment.date} onChange={(event) => patchSegment(index, { date: event.target.value })} className="h-10" /></SearchField>
                     </div>
                   </div>
                 ))}
@@ -102,30 +122,54 @@ export function HomeSearch() {
               </div>
             ) : (
               <form onSubmit={submitFlight} noValidate>
-                <div className={`grid gap-3 md:grid-cols-2 ${mode === "roundtrip" ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
-                  <SearchField label="From"><Input aria-label="From airport code" placeholder="AMD" maxLength={3} value={values.origin} onChange={(event) => patch({ origin: event.target.value.toUpperCase() })} className="uppercase" /></SearchField>
-                  <SearchField label="To"><Input aria-label="To airport code" placeholder="DXB" maxLength={3} value={values.destination} onChange={(event) => patch({ destination: event.target.value.toUpperCase() })} className="uppercase" /></SearchField>
-                  <SearchField label="Departure"><Input aria-label="Departure date" type="date" min={todayISO()} value={values.departureDate} onChange={(event) => patch({ departureDate: event.target.value })} /></SearchField>
-                  {mode === "roundtrip" && <SearchField label="Return"><Input aria-label="Return date" type="date" min={values.departureDate || todayISO()} value={values.returnDate ?? ""} onChange={(event) => patch({ returnDate: event.target.value })} /></SearchField>}
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
-                  {([ ["adults", "Adults"], ["children", "Children"], ["infants", "Infants"] ] as const).map(([name, label]) => <SearchField key={name} label={label}><Input aria-label={label} type="number" min={name === "adults" ? 1 : 0} max={9} value={values[name]} onChange={(event) => patch({ [name]: Number(event.target.value) })} /></SearchField>)}
-                  <SearchField label="Cabin class"><Select value={values.cabinClass} onValueChange={(value) => patch({ cabinClass: value as FlightSearchFormValues["cabinClass"] })}><SelectTrigger aria-label="Cabin class" className="w-full"><SelectValue /></SelectTrigger><SelectContent>{cabinClassOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></SearchField>
-                  <Button type="submit" size="lg" className="h-full min-h-14 bg-gold px-6 text-primary-foreground hover:bg-primary"><Search className="size-4" />Search flights</Button>
+                <div className={`grid gap-2 sm:grid-cols-2 lg:items-end ${mode === "roundtrip" ? "lg:grid-cols-[repeat(4,minmax(0,1fr))_auto_auto_auto]" : "lg:grid-cols-[repeat(3,minmax(0,1fr))_auto_auto_auto]"}`}>
+                  <SearchField label="From"><Input aria-label="From airport code" placeholder="AMD" maxLength={3} value={values.origin} onChange={(event) => patch({ origin: event.target.value.toUpperCase() })} className="h-10 uppercase" /></SearchField>
+                  <SearchField label="To"><Input aria-label="To airport code" placeholder="DXB" maxLength={3} value={values.destination} onChange={(event) => patch({ destination: event.target.value.toUpperCase() })} className="h-10 uppercase" /></SearchField>
+                  <SearchField label="Departure"><Input aria-label="Departure date" type="date" min={todayISO()} value={values.departureDate} onChange={(event) => patch({ departureDate: event.target.value })} className="h-10" /></SearchField>
+                  {mode === "roundtrip" && <SearchField label="Return"><Input aria-label="Return date" type="date" min={values.departureDate || todayISO()} value={values.returnDate ?? ""} onChange={(event) => patch({ returnDate: event.target.value })} className="h-10" /></SearchField>}
+                  <SearchField label="Travellers">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="outline" aria-label={`Travellers: ${values.adults} adults, ${values.children} children, ${values.infants} infants`} className="h-10 w-full min-w-0 justify-between gap-2 rounded-sm px-3 font-normal lg:w-auto lg:min-w-36">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <Users className="size-4 shrink-0 text-gold" aria-hidden="true" />
+                            <span className="truncate">{travellers} traveller{travellers > 1 ? "s" : ""}</span>
+                          </span>
+                          <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-72 max-w-[calc(100vw-2rem)]">
+                        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">Travellers</p>
+                        <TravellerCounter label="Adults" hint="12+ years" value={values.adults} min={1} onChange={(next) => patch({ adults: next })} />
+                        <TravellerCounter label="Children" hint="2–11 years" value={values.children} min={0} onChange={(next) => patch({ children: next })} />
+                        <TravellerCounter label="Infants" hint="Under 2" value={values.infants} min={0} onChange={(next) => patch({ infants: next })} />
+                      </PopoverContent>
+                    </Popover>
+                  </SearchField>
+                  <SearchField label="Cabin class">
+                    <Select value={values.cabinClass} onValueChange={(value) => patch({ cabinClass: value as FlightSearchFormValues["cabinClass"] })}>
+                      <SelectTrigger aria-label="Cabin class" className="h-10 w-full rounded-sm lg:w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>{cabinClassOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </SearchField>
+                  <Button type="submit" className="h-10 w-full rounded-sm bg-gold px-6 text-primary-foreground hover:bg-primary sm:col-span-2 lg:col-span-1 lg:w-auto"><Search className="size-4" />Search flights</Button>
                 </div>
                 {error && <p role="alert" className="pt-3 text-xs font-medium text-destructive">{error}</p>}
               </form>
             )}
           </div>
         )}
-        {service === "hotels" && <div className="[&_form]:border-0 [&_form]:p-0 [&_form]:shadow-none"><HotelSearchForm onSearch={submitHotel} isSearching={hotelQuery.isFetching} /></div>}
-        {service === "holidays" && <div className="grid gap-3 sm:grid-cols-2">
-          <Button asChild variant="outline" className="h-auto min-h-20 justify-start gap-4 whitespace-normal rounded-none border-border px-5 py-4 text-left hover:border-gold">
-            <Link to="/domestic"><MapPinned className="size-6 shrink-0 text-gold" aria-hidden="true" /><span className="flex-1"><strong className="block text-base font-medium">Domestic Holidays</strong><span className="mt-1 block text-xs text-muted-foreground">India’s signature destinations</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto min-h-20 justify-start gap-4 whitespace-normal rounded-none border-border px-5 py-4 text-left hover:border-gold">
-            <Link to="/international"><Globe2 className="size-6 shrink-0 text-gold" aria-hidden="true" /><span className="flex-1"><strong className="block text-base font-medium">International Holidays</strong><span className="mt-1 block text-xs text-muted-foreground">Escapes around the world</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
-          </Button>
+        {service === "hotels" && <HotelSearchForm compact onSearch={submitHotel} isSearching={hotelQuery.isFetching} />}
+        {service === "holidays" && <div>
+          <PackageDestinationSearch items={holidayItems} className="mt-0 max-w-none" label="Search holiday destinations" placeholder="City, state or country — e.g. Goa, Switzerland" />
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Button asChild variant="outline" className="h-auto min-h-14 justify-start gap-3 whitespace-normal rounded-none border-border px-4 py-3 text-left hover:border-gold">
+              <Link to="/domestic"><MapPinned className="size-5 shrink-0 text-gold" aria-hidden="true" /><span className="min-w-0 flex-1"><strong className="block text-sm font-medium">Domestic Holidays</strong><span className="mt-0.5 block text-xs text-muted-foreground">India’s signature destinations</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto min-h-14 justify-start gap-3 whitespace-normal rounded-none border-border px-4 py-3 text-left hover:border-gold">
+              <Link to="/international"><Globe2 className="size-5 shrink-0 text-gold" aria-hidden="true" /><span className="min-w-0 flex-1"><strong className="block text-sm font-medium">International Holidays</strong><span className="mt-0.5 block text-xs text-muted-foreground">Escapes around the world</span></span><ArrowRight className="size-4 shrink-0" aria-hidden="true" /></Link>
+            </Button>
+          </div>
         </div>}
       </div>
       {service === "hotels" && hotelRequest && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">
@@ -139,5 +183,21 @@ export function HomeSearch() {
 }
 
 function SearchField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="min-w-0"><Label className="mb-2 block text-[11px] font-semibold uppercase text-muted-foreground">{label}</Label>{children}</div>;
+  return <div className="min-w-0"><Label className="mb-1.5 block text-[11px] font-semibold uppercase text-muted-foreground">{label}</Label>{children}</div>;
+}
+
+function TravellerCounter({ label, hint, value, min, onChange }: { label: string; hint: string; value: number; min: number; onChange: (next: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Button type="button" variant="outline" size="icon" className="size-8 rounded-sm" aria-label={`Remove one ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}><Minus className="size-3.5" aria-hidden="true" /></Button>
+        <span className="w-6 text-center text-sm" aria-live="polite">{value}</span>
+        <Button type="button" variant="outline" size="icon" className="size-8 rounded-sm" aria-label={`Add one ${label.toLowerCase()}`} disabled={value >= MAX_PASSENGERS} onClick={() => onChange(Math.min(MAX_PASSENGERS, value + 1))}><Plus className="size-3.5" aria-hidden="true" /></Button>
+      </div>
+    </div>
+  );
 }
