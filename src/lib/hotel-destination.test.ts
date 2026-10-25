@@ -1,4 +1,4 @@
-import { describe, it } from 'bun:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { editHotelDestination, selectHotelDestination } from './hotel-destination';
 import { hotelSearchSchema, toHotelSearchRequest, hotelSearchKey } from './hotel-search';
