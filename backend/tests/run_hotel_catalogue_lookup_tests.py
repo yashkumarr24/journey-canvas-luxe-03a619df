@@ -51,6 +51,13 @@ def main():
             file('backend/tests/hotel_catalogue_search_regression.sql')
             file('backend/tests/hotel_catalogue_search_lookup_regression.sql')
             print('PASS: concrete selection/filter/pagination/permission assertions and 5,600 equivalence cases; migration rerun.')
+            file('backend/db/migrations/0027_hotel_catalogue_city_region_siblings.sql')
+            file('backend/db/migrations/0027_hotel_catalogue_city_region_siblings.sql')  # idempotence
+            # Fixtures above have no duplicate city rows, so 0027 must still match 0025/0026.
+            file('backend/tests/hotel_catalogue_search_regression.sql')
+            file('backend/tests/hotel_catalogue_search_lookup_regression.sql')
+            file('backend/tests/hotel_catalogue_city_siblings_regression.sql')
+            print('PASS: 0027 duplicate city-region merge, label validation, cross-region paging, unique HIDs.')
             # Put target-city IDs after a large unrelated catalogue: detects global scans.
             sql("""
               insert into public.hotel_regions(city_region_id,city_name,country_name)
