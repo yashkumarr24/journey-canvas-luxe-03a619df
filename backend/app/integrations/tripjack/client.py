@@ -21,6 +21,7 @@ be rejected by TripJack's IP allow-list.
 from __future__ import annotations
 
 import asyncio
+import math
 from typing import Any, Mapping
 
 import httpx
@@ -266,7 +267,7 @@ class TripJackClient:
                 raw = response.headers.get("Retry-After", "")
                 try:
                     delay = float(raw)
-                    if not __import__("math").isfinite(delay):
+                    if not math.isfinite(delay):
                         raise ValueError("non_finite_retry_after")
                 except ValueError:
                     try:

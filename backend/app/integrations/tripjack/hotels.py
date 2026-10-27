@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Any
 import asyncio
 import time
+import uuid
 
 from app.core.logging import get_logger, log_extra
 from app.integrations.tripjack.client import TripJackClient
@@ -179,6 +180,9 @@ async def search_hotels(
                         check_out=request.check_out.isoformat(), rooms=rooms,
                         nationality=request.nationality, currency=request.currency,
                     )
+                    # Wire helper uses the parent HTTP request ID; independent
+                    # batches need unique Listing context even within one search.
+                    payload["correlationId"] = uuid.uuid4().hex
                     # Documented provider-side deadline, also locally bounded.
                     payload["timeoutMs"] = max(1, min(13000, int(remaining * 1000)))
                     attempted += 1
