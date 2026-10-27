@@ -121,6 +121,33 @@ def test_pacing_shared_across_simultaneous_searches(monkeypatch):
     asyncio.run(run())
 
 
+def test_caller_cancellation_does_not_leave_provider_tasks_running(fast_dispatch):
+    async def run():
+        client = Client(slow_batch=0)
+        task = asyncio.create_task(tj.search_hotels(client, SimpleNamespace(), req(), hids=ids(6684)))
+        await asyncio.sleep(.01)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert client.active == 0 and client.cancelled > 0
+        count = len(client.calls)
+        await asyncio.sleep(.02)
+        assert len(client.calls) == count
+    asyncio.run(run())
+
+
+def test_throttling_after_success_preserves_results_and_counts_unstarted(fast_dispatch):
+    class RateClient(Client):
+        async def post(self, path, payload, **kw):
+            index = (int(payload['hids'][0]) - 100000000000) // 100
+            if index == 3:
+                raise TripJackRateLimitError()
+            return await super().post(path, payload, **kw)
+    result, _, _ = asyncio.run(tj.search_hotels(RateClient(), SimpleNamespace(), req(), hids=ids(6684)))
+    assert len(result) > 0 and result.incomplete_reason == 'rate_limited'
+    assert result.failed_batches > 0 and result.completed_batches + result.failed_batches == 67
+
+
 @pytest.mark.parametrize('header,expected', [('7', 7), ('bad', 60), ('NaN', 60)])
 def test_listing_retry_after_is_parsed_without_changing_booking_behavior(header, expected):
     client = TripJackClient(SimpleNamespace())
