@@ -39,6 +39,8 @@ At 2 starts/second, dispatching all 67 batches alone requires about 33 seconds, 
 
 ## Checks
 
+Final result: **129 Python tests and 5 frontend tests passed**; latest preview compilation reports build OK.
+
 Synthetic, local-only tests cover 6,684 IDs/67 batches, 100-ID cap, out-of-order completion, deterministic deduplication, unique batch correlations, batch 37 failure, partial deadline results, no-result timeout→504, caller cancellation with no orphan tasks, process-shared concurrency/pacing, 429 dispatch stop/cooldown, Retry-After parsing, lightweight names/returned-only enrichment, full-service lookup deadline, slow persistence fallback and saved per-hotel context. Existing Listing, catalogue, detail, review and content-resilience tests are rerun.
 
 Browser-request tests assert actual 50,000ms timer selection and unchanged 45,000ms default, plus partial payload retention; existing destination/date/multi-room handoff tests are rerun. Browser checks at 1280 and 390px show no page errors/overflow; preview is sample mode, **not live provider verification**. No fake live responses, production requests, database writes, syncs or deployments were made.
