@@ -177,7 +177,7 @@ def test_full_service_partial_response_and_lightweight_catalogue_reads(monkeypat
     monkeypatch.setattr(svc.hotel_search_limiter, 'check', lambda _: None)
     monkeypatch.setattr(svc, 'client_identity', lambda *_: 'test')
     async def listing(*a, **kw):
-        assert 0 < kw['budget_seconds'] <= 30
+        assert 0 < kw['budget_seconds'] <= 55  # Listing cap raised from 30 for 67-batch cities
         rows = tj.HotelListingResults()
         rows.extend(tj.normalize_listing_response(body([hotel('one')]), currency='INR').results)
         rows.completed_batches, rows.failed_batches = 36, 31
