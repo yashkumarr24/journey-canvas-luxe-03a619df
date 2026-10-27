@@ -133,7 +133,7 @@ async def search_hotels(
     request: HotelSearchRequest,
     *,
     hids: list[str],
-    budget_seconds: float = 30.0,
+    budget_seconds: float = 55.0,
 ) -> tuple[list[HotelResult], str | None, str]:
     """Run <=100-ID batches through a bounded, paced, Listing-only worker pool.
 

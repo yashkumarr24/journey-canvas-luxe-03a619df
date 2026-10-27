@@ -57,8 +57,9 @@ export const isBookingApiConfigured = bookingApiBaseUrl.length > 0;
 
 /** Travel searches are slow; keep a generous but bounded default. */
 export const DEFAULT_TIMEOUT_MS = 45_000;
-/** Hotel backend bounds all search work to 40s; allow delivery headroom. */
-export const HOTEL_SEARCH_TIMEOUT_MS = 50_000;
+/** Hotel backend bounds all search work to 75s; allow delivery headroom
+ *  while staying under the Vercel proxy's 95s upstream timeout. */
+export const HOTEL_SEARCH_TIMEOUT_MS = 90_000;
 
 /* ------------------------------------------------------------------ */
 /* Error model                                                         */

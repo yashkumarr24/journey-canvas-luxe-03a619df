@@ -87,7 +87,11 @@ class Settings(BaseSettings):
     # before raising; shared across searches in a single VPS worker.
     hotel_listing_concurrency: int = Field(default=3, ge=1, le=4, alias="HOTEL_LISTING_CONCURRENCY")
     hotel_listing_starts_per_second: float = Field(default=2, ge=0.1, le=4, alias="HOTEL_LISTING_STARTS_PER_SECOND")
-    hotel_search_budget_seconds: float = Field(default=40, ge=5, le=40, alias="HOTEL_SEARCH_BUDGET_SECONDS")
+    # Full-request hotel search budget. Must fit a 6,684-ID / 67-batch city at
+    # conservative pacing (2 starts/s -> last batch starts ~33s in, worst batch
+    # 13s) plus catalogue lookup, enrichment and persistence. Keep below the
+    # Vercel proxy's 95s upstream timeout and the browser's 90s hotel timeout.
+    hotel_search_budget_seconds: float = Field(default=75, ge=5, le=85, alias="HOTEL_SEARCH_BUDGET_SECONDS")
 
     # Only enable behind a trusted reverse proxy; otherwise clients could spoof
     # X-Forwarded-For and bypass rate limiting.
