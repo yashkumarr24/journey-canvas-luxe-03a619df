@@ -215,7 +215,7 @@ async def search_hotels(
     settings: Settings,
 ) -> HotelSearchResponse:
     # Bound lookup + names + Listing + enrichment + persistence, not just
-    # provider I/O. Leave transport headroom under the browser's 50s budget.
+    # provider I/O. Leave transport headroom under the browser's 90s budget.
     deadline = time.monotonic() + settings.hotel_search_budget_seconds
     try:
         async with asyncio.timeout(settings.hotel_search_budget_seconds):
@@ -280,7 +280,9 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
             client, config, payload, hids=hids,
-            budget_seconds=min(30.0, max(0, deadline - time.monotonic() - 5.0)),
+            # 55s Listing cap: 67 paced starts (~33.5s) + a 13s worst-case
+            # batch + margin. Pacing itself stays conservative (2 starts/s).
+            budget_seconds=min(55.0, max(0, deadline - time.monotonic() - 5.0)),
         )
     except Exception as exc:  # narrowed inside _map_provider_error
         raise _map_provider_error(exc) from None
