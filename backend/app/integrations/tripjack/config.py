@@ -45,6 +45,8 @@ class TripJackConfig:
     max_connections: int
     search_retries: int
     hotel_max_pages: int = 3
+    hotel_listing_concurrency: int = 3
+    hotel_listing_starts_per_second: float = 2
 
     @property
     def is_configured(self) -> bool:
@@ -76,6 +78,8 @@ def build_config(settings: Settings) -> TripJackConfig:
         max_connections=settings.tripjack_max_connections,
         search_retries=settings.tripjack_search_retries,
         hotel_max_pages=max(1, min(settings.tripjack_hotel_max_pages, 10)),
+        hotel_listing_concurrency=settings.hotel_listing_concurrency,
+        hotel_listing_starts_per_second=settings.hotel_listing_starts_per_second,
     )
 
 

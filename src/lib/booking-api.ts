@@ -57,6 +57,8 @@ export const isBookingApiConfigured = bookingApiBaseUrl.length > 0;
 
 /** Travel searches are slow; keep a generous but bounded default. */
 export const DEFAULT_TIMEOUT_MS = 45_000;
+/** Hotel backend bounds all search work to 40s; allow delivery headroom. */
+export const HOTEL_SEARCH_TIMEOUT_MS = 50_000;
 
 /* ------------------------------------------------------------------ */
 /* Error model                                                         */
@@ -377,7 +379,10 @@ export const bookingApi = {
 
   /** Hotel listing/search. Opens a server-held search session. */
   searchHotels: (payload: HotelSearchRequest, options?: RequestOptions) =>
-    request<HotelSearchResponse>("POST", "/api/v1/hotels/search", payload, options),
+    request<HotelSearchResponse>("POST", "/api/v1/hotels/search", payload, {
+      timeoutMs: HOTEL_SEARCH_TIMEOUT_MS,
+      ...options,
+    }),
 
   /**
    * Dynamic hotel detail + sellable room options for one search session.

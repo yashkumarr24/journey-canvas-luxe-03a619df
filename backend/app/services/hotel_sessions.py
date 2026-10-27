@@ -23,6 +23,7 @@ In both backends:
 from __future__ import annotations
 
 import secrets
+import asyncio
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -176,6 +177,7 @@ async def create_search_session(
     currency: str,
     user_id: Optional[str],
     provider_search_ids: Optional[Dict[str, str]] = None,
+    persist_timeout_seconds: float | None = None,
 ) -> SearchSession:
     session = SearchSession(
         id=_token(),
@@ -197,27 +199,28 @@ async def create_search_session(
     repo = _repo(settings)
     if repo is not None:
         try:
-            row = await repo.create_search(
-                {
-                    "search_token": session.id,
-                    "user_id": user_id,
-                    "provider_search_id": provider_search_id,
-                    "provider_search_ids": session.provider_search_ids,
-                    "nationality": nationality,
-                    "destination": destination,
-                    "check_in": check_in,
-                    "check_out": check_out,
-                    "nights": nights,
-                    "currency": currency,
-                    "room_info": [room.model_dump(by_alias=True) for room in session.rooms],
-                    "results": [
-                        result.model_dump(by_alias=True, exclude_none=True)
-                        for result in session.results.values()
-                    ],
-                    "result_count": len(session.results),
-                    "expires_at": _iso(session.expires_at),
-                }
-            )
+            async with asyncio.timeout(persist_timeout_seconds):
+                row = await repo.create_search(
+                    {
+                        "search_token": session.id,
+                        "user_id": user_id,
+                        "provider_search_id": provider_search_id,
+                        "provider_search_ids": session.provider_search_ids,
+                        "nationality": nationality,
+                        "destination": destination,
+                        "check_in": check_in,
+                        "check_out": check_out,
+                        "nights": nights,
+                        "currency": currency,
+                        "room_info": [room.model_dump(by_alias=True) for room in session.rooms],
+                        "results": [
+                            result.model_dump(by_alias=True, exclude_none=True)
+                            for result in session.results.values()
+                        ],
+                        "result_count": len(session.results),
+                        "expires_at": _iso(session.expires_at),
+                    }
+                )
             if row:
                 session.row_id = str(row.get("id"))
                 return session

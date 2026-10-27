@@ -19,10 +19,13 @@ from __future__ import annotations
 from typing import Any
 import asyncio
 import time
+import uuid
 
 from app.core.logging import get_logger, log_extra
 from app.integrations.tripjack.client import TripJackClient
 from app.integrations.tripjack.config import TripJackConfig
+from app.integrations.tripjack.listing_dispatch import listing_dispatch
+from app.integrations.tripjack.exceptions import TripJackRateLimitError, TripJackTimeoutError, TripJackUpstreamError
 from app.integrations.tripjack.hotel_wire import (
     DEFAULT_CURRENCY,
     HOTEL_LISTING_PATH,
@@ -121,6 +124,7 @@ class HotelListingResults(list):
         self.provider_search_ids: dict[str, str] = {}
         self.completed_batches = 0
         self.failed_batches = 0
+        self.incomplete_reason: str | None = None
 
 
 async def search_hotels(
@@ -129,12 +133,13 @@ async def search_hotels(
     request: HotelSearchRequest,
     *,
     hids: list[str],
+    budget_seconds: float = 30.0,
 ) -> tuple[list[HotelResult], str | None, str]:
-    """Run /hms/v3/hotel/listing in sequential batches of <=100 hids.
+    """Run <=100-ID batches through a bounded, paced, Listing-only worker pool.
 
     Returns (results, first correlationId, currency). The results list holds
-    each property's correlationId server-side. All planned batches are checked;
-    successful results survive a failed batch, explicitly marked partial.
+    Each batch owns its correlationId. Successful batches survive failures and
+    deadline cancellation. Unstarted batches count as incomplete, never empty.
     """
     currency = request.currency or DEFAULT_CURRENCY
     nights = (request.check_out - request.check_in).days or None
@@ -145,58 +150,86 @@ async def search_hotels(
     search_id: str | None = None
     total_results = 0
     batches = _batches(hids)
-    done = 0
     first_error = None
-    deadline = time.monotonic() + 35
+    deadline = time.monotonic() + max(0, budget_seconds)
+    concurrency = max(1, min(getattr(config, "hotel_listing_concurrency", 3), 4))
+    pace = getattr(config, "hotel_listing_starts_per_second", 2.0)
+    dispatch = listing_dispatch(concurrency, pace)
+    pending = iter(enumerate(batches))
+    completed: dict[int, tuple[HotelSearchPage, str]] = {}
+    stopped = False
+    attempted = 0
 
-    for index, batch in enumerate(batches):
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            from app.integrations.tripjack.exceptions import TripJackTimeoutError
-            first_error = first_error or TripJackTimeoutError("listing_budget_exhausted")
-            results.failed_batches += len(batches) - index
-            break
-        payload = build_listing_payload(
-            hids=batch,
-            check_in=request.check_in.isoformat(),
-            check_out=request.check_out.isoformat(),
-            rooms=rooms,
-            nationality=request.nationality,
-            currency=request.currency,
-        )
-        try:
-            async with asyncio.timeout(remaining):
-                body = await client.post(
-                    HOTEL_LISTING_PATH,
-                    payload,
-                    retries=config.search_retries,  # listing is a pure read
-                    operation="hotel_listing",
-                )
-        except Exception as exc:  # noqa: BLE001
-            first_error = first_error or exc
-            results.failed_batches += 1
-            logger.warning("hotel_listing_batch_failed", extra=log_extra(batch=index + 1))
-            continue
+    async def worker():
+        nonlocal first_error, stopped, attempted
+        while not stopped:
+            item = next(pending, None)
+            if item is None:
+                return
+            index, batch = item
+            try:
+                async with dispatch.slots:
+                    await dispatch.wait_turn()
+                    if stopped:
+                        return
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise TimeoutError()
+                    payload = build_listing_payload(
+                        hids=batch, check_in=request.check_in.isoformat(),
+                        check_out=request.check_out.isoformat(), rooms=rooms,
+                        nationality=request.nationality, currency=request.currency,
+                    )
+                    # Wire helper uses the parent HTTP request ID; independent
+                    # batches need unique Listing context even within one search.
+                    payload["correlationId"] = uuid.uuid4().hex
+                    # Documented provider-side deadline, also locally bounded.
+                    payload["timeoutMs"] = max(1, min(13000, int(remaining * 1000)))
+                    attempted += 1
+                    async with asyncio.timeout(min(14.0, remaining)):
+                        body = await client.post(HOTEL_LISTING_PATH, payload,
+                                                 retries=0, operation="hotel_listing")
+                if not isinstance(body, dict) or not isinstance(body.get("hotels"), list) or (
+                    isinstance(body.get("status"), dict) and body["status"].get("success") is False
+                ):
+                    raise TripJackUpstreamError("invalid_listing_response")
+                page = normalize_listing_response(body, currency=currency, nights=nights)
+                logger.info("tripjack_hotel_listing_shape", extra=log_extra(
+                    batch=index + 1, hids_sent=len(batch), normalized=len(page.results),
+                    returned_not_submitted=sum(r.id not in set(batch) for r in page.results),
+                    **listing_shape(body)))
+                completed[index] = (page, page.search_id or payload["correlationId"])
+            except TripJackRateLimitError as exc:
+                dispatch.throttled(getattr(exc, "retry_after_seconds", 60.0))
+                first_error = first_error or exc
+                results.incomplete_reason = "rate_limited"
+                stopped = True  # let already-running calls finish; start no more
+            except Exception as exc:
+                if isinstance(exc, TimeoutError):
+                    exc = TripJackTimeoutError("listing_batch_timeout")
+                first_error = first_error or exc
+                results.incomplete_reason = results.incomplete_reason or "provider_failure"
+                logger.warning("hotel_listing_batch_failed", extra=log_extra(batch=index + 1))
 
-        if not isinstance(body, dict) or not isinstance(body.get("hotels"), list) or (
-            isinstance(body.get("status"), dict) and body["status"].get("success") is False
-        ):
-            from app.integrations.tripjack.exceptions import TripJackUpstreamError
-            first_error = first_error or TripJackUpstreamError("invalid_listing_response")
-            results.failed_batches += 1
-            continue
-        page = normalize_listing_response(body, currency=currency, nights=nights)
-        logger.info(
-            "tripjack_hotel_listing_shape",
-            extra=log_extra(batch=index + 1, hids_sent=len(batch),
-                            normalized=len(page.results), returned_not_submitted=sum(
-                                r.id not in set(batch) for r in page.results), **listing_shape(body)),
-        )
-        batch_id = page.search_id or payload["correlationId"]
+    tasks = [asyncio.create_task(worker()) for _ in range(min(concurrency, len(batches)))]
+    try:
+        async with asyncio.timeout(max(0, budget_seconds)):
+            await asyncio.gather(*tasks)
+    except TimeoutError:
+        first_error = TripJackTimeoutError("listing_budget_exhausted")
+        results.incomplete_reason = "timeout"
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Stable batch order even when replies complete out of order. First wins.
+    for index in sorted(completed):
+        page, batch_id = completed[index]
         search_id = search_id or batch_id
         results.completed_batches += 1
         total_results += page.total_results or 0
-        done += 1
         for result in page.results:
             if result.id in seen:
                 continue
@@ -204,14 +237,18 @@ async def search_hotels(
             results.append(result)
             results.provider_search_ids[result.id] = batch_id
 
+    results.failed_batches = len(batches) - results.completed_batches
     if first_error is not None and not results:
         raise first_error
     logger.info(
         "tripjack_hotel_listing_normalized",
         extra=log_extra(
             result_count=len(results),
-            batches=done,
+            batches=results.completed_batches,
             batches_planned=len(batches),
+            batches_attempted=attempted,
+            failed_batches=results.failed_batches,
+            incomplete_reason=results.incomplete_reason,
             provider_total_results=total_results,
         ),
     )

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Large-city hotel search budget
+- [x] Bound Listing scheduling and full-request time; retain successful batch context and explicit incomplete status.
+- [x] Test 6,684-ID searches, failures, throttling and cancellation: 129 Python + 5 frontend tests passed; deployment/limits documented in HOTEL_LARGE_CITY_SEARCH_VERIFICATION.md. Live verification awaits VPS/Vercel deployment and UAT account-rate confirmation.
+
 ## Catalogue lookup timeout
 - [x] Add 0026 with indexed, branch-specific exact selection and unchanged legacy/keyset behavior.
 - [x] Run isolated SQL equivalence, pagination, permissions and large-catalogue checks; document deployment without applying to production in HOTEL_CATALOGUE_LOOKUP_OPTIMIZATION.md.

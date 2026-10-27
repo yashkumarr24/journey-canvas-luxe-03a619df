@@ -241,7 +241,7 @@ function HotelsPage() {
               <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start">{filtersPanel}</aside>
 
               <div className="min-w-0">
-                {query.data?.partial && <Alert className="mb-4"><AlertTitle>Some stays could not be checked</AlertTitle><AlertDescription>Available results are shown below. Try again to check the remaining properties.</AlertDescription></Alert>}
+                {query.data?.partial && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
                 {query.isFetching && <HotelResultsSkeleton />}
 
                 {!query.isFetching && error && (

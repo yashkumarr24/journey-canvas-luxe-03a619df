@@ -199,6 +199,13 @@ class HotelCatalogueRepository:
                 break
         return list(dict.fromkeys(ids))
 
+    async def names_for(self, ids: list[str]) -> dict[str, str]:
+        """Lightweight render names; avoid loading images/amenities for 6,684 IDs."""
+        rows = await self._db.select("hotels", columns="tj_hotel_id,name",
+                                     filters={"tj_hotel_id": _in(ids), "is_active": "is.true"},
+                                     limit=len(ids))
+        return {r["tj_hotel_id"]: r["name"] for r in rows if r.get("name")}
+
     async def static_for(self, ids: list[str]) -> dict[str, dict]:
         if not ids:
             return {}

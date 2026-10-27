@@ -14,6 +14,8 @@ booking, no voucher — those are marked PENDING in `hotel_wire.py`.
 from __future__ import annotations
 
 from typing import Optional
+import asyncio
+import time
 
 from fastapi import Request, status
 
@@ -212,6 +214,20 @@ async def search_hotels(
     auth: AuthContext,
     settings: Settings,
 ) -> HotelSearchResponse:
+    # Bound lookup + names + Listing + enrichment + persistence, not just
+    # provider I/O. Leave transport headroom under the browser's 50s budget.
+    deadline = time.monotonic() + settings.hotel_search_budget_seconds
+    try:
+        async with asyncio.timeout(settings.hotel_search_budget_seconds):
+            return await _search_hotels_within_budget(request=request, payload=payload,
+                auth=auth, settings=settings, deadline=deadline)
+    except TimeoutError:
+        raise HotelProviderTimeoutError() from None
+
+
+async def _search_hotels_within_budget(*, request: Request, payload: HotelSearchRequest,
+                                      auth: AuthContext, settings: Settings,
+                                      deadline: float) -> HotelSearchResponse:
     hotel_search_limiter.check(client_identity(request, auth.user_id))
     client, config = _provider(settings)
 
@@ -224,8 +240,11 @@ async def search_hotels(
     hids: list[str] = []
     if catalogue.enabled:
         try:
-            hids = await catalogue.resolve_hids(payload.destination, kind=payload.destination_kind,
-                                                selected_id=payload.destination_id)
+            async with asyncio.timeout(min(8.0, max(0, deadline - time.monotonic()))):
+                hids = await catalogue.resolve_hids(payload.destination, kind=payload.destination_kind,
+                                                    selected_id=payload.destination_id)
+        except TimeoutError:
+            raise HotelProviderTimeoutError() from None
         except Exception:
             logger.warning("hotel_catalogue_lookup_failed")
             raise HotelProviderUnavailableError() from None
@@ -238,15 +257,15 @@ async def search_hotels(
         logger.warning("hotel_destination_unresolved")
         raise HotelDestinationUnsupportedError()
     static: dict = {}
+    names: dict[str, str] = {}
     if catalogue.enabled:
         try:
-            for offset in range(0, len(hids), 100):
-                static.update(await catalogue.static_for(hids[offset:offset + 100]))
+            async with asyncio.timeout(min(3.0, max(0, deadline - time.monotonic() - 5))):
+                for offset in range(0, len(hids), 500):
+                    names.update(await catalogue.names_for(hids[offset:offset + 500]))
         except Exception:
             logger.warning("hotel_catalogue_static_failed")
-    names_token = tripjack_hotels.STATIC_NAMES.set(
-        {k: v["name"] for k, v in static.items() if v.get("name")}
-    )
+    names_token = tripjack_hotels.STATIC_NAMES.set(names)
 
     logger.info(
         "hotel_search_started",
@@ -260,7 +279,8 @@ async def search_hotels(
 
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
-            client, config, payload, hids=hids
+            client, config, payload, hids=hids,
+            budget_seconds=min(30.0, max(0, deadline - time.monotonic() - 5.0)),
         )
     except Exception as exc:  # narrowed inside _map_provider_error
         raise _map_provider_error(exc) from None
@@ -269,6 +289,15 @@ async def search_hotels(
     provider_search_ids = getattr(results, "provider_search_ids", {})
     completed_batches = getattr(results, "completed_batches", 1)
     failed_batches = getattr(results, "failed_batches", 0)
+    # Rich content only for returned properties, never all city mappings.
+    if catalogue.enabled:
+        try:
+            async with asyncio.timeout(min(2.0, max(0, deadline - time.monotonic() - 3))):
+                result_ids = [r.id for r in results]
+                for offset in range(0, len(result_ids), 100):
+                    static.update(await catalogue.static_for(result_ids[offset:offset + 100]))
+        except Exception:
+            logger.warning("hotel_catalogue_static_failed")
     results = [_merge_static(r, static.get(r.id)) for r in results]
 
     session = await sessions.create_search_session(
@@ -284,6 +313,7 @@ async def search_hotels(
         provider_search_ids=provider_search_ids,
         currency=currency,
         user_id=auth.user_id,
+        persist_timeout_seconds=min(2.0, max(0, deadline - time.monotonic() - 1)),
     )
 
     amenities = sorted({a for r in results for a in (r.amenities or [])})[:40]
