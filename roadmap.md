@@ -1,5 +1,9 @@
 # Roadmap
 
+## Large-city hotel search budget
+- [ ] Bound Listing scheduling and full-request time; retain successful batch context and explicit incomplete status.
+- [ ] Test 6,684-ID searches, failures, throttling and cancellation; document VPS/frontend deployment and live verification limits.
+
 ## Catalogue lookup timeout
 - [x] Add 0026 with indexed, branch-specific exact selection and unchanged legacy/keyset behavior.
 - [x] Run isolated SQL equivalence, pagination, permissions and large-catalogue checks; document deployment without applying to production in HOTEL_CATALOGUE_LOOKUP_OPTIMIZATION.md.
