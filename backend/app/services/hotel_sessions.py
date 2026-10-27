@@ -23,6 +23,7 @@ In both backends:
 from __future__ import annotations
 
 import secrets
+import asyncio
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -176,6 +177,7 @@ async def create_search_session(
     currency: str,
     user_id: Optional[str],
     provider_search_ids: Optional[Dict[str, str]] = None,
+    persist_timeout_seconds: float | None = None,
 ) -> SearchSession:
     session = SearchSession(
         id=_token(),
@@ -197,7 +199,8 @@ async def create_search_session(
     repo = _repo(settings)
     if repo is not None:
         try:
-            row = await repo.create_search(
+            async with asyncio.timeout(persist_timeout_seconds):
+                row = await repo.create_search(
                 {
                     "search_token": session.id,
                     "user_id": user_id,
