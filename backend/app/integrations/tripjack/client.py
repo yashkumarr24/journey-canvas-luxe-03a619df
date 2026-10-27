@@ -257,7 +257,24 @@ class TripJackClient:
         )
 
         if status == 429:
-            raise TripJackRateLimitError(f"{operation} rate limited", provider_code=provider_code)
+            error = TripJackRateLimitError(f"{operation} rate limited", provider_code=provider_code)
+            if operation == "hotel_listing":
+                # Listing dispatch stops on 429, never retries immediately.
+                # Other operations' behavior is intentionally unchanged.
+                from email.utils import parsedate_to_datetime
+                from datetime import datetime, timezone
+                raw = response.headers.get("Retry-After", "")
+                try:
+                    delay = float(raw)
+                    if not __import__("math").isfinite(delay):
+                        raise ValueError("non_finite_retry_after")
+                except ValueError:
+                    try:
+                        delay = (parsedate_to_datetime(raw) - datetime.now(timezone.utc)).total_seconds()
+                    except (ValueError, TypeError, OverflowError):
+                        delay = 60.0
+                error.retry_after_seconds = max(1.0, delay)
+            raise error
         if status in (401, 403) or (provider_code in AUTH_PROVIDER_CODES):
             raise TripJackAuthError(
                 f"{operation} rejected — check API key and IP whitelist",

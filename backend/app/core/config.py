@@ -83,6 +83,12 @@ class Settings(BaseSettings):
     # always use 0.
     tripjack_search_retries: int = Field(default=1, alias="TRIPJACK_SEARCH_RETRIES")
 
+    # Listing-only ceilings, NOT provider entitlements. Validate account limits
+    # before raising; shared across searches in a single VPS worker.
+    hotel_listing_concurrency: int = Field(default=3, ge=1, le=4, alias="HOTEL_LISTING_CONCURRENCY")
+    hotel_listing_starts_per_second: float = Field(default=2, ge=0.1, le=4, alias="HOTEL_LISTING_STARTS_PER_SECOND")
+    hotel_search_budget_seconds: float = Field(default=40, ge=5, le=40, alias="HOTEL_SEARCH_BUDGET_SECONDS")
+
     # Only enable behind a trusted reverse proxy; otherwise clients could spoof
     # X-Forwarded-For and bypass rate limiting.
     trust_proxy_headers: bool = Field(default=False, alias="TRUST_PROXY_HEADERS")
