@@ -34,5 +34,13 @@ export default defineConfig({
       serverDir: undefined as unknown as string,
       publicDir: undefined as unknown as string,
     },
+    vercel: {
+      functionRules: {
+        // The /api/v1/* proxy waits on hotel searches bounded to 75s upstream
+        // (95s proxy timeout). 120s needs a Vercel plan allowing maxDuration
+        // >= 120 (Pro); on Hobby (60s cap) long city searches cannot finish.
+        "/api/v1/**": { maxDuration: 120 },
+      },
+    },
   },
 });

@@ -8,7 +8,7 @@ afterEach(() => {
   globalThis.setTimeout = originalTimeout;
 });
 
-test('hotel search allows 50s delivery headroom without changing the 45s default', async () => {
+test('hotel search allows 90s delivery headroom without changing the 45s default', async () => {
   // Run with VITE_BOOKING_API_URL=https://booking.example.test (no real I/O).
   const { bookingApi, DEFAULT_TIMEOUT_MS } = await import('./booking-api');
   const timers: number[] = [];
@@ -20,7 +20,7 @@ test('hotel search allows 50s delivery headroom without changing the 45s default
     completedBatches: 36, failedBatches: 31, currency: 'INR' })) as typeof fetch;
   const result = await bookingApi.searchHotels({ destination: 'Dubai', checkIn: '2026-12-01',
     checkOut: '2026-12-03', rooms: [{ adults: 2, childAges: [] }] });
-  assert.deepEqual(timers, [50_000]);
+  assert.deepEqual(timers, [90_000]);
   assert.equal(DEFAULT_TIMEOUT_MS, 45_000);
   assert.equal(result.partial, true);
   assert.equal(result.completedBatches, 36);
