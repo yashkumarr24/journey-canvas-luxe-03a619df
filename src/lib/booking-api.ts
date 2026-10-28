@@ -386,6 +386,19 @@ export const bookingApi = {
     }),
 
   /**
+   * Poll a progressive hotel search for results beyond `offset`. Quick
+   * server-side read, so the default timeout applies — the 90s budget is
+   * only for the initial search request.
+   */
+  hotelSearchProgress: (searchId: string, offset: number, options?: RequestOptions) =>
+    request<HotelSearchProgress>(
+      "GET",
+      `/api/v1/hotels/search/${encodeURIComponent(searchId)}/progress?offset=${Math.max(0, Math.floor(offset))}`,
+      undefined,
+      options,
+    ),
+
+  /**
    * Dynamic hotel detail + sellable room options for one search session.
    * The room list is always provider-fresh; the frontend caches nothing.
    */

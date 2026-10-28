@@ -255,6 +255,9 @@ export interface HotelSearchResponse {
   partial?: boolean;
   completedBatches?: number;
   failedBatches?: number;
+  /** True while the server keeps delivering batches; poll hotelSearchProgress. */
+  loading?: boolean;
+  totalBatches?: number;
   /** Server-side search session id, required by detail and review. */
   searchId?: string;
   results: HotelResult[];
@@ -265,6 +268,19 @@ export interface HotelSearchResponse {
   /** Facets for the filter UI, derived server-side. */
   amenities?: string[];
   propertyTypes?: string[];
+}
+
+/** Poll snapshot for a progressive hotel search. */
+export interface HotelSearchProgress {
+  status: "loading" | "complete" | "partial";
+  completedBatches: number;
+  failedBatches: number;
+  totalBatches: number;
+  incompleteReason?: string;
+  /** Deduplicated slice from the requested offset. */
+  results: HotelResult[];
+  nextOffset: number;
+  expiresAt?: string;
 }
 
 export interface HotelDetailRequest {
