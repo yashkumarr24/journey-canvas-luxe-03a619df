@@ -121,13 +121,18 @@ class SearchRepository:
         results: Sequence[FlightResult],
         *,
         expires_at: datetime,
-    ) -> None:
-        """Store fare tokens with their server-side authoritative amount."""
+    ) -> set[str]:
+        """Store fare tokens with their server-side authoritative amount.
+
+        Returns the result ids whose reference rows were confirmed written;
+        the caller must not offer any other result for selection.
+        """
         if not self.enabled or not search_id or not results:
-            return
+            return set()
 
         rows = [
             {
+                "_result_id": result.id,
                 "search_kind": "flight",
                 "flight_search_id": search_id,
                 "provider": "tripjack",
@@ -135,7 +140,7 @@ class SearchRepository:
                 # JSONB list (VPS migration 0022_flight_provider_price_refs);
                 # one TripJack priceId per row today, list-shaped so a future
                 # documented multi-ID selection needs no schema change.
-                "provider_refs": [result.fare.fare_id or result.id],
+                "provider_refs": _provider_refs(result),
                 "total_amount": result.fare.total_price.amount,
                 "currency": result.fare.total_price.currency,
                 "expires_at": expires_at.isoformat(),
@@ -144,15 +149,41 @@ class SearchRepository:
             if result.fare.fare_id or result.id
         ]
         if not rows:
-            return
+            return set()
 
+        stored: set[str] = set()
         for start in range(0, len(rows), REF_INSERT_CHUNK):
+            chunk = rows[start : start + REF_INSERT_CHUNK]
+            payload = [{k: v for k, v in row.items() if k != "_result_id"} for row in chunk]
             try:
-                await self._post(
-                    "search_result_refs",
-                    rows[start : start + REF_INSERT_CHUNK],
-                    prefer="return=minimal",
-                )
+                ok = await self._insert_ok("search_result_refs", payload)
             except httpx.HTTPError:
+                ok = False
+            if not ok:
                 logger.warning("result_refs_persist_unavailable")
-                return
+                break  # remaining chunks are not attempted; their fares stay unselectable
+            stored.update(row["_result_id"] for row in chunk)
+        return stored
+
+    async def _insert_ok(self, table: str, rows: Any) -> bool:
+        url = f"{self._settings.supabase_url.rstrip('/')}/rest/v1/{table}"
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            response = await client.post(url, json=rows, headers=self._headers(prefer="return=minimal"))
+        if response.status_code >= 300:
+            logger.warning("search_persist_failed", extra=log_extra(table=table, status=response.status_code))
+            return False
+        return True
+
+
+def _provider_refs(result: FlightResult) -> list[str]:
+    """The fare's full provider reference list, never collapsed.
+
+    VPS fares may carry several ids (combined return / Special Return);
+    those are stored verbatim. Otherwise fall back to the single primary ref.
+    """
+    refs = getattr(result.fare, "provider_refs", None)
+    if isinstance(refs, (list, tuple)):
+        cleaned = [str(r) for r in refs if r]
+        if cleaned:
+            return cleaned
+    return [result.fare.fare_id or result.id]

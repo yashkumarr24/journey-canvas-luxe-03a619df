@@ -384,7 +384,7 @@ def test_oneway_and_roundtrip_groups_are_unchanged(client, monkeypatch):
 # --------------------------------------------------------------------------
 
 
-def _capture_persistence(monkeypatch):
+def _capture_persistence(monkeypatch, fail_from_chunk=None, raise_error=False):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
     get_settings.cache_clear()
@@ -398,7 +398,21 @@ def _capture_persistence(monkeypatch):
             return [{"id": "11111111-2222-3333-4444-555555555555"}]
         return []
 
+    chunk_no = {"n": 0}
+
+    async def fake_insert_ok(self, table, rows):
+        index = chunk_no["n"]
+        chunk_no["n"] += 1
+        if fail_from_chunk is not None and index >= fail_from_chunk:
+            if raise_error:
+                import httpx
+                raise httpx.ConnectError("db down")
+            return False
+        posted.append((table, rows))
+        return True
+
     monkeypatch.setattr(SearchRepository, "_post", fake_post)
+    monkeypatch.setattr(SearchRepository, "_insert_ok", fake_insert_ok)
     return posted
 
 
@@ -491,14 +505,17 @@ def test_six_leg_groups_keep_original_keys_indices_and_price_ids():
     ]
 
 
-def test_large_onward_does_not_crowd_out_return_fares():
+def test_onward_return_path_keeps_its_existing_single_cap():
+    """Per-group caps apply to indexed multi-city groups only; the existing
+    ONWARD/RETURN path (combined return / Special Return on the VPS) is
+    deliberately left with its original single MAX_RESULTS cap."""
     body = {"searchResult": {"tripInfos": {
-        "ONWARD": _many("on", "DEL", "BOM", TOMORROW, MAX_RESULTS + 5),
+        "ONWARD": _many("on", "DEL", "BOM", TOMORROW, MAX_RESULTS - 2),
         "RETURN": _many("re", "BOM", "DEL", LATER, 4),
     }}}
     results = normalize_search_response(body, currency="INR").results
-    inbound = [r.id for r in results if r.itineraries[0].direction == "inbound"]
-    assert inbound == ["re-0", "re-1", "re-2", "re-3"]
+    assert len(results) == MAX_RESULTS
+    assert [r.id for r in results if r.itineraries[0].direction == "inbound"] == ["re-0", "re-1"]
     assert all(r.itineraries[0].group_key is None for r in results)
 
 
@@ -566,3 +583,59 @@ def test_multicity_review_is_blocked(monkeypatch):
     with pytest.raises(flight_booking.FareUnavailableError):
         asyncio.run(flight_booking.select_flight(
             request=SimpleNamespace(), payload=payload, auth=auth, settings=get_settings()))
+
+
+# --------------------------------------------------------------------------
+# v4: multi-ID provider refs and safe reference persistence
+# --------------------------------------------------------------------------
+
+
+def _patch_multi_id_refs(monkeypatch, mapping):
+    """Simulate the VPS fare model where fare.provider_refs holds several ids."""
+    from app.integrations.tripjack import flights as tj_flights
+
+    original = tj_flights.normalize_search_response
+
+    def wrapped(body, *, currency):
+        response = original(body, currency=currency)
+        for result in response.results:
+            if result.id in mapping:
+                object.__setattr__(result.fare, "provider_refs", mapping[result.id])
+        return response
+
+    monkeypatch.setattr(tj_flights, "normalize_search_response", wrapped)
+
+
+def test_multi_id_provider_refs_are_stored_verbatim(client, monkeypatch):
+    posted = _capture_persistence(monkeypatch)
+    stub_provider(monkeypatch, result=indexed_multicity_response())
+    _patch_multi_id_refs(monkeypatch, {"mc-price-0": ["out-id", "ret-id"]})
+    response = client.post("/api/v1/flights/search", json=multicity_body())
+    assert response.status_code == 200, response.text
+    rows = {r["provider_ref"]: r for _, c in posted if _ == "search_result_refs" for r in c}
+    assert rows["mc-price-0"]["provider_refs"] == ["out-id", "ret-id"]  # never collapsed
+    assert rows["mc-price-1"]["provider_refs"] == ["mc-price-1"]  # primary fallback
+    assert all("_result_id" not in r for r in rows.values())
+
+
+def test_partial_ref_failure_hides_unresolvable_fares(client, monkeypatch):
+    _capture_persistence(monkeypatch, fail_from_chunk=1)
+    stub_provider(monkeypatch, result={"searchResult": {"tripInfos": {
+        "0": _many("a", "DEL", "BOM", TOMORROW, 100),
+        "1": _many("b", "BOM", "GOI", LATER, 20),
+    }}})
+    response = client.post("/api/v1/flights/search", json=multicity_body())
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["searchId"]
+    ids = {r["id"] for r in data["results"]}
+    assert ids == {f"a-{i}" for i in range(100)}  # second chunk failed -> its fares withheld
+
+
+@pytest.mark.parametrize("raise_error", [False, True])
+def test_total_ref_failure_disables_selection(client, monkeypatch, raise_error):
+    _capture_persistence(monkeypatch, fail_from_chunk=0, raise_error=raise_error)
+    stub_provider(monkeypatch, result=indexed_multicity_response())
+    response = client.post("/api/v1/flights/search", json=multicity_body())
+    assert response.status_code == 200, response.text
+    assert not response.json().get("searchId")  # nothing resolvable -> nothing selectable
