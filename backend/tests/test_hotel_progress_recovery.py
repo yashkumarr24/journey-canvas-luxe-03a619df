@@ -193,7 +193,7 @@ def test_small_city_without_progress_entry_still_complete(fast_dispatch, service
         assert hotel_progress.get(response.search_id) is None
         snapshot = await _poll(response.search_id)
         assert snapshot.status == 'complete' and snapshot.next_offset == 200
-        assert snapshot.total_batches == 2 and snapshot.completed_batches == 1 or True
+        assert snapshot.total_batches == 2
         assert snapshot.completed_batches >= 1
 
     asyncio.run(run())
@@ -201,13 +201,13 @@ def test_small_city_without_progress_entry_still_complete(fast_dispatch, service
 
 def test_legacy_session_without_progress_reports_complete(service_stub):
     """Sessions persisted before migration 0028 have no progress: keep old behavior."""
+    from app.schemas.hotels import HotelResult
 
     async def run():
         session = await hotel_sessions.create_search_session(
             settings=Settings(), destination='Dubai', check_in='2026-11-01',
             check_out='2026-11-03', nights=2, rooms=req().rooms, nationality=None,
-            results=[hotel('h1') and __import__('app.schemas.hotels', fromlist=['HotelResult']).HotelResult(
-                id='h1', name='Sea View')],
+            results=[HotelResult(id='h1', name='Sea View')],
             provider_search_id=None, currency='INR', user_id=None,
         )
         assert session.progress is None
