@@ -479,7 +479,8 @@ async def search_progress(
 
     With a live progress entry, returns the deduplicated result slice from
     `offset`. Without one (restart, another worker), falls back to the durable
-    session and reports its stored results as complete — never as loading.
+    session's persisted progress: a search whose background delivery never
+    finished is reported as partial/interrupted — never as complete.
     """
     hotel_session_limiter.check(client_identity(request, auth.user_id))
     cleaned = search_id.strip()
@@ -505,11 +506,20 @@ async def search_progress(
         raise HotelSearchExpiredError()
     ordered = list(session.results.values())
     slice_ = ordered[offset:] if offset > 0 else ordered
+    persisted = session.progress if isinstance(session.progress, dict) else {}
+    persisted_status = persisted.get("status", "complete")
+    reason = persisted.get("incomplete_reason")
+    if persisted_status == "loading":
+        # The background continuation never recorded a finish: the worker was
+        # restarted or the entry was lost mid-search. The stored results are
+        # only the batches that landed before the interruption.
+        persisted_status, reason = "partial", "interrupted"
     return HotelSearchProgressResponse(
-        status="complete",
-        completed_batches=0,
-        failed_batches=0,
-        total_batches=0,
+        status=persisted_status,
+        completed_batches=int(persisted.get("completed_batches") or 0),
+        failed_batches=int(persisted.get("failed_batches") or 0),
+        total_batches=int(persisted.get("total_batches") or 0),
+        incomplete_reason=reason,
         results=slice_,
         next_offset=offset + len(slice_),
         expires_at=sessions.expires_at_iso(session),
