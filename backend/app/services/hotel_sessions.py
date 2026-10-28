@@ -289,6 +289,34 @@ async def append_search_results(
             logger.warning("hotel_search_session_append_failed")
 
 
+async def update_search_progress(
+    *,
+    settings: Settings,
+    search_id: str,
+    progress: Dict[str, Any],
+) -> None:
+    """Persist the final progressive-search state on the durable session.
+
+    Called when the background continuation finishes (complete or partial).
+    If the worker is killed first, the stored state keeps saying "loading",
+    which the progress endpoint reports as interrupted — never as complete.
+    A failure here never breaks the background search.
+    """
+    session = _memory.searches.get(search_id)
+    if session is not None and not session.is_expired:
+        session.progress = progress
+
+    repo = _repo(settings)
+    if repo is not None:
+        try:
+            row = await repo.get_search(search_id)
+            if not row:
+                return
+            await repo.update_search(str(row.get("id")), {"progress": progress})
+        except Exception:  # noqa: BLE001
+            logger.warning("hotel_search_progress_persist_failed")
+
+
 async def get_search_session(
     *, settings: Settings, search_id: str
 ) -> Optional[SearchSession]:
