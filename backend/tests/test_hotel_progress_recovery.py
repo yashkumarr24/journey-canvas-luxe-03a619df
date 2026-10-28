@@ -15,7 +15,7 @@ from app.core.config import Settings
 from app.integrations.tripjack import hotels as tj
 from app.integrations.tripjack.listing_dispatch import ListingDispatch
 from app.services import hotel_progress, hotel_search as svc, hotel_sessions
-from tests.test_hotel_listing import body, hotel, ids, req
+from tests.test_hotel_listing import ids, req
 from tests.test_hotel_progressive_search import Client
 
 
