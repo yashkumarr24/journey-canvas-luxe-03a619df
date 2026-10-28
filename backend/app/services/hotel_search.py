@@ -58,10 +58,10 @@ from app.schemas.hotels import (
     HotelStay,
     HotelSummary,
 )
-from app.schemas.review import PriceChange
-from app.services import hotel_sessions as sessions
+from app.schemas.review import PriceChange, TOKEN_RE, UUID_RE
+from app.services import hotel_progress, hotel_sessions as sessions
 from app.repositories.hotel_catalogue import HotelCatalogueRepository
-from app.schemas.hotels import HotelImage, HotelLocation
+from app.schemas.hotels import HotelImage, HotelLocation, HotelSearchProgressResponse
 
 
 def _merge_static(result, row):
@@ -277,15 +277,29 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
         ),
     )
 
+    # Progressive delivery: the first batches answer the request inside a
+    # short initial window; the rest continue in a background task at the
+    # SAME paced dispatch (no rate increase), surfaced via the progress poll.
+    total_batches = max(1, -(-len(hids) // tripjack_hotels.MAX_LISTING_HIDS))
+    initial_count = min(len(hids), settings.hotel_search_initial_batches * tripjack_hotels.MAX_LISTING_HIDS)
+    initial_hids, rest_hids = hids[:initial_count], hids[initial_count:]
+    initial_budget = min(settings.hotel_search_initial_seconds,
+                         max(0.5, deadline - time.monotonic() - 5.0))
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
-            client, config, payload, hids=hids,
-            # 55s Listing cap: 67 paced starts (~33.5s) + a 13s worst-case
-            # batch + margin. Pacing itself stays conservative (2 starts/s).
-            budget_seconds=min(55.0, max(0, deadline - time.monotonic() - 5.0)),
+            client, config, payload, hids=initial_hids,
+            budget_seconds=initial_budget,
         )
     except Exception as exc:  # narrowed inside _map_provider_error
-        raise _map_provider_error(exc) from None
+        if not rest_hids:
+            raise _map_provider_error(exc) from None
+        # Large destination: the initial window failed, but the background
+        # continuation can still deliver. Start empty, stay explicit.
+        logger.warning("hotel_search_initial_window_failed")
+        results = tripjack_hotels.HotelListingResults()
+        results.failed_batches = -(-len(initial_hids) // tripjack_hotels.MAX_LISTING_HIDS)
+        results.incomplete_reason = "provider_failure"
+        provider_search_id, currency = None, payload.currency or "INR"
     finally:
         tripjack_hotels.STATIC_NAMES.reset(names_token)
     provider_search_ids = getattr(results, "provider_search_ids", {})
