@@ -453,3 +453,116 @@ def test_oneway_persistence_has_no_routes(client, monkeypatch):
     row = [rows for table, rows in posted if table == "flight_searches"][0]
     assert row["trip_type"] == "oneway"
     assert row["routes"] is None
+
+
+# --------------------------------------------------------------------------
+# Revision regressions: truncation, group keys, full ref storage, review block
+# --------------------------------------------------------------------------
+
+from app.integrations.tripjack.flights import MAX_RESULTS, normalize_search_response  # noqa: E402
+
+
+def _many(prefix: str, origin: str, destination: str, day: str, count: int) -> list[dict]:
+    return [_leg_trip(f"{prefix}-s{i}", origin, destination, day, f"{prefix}-{i}") for i in range(count)]
+
+
+def test_large_first_leg_does_not_drop_later_legs():
+    body = {"searchResult": {"tripInfos": {
+        "0": _many("l0", "DEL", "BOM", TOMORROW, MAX_RESULTS + 30),
+        "1": _many("l1", "BOM", "GOI", LATER, 3),
+        "2": _many("l2", "GOI", "DEL", LATEST, 2),
+    }}}
+    results = normalize_search_response(body, currency="INR").results
+    by_key: dict[str, list[str]] = {}
+    for r in results:
+        by_key.setdefault(r.itineraries[0].group_key, []).append(r.id)
+    assert len(by_key["0"]) == MAX_RESULTS
+    assert by_key["1"] == ["l1-0", "l1-1", "l1-2"]
+    assert by_key["2"] == ["l2-0", "l2-1"]
+
+
+def test_six_leg_groups_keep_original_keys_indices_and_price_ids():
+    body = {"searchResult": {"tripInfos": {
+        str(i): [_leg_trip(f"s{i}", "DEL", "BOM", TOMORROW, f"p{i}")] for i in (5, 0, 3, 1, 4, 2)
+    }}}
+    results = normalize_search_response(body, currency="INR").results
+    assert [(r.itineraries[0].group_key, r.itineraries[0].leg_index, r.id) for r in results] == [
+        (str(i), i, f"p{i}") for i in range(6)
+    ]
+
+
+def test_large_onward_does_not_crowd_out_return_fares():
+    body = {"searchResult": {"tripInfos": {
+        "ONWARD": _many("on", "DEL", "BOM", TOMORROW, MAX_RESULTS + 5),
+        "RETURN": _many("re", "BOM", "DEL", LATER, 4),
+    }}}
+    results = normalize_search_response(body, currency="INR").results
+    inbound = [r.id for r in results if r.itineraries[0].direction == "inbound"]
+    assert inbound == ["re-0", "re-1", "re-2", "re-3"]
+    assert all(r.itineraries[0].group_key is None for r in results)
+
+
+def test_special_return_fare_in_onward_return_is_preserved():
+    onward = _leg_trip("s1", "DEL", "BOM", TOMORROW, "sr-out")
+    onward["totalPriceList"][0]["fareIdentifier"] = "SPECIAL_RETURN"
+    inbound = _leg_trip("s2", "BOM", "DEL", LATER, "sr-in")
+    inbound["totalPriceList"][0]["fareIdentifier"] = "SPECIAL_RETURN"
+    body = {"searchResult": {"tripInfos": {"ONWARD": [onward], "RETURN": [inbound]}}}
+    results = normalize_search_response(body, currency="INR").results
+    assert {r.id: r.itineraries[0].direction for r in results} == {"sr-out": "outbound", "sr-in": "inbound"}
+
+
+def test_every_returned_fare_gets_a_stored_reference(client, monkeypatch):
+    posted = _capture_persistence(monkeypatch)
+    stub_provider(monkeypatch, result={"searchResult": {"tripInfos": {
+        "0": _many("a", "DEL", "BOM", TOMORROW, MAX_RESULTS),
+        "1": _many("b", "BOM", "GOI", LATER, 40),
+    }}})
+    response = client.post("/api/v1/flights/search", json=multicity_body())
+    assert response.status_code == 200, response.text
+    returned = {r["id"] for r in response.json()["results"]}
+    assert len(returned) == MAX_RESULTS + 40
+
+    chunks = [rows for table, rows in posted if table == "search_result_refs"]
+    assert all(len(c) <= 100 for c in chunks)
+    stored = [row for c in chunks for row in c]
+    assert {row["provider_ref"] for row in stored} == returned
+    assert all(row["provider_refs"] == [row["provider_ref"]] for row in stored)
+
+
+def test_group_key_absent_from_oneway_json(client, monkeypatch):
+    stub_provider(monkeypatch, result={"searchResult": {"tripInfos": {
+        "ONWARD": [_leg_trip("s", "DEL", "BOM", TOMORROW, "ow-1")]}}})
+    response = client.post("/api/v1/flights/search", json={
+        "tripType": "oneway", "origin": "DEL", "destination": "BOM", "departureDate": TOMORROW})
+    assert response.status_code == 200, response.text
+    itinerary = response.json()["results"][0]["itineraries"][0]
+    assert "groupKey" not in itinerary and "legIndex" not in itinerary
+
+
+def test_multicity_review_is_blocked(monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    from app.repositories.reviews import ReviewRepository, SearchContext
+    from app.services import flight_booking
+
+    monkeypatch.setattr(ReviewRepository, "enabled", property(lambda self: True))
+
+    async def get_search(self, search_id):
+        return SearchContext(search_id=search_id, user_id=None, adults=1, children=0,
+                             infants=0, currency="INR", trip_type="multicity")
+
+    async def must_not_run(*a, **k):
+        raise AssertionError("fare lookup/provider review must not run for multicity")
+
+    monkeypatch.setattr(ReviewRepository, "get_search", get_search)
+    monkeypatch.setattr(ReviewRepository, "get_fare_ref", must_not_run)
+    monkeypatch.setattr(flight_booking, "_review_with_provider", must_not_run)
+    monkeypatch.setattr(flight_booking.review_limiter, "check", lambda *_: None)
+    monkeypatch.setattr(flight_booking, "client_identity", lambda *_: "t")
+
+    payload = SimpleNamespace(idempotency_key=None, search_id="s-1", fare_id="mc-price-0", guest_token=None)
+    auth = SimpleNamespace(user_id=None, is_authenticated=False)
+    with pytest.raises(flight_booking.FareUnavailableError):
+        asyncio.run(flight_booking.select_flight(
+            request=SimpleNamespace(), payload=payload, auth=auth, settings=get_settings()))

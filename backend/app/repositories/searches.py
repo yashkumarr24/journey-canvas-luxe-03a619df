@@ -25,9 +25,10 @@ from app.schemas.flights import FlightResult, FlightSearchRequest
 
 logger = get_logger(__name__)
 
-# Only the cheapest N fares per search are referenced; storing every quote
-# would bloat the table for no operational benefit.
-MAX_STORED_REFS = 25
+# Every fare returned to the browser must have a server-side reference, or
+# selecting it fails review. The adapter already caps each provider group,
+# so refs are stored for all returned results, written in bounded chunks.
+REF_INSERT_CHUNK = 100
 TIMEOUT = 6.0
 
 
@@ -131,17 +132,27 @@ class SearchRepository:
                 "flight_search_id": search_id,
                 "provider": "tripjack",
                 "provider_ref": result.fare.fare_id or result.id,
+                # JSONB list (VPS migration 0022_flight_provider_price_refs);
+                # one TripJack priceId per row today, list-shaped so a future
+                # documented multi-ID selection needs no schema change.
+                "provider_refs": [result.fare.fare_id or result.id],
                 "total_amount": result.fare.total_price.amount,
                 "currency": result.fare.total_price.currency,
                 "expires_at": expires_at.isoformat(),
             }
-            for result in results[:MAX_STORED_REFS]
+            for result in results
             if result.fare.fare_id or result.id
         ]
         if not rows:
             return
 
-        try:
-            await self._post("search_result_refs", rows, prefer="return=minimal")
-        except httpx.HTTPError:
-            logger.warning("result_refs_persist_unavailable")
+        for start in range(0, len(rows), REF_INSERT_CHUNK):
+            try:
+                await self._post(
+                    "search_result_refs",
+                    rows[start : start + REF_INSERT_CHUNK],
+                    prefer="return=minimal",
+                )
+            except httpx.HTTPError:
+                logger.warning("result_refs_persist_unavailable")
+                return

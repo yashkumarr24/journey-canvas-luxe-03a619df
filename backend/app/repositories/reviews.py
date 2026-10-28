@@ -59,6 +59,7 @@ class SearchContext:
     children: int
     infants: int
     currency: str
+    trip_type: str = "oneway"
 
 
 @dataclass(frozen=True)
@@ -119,7 +120,7 @@ class ReviewRepository:
     async def get_search(self, search_id: str) -> Optional[SearchContext]:
         rows = await self._db.select(
             FLIGHT_SEARCHES,
-            columns="id,user_id,adults,children,infants,currency",
+            columns="id,user_id,adults,children,infants,currency,trip_type",
             filters={"id": f"eq.{search_id}"},
         )
         if not rows:
@@ -132,6 +133,7 @@ class ReviewRepository:
             children=int(row.get("children") or 0),
             infants=int(row.get("infants") or 0),
             currency=str(row.get("currency") or "INR"),
+            trip_type=str(row.get("trip_type") or "oneway"),
         )
 
     async def get_fare_ref(self, search_id: str, provider_ref: str) -> Optional[FareRef]:

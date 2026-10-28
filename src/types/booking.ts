@@ -138,6 +138,8 @@ export interface FlightItinerary {
   durationMinutes?: number;
   /** Provider's numeric multi-city group key, when parseable. */
   legIndex?: number;
+  /** Original provider tripInfos key for multi-city leg groups; display-only. */
+  groupKey?: string;
 }
 
 export interface FlightFare {
