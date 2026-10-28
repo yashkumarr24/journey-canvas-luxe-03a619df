@@ -172,6 +172,8 @@ function HotelsPage() {
   const handleSearch = (values: HotelSearchFormValues) => {
     setFilters(defaultHotelFilters);
     setSort("recommended");
+    setAppended([]);
+    setProgress(null);
     const request = toHotelSearchRequest(values);
     setRequest(request);
     // Destination, dates and occupancy counts only — no guest identity.
@@ -287,7 +289,14 @@ function HotelsPage() {
               <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start">{filtersPanel}</aside>
 
               <div className="min-w-0">
-                {query.data?.partial && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
+                {query.data?.partial && !query.data.loading && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
+                {loadingMore && (
+                  <div className="mb-4 flex items-center gap-2 rounded-sm border border-foreground/10 px-4 py-3 text-sm text-muted-foreground" role="status" aria-live="polite">
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <span>Loading more stays… {results.length} found so far. Rates are provisional until you open a hotel.</span>
+                  </div>
+                )}
+                {progress?.status === "partial" && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {progress.completedBatches} of {progress.totalBatches} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
                 {query.isFetching && <HotelResultsSkeleton />}
 
                 {!query.isFetching && error && (
