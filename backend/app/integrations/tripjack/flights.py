@@ -148,12 +148,32 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
     )
 
 
+def _indexed_groups(trip_infos: dict[str, Any]) -> list[tuple[str, list[Any]]]:
+    """List-valued tripInfos keys outside the documented ONWARD/RETURN/COMBO.
+
+    Sorted numerically when every key is a non-negative integer (the
+    documented multi-city shape), otherwise lexically — order is preserved,
+    never invented.
+    """
+    groups = [
+        (key, value)
+        for key, value in trip_infos.items()
+        if key not in (ONWARD_KEY, RETURN_KEY, COMBO_KEY) and isinstance(value, list)
+    ]
+    if groups and all(key.isdigit() for key, _ in groups):
+        groups.sort(key=lambda item: int(item[0]))
+    else:
+        groups.sort(key=lambda item: item[0])
+    return groups
+
+
 def _results_from_trip(
     trip: Any,
     direction: str,
     currency: str,
     *,
     combo: bool = False,
+    leg_index: int | None = None,
 ) -> list[FlightResult]:
     if not isinstance(trip, dict):
         return []
@@ -162,7 +182,7 @@ def _results_from_trip(
     if not segments:
         return []
 
-    itinerary = _itinerary(segments, direction if not combo else "outbound")
+    itinerary = _itinerary(segments, direction if not combo else "outbound", leg_index=leg_index)
 
     out: list[FlightResult] = []
     for price in get_list(trip, "totalPriceList"):
@@ -187,14 +207,20 @@ def _results_from_trip(
     return out
 
 
-def _itinerary(segments: list[FlightSegment], direction: str) -> FlightItinerary:
+def _itinerary(
+    segments: list[FlightSegment],
+    direction: str,
+    *,
+    leg_index: int | None = None,
+) -> FlightItinerary:
     durations = [s.duration_minutes for s in segments if s.duration_minutes is not None]
     total = sum(durations) if len(durations) == len(segments) else None
     return FlightItinerary(
-        direction="inbound" if direction == "inbound" else "outbound",
+        direction=direction if direction in ("inbound", "leg") else "outbound",
         segments=segments,
         stops=max(len(segments) - 1, 0),
         duration_minutes=total,
+        leg_index=leg_index,
     )
 
 
