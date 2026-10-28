@@ -17,13 +17,19 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 IATA_RE = re.compile(r"^[A-Z]{3}$")
+AIRLINE_RE = re.compile(r"^[A-Z0-9]{2}$")  # airline IATA codes are 2 chars (6E, AI, EK)
 CURRENCY_RE = re.compile(r"^[A-Z]{3}$")
 
 MAX_SEATED_PAX = 9  # TripJack error 1006: passengers cannot exceed 9
 MAX_ADVANCE_DAYS = 361
+MIN_MULTI_CITY_LEGS = 2
+MAX_MULTI_CITY_LEGS = 6  # TripJack documents 2-6 routeInfos for multi-city
+MAX_PREFERRED_AIRLINES = 10  # documented preferredAirline cap
 
-TripType = Literal["oneway", "roundtrip"]
+TripType = Literal["oneway", "roundtrip", "multicity"]
 CabinClass = Literal["economy", "premium_economy", "business", "first"]
+# Documented searchModifiers.pfts values (default: REGULAR).
+PassengerFareType = Literal["REGULAR", "STUDENT", "SENIOR_CITIZEN"]
 
 
 def _camel(name: str) -> str:
