@@ -381,6 +381,7 @@ def _search_from_row(row: dict[str, Any]) -> Optional[SearchSession]:
         provider_search_ids=row.get("provider_search_ids") or {},
         expires_at=expires_at,
         user_id=row.get("user_id"),
+        progress=row.get("progress") if isinstance(row.get("progress"), dict) else None,
     )
 
 
