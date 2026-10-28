@@ -25,6 +25,7 @@ from app.schemas.hotels import (
     HotelGuestDetailsRequest,
     HotelGuestDetailsResponse,
     HotelReviewResponse,
+    HotelSearchProgressResponse,
     HotelSearchRequest,
     HotelSearchResponse,
     HotelSelectionRequest,
@@ -74,6 +75,25 @@ async def search_hotels(
 ) -> HotelSearchResponse:
     return await hotel_service.search_hotels(
         request=request, payload=payload, auth=auth, settings=settings
+    )
+
+
+@router.get(
+    "/search/{search_id}/progress",
+    response_model=HotelSearchProgressResponse,
+    response_model_exclude_none=True,
+    summary="Poll a progressive hotel search for more results",
+    responses=COMMON_ERRORS,
+)
+async def hotel_search_progress(
+    search_id: str,
+    request: Request,
+    offset: int = Query(default=0, ge=0, le=1_000_000),
+    auth: AuthContext = Depends(optional_user),
+    settings: Settings = Depends(get_settings),
+) -> HotelSearchProgressResponse:
+    return await hotel_service.search_progress(
+        request=request, search_id=search_id, offset=offset, auth=auth, settings=settings
     )
 
 
