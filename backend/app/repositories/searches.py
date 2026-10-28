@@ -81,7 +81,7 @@ class SearchRepository:
             "user_id": user_id,
             "origin": request.origin,
             "destination": request.destination,
-            "departure_date": request.departure_date.isoformat(),
+            "departure_date": request.departure_date.isoformat() if request.departure_date else None,
             "return_date": request.return_date.isoformat() if request.return_date else None,
             "trip_type": request.trip_type,
             "adults": request.passengers.adults,
@@ -89,6 +89,20 @@ class SearchRepository:
             "infants": request.passengers.infants,
             "cabin_class": request.cabin_class,
             "currency": currency,
+            # Multi-city legs (migration 0030); NULL for oneway/roundtrip so
+            # historical rows and the existing scalar columns stay authoritative.
+            "routes": (
+                [
+                    {
+                        "from": leg.origin,
+                        "to": leg.destination,
+                        "travelDate": leg.departure_date.isoformat(),
+                    }
+                    for leg in request.legs
+                ]
+                if request.legs
+                else None
+            ),
         }
 
         try:

@@ -63,16 +63,25 @@ async def search_flights(
     config: TripJackConfig,
     request: FlightSearchRequest,
 ) -> FlightSearchResponse:
+    legs = (
+        [(leg.origin, leg.destination, leg.departure_date.isoformat()) for leg in request.legs]
+        if request.legs
+        else None
+    )
     payload = build_search_payload(
-        origin=request.origin,
-        destination=request.destination,
-        departure_date=request.departure_date.isoformat(),
+        origin=request.origin or "",
+        destination=request.destination or "",
+        departure_date=request.departure_date.isoformat() if request.departure_date else "",
         return_date=request.return_date.isoformat() if request.return_date else None,
         cabin_class=request.cabin_class,
         adults=request.passengers.adults,
         children=request.passengers.children,
         infants=request.passengers.infants,
         direct_only=request.direct_only,
+        connecting_only=request.connecting_only,
+        pfts=list(request.pfts) if request.pfts else None,
+        preferred_airlines=list(request.preferred_airlines) if request.preferred_airlines else None,
+        legs=legs,
     )
 
     # Search is a pure read, so a small retry budget is safe. Nothing
@@ -97,13 +106,6 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
     inbound_trips = get_list(trip_infos, RETURN_KEY)
     combo_trips = get_list(trip_infos, COMBO_KEY)
 
-    if not (outbound_trips or inbound_trips or combo_trips):
-        # Domestic multi-city uses indexed keys ("0", "1", ...). Treat the
-        # first indexed group as outbound so nothing is silently dropped.
-        indexed = [trip_infos[k] for k in sorted(trip_infos) if isinstance(trip_infos[k], list)]
-        if indexed:
-            outbound_trips = indexed[0]
-
     results: list[FlightResult] = []
     for trip in combo_trips:
         results.extend(_results_from_trip(trip, "outbound", currency, combo=True))
@@ -111,6 +113,17 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
         results.extend(_results_from_trip(trip, "outbound", currency))
     for trip in inbound_trips:
         results.extend(_results_from_trip(trip, "inbound", currency))
+
+    # Domestic multi-city returns indexed keys per route (documented as
+    # "Indexed keys per route"; the reference never names them, so any
+    # list-valued key outside ONWARD/RETURN/COMBO is treated as one leg
+    # group). EVERY group is normalized — no leg and no priceId is dropped.
+    # How fares combine across legs is not documented, so no combination
+    # logic lives here; each group's priceIds are preserved as-is.
+    for key, group in _indexed_groups(trip_infos):
+        leg_index = int(key) if key.isdigit() else None
+        for trip in group:
+            results.extend(_results_from_trip(trip, "leg", currency, leg_index=leg_index))
 
     results = results[:MAX_RESULTS]
 
@@ -135,12 +148,32 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
     )
 
 
+def _indexed_groups(trip_infos: dict[str, Any]) -> list[tuple[str, list[Any]]]:
+    """List-valued tripInfos keys outside the documented ONWARD/RETURN/COMBO.
+
+    Sorted numerically when every key is a non-negative integer (the
+    documented multi-city shape), otherwise lexically — order is preserved,
+    never invented.
+    """
+    groups = [
+        (key, value)
+        for key, value in trip_infos.items()
+        if key not in (ONWARD_KEY, RETURN_KEY, COMBO_KEY) and isinstance(value, list)
+    ]
+    if groups and all(key.isdigit() for key, _ in groups):
+        groups.sort(key=lambda item: int(item[0]))
+    else:
+        groups.sort(key=lambda item: item[0])
+    return groups
+
+
 def _results_from_trip(
     trip: Any,
     direction: str,
     currency: str,
     *,
     combo: bool = False,
+    leg_index: int | None = None,
 ) -> list[FlightResult]:
     if not isinstance(trip, dict):
         return []
@@ -149,7 +182,7 @@ def _results_from_trip(
     if not segments:
         return []
 
-    itinerary = _itinerary(segments, direction if not combo else "outbound")
+    itinerary = _itinerary(segments, direction if not combo else "outbound", leg_index=leg_index)
 
     out: list[FlightResult] = []
     for price in get_list(trip, "totalPriceList"):
@@ -174,14 +207,20 @@ def _results_from_trip(
     return out
 
 
-def _itinerary(segments: list[FlightSegment], direction: str) -> FlightItinerary:
+def _itinerary(
+    segments: list[FlightSegment],
+    direction: str,
+    *,
+    leg_index: int | None = None,
+) -> FlightItinerary:
     durations = [s.duration_minutes for s in segments if s.duration_minutes is not None]
     total = sum(durations) if len(durations) == len(segments) else None
     return FlightItinerary(
-        direction="inbound" if direction == "inbound" else "outbound",
+        direction=direction if direction in ("inbound", "leg") else "outbound",
         segments=segments,
         stops=max(len(segments) - 1, 0),
         duration_minutes=total,
+        leg_index=leg_index,
     )
 
 

@@ -53,6 +53,14 @@ COMBO_KEY = "COMBO"
 DEFAULT_CURRENCY = "INR"
 
 
+def _route_info(origin: str, destination: str, travel_date: str) -> dict[str, Any]:
+    return {
+        "fromCityOrAirport": {"code": origin},
+        "toCityOrAirport": {"code": destination},
+        "travelDate": travel_date,
+    }
+
+
 def build_search_payload(
     *,
     origin: str,
@@ -64,23 +72,23 @@ def build_search_payload(
     children: int,
     infants: int,
     direct_only: bool = False,
+    connecting_only: bool = False,
+    pfts: list[str] | None = None,
+    preferred_airlines: list[str] | None = None,
+    legs: list[tuple[str, str, str]] | None = None,
 ) -> dict[str, Any]:
-    """Map OUR normalized search into the documented TripJack request body."""
-    route_infos: list[dict[str, Any]] = [
-        {
-            "fromCityOrAirport": {"code": origin},
-            "toCityOrAirport": {"code": destination},
-            "travelDate": departure_date,
-        }
-    ]
-    if return_date:
-        route_infos.append(
-            {
-                "fromCityOrAirport": {"code": destination},
-                "toCityOrAirport": {"code": origin},
-                "travelDate": return_date,
-            }
-        )
+    """Map OUR normalized search into the documented TripJack request body.
+
+    `legs` is a list of (origin, destination, travelDate) triples for
+    multi-city searches (2-6 entries); when present it replaces the
+    origin/destination/return_date route construction.
+    """
+    if legs:
+        route_infos = [_route_info(leg_from, leg_to, leg_date) for leg_from, leg_to, leg_date in legs]
+    else:
+        route_infos = [_route_info(origin, destination, departure_date)]
+        if return_date:
+            route_infos.append(_route_info(destination, origin, return_date))
 
     pax_info: dict[str, int] = {"ADULT": adults}
     # CHILD / INFANT are optional; omit rather than send zeros.
@@ -94,8 +102,20 @@ def build_search_payload(
         "paxInfo": pax_info,
         "routeInfos": route_infos,
     }
+
+    # searchModifiers: only documented keys, only when actually set.
+    search_modifiers: dict[str, Any] = {}
     if direct_only:
-        search_query["searchModifiers"] = {"isDirectFlight": True}
+        search_modifiers["isDirectFlight"] = True
+    if connecting_only:
+        search_modifiers["isConnectingFlight"] = True
+    if pfts:
+        search_modifiers["pfts"] = list(pfts)
+    if search_modifiers:
+        search_query["searchModifiers"] = search_modifiers
+
+    if preferred_airlines:
+        search_query["preferredAirline"] = [{"code": code} for code in preferred_airlines]
 
     return {"searchQuery": search_query}
 
