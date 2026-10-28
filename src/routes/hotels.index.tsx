@@ -101,7 +101,52 @@ function HotelsPage() {
   // refetchOnMount: false keeps results handed over from the homepage.
   const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
 
-  const results = query.data?.results ?? [];
+  // Progressive search: while the server reports `loading`, poll the
+  // progress endpoint and append new stays (deduplicated by id) until the
+  // search is complete or partially failed.
+  const [appended, setAppended] = useState<HotelResult[]>([]);
+  const [progress, setProgress] = useState<HotelSearchProgress | null>(null);
+  const searchId = query.data?.searchId;
+  const loadingMore = query.data?.loading === true && progress?.status !== "complete" && progress?.status !== "partial";
+
+  useEffect(() => {
+    setAppended([]);
+    setProgress(null);
+    if (!query.data?.loading || !searchId) return;
+    let cancelled = false;
+    let offset = query.data.results.length;
+    const seen = new Set(query.data.results.map((result) => result.id));
+    const poll = async () => {
+      try {
+        const chunk = await bookingApi.hotelSearchProgress(searchId, offset);
+        if (cancelled) return;
+        offset = chunk.nextOffset;
+        const fresh = chunk.results.filter((result) => !seen.has(result.id));
+        fresh.forEach((result) => seen.add(result.id));
+        if (fresh.length > 0) setAppended((prev) => [...prev, ...fresh]);
+        setProgress(chunk);
+        return chunk.status === "loading";
+      } catch {
+        // A failed poll never loses the search; try again next tick.
+        return true;
+      }
+    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = async () => {
+      const keepGoing = await poll();
+      if (!cancelled && keepGoing) timer = setTimeout(tick, 2000);
+    };
+    timer = setTimeout(tick, 1200);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [searchId, query.data?.loading, query.data?.results]);
+
+  const results = useMemo(
+    () => [...(query.data?.results ?? []), ...appended],
+    [query.data?.results, appended],
+  );
   const currency = query.data?.currency ?? request?.currency ?? "INR";
   const nights = query.data?.nights ?? 0;
   const roomCount = request?.rooms.length ?? 1;
