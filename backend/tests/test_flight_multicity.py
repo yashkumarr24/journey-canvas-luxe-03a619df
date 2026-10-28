@@ -135,14 +135,18 @@ def combo_response() -> dict:
     return {"searchResult": {"tripInfos": {"COMBO": [combo]}}}
 
 
-def multicity_body(legs=None, **overrides) -> dict:
-    body = {
-        "tripType": "multicity",
-        "legs": legs
-        or [
+_DEFAULT_LEGS = object()
+
+
+def multicity_body(legs=_DEFAULT_LEGS, **overrides) -> dict:
+    if legs is _DEFAULT_LEGS:
+        legs = [
             {"origin": "DEL", "destination": "BOM", "departureDate": TOMORROW},
             {"origin": "BOM", "destination": "GOI", "departureDate": LATER},
-        ],
+        ]
+    body = {
+        "tripType": "multicity",
+        "legs": legs,
         "passengers": {"adults": 1, "children": 0, "infants": 0},
         "cabinClass": "economy",
     }
