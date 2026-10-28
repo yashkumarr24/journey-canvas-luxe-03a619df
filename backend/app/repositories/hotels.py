@@ -46,6 +46,9 @@ class HotelSessionRepository:
         )
         return rows[0] if rows else None
 
+    async def update_search(self, session_id: str, values: dict[str, Any]) -> None:
+        await self._db.update(HOTEL_SEARCHES, values, filters={"id": f"eq.{session_id}"})
+
     # -- reviews -----------------------------------------------------------
 
     async def create_review(self, values: dict[str, Any]) -> Optional[dict[str, Any]]:
