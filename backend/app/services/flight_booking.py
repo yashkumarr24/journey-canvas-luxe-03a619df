@@ -164,6 +164,10 @@ async def select_flight(
     # A signed-in user may not select against another account's search.
     if search.user_id and search.user_id != auth.user_id:
         raise ReviewNotFoundError()
+    # Multi-city review stays blocked until TripJack confirms how indexed
+    # leg groups combine into one reviewable selection.
+    if search.trip_type == "multicity":
+        raise FareUnavailableError()
 
     # THE price lookup. `fare_id` only identifies a row; it never carries money.
     fare_ref = await reviews.get_fare_ref(payload.search_id, payload.fare_id)

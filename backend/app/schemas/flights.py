@@ -257,6 +257,9 @@ class FlightItinerary(CamelModel):
     stops: Optional[int] = None
     duration_minutes: Optional[int] = None
     leg_index: Optional[int] = None
+    # Original provider tripInfos key for indexed multi-city groups (e.g. "0",
+    # "1"); preserved verbatim so no grouping is inferred. Omitted otherwise.
+    group_key: Optional[str] = None
 
 
 class FlightFare(CamelModel):

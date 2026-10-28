@@ -106,26 +106,25 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
     inbound_trips = get_list(trip_infos, RETURN_KEY)
     combo_trips = get_list(trip_infos, COMBO_KEY)
 
+    # MAX_RESULTS caps each provider group independently. A single global
+    # cap let a large first group (ONWARD/COMBO/leg 0) crowd out RETURN fares
+    # or later multi-city legs entirely, leaving those legs unselectable.
     results: list[FlightResult] = []
-    for trip in combo_trips:
-        results.extend(_results_from_trip(trip, "outbound", currency, combo=True))
-    for trip in outbound_trips:
-        results.extend(_results_from_trip(trip, "outbound", currency))
-    for trip in inbound_trips:
-        results.extend(_results_from_trip(trip, "inbound", currency))
+    results.extend(_capped(combo_trips, "outbound", currency, combo=True))
+    results.extend(_capped(outbound_trips, "outbound", currency))
+    results.extend(_capped(inbound_trips, "inbound", currency))
 
     # Domestic multi-city returns indexed keys per route (documented as
     # "Indexed keys per route"; the reference never names them, so any
     # list-valued key outside ONWARD/RETURN/COMBO is treated as one leg
-    # group). EVERY group is normalized — no leg and no priceId is dropped.
-    # How fares combine across legs is not documented, so no combination
-    # logic lives here; each group's priceIds are preserved as-is.
+    # group). EVERY group is normalized with its original key and index —
+    # no leg and no priceId is dropped. How fares combine across legs is not
+    # documented, so no combination logic lives here.
     for key, group in _indexed_groups(trip_infos):
         leg_index = int(key) if key.isdigit() else None
-        for trip in group:
-            results.extend(_results_from_trip(trip, "leg", currency, leg_index=leg_index))
-
-    results = results[:MAX_RESULTS]
+        results.extend(
+            _capped(group, "leg", currency, leg_index=leg_index, group_key=key)
+        )
 
     airlines: dict[str, AirlineRef] = {}
     for result in results:
@@ -167,6 +166,15 @@ def _indexed_groups(trip_infos: dict[str, Any]) -> list[tuple[str, list[Any]]]:
     return groups
 
 
+def _capped(trips: list[Any], direction: str, currency: str, **kwargs: Any) -> list[FlightResult]:
+    out: list[FlightResult] = []
+    for trip in trips:
+        out.extend(_results_from_trip(trip, direction, currency, **kwargs))
+        if len(out) >= MAX_RESULTS:
+            return out[:MAX_RESULTS]
+    return out
+
+
 def _results_from_trip(
     trip: Any,
     direction: str,
@@ -174,6 +182,7 @@ def _results_from_trip(
     *,
     combo: bool = False,
     leg_index: int | None = None,
+    group_key: str | None = None,
 ) -> list[FlightResult]:
     if not isinstance(trip, dict):
         return []
@@ -182,7 +191,7 @@ def _results_from_trip(
     if not segments:
         return []
 
-    itinerary = _itinerary(segments, direction if not combo else "outbound", leg_index=leg_index)
+    itinerary = _itinerary(segments, direction if not combo else "outbound", leg_index=leg_index, group_key=group_key)
 
     out: list[FlightResult] = []
     for price in get_list(trip, "totalPriceList"):
@@ -212,6 +221,7 @@ def _itinerary(
     direction: str,
     *,
     leg_index: int | None = None,
+    group_key: str | None = None,
 ) -> FlightItinerary:
     durations = [s.duration_minutes for s in segments if s.duration_minutes is not None]
     total = sum(durations) if len(durations) == len(segments) else None
@@ -221,6 +231,7 @@ def _itinerary(
         stops=max(len(segments) - 1, 0),
         duration_minutes=total,
         leg_index=leg_index,
+        group_key=group_key,
     )
 
 
