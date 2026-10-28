@@ -6,8 +6,9 @@ entry is therefore process-local by design: it mirrors the background task,
 which cannot move between workers.
 
 If an entry is missing (restart, another worker, expiry), the API falls back
-to the durable search session and reports its stored results as complete —
-never as still loading, never as lost.
+to the durable search session's persisted progress (migration 0028): a search
+whose background delivery never recorded a finish is reported as
+partial/interrupted — never as complete, never as lost.
 
 Entries expire with the search session and the store is capped, so abandoned
 searches cannot grow memory without bound. No prices, guest data or provider

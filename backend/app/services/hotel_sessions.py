@@ -99,6 +99,9 @@ class SearchSession:
     expires_at: datetime
     user_id: Optional[str] = None
     provider_search_ids: Dict[str, str] = field(default_factory=dict)
+    # Durable progressive-search state (migration 0028): status, batch counts
+    # and incomplete_reason. None for sessions persisted before 0028.
+    progress: Optional[Dict[str, Any]] = None
 
     @property
     def is_expired(self) -> bool:
@@ -178,6 +181,7 @@ async def create_search_session(
     user_id: Optional[str],
     provider_search_ids: Optional[Dict[str, str]] = None,
     persist_timeout_seconds: float | None = None,
+    progress: Optional[Dict[str, Any]] = None,
 ) -> SearchSession:
     session = SearchSession(
         id=_token(),
@@ -194,6 +198,7 @@ async def create_search_session(
         provider_search_ids=provider_search_ids or {},
         expires_at=_now() + SEARCH_TTL,
         user_id=user_id,
+        progress=progress,
     )
 
     repo = _repo(settings)
@@ -218,6 +223,7 @@ async def create_search_session(
                             for result in session.results.values()
                         ],
                         "result_count": len(session.results),
+                        "progress": progress,
                         "expires_at": _iso(session.expires_at),
                     }
                 )
@@ -281,6 +287,34 @@ async def append_search_results(
             )
         except Exception:  # noqa: BLE001
             logger.warning("hotel_search_session_append_failed")
+
+
+async def update_search_progress(
+    *,
+    settings: Settings,
+    search_id: str,
+    progress: Dict[str, Any],
+) -> None:
+    """Persist the final progressive-search state on the durable session.
+
+    Called when the background continuation finishes (complete or partial).
+    If the worker is killed first, the stored state keeps saying "loading",
+    which the progress endpoint reports as interrupted — never as complete.
+    A failure here never breaks the background search.
+    """
+    session = _memory.searches.get(search_id)
+    if session is not None and not session.is_expired:
+        session.progress = progress
+
+    repo = _repo(settings)
+    if repo is not None:
+        try:
+            row = await repo.get_search(search_id)
+            if not row:
+                return
+            await repo.update_search(str(row.get("id")), {"progress": progress})
+        except Exception:  # noqa: BLE001
+            logger.warning("hotel_search_progress_persist_failed")
 
 
 async def get_search_session(
@@ -347,6 +381,7 @@ def _search_from_row(row: dict[str, Any]) -> Optional[SearchSession]:
         provider_search_ids=row.get("provider_search_ids") or {},
         expires_at=expires_at,
         user_id=row.get("user_id"),
+        progress=row.get("progress") if isinstance(row.get("progress"), dict) else None,
     )
 
 

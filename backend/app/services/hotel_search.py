@@ -316,6 +316,17 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
             logger.warning("hotel_catalogue_static_failed")
     results = [_merge_static(r, static.get(r.id)) for r in results]
 
+    loading = bool(rest_hids)
+    # Durable progress (migration 0028): if the background continuation is
+    # interrupted, the stored session still says "loading", so a later poll
+    # reports interrupted/partial instead of presenting the initial batches
+    # as a complete search.
+    progress = {
+        "status": "loading" if loading else ("partial" if failed_batches > 0 else "complete"),
+        "total_batches": total_batches,
+        "completed_batches": completed_batches,
+        "failed_batches": failed_batches,
+    }
     session = await sessions.create_search_session(
         settings=settings,
         destination=payload.destination,
@@ -330,12 +341,12 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
         currency=currency,
         user_id=auth.user_id,
         persist_timeout_seconds=min(2.0, max(0, deadline - time.monotonic() - 1)),
+        progress=progress,
     )
 
     amenities = sorted({a for r in results for a in (r.amenities or [])})[:40]
     property_types = sorted({r.property_type for r in results if r.property_type})
 
-    loading = bool(rest_hids)
     if loading:
         entry = hotel_progress.begin(
             search_id=session.id,
@@ -429,6 +440,21 @@ async def _continue_search(
         logger.warning("hotel_search_continuation_failed")
         entry.failed_batches += planned
         hotel_progress.finish(entry, incomplete_reason="provider_failure")
+    # Persist the final state so a later poll without the in-process entry
+    # (restart, another worker) can tell finished from interrupted. Skipped
+    # when the task itself is cancelled/killed — the stored "loading" state
+    # then correctly reads as interrupted.
+    await sessions.update_search_progress(
+        settings=settings,
+        search_id=search_id,
+        progress={
+            "status": entry.status,
+            "total_batches": entry.total_batches,
+            "completed_batches": entry.completed_batches,
+            "failed_batches": entry.failed_batches,
+            "incomplete_reason": entry.incomplete_reason,
+        },
+    )
     logger.info(
         "hotel_search_continuation_finished",
         extra=log_extra(
@@ -453,7 +479,8 @@ async def search_progress(
 
     With a live progress entry, returns the deduplicated result slice from
     `offset`. Without one (restart, another worker), falls back to the durable
-    session and reports its stored results as complete — never as loading.
+    session's persisted progress: a search whose background delivery never
+    finished is reported as partial/interrupted — never as complete.
     """
     hotel_session_limiter.check(client_identity(request, auth.user_id))
     cleaned = search_id.strip()
@@ -479,11 +506,20 @@ async def search_progress(
         raise HotelSearchExpiredError()
     ordered = list(session.results.values())
     slice_ = ordered[offset:] if offset > 0 else ordered
+    persisted = session.progress if isinstance(session.progress, dict) else {}
+    persisted_status = persisted.get("status", "complete")
+    reason = persisted.get("incomplete_reason")
+    if persisted_status == "loading":
+        # The background continuation never recorded a finish: the worker was
+        # restarted or the entry was lost mid-search. The stored results are
+        # only the batches that landed before the interruption.
+        persisted_status, reason = "partial", "interrupted"
     return HotelSearchProgressResponse(
-        status="complete",
-        completed_batches=0,
-        failed_batches=0,
-        total_batches=0,
+        status=persisted_status,
+        completed_batches=int(persisted.get("completed_batches") or 0),
+        failed_batches=int(persisted.get("failed_batches") or 0),
+        total_batches=int(persisted.get("total_batches") or 0),
+        incomplete_reason=reason,
         results=slice_,
         next_offset=offset + len(slice_),
         expires_at=sessions.expires_at_iso(session),
