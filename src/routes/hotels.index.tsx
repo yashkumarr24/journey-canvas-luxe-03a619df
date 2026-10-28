@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { AlertCircle, FlaskConical, Info, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, FlaskConical, Info, Loader2, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
@@ -37,13 +37,14 @@ import {
   toHotelSearchRequest,
   type HotelSearchFormValues,
 } from "@/lib/hotel-search";
-import { toBookingError } from "@/lib/booking-api";
+import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
   defaultHotelFilters,
   type HotelFilters,
   type HotelResult,
+  type HotelSearchProgress,
   type HotelSearchRequest,
   type HotelSortKey,
 } from "@/types/booking";
