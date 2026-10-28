@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { AlertCircle, FlaskConical, Info, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, FlaskConical, Info, Loader2, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
@@ -37,13 +37,14 @@ import {
   toHotelSearchRequest,
   type HotelSearchFormValues,
 } from "@/lib/hotel-search";
-import { toBookingError } from "@/lib/booking-api";
+import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
   defaultHotelFilters,
   type HotelFilters,
   type HotelResult,
+  type HotelSearchProgress,
   type HotelSearchRequest,
   type HotelSortKey,
 } from "@/types/booking";
@@ -100,7 +101,52 @@ function HotelsPage() {
   // refetchOnMount: false keeps results handed over from the homepage.
   const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
 
-  const results = query.data?.results ?? [];
+  // Progressive search: while the server reports `loading`, poll the
+  // progress endpoint and append new stays (deduplicated by id) until the
+  // search is complete or partially failed.
+  const [appended, setAppended] = useState<HotelResult[]>([]);
+  const [progress, setProgress] = useState<HotelSearchProgress | null>(null);
+  const searchId = query.data?.searchId;
+  const loadingMore = query.data?.loading === true && progress?.status !== "complete" && progress?.status !== "partial";
+
+  useEffect(() => {
+    setAppended([]);
+    setProgress(null);
+    if (!query.data?.loading || !searchId) return;
+    let cancelled = false;
+    let offset = query.data.results.length;
+    const seen = new Set(query.data.results.map((result) => result.id));
+    const poll = async () => {
+      try {
+        const chunk = await bookingApi.hotelSearchProgress(searchId, offset);
+        if (cancelled) return;
+        offset = chunk.nextOffset;
+        const fresh = chunk.results.filter((result) => !seen.has(result.id));
+        fresh.forEach((result) => seen.add(result.id));
+        if (fresh.length > 0) setAppended((prev) => [...prev, ...fresh]);
+        setProgress(chunk);
+        return chunk.status === "loading";
+      } catch {
+        // A failed poll never loses the search; try again next tick.
+        return true;
+      }
+    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = async () => {
+      const keepGoing = await poll();
+      if (!cancelled && keepGoing) timer = setTimeout(tick, 2000);
+    };
+    timer = setTimeout(tick, 1200);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [searchId, query.data?.loading, query.data?.results]);
+
+  const results = useMemo(
+    () => [...(query.data?.results ?? []), ...appended],
+    [query.data?.results, appended],
+  );
   const currency = query.data?.currency ?? request?.currency ?? "INR";
   const nights = query.data?.nights ?? 0;
   const roomCount = request?.rooms.length ?? 1;
@@ -126,6 +172,8 @@ function HotelsPage() {
   const handleSearch = (values: HotelSearchFormValues) => {
     setFilters(defaultHotelFilters);
     setSort("recommended");
+    setAppended([]);
+    setProgress(null);
     const request = toHotelSearchRequest(values);
     setRequest(request);
     // Destination, dates and occupancy counts only — no guest identity.
@@ -241,7 +289,14 @@ function HotelsPage() {
               <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start">{filtersPanel}</aside>
 
               <div className="min-w-0">
-                {query.data?.partial && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
+                {query.data?.partial && !query.data.loading && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
+                {loadingMore && (
+                  <div className="mb-4 flex items-center gap-2 rounded-sm border border-foreground/10 px-4 py-3 text-sm text-muted-foreground" role="status" aria-live="polite">
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <span>Loading more stays… {results.length} found so far. Rates are provisional until you open a hotel.</span>
+                  </div>
+                )}
+                {progress?.status === "partial" && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {progress.completedBatches} of {progress.totalBatches} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
                 {query.isFetching && <HotelResultsSkeleton />}
 
                 {!query.isFetching && error && (
@@ -263,7 +318,7 @@ function HotelsPage() {
                   </Alert>
                 )}
 
-                {!query.isFetching && !error && results.length === 0 && (
+                {!query.isFetching && !error && !loadingMore && results.length === 0 && (
                    <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No stays for these dates</p>
                     <p className="mt-2 text-sm text-muted-foreground">

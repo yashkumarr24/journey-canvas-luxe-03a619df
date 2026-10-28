@@ -58,10 +58,10 @@ from app.schemas.hotels import (
     HotelStay,
     HotelSummary,
 )
-from app.schemas.review import PriceChange
-from app.services import hotel_sessions as sessions
+from app.schemas.review import PriceChange, TOKEN_RE, UUID_RE
+from app.services import hotel_progress, hotel_sessions as sessions
 from app.repositories.hotel_catalogue import HotelCatalogueRepository
-from app.schemas.hotels import HotelImage, HotelLocation
+from app.schemas.hotels import HotelImage, HotelLocation, HotelSearchProgressResponse
 
 
 def _merge_static(result, row):
@@ -277,15 +277,29 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
         ),
     )
 
+    # Progressive delivery: the first batches answer the request inside a
+    # short initial window; the rest continue in a background task at the
+    # SAME paced dispatch (no rate increase), surfaced via the progress poll.
+    total_batches = max(1, -(-len(hids) // tripjack_hotels.MAX_LISTING_HIDS))
+    initial_count = min(len(hids), settings.hotel_search_initial_batches * tripjack_hotels.MAX_LISTING_HIDS)
+    initial_hids, rest_hids = hids[:initial_count], hids[initial_count:]
+    initial_budget = min(settings.hotel_search_initial_seconds,
+                         max(0.5, deadline - time.monotonic() - 5.0))
     try:
         results, provider_search_id, currency = await tripjack_hotels.search_hotels(
-            client, config, payload, hids=hids,
-            # 55s Listing cap: 67 paced starts (~33.5s) + a 13s worst-case
-            # batch + margin. Pacing itself stays conservative (2 starts/s).
-            budget_seconds=min(55.0, max(0, deadline - time.monotonic() - 5.0)),
+            client, config, payload, hids=initial_hids,
+            budget_seconds=initial_budget,
         )
     except Exception as exc:  # narrowed inside _map_provider_error
-        raise _map_provider_error(exc) from None
+        if not rest_hids:
+            raise _map_provider_error(exc) from None
+        # Large destination: the initial window failed, but the background
+        # continuation can still deliver. Start empty, stay explicit.
+        logger.warning("hotel_search_initial_window_failed")
+        results = tripjack_hotels.HotelListingResults()
+        results.failed_batches = -(-len(initial_hids) // tripjack_hotels.MAX_LISTING_HIDS)
+        results.incomplete_reason = "provider_failure"
+        provider_search_id, currency = None, payload.currency or "INR"
     finally:
         tripjack_hotels.STATIC_NAMES.reset(names_token)
     provider_search_ids = getattr(results, "provider_search_ids", {})
@@ -321,10 +335,27 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
     amenities = sorted({a for r in results for a in (r.amenities or [])})[:40]
     property_types = sorted({r.property_type for r in results if r.property_type})
 
+    loading = bool(rest_hids)
+    if loading:
+        entry = hotel_progress.begin(
+            search_id=session.id,
+            total_batches=total_batches,
+            results=list(results),
+            provider_search_ids=dict(provider_search_ids),
+            completed_batches=completed_batches,
+            failed_batches=failed_batches,
+            ttl_seconds=sessions.SEARCH_TTL.total_seconds(),
+        )
+        entry.task = asyncio.create_task(_continue_search(
+            settings=settings, payload=payload, hids=rest_hids, names=names,
+            search_id=session.id, entry=entry,
+        ))
+
     logger.info("hotel_search_completed", extra=log_extra(result_count=len(results)))
 
     return HotelSearchResponse(
         partial=failed_batches > 0, completed_batches=completed_batches, failed_batches=failed_batches,
+        loading=loading, total_batches=total_batches,
         search_id=session.id,
         results=results,
         currency=currency,
@@ -332,6 +363,130 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
         nights=payload.nights,
         amenities=amenities or None,
         property_types=property_types or None,
+    )
+
+
+async def _continue_search(
+    *,
+    settings: Settings,
+    payload: HotelSearchRequest,
+    hids: list,
+    names: dict,
+    search_id: str,
+    entry: hotel_progress.SearchProgress,
+) -> None:
+    """Background Listing continuation for a progressive search.
+
+    Uses the same bounded, paced dispatch guard as the initial window — this
+    decouples the customer's wait, it never raises the provider request rate.
+    Each completed batch is appended to the progress store and merged into the
+    durable search session so detail/review work for late arrivals.
+    """
+    planned = -(-len(hids) // tripjack_hotels.MAX_LISTING_HIDS)
+    try:
+        client, config = _provider(settings)
+        catalogue = HotelCatalogueRepository(settings)
+
+        async def on_batch(_index, page, batch_id):
+            batch_ids = {r.id: batch_id for r in page.results}
+            enriched = page.results
+            if catalogue.enabled and page.results:
+                try:
+                    async with asyncio.timeout(2.0):
+                        static: dict = {}
+                        result_ids = [r.id for r in page.results]
+                        for offset in range(0, len(result_ids), 100):
+                            static.update(await catalogue.static_for(result_ids[offset:offset + 100]))
+                    enriched = [_merge_static(r, static.get(r.id)) for r in page.results]
+                except Exception:
+                    logger.warning("hotel_catalogue_static_failed")
+            fresh = hotel_progress.append(
+                entry, results=enriched, provider_search_ids=batch_ids,
+                completed_batches=1, failed_batches=0)
+            if fresh:
+                await sessions.append_search_results(
+                    settings=settings, search_id=search_id, results=fresh,
+                    provider_search_ids={r.id: batch_id for r in fresh})
+
+        names_token = tripjack_hotels.STATIC_NAMES.set(names)
+        try:
+            continuation, _cid, _cur = await tripjack_hotels.search_hotels(
+                client, config, payload, hids=hids,
+                # Continuation owns its own Listing window from its start;
+                # pacing stays at the configured conservative rate.
+                budget_seconds=55.0,
+                on_batch=on_batch,
+            )
+            entry.failed_batches += continuation.failed_batches
+            hotel_progress.finish(entry, incomplete_reason=continuation.incomplete_reason)
+        except Exception:
+            # Zero usable continuation results: every remaining batch failed.
+            entry.failed_batches += planned
+            hotel_progress.finish(entry, incomplete_reason="provider_failure")
+        finally:
+            tripjack_hotels.STATIC_NAMES.reset(names_token)
+    except Exception:
+        logger.warning("hotel_search_continuation_failed")
+        entry.failed_batches += planned
+        hotel_progress.finish(entry, incomplete_reason="provider_failure")
+    logger.info(
+        "hotel_search_continuation_finished",
+        extra=log_extra(
+            status=entry.status,
+            result_count=len(entry.results),
+            completed_batches=entry.completed_batches,
+            failed_batches=entry.failed_batches,
+            incomplete_reason=entry.incomplete_reason,
+        ),
+    )
+
+
+async def search_progress(
+    *,
+    request: Request,
+    search_id: str,
+    offset: int,
+    auth: AuthContext,
+    settings: Settings,
+) -> HotelSearchProgressResponse:
+    """Poll snapshot for a progressive search.
+
+    With a live progress entry, returns the deduplicated result slice from
+    `offset`. Without one (restart, another worker), falls back to the durable
+    session and reports its stored results as complete — never as loading.
+    """
+    hotel_session_limiter.check(client_identity(request, auth.user_id))
+    cleaned = search_id.strip()
+    if not (TOKEN_RE.match(cleaned) or UUID_RE.match(cleaned)):
+        raise HotelSearchRejectedError()
+
+    entry = hotel_progress.get(cleaned)
+    if entry is not None:
+        slice_ = entry.results[offset:] if offset > 0 else list(entry.results)
+        return HotelSearchProgressResponse(
+            status=entry.status,
+            completed_batches=entry.completed_batches,
+            failed_batches=entry.failed_batches,
+            total_batches=entry.total_batches,
+            incomplete_reason=entry.incomplete_reason,
+            results=slice_,
+            next_offset=offset + len(slice_),
+            expires_at=entry.expires_at_iso,
+        )
+
+    session = await sessions.get_search_session(settings=settings, search_id=cleaned)
+    if session is None:
+        raise HotelSearchExpiredError()
+    ordered = list(session.results.values())
+    slice_ = ordered[offset:] if offset > 0 else ordered
+    return HotelSearchProgressResponse(
+        status="complete",
+        completed_batches=0,
+        failed_batches=0,
+        total_batches=0,
+        results=slice_,
+        next_offset=offset + len(slice_),
+        expires_at=sessions.expires_at_iso(session),
     )
 
 

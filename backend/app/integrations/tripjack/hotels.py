@@ -134,12 +134,18 @@ async def search_hotels(
     *,
     hids: list[str],
     budget_seconds: float = 55.0,
+    on_batch=None,
 ) -> tuple[list[HotelResult], str | None, str]:
     """Run <=100-ID batches through a bounded, paced, Listing-only worker pool.
 
     Returns (results, first correlationId, currency). The results list holds
     Each batch owns its correlationId. Successful batches survive failures and
     deadline cancellation. Unstarted batches count as incomplete, never empty.
+
+    `on_batch(index, page, batch_correlation_id)` (async, optional) fires as
+    each batch completes, for progressive delivery. A failing callback never
+    fails the batch. Pacing and concurrency are unchanged whether or not a
+    callback is attached.
     """
     currency = request.currency or DEFAULT_CURRENCY
     nights = (request.check_out - request.check_in).days or None
@@ -199,6 +205,11 @@ async def search_hotels(
                     returned_not_submitted=sum(r.id not in set(batch) for r in page.results),
                     **listing_shape(body)))
                 completed[index] = (page, page.search_id or payload["correlationId"])
+                if on_batch is not None:
+                    try:
+                        await on_batch(index, page, page.search_id or payload["correlationId"])
+                    except Exception:
+                        logger.warning("hotel_listing_on_batch_failed")
             except TripJackRateLimitError as exc:
                 dispatch.throttled(getattr(exc, "retry_after_seconds", 60.0))
                 first_error = first_error or exc

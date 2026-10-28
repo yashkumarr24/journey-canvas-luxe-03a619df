@@ -260,6 +260,10 @@ class HotelSearchResponse(CamelModel):
     partial: bool = False
     completed_batches: int = 0
     failed_batches: int = 0
+    # True while a background task keeps delivering batches for this search;
+    # poll the progress endpoint until it reports complete or partial.
+    loading: bool = False
+    total_batches: int = 0
     search_id: Optional[str] = None
     results: List[HotelResult] = Field(default_factory=list)
     currency: Optional[str] = None
@@ -267,6 +271,19 @@ class HotelSearchResponse(CamelModel):
     nights: Optional[int] = None
     amenities: Optional[List[str]] = None
     property_types: Optional[List[str]] = None
+
+
+class HotelSearchProgressResponse(CamelModel):
+    """Poll snapshot for a progressive search. Results are the slice from the
+    requested offset, already deduplicated server-side."""
+    status: Literal["loading", "complete", "partial"]
+    completed_batches: int = 0
+    failed_batches: int = 0
+    total_batches: int = 0
+    incomplete_reason: Optional[str] = None
+    results: List[HotelResult] = Field(default_factory=list)
+    next_offset: int = 0
+    expires_at: Optional[str] = None
 
 
 # --------------------------------------------------------------- detail --

@@ -92,6 +92,10 @@ class Settings(BaseSettings):
     # 13s) plus catalogue lookup, enrichment and persistence. Keep below the
     # Vercel proxy's 95s upstream timeout and the browser's 90s hotel timeout.
     hotel_search_budget_seconds: float = Field(default=75, ge=5, le=85, alias="HOTEL_SEARCH_BUDGET_SECONDS")
+    # Progressive search: the first batches answer the request within this
+    # window; the rest continue in a background task at the same pacing.
+    hotel_search_initial_seconds: float = Field(default=3.0, ge=1, le=10, alias="HOTEL_SEARCH_INITIAL_SECONDS")
+    hotel_search_initial_batches: int = Field(default=4, ge=1, le=10, alias="HOTEL_SEARCH_INITIAL_BATCHES")
 
     # Only enable behind a trusted reverse proxy; otherwise clients could spoof
     # X-Forwarded-For and bypass rate limiting.

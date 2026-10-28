@@ -233,6 +233,56 @@ async def create_search_session(
     return session
 
 
+async def append_search_results(
+    *,
+    settings: Settings,
+    search_id: str,
+    results: List[HotelResult],
+    provider_search_ids: Dict[str, str],
+) -> None:
+    """Merge late-arriving progressive results into an existing session.
+
+    Detail and review read the session, so hotels that arrive after the
+    initial response must land here too. Duplicates are dropped. A failure
+    never breaks the background search — the progress store still serves
+    the results, and the customer can re-search if the session missed them.
+    """
+    if not results and not provider_search_ids:
+        return
+
+    session = _memory.searches.get(search_id)
+    if session is not None and not session.is_expired:
+        for result in results:
+            session.results.setdefault(result.id, result)
+        session.provider_search_ids.update(provider_search_ids)
+
+    repo = _repo(settings)
+    if repo is not None:
+        try:
+            row = await repo.get_search(search_id)
+            if not row:
+                return
+            existing = row.get("results") or []
+            known = {r.get("id") for r in existing if isinstance(r, dict)}
+            merged = existing + [
+                result.model_dump(by_alias=True, exclude_none=True)
+                for result in results
+                if result.id not in known
+            ]
+            ids_map = dict(row.get("provider_search_ids") or {})
+            ids_map.update(provider_search_ids)
+            await repo.update_search(
+                str(row.get("id")),
+                {
+                    "results": merged,
+                    "provider_search_ids": ids_map,
+                    "result_count": len(merged),
+                },
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("hotel_search_session_append_failed")
+
+
 async def get_search_session(
     *, settings: Settings, search_id: str
 ) -> Optional[SearchSession]:
