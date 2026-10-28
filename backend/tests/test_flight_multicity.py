@@ -559,6 +559,7 @@ def test_multicity_review_is_blocked(monkeypatch):
     monkeypatch.setattr(ReviewRepository, "get_fare_ref", must_not_run)
     monkeypatch.setattr(flight_booking, "_review_with_provider", must_not_run)
     monkeypatch.setattr(flight_booking.review_limiter, "check", lambda *_: None)
+    monkeypatch.setattr(flight_booking, "client_identity", lambda *_: "t")
 
     payload = SimpleNamespace(idempotency_key=None, search_id="s-1", fare_id="mc-price-0", guest_token=None)
     auth = SimpleNamespace(user_id=None, is_authenticated=False)
