@@ -316,6 +316,17 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
             logger.warning("hotel_catalogue_static_failed")
     results = [_merge_static(r, static.get(r.id)) for r in results]
 
+    loading = bool(rest_hids)
+    # Durable progress (migration 0028): if the background continuation is
+    # interrupted, the stored session still says "loading", so a later poll
+    # reports interrupted/partial instead of presenting the initial batches
+    # as a complete search.
+    progress = {
+        "status": "loading" if loading else ("partial" if failed_batches > 0 else "complete"),
+        "total_batches": total_batches,
+        "completed_batches": completed_batches,
+        "failed_batches": failed_batches,
+    }
     session = await sessions.create_search_session(
         settings=settings,
         destination=payload.destination,
@@ -330,12 +341,12 @@ async def _search_hotels_within_budget(*, request: Request, payload: HotelSearch
         currency=currency,
         user_id=auth.user_id,
         persist_timeout_seconds=min(2.0, max(0, deadline - time.monotonic() - 1)),
+        progress=progress,
     )
 
     amenities = sorted({a for r in results for a in (r.amenities or [])})[:40]
     property_types = sorted({r.property_type for r in results if r.property_type})
 
-    loading = bool(rest_hids)
     if loading:
         entry = hotel_progress.begin(
             search_id=session.id,
