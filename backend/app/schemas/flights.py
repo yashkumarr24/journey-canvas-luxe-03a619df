@@ -250,10 +250,13 @@ class FlightSegment(CamelModel):
 
 
 class FlightItinerary(CamelModel):
-    direction: Literal["outbound", "inbound"]
+    # "leg" is used for indexed multi-city response groups; leg_index is the
+    # provider's numeric group key when it is parseable, else omitted.
+    direction: Literal["outbound", "inbound", "leg"]
     segments: List[FlightSegment]
     stops: Optional[int] = None
     duration_minutes: Optional[int] = None
+    leg_index: Optional[int] = None
 
 
 class FlightFare(CamelModel):
