@@ -440,6 +440,21 @@ async def _continue_search(
         logger.warning("hotel_search_continuation_failed")
         entry.failed_batches += planned
         hotel_progress.finish(entry, incomplete_reason="provider_failure")
+    # Persist the final state so a later poll without the in-process entry
+    # (restart, another worker) can tell finished from interrupted. Skipped
+    # when the task itself is cancelled/killed — the stored "loading" state
+    # then correctly reads as interrupted.
+    await sessions.update_search_progress(
+        settings=settings,
+        search_id=search_id,
+        progress={
+            "status": entry.status,
+            "total_batches": entry.total_batches,
+            "completed_batches": entry.completed_batches,
+            "failed_batches": entry.failed_batches,
+            "incomplete_reason": entry.incomplete_reason,
+        },
+    )
     logger.info(
         "hotel_search_continuation_finished",
         extra=log_extra(
