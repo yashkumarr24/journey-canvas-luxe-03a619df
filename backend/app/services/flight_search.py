@@ -145,7 +145,21 @@ async def _persist(
     response.search_id = search_id
 
     expires_at = _parse_expiry(response.expires_at)
-    await repository.record_result_refs(search_id, response.results, expires_at=expires_at)
+    stored = await repository.record_result_refs(search_id, response.results, expires_at=expires_at)
+    if not stored:
+        # No fare is resolvable server-side: withhold the search handle so the
+        # website shows results without offering selection.
+        response.search_id = None
+        if response.results:
+            logger.warning("flight_refs_unavailable_selection_disabled")
+        return
+    if len(stored) < len(response.results):
+        # Partial persistence: drop fares that could not be resolved at review.
+        logger.warning(
+            "flight_refs_partial",
+            extra=log_extra(stored=len(stored), returned=len(response.results)),
+        )
+        response.results = [r for r in response.results if r.id in stored]
 
 
 def _parse_expiry(raw: str | None) -> datetime:

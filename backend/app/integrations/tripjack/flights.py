@@ -106,14 +106,22 @@ def normalize_search_response(body: dict[str, Any], *, currency: str) -> FlightS
     inbound_trips = get_list(trip_infos, RETURN_KEY)
     combo_trips = get_list(trip_infos, COMBO_KEY)
 
-    # MAX_RESULTS caps each provider group independently. A single global
-    # cap let a large first group (ONWARD/COMBO/leg 0) crowd out RETURN fares
-    # or later multi-city legs entirely, leaving those legs unselectable.
+    # ONWARD/RETURN/COMBO handling is the pre-existing path and is left
+    # exactly as it was (on the VPS this is where combined domestic return
+    # and Special Return matching live); it keeps its single MAX_RESULTS cap.
     results: list[FlightResult] = []
-    results.extend(_capped(combo_trips, "outbound", currency, combo=True))
-    results.extend(_capped(outbound_trips, "outbound", currency))
-    results.extend(_capped(inbound_trips, "inbound", currency))
+    for trip in combo_trips:
+        results.extend(_results_from_trip(trip, "outbound", currency, combo=True))
+    for trip in outbound_trips:
+        results.extend(_results_from_trip(trip, "outbound", currency))
+    for trip in inbound_trips:
+        results.extend(_results_from_trip(trip, "inbound", currency))
+    results = results[:MAX_RESULTS]
 
+    # Intentional truncation: each indexed multi-city group is capped at
+    # MAX_RESULTS on its own (first MAX_RESULTS fares in provider order), so
+    # a large group can never push a later leg out. Fares past the cap ARE
+    # dropped and are never shown, so nothing unreferenced is selectable.
     # Domestic multi-city returns indexed keys per route (documented as
     # "Indexed keys per route"; the reference never names them, so any
     # list-valued key outside ONWARD/RETURN/COMBO is treated as one leg
