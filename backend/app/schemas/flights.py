@@ -64,16 +64,12 @@ class PassengerCounts(CamelModel):
         return self
 
 
-class FlightSearchRequest(CamelModel):
-    trip_type: TripType
+class FlightRouteLeg(CamelModel):
+    """One multi-city leg -> one TripJack routeInfos entry."""
+
     origin: str
     destination: str
     departure_date: date
-    return_date: Optional[date] = None
-    passengers: PassengerCounts = Field(default_factory=PassengerCounts)
-    cabin_class: CabinClass = "economy"
-    currency: Optional[str] = None
-    direct_only: bool = False
 
     @field_validator("origin", "destination", mode="before")
     @classmethod
@@ -82,6 +78,68 @@ class FlightSearchRequest(CamelModel):
             value = value.strip().upper()
             if not IATA_RE.match(value):
                 raise ValueError("invalid_airport_code")
+        return value
+
+    @model_validator(mode="after")
+    def _check_leg(self) -> "FlightRouteLeg":
+        if self.origin == self.destination:
+            raise ValueError("same_origin_destination")  # TripJack 1005
+        today = date.today()
+        if self.departure_date < today:
+            raise ValueError("departure_in_past")
+        if self.departure_date > today + timedelta(days=MAX_ADVANCE_DAYS):
+            raise ValueError("departure_too_far_ahead")
+        return self
+
+
+class FlightSearchRequest(CamelModel):
+    trip_type: TripType
+    # Required for oneway/roundtrip; for multicity they are derived from legs
+    # (first origin, last destination, first date) so every downstream consumer
+    # keeps working with the same scalar fields.
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    # Multi-city legs (2-6), in travel order. Only valid with trip_type
+    # "multicity"; forbidden otherwise.
+    legs: Optional[List[FlightRouteLeg]] = None
+    passengers: PassengerCounts = Field(default_factory=PassengerCounts)
+    cabin_class: CabinClass = "economy"
+    currency: Optional[str] = None
+    # Documented optional search modifiers.
+    direct_only: bool = False
+    connecting_only: bool = False
+    pfts: Optional[List[PassengerFareType]] = None
+    preferred_airlines: Optional[List[str]] = None
+
+    @field_validator("origin", "destination", mode="before")
+    @classmethod
+    def _normalize_iata(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            value = value.strip().upper()
+            if not IATA_RE.match(value):
+                raise ValueError("invalid_airport_code")
+        return value
+
+    @field_validator("preferred_airlines", mode="before")
+    @classmethod
+    def _normalize_airlines(cls, value: object) -> object:
+        if value in (None, ""):
+            return None
+        if isinstance(value, list):
+            cleaned = []
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValueError("invalid_airline_code")
+                code = item.strip().upper()
+                if not AIRLINE_RE.match(code):
+                    raise ValueError("invalid_airline_code")
+                if code not in cleaned:
+                    cleaned.append(code)
+            return cleaned or None
         return value
 
     @field_validator("currency", mode="before")
@@ -97,6 +155,21 @@ class FlightSearchRequest(CamelModel):
 
     @model_validator(mode="after")
     def _check_route_and_dates(self) -> "FlightSearchRequest":
+        if self.direct_only and self.connecting_only:
+            # Contradictory searchModifiers — TripJack documents them as
+            # mutually exclusive filters.
+            raise ValueError("conflicting_flight_modifiers")
+        if self.preferred_airlines and len(self.preferred_airlines) > MAX_PREFERRED_AIRLINES:
+            raise ValueError("too_many_preferred_airlines")
+
+        if self.trip_type == "multicity":
+            return self._check_multicity()
+
+        if self.legs is not None:
+            raise ValueError("legs_require_multicity")
+        if self.origin is None or self.destination is None or self.departure_date is None:
+            raise ValueError("route_required")
+
         if self.origin == self.destination:
             raise ValueError("same_origin_destination")  # TripJack 1005
 
@@ -116,6 +189,23 @@ class FlightSearchRequest(CamelModel):
         elif self.return_date is not None:
             raise ValueError("return_date_not_allowed")
 
+        return self
+
+    def _check_multicity(self) -> "FlightSearchRequest":
+        if self.return_date is not None:
+            raise ValueError("return_date_not_allowed")
+        if not self.legs or not (MIN_MULTI_CITY_LEGS <= len(self.legs) <= MAX_MULTI_CITY_LEGS):
+            raise ValueError("invalid_leg_count")
+        # Legs must be chronological; same-day onward legs are allowed, so the
+        # check is non-decreasing rather than strictly increasing.
+        for previous, current in zip(self.legs, self.legs[1:]):
+            if current.departure_date < previous.departure_date:
+                raise ValueError("legs_not_chronological")
+        # Derive the scalar summary fields so logging, persistence and the
+        # response contract stay identical to one-way/round-trip.
+        self.origin = self.legs[0].origin
+        self.destination = self.legs[-1].destination
+        self.departure_date = self.legs[0].departure_date
         return self
 
 
