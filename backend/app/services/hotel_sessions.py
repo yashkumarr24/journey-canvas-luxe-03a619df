@@ -99,6 +99,9 @@ class SearchSession:
     expires_at: datetime
     user_id: Optional[str] = None
     provider_search_ids: Dict[str, str] = field(default_factory=dict)
+    # Durable progressive-search state (migration 0028): status, batch counts
+    # and incomplete_reason. None for sessions persisted before 0028.
+    progress: Optional[Dict[str, Any]] = None
 
     @property
     def is_expired(self) -> bool:
