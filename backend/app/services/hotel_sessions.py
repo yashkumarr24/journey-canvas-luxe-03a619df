@@ -181,6 +181,7 @@ async def create_search_session(
     user_id: Optional[str],
     provider_search_ids: Optional[Dict[str, str]] = None,
     persist_timeout_seconds: float | None = None,
+    progress: Optional[Dict[str, Any]] = None,
 ) -> SearchSession:
     session = SearchSession(
         id=_token(),
@@ -197,6 +198,7 @@ async def create_search_session(
         provider_search_ids=provider_search_ids or {},
         expires_at=_now() + SEARCH_TTL,
         user_id=user_id,
+        progress=progress,
     )
 
     repo = _repo(settings)
