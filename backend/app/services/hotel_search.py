@@ -410,7 +410,7 @@ async def _continue_search(
 
         names_token = tripjack_hotels.STATIC_NAMES.set(names)
         try:
-            continuation = await tripjack_hotels.search_hotels(
+            continuation, _cid, _cur = await tripjack_hotels.search_hotels(
                 client, config, payload, hids=hids,
                 # Continuation owns its own Listing window from its start;
                 # pacing stays at the configured conservative rate.
