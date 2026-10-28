@@ -48,7 +48,7 @@ def test_budget_chain_fits_hosting_limits():
     assert total <= 85 < 90 < 95  # backend max < browser < Vercel proxy
 
 
-def test_service_passes_55s_listing_cap_with_default_budget(monkeypatch):
+def test_service_passes_initial_window_budget_with_default_budget(monkeypatch):
     class Repo:
         enabled = True
         def __init__(self, *_): pass
@@ -71,7 +71,10 @@ def test_service_passes_55s_listing_cap_with_default_budget(monkeypatch):
         response = await svc.search_hotels(request=None, payload=req(), auth=AuthContext(user_id=None), settings=Settings())
         assert not response.partial and response.completed_batches == 2
     asyncio.run(run())
-    assert 54.0 < captured['budget'] <= 55.0  # was capped at 30 before
+    # Progressive search: the request's only call is the initial window
+    # (200 IDs = 2 batches <= initial window); the 55s cap now bounds the
+    # background continuation, covered in test_hotel_progressive_search.py.
+    assert 0 < captured['budget'] <= Settings().hotel_search_initial_seconds
 
 
 def test_dubai_6684_ids_67_batches_complete_within_55s_listing_budget(fast_dispatch):
