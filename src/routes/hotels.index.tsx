@@ -318,7 +318,7 @@ function HotelsPage() {
                   </Alert>
                 )}
 
-                {!query.isFetching && !error && results.length === 0 && (
+                {!query.isFetching && !error && !loadingMore && results.length === 0 && (
                    <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No stays for these dates</p>
                     <p className="mt-2 text-sm text-muted-foreground">
