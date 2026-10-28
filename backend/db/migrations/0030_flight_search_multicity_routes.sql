@@ -35,21 +35,38 @@ alter table public.flight_searches add constraint flight_searches_return_chk che
 );
 
 -- Leg shape: an array of 2-6 objects, each with distinct IATA from/to and an
--- ISO travelDate. Mirrors the application-level validation so a direct
--- service-role write cannot store a malformed route set.
-alter table public.flight_searches add constraint flight_searches_routes_chk check (
-  routes is null or (
-    jsonb_typeof(routes) = 'array'
-    and jsonb_array_length(routes) between 2 and 6
-    and (
-      select bool_and(
-        jsonb_typeof(leg) = 'object'
-        and (leg ->> 'from') ~ '^[A-Z]{3}$'
-        and (leg ->> 'to') ~ '^[A-Z]{3}$'
-        and (leg ->> 'from') <> (leg ->> 'to')
-        and (leg ->> 'travelDate') ~ '^\d{4}-\d{2}-\d{2}$'
-      )
-      from jsonb_array_elements(routes) as leg
-    )
-  )
-);
+-- ISO travelDate. PostgreSQL forbids subqueries in CHECK constraints, so the
+-- array validation lives in a trigger; it mirrors the application-level
+-- validation so a direct service-role write cannot store a malformed route set.
+create or replace function public.validate_flight_search_routes()
+returns trigger
+language plpgsql
+as $$
+declare
+  leg jsonb;
+begin
+  if new.routes is null then
+    return new;
+  end if;
+  if jsonb_typeof(new.routes) <> 'array'
+     or jsonb_array_length(new.routes) < 2
+     or jsonb_array_length(new.routes) > 6 then
+    raise exception 'invalid routes: expected an array of 2-6 legs';
+  end if;
+  for leg in select * from jsonb_array_elements(new.routes) loop
+    if jsonb_typeof(leg) <> 'object'
+       or (leg ->> 'from') !~ '^[A-Z]{3}$'
+       or (leg ->> 'to') !~ '^[A-Z]{3}$'
+       or (leg ->> 'from') = (leg ->> 'to')
+       or (leg ->> 'travelDate') !~ '^\d{4}-\d{2}-\d{2}$' then
+      raise exception 'invalid routes leg: %', leg;
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+drop trigger if exists flight_searches_routes_validate on public.flight_searches;
+create trigger flight_searches_routes_validate
+  before insert or update of routes on public.flight_searches
+  for each row execute function public.validate_flight_search_routes();
