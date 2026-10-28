@@ -223,6 +223,7 @@ async def create_search_session(
                             for result in session.results.values()
                         ],
                         "result_count": len(session.results),
+                        "progress": progress,
                         "expires_at": _iso(session.expires_at),
                     }
                 )
