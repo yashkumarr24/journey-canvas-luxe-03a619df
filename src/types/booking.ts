@@ -125,12 +125,19 @@ export interface FlightSegment {
 }
 
 export interface FlightItinerary {
-  /** "outbound" for one-way and the first leg, "inbound" for the return leg. */
-  direction: "outbound" | "inbound";
+  /**
+   * "outbound" for one-way and the first leg, "inbound" for the return leg.
+   * "leg" is used for indexed multi-city response groups (Flight API v2.0);
+   * the frontend has no multi-city UI yet, so such groups are rendered only
+   * if a multi-city search is ever submitted through this client.
+   */
+  direction: "outbound" | "inbound" | "leg";
   segments: FlightSegment[];
   /** Number of stops; derived by the backend, may be absent. */
   stops?: number;
   durationMinutes?: number;
+  /** Provider's numeric multi-city group key, when parseable. */
+  legIndex?: number;
 }
 
 export interface FlightFare {
