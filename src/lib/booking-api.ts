@@ -32,6 +32,7 @@ import type {
   HotelGuestDetailsResponse,
   HotelReviewResponse,
   HotelSearchRequest,
+  HotelSearchProgress,
   HotelSearchResponse,
   HotelSelectionRequest,
   PaymentConfirmRequest,
