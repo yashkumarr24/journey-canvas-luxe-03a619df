@@ -279,6 +279,8 @@ function ReviewPage() {
             ))}
           </section>
 
+          <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
+
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Names must match the photo ID each traveller will carry.
