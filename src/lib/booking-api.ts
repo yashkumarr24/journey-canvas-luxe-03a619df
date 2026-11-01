@@ -18,6 +18,7 @@ import type {
   BookingError,
   BookingErrorKind,
   BookingSummary,
+  FlightFareRuleRawResponse,
   FlightFareRuleRequest,
   FlightFareRules,
   FlightReviewResponse,
