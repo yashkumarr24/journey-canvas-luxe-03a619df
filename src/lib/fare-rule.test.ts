@@ -1,15 +1,17 @@
 /**
  * Fare-rule fetch contract for the Flight Review page:
  *  - POST /api/v1/flights/fare-rule with exactly { searchId, fareId }
- *  - the request fires once per selected flight (query config, not UI)
  *  - selection refs survive a round-trip through sessionStorage
+ *
+ * booking-api reads VITE_BOOKING_API_URL at module load, so it is set before
+ * the dynamic import below (matching the existing booking-api tests).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.stubEnv("VITE_BOOKING_API_URL", "https://api.example.test");
+process.env.VITE_BOOKING_API_URL = "https://api.example.test";
 
-import { bookingApi } from "@/lib/booking-api";
-import { readFareRefs, rememberFareRefs } from "@/lib/review-session";
+const { bookingApi } = await import("@/lib/booking-api");
+const { readFareRefs, rememberFareRefs } = await import("@/lib/review-session");
 
 const fetchMock = vi.fn();
 
