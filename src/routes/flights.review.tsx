@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { AlertCircle, ArrowRight, Clock, Luggage, ShieldCheck } from "lucide-react";
+import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
+import { SectionTitle } from "@/components/Section";
 import type { FareRefs } from "@/lib/review-session";
 import type {
   ContactInput,
