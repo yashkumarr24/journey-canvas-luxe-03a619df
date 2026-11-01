@@ -502,6 +502,8 @@ export interface FlightFareRules {
  * (e.g. "DEL-BOM") and `tfr` groups policy lines by topic.
  */
 export interface FlightFareRuleRawResponse {
+  /** Production endpoint wrapper, separate from the standard data envelope. */
+  response?: FlightFareRuleRawResponse;
   fareRules?: {
     fareRule?: Record<
       string,

@@ -416,7 +416,8 @@ function FareRulesSection({
 
 function FareRuleList({ rules }: { rules: FlightFareRules }) {
   const topics = FARE_RULE_TOPICS.filter(({ key }) => (rules[key] ?? []).length > 0);
-  if (topics.length === 0) {
+  const allPoliciesEmpty = FARE_RULE_TOPICS.every(({ key }) => (rules[key] ?? []).length === 0);
+  if (allPoliciesEmpty) {
     return (
       <p className="mt-3 text-sm text-muted-foreground">
         The airline didn't return detailed rules for this fare. The final conditions are confirmed
