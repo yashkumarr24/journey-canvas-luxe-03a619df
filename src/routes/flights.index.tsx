@@ -33,7 +33,7 @@ import { applyFlightFilters, collectAirlines, priceRange, sortFlightResults, sor
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
+import { newIdempotencyKey, rememberFareRefs, rememberGuestToken } from "@/lib/review-session";
 import {
   defaultFlightFilters,
   type FlightFilters,

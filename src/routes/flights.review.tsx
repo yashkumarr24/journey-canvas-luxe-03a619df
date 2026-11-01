@@ -12,7 +12,7 @@ import { TravellerForm } from "@/components/booking/TravellerForm";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { newIdempotencyKey, readGuestToken } from "@/lib/review-session";
+import { newIdempotencyKey, readFareRefs, readGuestToken } from "@/lib/review-session";
 import { rememberBookingGuestToken, saveCheckoutSnapshot } from "@/lib/checkout-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
 import type {
