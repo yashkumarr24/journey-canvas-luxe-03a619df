@@ -91,8 +91,8 @@ describe("fare refs session storage", () => {
   });
 
   it("returns null for corrupt entries instead of throwing", () => {
-    window.sessionStorage.setItem("fnf.fareRefs.broken", "{not json");
-    window.sessionStorage.setItem("fnf.fareRefs.partial", JSON.stringify({ searchId: "s" }));
+    sessionStorageStub.setItem("fnf.fareRefs.broken", "{not json");
+    sessionStorageStub.setItem("fnf.fareRefs.partial", JSON.stringify({ searchId: "s" }));
     expect(readFareRefs("broken")).toBeNull();
     expect(readFareRefs("partial")).toBeNull();
   });
