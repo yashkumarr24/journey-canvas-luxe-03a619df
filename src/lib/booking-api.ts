@@ -59,6 +59,67 @@ export const bookingApiBaseUrl = RAW_BASE_URL.replace(/\/+$/, "");
 /** True once VITE_BOOKING_API_URL points somewhere. */
 export const isBookingApiConfigured = bookingApiBaseUrl.length > 0;
 
+/* ------------------------------------------------------------------ */
+/* Fare-rule normalization                                             */
+/* ------------------------------------------------------------------ */
+
+/** Coerce a raw tfr topic (string | string[] | objects) into clean lines. */
+function fareRuleLines(value: unknown): string[] {
+  const items = Array.isArray(value) ? value : value == null ? [] : [value];
+  return items
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      if (item && typeof item === "object") {
+        // Some payloads wrap the text, e.g. { policyDetail: "..." }.
+        const record = item as Record<string, unknown>;
+        for (const key of ["policyDetail", "detail", "text", "description", "value"]) {
+          const text = record[key];
+          if (typeof text === "string" && text.trim()) return text.trim();
+        }
+      }
+      return "";
+    })
+    .filter((line) => line.length > 0);
+}
+
+/**
+ * Normalize the raw provider fare-rule payload into the shape the review
+ * page renders. The route key under `fareRule` is dynamic (e.g. "DEL-BOM"),
+ * so it is resolved from the payload instead of being hardcoded. A response
+ * that is already normalized is passed through unchanged.
+ */
+export function normalizeFareRulesResponse(
+  response: FlightFareRules | FlightFareRuleRawResponse,
+): FlightFareRules {
+  const raw = response as FlightFareRuleRawResponse;
+  const fareRule = raw.fareRules?.[0]?.fareRule;
+  if (!fareRule || typeof fareRule !== "object") {
+    // Already normalized (or empty) — nothing to unwrap.
+    return response as FlightFareRules;
+  }
+  // Merge every route leg present (multi-city returns one key per leg).
+  const merged: Required<FlightFareRules> = {
+    cancellation: [],
+    dateChange: [],
+    noShow: [],
+    seatCharges: [],
+  };
+  for (const routeKey of Object.keys(fareRule)) {
+    const tfr = fareRule[routeKey]?.tfr;
+    if (!tfr) continue;
+    merged.cancellation.push(...fareRuleLines(tfr.CANCELLATION));
+    merged.dateChange.push(...fareRuleLines(tfr.DATECHANGE));
+    merged.noShow.push(...fareRuleLines(tfr.NO_SHOW));
+    merged.seatCharges.push(...fareRuleLines(tfr.SEAT_CHARGEABLE));
+  }
+  const normalized: FlightFareRules = {};
+  if (merged.cancellation.length) normalized.cancellation = merged.cancellation;
+  if (merged.dateChange.length) normalized.dateChange = merged.dateChange;
+  if (merged.noShow.length) normalized.noShow = merged.noShow;
+  if (merged.seatCharges.length) normalized.seatCharges = merged.seatCharges;
+  return normalized;
+}
+
 /** Travel searches are slow; keep a generous but bounded default. */
 export const DEFAULT_TIMEOUT_MS = 45_000;
 /** Hotel backend bounds all search work to 75s; allow delivery headroom
@@ -321,10 +382,17 @@ export const bookingApi = {
   /**
    * Fare rules (cancellation, date-change, no-show, seat charges) for the
    * selected fare. Uses the same searchId + fareId the customer picked on the
-   * results screen; called once per selection from the review page.
+   * results screen; called once per selection from the review page. The raw
+   * provider shape (`fareRules[0].fareRule["<ROUTE>"].tfr`) is normalized
+   * here so the review page never has to know the route key.
    */
   flightFareRules: (payload: FlightFareRuleRequest, options?: RequestOptions) =>
-    request<FlightFareRules>("POST", "/api/v1/flights/fare-rule", payload, options),
+    request<FlightFareRules | FlightFareRuleRawResponse>(
+      "POST",
+      "/api/v1/flights/fare-rule",
+      payload,
+      options,
+    ).then(normalizeFareRulesResponse),
 
   /**
    * Re-read a review session. The guest token travels in a header so it stays
