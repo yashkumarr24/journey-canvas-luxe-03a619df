@@ -61,6 +61,71 @@ test("flightFareRules POSTs the selected searchId and fareId to /api/v1/flights/
   assert.deepEqual(rules, { cancellation: ["Non-refundable"] });
 });
 
+/** Captured live shape: response.fareRules[0].fareRule["DEL-BOM"].tfr */
+const CAPTURED_FARE_RULE_RESPONSE = {
+  fareRules: [
+    {
+      fareRule: {
+        "DEL-BOM": {
+          tfr: {
+            CANCELLATION: ["Cancellation fee of INR 3500 applies", "Non-refundable within 24h"],
+            DATECHANGE: ["Date change fee of INR 2500 per passenger"],
+            NO_SHOW: ["No-show forfeits the base fare"],
+            SEAT_CHARGEABLE: ["Seat selection is chargeable on this fare"],
+          },
+        },
+      },
+    },
+  ],
+};
+
+test("flightFareRules normalizes the raw fareRules[0].fareRule[route].tfr shape", async () => {
+  globalThis.fetch = (async () =>
+    jsonResponse({ success: true, data: CAPTURED_FARE_RULE_RESPONSE })) as typeof fetch;
+
+  const rules = await bookingApi.flightFareRules({ searchId: "s", fareId: "f" });
+
+  assert.deepEqual(rules, {
+    cancellation: ["Cancellation fee of INR 3500 applies", "Non-refundable within 24h"],
+    dateChange: ["Date change fee of INR 2500 per passenger"],
+    noShow: ["No-show forfeits the base fare"],
+    seatCharges: ["Seat selection is chargeable on this fare"],
+  });
+});
+
+test("flightFareRules resolves the route key dynamically and merges multi-leg routes", async () => {
+  globalThis.fetch = (async () =>
+    jsonResponse({
+      success: true,
+      data: {
+        fareRules: [
+          {
+            fareRule: {
+              "BOM-GOI": { tfr: { CANCELLATION: ["Leg 1 cancellation"] } },
+              "GOI-DEL": { tfr: { CANCELLATION: ["Leg 2 cancellation"] } },
+            },
+          },
+        ],
+      },
+    })) as typeof fetch;
+
+  const rules = await bookingApi.flightFareRules({ searchId: "s", fareId: "f" });
+
+  assert.deepEqual(rules, { cancellation: ["Leg 1 cancellation", "Leg 2 cancellation"] });
+});
+
+test("flightFareRules returns empty topics when tfr is missing so no fallback hides valid data", async () => {
+  globalThis.fetch = (async () =>
+    jsonResponse({
+      success: true,
+      data: { fareRules: [{ fareRule: { "DEL-BOM": {} } }] },
+    })) as typeof fetch;
+
+  const rules = await bookingApi.flightFareRules({ searchId: "s", fareId: "f" });
+
+  assert.deepEqual(rules, {});
+});
+
 test("flightFareRules surfaces backend failures as booking errors", async () => {
   globalThis.fetch = (async () =>
     jsonResponse(
