@@ -496,6 +496,27 @@ export interface FlightFareRules {
   seatCharges?: string[];
 }
 
+/**
+ * Raw provider-shaped fare-rule payload as returned by the backend:
+ * `fareRules[0].fareRule["<ROUTE>"].tfr` where the route key is dynamic
+ * (e.g. "DEL-BOM") and `tfr` groups policy lines by topic.
+ */
+export interface FlightFareRuleRawResponse {
+  fareRules?: {
+    fareRule?: Record<
+      string,
+      {
+        tfr?: {
+          CANCELLATION?: unknown;
+          DATECHANGE?: unknown;
+          NO_SHOW?: unknown;
+          SEAT_CHARGEABLE?: unknown;
+        };
+      }
+    >;
+  }[];
+}
+
 export type PassengerType = "adult" | "child" | "infant";
 
 export interface TravellerInput {
