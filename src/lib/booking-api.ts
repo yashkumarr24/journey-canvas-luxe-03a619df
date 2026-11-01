@@ -18,6 +18,8 @@ import type {
   BookingError,
   BookingErrorKind,
   BookingSummary,
+  FlightFareRuleRequest,
+  FlightFareRules,
   FlightReviewResponse,
   FlightSearchRequest,
   FlightSearchResponse,
@@ -314,6 +316,14 @@ export const bookingApi = {
    */
   selectFlight: (payload: FlightSelectionRequest, options?: RequestOptions) =>
     request<FlightReviewResponse>("POST", "/api/v1/flights/select", payload, options),
+
+  /**
+   * Fare rules (cancellation, date-change, no-show, seat charges) for the
+   * selected fare. Uses the same searchId + fareId the customer picked on the
+   * results screen; called once per selection from the review page.
+   */
+  flightFareRules: (payload: FlightFareRuleRequest, options?: RequestOptions) =>
+    request<FlightFareRules>("POST", "/api/v1/flights/fare-rule", payload, options),
 
   /**
    * Re-read a review session. The guest token travels in a header so it stays
