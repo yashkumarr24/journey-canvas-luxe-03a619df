@@ -2,7 +2,7 @@
 
 ## Flight Review fare-rule response
 - [x] Reproduce the nested production response and normalize it before Review rendering; preserve request and other flows.
-- [ ] Run focused unit and real Review-page browser tests, including all-empty and single-topic responses.
+- [x] Pass 10 unit tests and 4 real Review-page browser tests (captured response, single-topic, all-empty, error), each verifying one selected-flight POST; preview checks report build OK.
 - [ ] Deploy to the existing Vercel site: blocked by missing authorized Vercel connection/project access.
 
 ## Large-city hotel search budget
