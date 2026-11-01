@@ -114,6 +114,31 @@ test("flightFareRules resolves the route key dynamically and merges multi-leg ro
   assert.deepEqual(rules, { cancellation: ["Leg 1 cancellation", "Leg 2 cancellation"] });
 });
 
+test("flightFareRules unwraps the production response.fareRules route before rendering", async () => {
+  globalThis.fetch = (async () =>
+    jsonResponse({ response: CAPTURED_FARE_RULE_RESPONSE })) as typeof fetch;
+  const rules = await bookingApi.flightFareRules({ searchId: "selected-search", fareId: "selected-fare" });
+  assert.deepEqual(rules, {
+    cancellation: CAPTURED_FARE_RULE_RESPONSE.fareRules[0].fareRule["DEL-BOM"].tfr.CANCELLATION,
+    dateChange: CAPTURED_FARE_RULE_RESPONSE.fareRules[0].fareRule["DEL-BOM"].tfr.DATECHANGE,
+    noShow: CAPTURED_FARE_RULE_RESPONSE.fareRules[0].fareRule["DEL-BOM"].tfr.NO_SHOW,
+    seatCharges: CAPTURED_FARE_RULE_RESPONSE.fareRules[0].fareRule["DEL-BOM"].tfr.SEAT_CHARGEABLE,
+  });
+});
+
+test("flightFareRules retains policyInfo objects and later fare-rule entries", async () => {
+  globalThis.fetch = (async () => jsonResponse({ success: true, data: { response: {
+    fareRules: [
+      { fareRule: { "BOM-GOI": { tfr: { CANCELLATION: { policyInfo: "Cancellation policy supplied by airline" } } } } },
+      { fareRule: { "GOI-DEL": { tfr: { SEAT_CHARGEABLE: { policyInfo: "Seat policy supplied by airline" } } } } },
+    ],
+  } } })) as typeof fetch;
+  assert.deepEqual(await bookingApi.flightFareRules({ searchId: "s", fareId: "f" }), {
+    cancellation: ["Cancellation policy supplied by airline"],
+    seatCharges: ["Seat policy supplied by airline"],
+  });
+});
+
 test("flightFareRules returns empty topics when tfr is missing so no fallback hides valid data", async () => {
   globalThis.fetch = (async () =>
     jsonResponse({

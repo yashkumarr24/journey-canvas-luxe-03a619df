@@ -1,5 +1,7 @@
 # Project architecture rules
 
+- Normalize flight fare-rule response wrappers and dynamic route policy topics in the booking API client before Review rendering; keeps provider response shape out of the UI without changing other API contracts.
+
 - Use numbered additive DB migrations; preserve catalogue sync and data.
 - Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
 - Keep search editors mounted. Catalogue RPCs are FastAPI-only with indexed selections. Listing uses paced process-wide bounded workers, full-request deadlines and per-hotel context; incomplete searches stay explicit. Large hotel searches are progressive: an initial window answers, a same-pacing background task delivers the rest via the polled progress endpoint; partial never shows as complete.

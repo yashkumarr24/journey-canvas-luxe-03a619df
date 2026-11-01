@@ -72,7 +72,7 @@ function fareRuleLines(value: unknown): string[] {
       if (item && typeof item === "object") {
         // Some payloads wrap the text, e.g. { policyDetail: "..." }.
         const record = item as Record<string, unknown>;
-        for (const key of ["policyDetail", "detail", "text", "description", "value"]) {
+        for (const key of ["policyInfo", "policyDetail", "detail", "text", "description", "value"]) {
           const text = record[key];
           if (typeof text === "string" && text.trim()) return text.trim();
         }
@@ -89,35 +89,38 @@ function fareRuleLines(value: unknown): string[] {
  * that is already normalized is passed through unchanged.
  */
 export function normalizeFareRulesResponse(
-  response: FlightFareRules | FlightFareRuleRawResponse,
+  response: FlightFareRules | FlightFareRuleRawResponse | null,
 ): FlightFareRules {
-  const raw = response as FlightFareRuleRawResponse;
-  const fareRule = raw.fareRules?.[0]?.fareRule;
-  if (!fareRule || typeof fareRule !== "object") {
-    // Already normalized (or empty) — nothing to unwrap.
-    return response as FlightFareRules;
-  }
-  // Merge every route leg present (multi-city returns one key per leg).
+  // The generic client unwraps { success: true, data }, but the production
+  // fare-rule endpoint also returns { response: { fareRules: [...] } }.
+  // Unwrap that here, without changing the contract of other API methods.
+  const raw = response as FlightFareRuleRawResponse | null;
+  const payload = raw?.response ?? response;
+  const normalized = (payload ?? {}) as FlightFareRules;
   const merged: Required<FlightFareRules> = {
-    cancellation: [],
-    dateChange: [],
-    noShow: [],
-    seatCharges: [],
+    cancellation: fareRuleLines(normalized.cancellation),
+    dateChange: fareRuleLines(normalized.dateChange),
+    noShow: fareRuleLines(normalized.noShow),
+    seatCharges: fareRuleLines(normalized.seatCharges),
   };
-  for (const routeKey of Object.keys(fareRule)) {
-    const tfr = fareRule[routeKey]?.tfr;
-    if (!tfr) continue;
-    merged.cancellation.push(...fareRuleLines(tfr.CANCELLATION));
-    merged.dateChange.push(...fareRuleLines(tfr.DATECHANGE));
-    merged.noShow.push(...fareRuleLines(tfr.NO_SHOW));
-    merged.seatCharges.push(...fareRuleLines(tfr.SEAT_CHARGEABLE));
+  // Preserve policy text across all dynamically named routes/entries only;
+  // this does not combine fares or change multi-city selection behavior.
+  for (const entry of (payload as FlightFareRuleRawResponse | null)?.fareRules ?? []) {
+    for (const route of Object.values(entry.fareRule ?? {})) {
+      const tfr = route?.tfr;
+      if (!tfr) continue;
+      merged.cancellation.push(...fareRuleLines(tfr.CANCELLATION));
+      merged.dateChange.push(...fareRuleLines(tfr.DATECHANGE));
+      merged.noShow.push(...fareRuleLines(tfr.NO_SHOW));
+      merged.seatCharges.push(...fareRuleLines(tfr.SEAT_CHARGEABLE));
+    }
   }
-  const normalized: FlightFareRules = {};
-  if (merged.cancellation.length) normalized.cancellation = merged.cancellation;
-  if (merged.dateChange.length) normalized.dateChange = merged.dateChange;
-  if (merged.noShow.length) normalized.noShow = merged.noShow;
-  if (merged.seatCharges.length) normalized.seatCharges = merged.seatCharges;
-  return normalized;
+  const result: FlightFareRules = {};
+  if (merged.cancellation.length) result.cancellation = merged.cancellation;
+  if (merged.dateChange.length) result.dateChange = merged.dateChange;
+  if (merged.noShow.length) result.noShow = merged.noShow;
+  if (merged.seatCharges.length) result.seatCharges = merged.seatCharges;
+  return result;
 }
 
 /** Travel searches are slow; keep a generous but bounded default. */

@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Review fare-rule response
+- [x] Reproduce the nested production response and normalize it before Review rendering; preserve request and other flows.
+- [ ] Run focused unit and real Review-page browser tests, including all-empty and single-topic responses.
+- [ ] Deploy to the existing Vercel site: blocked by missing authorized Vercel connection/project access.
+
 ## Large-city hotel search budget
 - [x] Bound Listing scheduling and full-request time; retain successful batch context and explicit incomplete status.
 - [x] Test 6,684-ID searches, failures, throttling and cancellation: 129 Python + 5 frontend tests passed; deployment/limits documented in HOTEL_LARGE_CITY_SEARCH_VERIFICATION.md. Live verification awaits VPS/Vercel deployment and UAT account-rate confirmation.
