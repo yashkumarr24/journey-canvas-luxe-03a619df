@@ -472,6 +472,30 @@ export interface FlightReviewResponse {
   validForSeconds: number;
 }
 
+/* --- Fare rules (cancellation / date-change / no-show / seats) ------- */
+
+/**
+ * Fetched on the review page using the SAME searchId + fareId the customer
+ * selected on the results screen. Both are opaque provider handles; neither
+ * carries a price.
+ */
+export interface FlightFareRuleRequest {
+  searchId: string;
+  fareId: string;
+}
+
+/**
+ * Normalized fare-policy text, grouped by topic. Every list is optional —
+ * the provider does not return every topic for every fare, and the UI must
+ * never invent a policy that was not returned.
+ */
+export interface FlightFareRules {
+  cancellation?: string[];
+  dateChange?: string[];
+  noShow?: string[];
+  seatCharges?: string[];
+}
+
 export type PassengerType = "adult" | "child" | "infant";
 
 export interface TravellerInput {

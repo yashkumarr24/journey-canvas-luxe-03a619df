@@ -33,7 +33,7 @@ import { applyFlightFilters, collectAirlines, priceRange, sortFlightResults, sor
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
+import { newIdempotencyKey, rememberFareRefs, rememberGuestToken } from "@/lib/review-session";
 import {
   defaultFlightFilters,
   type FlightFilters,
@@ -113,10 +113,16 @@ function FlightsPage() {
         fareId: result.fare?.fareId ?? result.id,
         idempotencyKey: newIdempotencyKey(),
       }),
-    onSuccess: (review) => {
+    onSuccess: (review, result) => {
       // The guest secret is kept in sessionStorage; only the opaque review
       // token travels in the URL.
       rememberGuestToken(review.reviewToken, review.guestToken);
+      // The review page fetches fare rules with the same searchId + fareId;
+      // keep them in sessionStorage keyed by the review token, never the URL.
+      rememberFareRefs(review.reviewToken, {
+        searchId: query.data?.searchId as string,
+        fareId: result.fare?.fareId ?? result.id,
+      });
       track(ANALYTICS_EVENTS.flightSelected);
       navigate({ to: "/flights/review", search: { token: review.reviewToken } });
     },

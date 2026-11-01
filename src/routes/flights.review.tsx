@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { AlertCircle, ArrowRight, Clock, Luggage, ShieldCheck } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -12,11 +12,13 @@ import { TravellerForm } from "@/components/booking/TravellerForm";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { newIdempotencyKey, readGuestToken } from "@/lib/review-session";
+import { newIdempotencyKey, readFareRefs, readGuestToken } from "@/lib/review-session";
 import { rememberBookingGuestToken, saveCheckoutSnapshot } from "@/lib/checkout-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
+import type { FareRefs } from "@/lib/review-session";
 import type {
   ContactInput,
+  FlightFareRules,
   FlightItinerary,
   TravellerDetailsResponse,
   TravellerInput,
@@ -114,6 +116,21 @@ function ReviewPage() {
     staleTime: 0,
     retry: false,
     queryFn: ({ signal }) => bookingApi.getReview(token as string, guestToken, { signal }),
+  });
+
+  // The selected flight's searchId + fareId, stored at selection time and
+  // keyed by this review token. The fare-rule request fires exactly once per
+  // selection: one query key, no retries, no refetch on focus.
+  const fareRefs = useMemo(() => (token ? readFareRefs(token) : null), [token]);
+  const fareRules = useQuery({
+    queryKey: ["flight-fare-rule", fareRefs?.searchId, fareRefs?.fareId],
+    enabled: Boolean(fareRefs),
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    queryFn: ({ signal }) => bookingApi.flightFareRules(fareRefs as FareRefs, { signal }),
   });
 
   const { track } = useAnalytics();
@@ -264,6 +281,8 @@ function ReviewPage() {
             ))}
           </section>
 
+          <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
+
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Names must match the photo ID each traveller will carry.
@@ -341,6 +360,83 @@ function ReviewPage() {
         </aside>
       </div>
     </Shell>
+  );
+}
+
+const FARE_RULE_TOPICS: { key: keyof FlightFareRules; label: string }[] = [
+  { key: "cancellation", label: "Cancellation" },
+  { key: "dateChange", label: "Date change" },
+  { key: "noShow", label: "No-show" },
+  { key: "seatCharges", label: "Seat charges" },
+];
+
+/**
+ * Cancellation, date-change, no-show and seat-charge policies for the
+ * selected fare, fetched once per selection. Only topics the provider
+ * actually returned are rendered — a missing topic is never invented.
+ */
+function FareRulesSection({
+  fareRules,
+  hasRefs,
+}: {
+  fareRules: UseQueryResult<FlightFareRules>;
+  hasRefs: boolean;
+}) {
+  return (
+    <section aria-labelledby="fare-rules-heading" className="mt-10">
+      <h2 id="fare-rules-heading" className="font-display text-2xl">
+        Fare rules
+      </h2>
+
+      {!hasRefs ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Fare rules aren't available for this review session. The final conditions are confirmed
+          again before payment.
+        </p>
+      ) : fareRules.isPending ? (
+        <div className="mt-4 space-y-3" role="status" aria-label="Loading fare rules">
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-20 w-full rounded-2xl" />
+        </div>
+      ) : fareRules.isError ? (
+        <Alert className="mt-4" role="alert">
+          <AlertCircle className="size-4" aria-hidden="true" />
+          <AlertTitle>Fare rules couldn't be loaded</AlertTitle>
+          <AlertDescription>
+            {toBookingError(fareRules.error).message} You can still continue — the final conditions
+            are confirmed again before payment.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <FareRuleList rules={fareRules.data} />
+      )}
+    </section>
+  );
+}
+
+function FareRuleList({ rules }: { rules: FlightFareRules }) {
+  const topics = FARE_RULE_TOPICS.filter(({ key }) => (rules[key] ?? []).length > 0);
+  if (topics.length === 0) {
+    return (
+      <p className="mt-3 text-sm text-muted-foreground">
+        The airline didn't return detailed rules for this fare. The final conditions are confirmed
+        again before payment.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      {topics.map(({ key, label }) => (
+        <div key={key} className="rounded-2xl border border-foreground/10 bg-card p-5">
+          <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</h3>
+          <ul className="mt-3 list-disc space-y-1.5 pl-4 text-sm">
+            {(rules[key] ?? []).map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 

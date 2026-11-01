@@ -33,6 +33,45 @@ export function readGuestToken(reviewToken: string): string | null {
 
 export function forgetGuestToken(reviewToken: string): void {
   storage()?.removeItem(KEY_PREFIX + reviewToken);
+  storage()?.removeItem(FARE_REFS_PREFIX + reviewToken);
+}
+
+/* --- Selected-fare references ---------------------------------------- */
+
+/**
+ * The review page needs the selected flight's searchId + fareId to fetch its
+ * fare rules. The review response deliberately does not echo them, so they
+ * are stored here at selection time, keyed by the opaque review token and
+ * kept in sessionStorage like the guest token — never in the URL.
+ */
+const FARE_REFS_PREFIX = "fnf.fareRefs.";
+
+export interface FareRefs {
+  searchId: string;
+  fareId: string;
+}
+
+export function rememberFareRefs(reviewToken: string, refs: FareRefs): void {
+  if (!refs.searchId || !refs.fareId) return;
+  try {
+    storage()?.setItem(FARE_REFS_PREFIX + reviewToken, JSON.stringify(refs));
+  } catch {
+    // Storage full/blocked — the review page simply skips the fare-rule fetch.
+  }
+}
+
+export function readFareRefs(reviewToken: string): FareRefs | null {
+  const raw = storage()?.getItem(FARE_REFS_PREFIX + reviewToken);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<FareRefs>;
+    if (typeof parsed.searchId === "string" && typeof parsed.fareId === "string" && parsed.searchId && parsed.fareId) {
+      return { searchId: parsed.searchId, fareId: parsed.fareId };
+    }
+  } catch {
+    // Corrupt entry — treat as absent.
+  }
+  return null;
 }
 
 /** Stable per-attempt key so a double-click cannot create two pre-bookings. */
