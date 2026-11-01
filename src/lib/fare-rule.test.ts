@@ -3,15 +3,14 @@
  *  - POST /api/v1/flights/fare-rule with exactly { searchId, fareId }
  *  - selection refs survive a round-trip through sessionStorage
  *
- * booking-api reads VITE_BOOKING_API_URL at module load, so it is set before
- * the dynamic import below (matching the existing booking-api tests).
+ * booking-api reads VITE_BOOKING_API_URL at module load; run with it set,
+ * e.g. VITE_BOOKING_API_URL=https://booking.example.test (no real I/O),
+ * matching the existing booking-api tests.
  */
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 
-process.env.VITE_BOOKING_API_URL = "https://api.example.test";
-
-const { bookingApi } = await import("./booking-api");
+const { bookingApi, bookingApiBaseUrl } = await import("./booking-api");
 const { readFareRefs, rememberFareRefs } = await import("./review-session");
 
 const originalFetch = globalThis.fetch;
@@ -53,7 +52,7 @@ test("flightFareRules POSTs the selected searchId and fareId to /api/v1/flights/
   const rules = await bookingApi.flightFareRules({ searchId: "search-123", fareId: "fare-456" });
 
   assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], "https://api.example.test/api/v1/flights/fare-rule");
+  assert.equal(calls[0][0], `${bookingApiBaseUrl}/api/v1/flights/fare-rule`);
   assert.equal(calls[0][1].method, "POST");
   assert.deepEqual(JSON.parse(calls[0][1].body as string), {
     searchId: "search-123",
