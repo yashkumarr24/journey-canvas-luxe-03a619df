@@ -13,10 +13,28 @@ import { readFareRefs, rememberFareRefs } from "@/lib/review-session";
 
 const fetchMock = vi.fn();
 
+/** Minimal in-memory sessionStorage — tests run in Node, no DOM. */
+function createStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear: () => map.clear(),
+    getItem: (k: string) => map.get(k) ?? null,
+    key: (i: number) => [...map.keys()][i] ?? null,
+    removeItem: (k: string) => void map.delete(k),
+    setItem: (k: string, v: string) => void map.set(k, String(v)),
+  };
+}
+
+let sessionStorageStub: Storage;
+
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
-  window.sessionStorage.clear();
+  sessionStorageStub = createStorage();
+  vi.stubGlobal("window", { sessionStorage: sessionStorageStub });
 });
 
 afterEach(() => {
