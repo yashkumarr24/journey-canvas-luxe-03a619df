@@ -116,6 +116,21 @@ function ReviewPage() {
     queryFn: ({ signal }) => bookingApi.getReview(token as string, guestToken, { signal }),
   });
 
+  // The selected flight's searchId + fareId, stored at selection time and
+  // keyed by this review token. The fare-rule request fires exactly once per
+  // selection: one query key, no retries, no refetch on focus.
+  const fareRefs = useMemo(() => (token ? readFareRefs(token) : null), [token]);
+  const fareRules = useQuery({
+    queryKey: ["flight-fare-rule", fareRefs?.searchId, fareRefs?.fareId],
+    enabled: Boolean(fareRefs),
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    queryFn: ({ signal }) => bookingApi.flightFareRules(fareRefs as FareRefs, { signal }),
+  });
+
   const { track } = useAnalytics();
   useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
   useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
