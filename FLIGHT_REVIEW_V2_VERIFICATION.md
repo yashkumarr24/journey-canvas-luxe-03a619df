@@ -42,6 +42,8 @@ PYTHONPATH=backend /tmp/flight-review-venv/bin/pytest -q \
 
 **83 passed**, one unrelated Starlette/AnyIO deprecation warning. Tests assert documented request shape, selected plural IDs and single-ID compatibility, booking handle retention, explicit conditions/expiry, PAN versus passport, persistence/replay and blocked unaccepted changes, including a decrease and unchanged-total FAREALERT.
 
+Expanded compatibility run, same command with `backend/tests/test_flight_search.py` added: **121 passed**, one unrelated deprecation warning.
+
 ```sh
 mkdir -p /tmp/browser/flight-review-v2
 cp tests/browser/flight_review_v2.py /tmp/browser/flight-review-v2/check_review.py
