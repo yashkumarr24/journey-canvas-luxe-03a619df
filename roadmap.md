@@ -1,5 +1,9 @@
 # Roadmap
 
+## Flight Review condition audit
+- [ ] Verify official condition descriptions and align backend traveller requirements without inferred aliases or geography.
+- [ ] Run focused documented-field, missing/false-flag and Review compatibility regressions; report scope and VPS verification limits.
+
 ## Flight V2 Review contract
 - [x] Align selected server-side price IDs, returned booking handle and documented conditions with official Review docs.
 - [x] Require review of FAREALERT updates; 83 focused adapter/session and compatibility tests plus 3 browser cases pass, preview build OK. Other flows preserved.
