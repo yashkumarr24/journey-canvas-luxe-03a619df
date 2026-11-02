@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Optional
@@ -69,6 +69,7 @@ class FareRef:
     total_amount: Decimal
     currency: str
     expires_at: Optional[datetime]
+    provider_refs: list[str] = field(default_factory=list)
 
     @property
     def expired(self) -> bool:
@@ -141,7 +142,7 @@ class ReviewRepository:
         simply does not match, so cross-search replay returns nothing."""
         rows = await self._db.select(
             RESULT_REFS,
-            columns="id,provider_ref,total_amount,currency,expires_at",
+            columns="id,provider_ref,provider_refs,total_amount,currency,expires_at",
             filters={
                 "flight_search_id": f"eq.{search_id}",
                 "provider_ref": f"eq.{provider_ref}",
@@ -158,6 +159,8 @@ class ReviewRepository:
             total_amount=_dec(row.get("total_amount")),
             currency=str(row.get("currency") or "INR"),
             expires_at=_dt(row.get("expires_at")),
+            provider_refs=[ref for ref in row.get("provider_refs", []) if isinstance(ref, str) and ref.strip()]
+            if isinstance(row.get("provider_refs"), list) else [],
         )
 
     # -- review sessions ---------------------------------------------------

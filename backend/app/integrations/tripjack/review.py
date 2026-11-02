@@ -20,10 +20,9 @@ Response fields read here (everything else is ignored, nothing is invented):
     alerts[]                                    provider notices (price/seat)
     conditions{}                                document requirements (see below)
 
-`conditions` key naming is not fully specified in the public reference, so the
-requirement extraction below probes a small set of candidate keys and treats an
-ABSENT flag as "not required" rather than guessing a stricter or looser rule.
-This gap is reported to the operator rather than papered over.
+Condition names follow the official Review table (supplied PDF page 3).
+The existing fare/itinerary normalization remains unchanged: that reference
+does not provide a full Review response or a FAREALERT amount example.
 """
 
 from __future__ import annotations
@@ -51,13 +50,6 @@ REVIEW_TTL = timedelta(minutes=14)
 REFUNDABLE_BY_RT = {0: False, 1: True, 2: True}
 REFUND_LABEL_BY_RT = {0: "Non-refundable", 1: "Refundable", 2: "Partially refundable"}
 
-# Candidate flag names probed defensively (see module docstring).
-PASSPORT_FLAGS = ("isPassportRequired", "ipa", "isPassportFullDetailRequired", "ipfdr")
-PASSPORT_EXPIRY_FLAGS = ("isPassportExpiryRequired", "iper", "isPassportFullDetailRequired", "ipfdr")
-DOB_FLAGS = ("isDobRequired", "idr", "isDobRequiredForAdult")
-NATIONALITY_FLAGS = ("isNationalityRequired", "inr")
-
-
 @dataclass(frozen=True)
 class ReviewOutcome:
     """Provider-neutral result of a review call."""
@@ -69,6 +61,7 @@ class ReviewOutcome:
     itineraries: list[FlightItinerary]
     fare: ReviewFare
     requirements: TravellerRequirements
+    conditions: dict[str, Any] = field(default_factory=dict)
     sellable: bool = True
     alerts: list[str] = field(default_factory=list)
     expires_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + REVIEW_TTL)
@@ -77,13 +70,17 @@ class ReviewOutcome:
 async def review_fare(
     client: TripJackClient,
     *,
-    price_id: str,
+    price_id: Optional[str] = None,
+    price_ids: Optional[list[str]] = None,
     currency: str,
 ) -> ReviewOutcome:
-    """Re-price one fare with TripJack. Never retried: it is transactional."""
+    """Review the stored selection's IDs, never construct cross-leg combinations."""
+    selected_ids = price_ids if price_ids is not None else [price_id] if price_id else []
+    if not selected_ids or any(not isinstance(ref, str) or not ref.strip() for ref in selected_ids):
+        raise ValueError("review_price_ids_required")
     body = await client.post(
         REVIEW_PATH,
-        {"priceIds": [price_id]},
+        {"priceIds": selected_ids},
         retries=0,  # pre-book must not be duplicated by an automatic retry
         operation="air_review",
     )
@@ -120,9 +117,11 @@ def normalize_review_response(body: dict[str, Any], *, currency: str) -> ReviewO
         itineraries=itineraries,
         fare=fare,
         requirements=_requirements(body, itineraries),
+        conditions=dict(get_map(body, "conditions")),
         # A review that produced no total is not sellable, whatever else it said.
-        sellable=total > 0 and bool(itineraries),
+        sellable=total > 0 and bool(itineraries) and bool(get_str(body, "bookingId")),
         alerts=alerts,
+        expires_at=_expiry(get_map(body, "conditions")),
     )
 
     logger.info(
@@ -238,12 +237,24 @@ def _fare(
     )
 
 
-def _flag(source: dict[str, Any], names: tuple[str, ...]) -> bool:
-    for name in names:
-        value = source.get(name)
-        if isinstance(value, bool):
-            return value
-    return False
+def _expiry(conditions: dict[str, Any]) -> datetime:
+    now = datetime.now(timezone.utc)
+    seconds = conditions.get("st")
+    if not isinstance(seconds, int) or isinstance(seconds, bool) or seconds < 0:
+        return now + REVIEW_TTL  # existing compatibility, not a claimed provider lifetime
+    created = now
+    timestamp = conditions.get("sct")
+    if isinstance(timestamp, str):
+        try:
+            parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if parsed.tzinfo:
+                created = min(now, parsed)
+        except ValueError:
+            pass
+    try:
+        return created + timedelta(seconds=seconds)
+    except OverflowError:
+        return now  # malformed duration must not extend validity
 
 
 def _requirements(body: dict[str, Any], itineraries: list[FlightItinerary]) -> TravellerRequirements:
@@ -256,14 +267,12 @@ def _requirements(body: dict[str, Any], itineraries: list[FlightItinerary]) -> T
         for airport in (segment.origin, segment.destination)
         if airport and airport.country
     }
-    # Route-derived signal only; it never RELAXES a provider flag.
     international = len(countries) > 1
-
-    passport = _flag(conditions, PASSPORT_FLAGS) or international
     return TravellerRequirements(
-        passport_required=passport,
-        passport_expiry_required=passport or _flag(conditions, PASSPORT_EXPIRY_FLAGS),
-        nationality_required=passport or _flag(conditions, NATIONALITY_FLAGS),
-        date_of_birth_required=_flag(conditions, DOB_FLAGS) or international,
+        passport_required=conditions.get("pm") is True,
+        passport_expiry_required=conditions.get("pped") is True,
+        adult_dob_required=conditions.get("adobr") is True,
+        child_dob_required=conditions.get("cdobr") is True,
+        infant_dob_required=conditions.get("idobr") is True,
         international=international,
     )
