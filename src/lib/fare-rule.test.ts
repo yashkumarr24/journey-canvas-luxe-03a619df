@@ -10,7 +10,7 @@
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 
-const { bookingApi, bookingApiBaseUrl } = await import("./booking-api");
+const { bookingApi, bookingApiBaseUrl, cleanFareRuleText } = await import("./booking-api");
 const { readFareRefs, rememberFareRefs } = await import("./review-session");
 
 const originalFetch = globalThis.fetch;
