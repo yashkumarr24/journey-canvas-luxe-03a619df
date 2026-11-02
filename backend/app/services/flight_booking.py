@@ -176,7 +176,8 @@ async def select_flight(
     if fare_ref.expired:
         raise FareExpiredError()
 
-    outcome = await _review_with_provider(fare_ref.provider_ref, fare_ref.currency, settings)
+    selected_refs = fare_ref.provider_refs or [fare_ref.provider_ref]
+    outcome = await _review_with_provider(selected_refs, fare_ref.currency, settings)
     if not outcome.sellable:
         raise FareUnavailableError()
 
@@ -187,9 +188,10 @@ async def select_flight(
         "itineraries": [i.model_dump(mode="json", by_alias=True, exclude_none=True) for i in outcome.itineraries],
         "fare": outcome.fare.model_dump(mode="json", by_alias=True, exclude_none=True),
         "alerts": outcome.alerts,
+        "conditions": outcome.conditions,
     }
 
-    status_value = "price_changed" if outcome.total != fare_ref.total_amount else "reviewed"
+    status_value = "price_changed" if outcome.total != fare_ref.total_amount or "FAREALERT" in outcome.alerts else "reviewed"
 
     session = await reviews.create_session(
         {
@@ -200,6 +202,7 @@ async def select_flight(
             "flight_search_id": search.search_id,
             "search_result_ref_id": fare_ref.id,
             "provider_price_ref": fare_ref.provider_ref,
+            "provider_price_refs": selected_refs,
             "provider_booking_ref": outcome.provider_booking_ref,
             "searched_amount": str(fare_ref.total_amount),
             "total_amount": str(outcome.total),
@@ -365,7 +368,7 @@ async def submit_travellers(
 # -- internals ---------------------------------------------------------------
 
 
-async def _review_with_provider(price_ref: str, currency: str, settings: Settings):
+async def _review_with_provider(price_refs: list[str], currency: str, settings: Settings):
     config = build_config(settings)
     if not config.is_configured:
         logger.error("tripjack_not_configured")
@@ -376,7 +379,7 @@ async def _review_with_provider(price_ref: str, currency: str, settings: Setting
 
     client = get_client(config)
     try:
-        return await tripjack_review.review_fare(client, price_id=price_ref, currency=currency)
+        return await tripjack_review.review_fare(client, price_ids=price_refs, currency=currency)
     except TripJackTimeoutError:
         raise ReviewTimeoutError() from None
     except TripJackBadRequestError:
@@ -452,7 +455,12 @@ def _validate_travellers(
         raise TravellerMismatchError()
 
     for traveller in travellers:
-        if requirements.date_of_birth_required or traveller.type in ("child", "infant"):
+        per_type_dob = {
+            "adult": requirements.adult_dob_required,
+            "child": requirements.child_dob_required,
+            "infant": requirements.infant_dob_required,
+        }
+        if requirements.date_of_birth_required or per_type_dob[traveller.type] or traveller.type in ("child", "infant"):
             if not traveller.date_of_birth:
                 raise TravellerDetailsIncompleteError()
         if requirements.passport_required:
@@ -544,7 +552,7 @@ def _to_response(session: ReviewSession, *, guest_token: Optional[str]) -> Fligh
     return FlightReviewResponse(
         review_token=session.review_token,
         guest_token=guest_token,
-        status="price_changed" if price_change and price_change.direction == "increase" else "reviewed",
+        status="price_changed" if price_change or "FAREALERT" in snapshot.get("alerts", []) else "reviewed",
         itineraries=itineraries,
         fare=fare,
         price_change=price_change,
@@ -552,6 +560,7 @@ def _to_response(session: ReviewSession, *, guest_token: Optional[str]) -> Fligh
             adults=session.adults, children=session.children, infants=session.infants
         ),
         requirements=TravellerRequirements.model_validate(session.requirements or {}),
+        conditions=snapshot.get("conditions") if isinstance(snapshot.get("conditions"), dict) else {},
         expires_at=expires_at.isoformat(),
         valid_for_seconds=max(remaining, 0),
     )

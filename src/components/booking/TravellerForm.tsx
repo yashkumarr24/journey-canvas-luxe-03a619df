@@ -31,7 +31,7 @@ export interface TravellerFormProps {
   passengers: PassengerCounts;
   requirements: TravellerRequirements;
   submitting: boolean;
-  /** Present when the server re-priced the fare upward. */
+  /** Present when Review requires explicit acknowledgement of the updated fare. */
   priceChangeNotice?: string;
   onSubmit: (values: { travellers: TravellerInput[]; contact: ContactInput; acceptPriceChange: boolean }) => void;
 }
@@ -89,7 +89,7 @@ export function TravellerForm({
       if (!NAME_RE.test(traveller.firstName.trim())) found.push(`${who}: enter a valid first name.`);
       if (!NAME_RE.test(traveller.lastName.trim())) found.push(`${who}: enter a valid last name.`);
 
-      const needsDob = requirements.dateOfBirthRequired || traveller.type !== "adult";
+      const needsDob = requiresDob(traveller.type, requirements);
       if (needsDob && !traveller.dateOfBirth) found.push(`${who}: date of birth is required.`);
       if (traveller.dateOfBirth && traveller.dateOfBirth > today()) {
         found.push(`${who}: date of birth cannot be in the future.`);
@@ -201,7 +201,7 @@ export function TravellerForm({
             <div className="space-y-2">
               <Label htmlFor={`dob-${index}`}>
                 Date of birth
-                {requirements.dateOfBirthRequired || traveller.type !== "adult" ? "" : " (optional)"}
+                {requiresDob(traveller.type, requirements) ? "" : " (optional)"}
               </Label>
               <Input
                 id={`dob-${index}`}
@@ -352,7 +352,7 @@ export function TravellerForm({
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" size="lg" disabled={submitting}>
+        <Button type="submit" size="lg" disabled={submitting || Boolean(priceChangeNotice && !accepted)}>
           {submitting ? "Saving details…" : "Continue to payment"}
         </Button>
         <p className="text-xs text-muted-foreground">
@@ -361,4 +361,9 @@ export function TravellerForm({
       </div>
     </form>
   );
+}
+
+function requiresDob(type: PassengerType, requirements: TravellerRequirements): boolean {
+  const perType = { adult: requirements.adultDobRequired, child: requirements.childDobRequired, infant: requirements.infantDobRequired };
+  return Boolean(requirements.dateOfBirthRequired || perType[type] || type !== "adult");
 }

@@ -101,6 +101,10 @@ class TravellerRequirements(CamelModel):
     nationality_required: bool = False
     date_of_birth_required: bool = False
     international: bool = False
+    # Explicit per-passenger flags from Review conditions, not route guesses.
+    adult_dob_required: bool = False
+    child_dob_required: bool = False
+    infant_dob_required: bool = False
 
 
 class ReviewFare(CamelModel):
@@ -128,6 +132,8 @@ class FlightReviewResponse(CamelModel):
     price_change: Optional[PriceChange] = None
     passengers: PassengerCounts
     requirements: TravellerRequirements = Field(default_factory=TravellerRequirements)
+    # Retained provider conditions only; no provider booking/price handles.
+    conditions: dict = Field(default_factory=dict)
     expires_at: str
     valid_for_seconds: int
 

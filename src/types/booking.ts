@@ -442,6 +442,28 @@ export interface TravellerRequirements {
   nationalityRequired: boolean;
   dateOfBirthRequired: boolean;
   international: boolean;
+  adultDobRequired?: boolean;
+  childDobRequired?: boolean;
+  infantDobRequired?: boolean;
+}
+
+/** Exact fields described in the official Review conditions table. */
+export interface FlightReviewConditions {
+  st?: number;
+  sct?: string;
+  isa?: boolean;
+  isBA?: boolean;
+  iecr?: boolean;
+  igm?: boolean;
+  gstappl?: boolean;
+  pm?: boolean;
+  pped?: boolean;
+  adobr?: boolean;
+  cdobr?: boolean;
+  idobr?: boolean;
+  ipa?: boolean;
+  ida?: boolean;
+  idm?: boolean;
 }
 
 export interface ReviewFare {
@@ -468,6 +490,7 @@ export interface FlightReviewResponse {
   priceChange?: PriceChange;
   passengers: PassengerCounts;
   requirements: TravellerRequirements;
+  conditions?: FlightReviewConditions;
   expiresAt: string;
   validForSeconds: number;
 }
