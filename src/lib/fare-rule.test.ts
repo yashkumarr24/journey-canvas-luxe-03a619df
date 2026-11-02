@@ -10,7 +10,7 @@
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 
-const { bookingApi, bookingApiBaseUrl } = await import("./booking-api");
+const { bookingApi, bookingApiBaseUrl, cleanFareRuleText } = await import("./booking-api");
 const { readFareRefs, rememberFareRefs } = await import("./review-session");
 
 const originalFetch = globalThis.fetch;
@@ -149,6 +149,64 @@ test("flightFareRules returns empty topics when tfr is missing so no fallback hi
   const rules = await bookingApi.flightFareRules({ searchId: "s", fareId: "f" });
 
   assert.deepEqual(rules, {});
+});
+
+/** Captured TripJack policy text with raw provider markers. */
+const TRIPJACK_MARKED_TEXT =
+  "__bs__Cancellation Charges__be____nls__INR 3500 per passenger__nls____bs__Non-refundable__be__ within 24 hours of departure";
+
+test("cleanFareRuleText removes TripJack __nls__, __bs__ and __be__ markers", () => {
+  const lines = cleanFareRuleText(TRIPJACK_MARKED_TEXT);
+  assert.deepEqual(lines, [
+    "Cancellation Charges",
+    "INR 3500 per passenger",
+    "Non-refundable within 24 hours of departure",
+  ]);
+  for (const line of lines) {
+    assert.ok(!line.includes("__nls__"), "no __nls__ marker");
+    assert.ok(!line.includes("__bs__"), "no __bs__ marker");
+    assert.ok(!line.includes("__be__"), "no __be__ marker");
+    assert.ok(!line.includes("__"), "no leftover underscores");
+  }
+});
+
+test("flightFareRules renders no raw TripJack markers from a marked live-style response", async () => {
+  globalThis.fetch = (async () =>
+    jsonResponse({
+      response: {
+        fareRules: [
+          {
+            fareRule: {
+              "DEL-BOM": {
+                tfr: {
+                  CANCELLATION: [TRIPJACK_MARKED_TEXT],
+                  DATECHANGE: ["__bs__Date change__be____nls__INR 2500 per passenger"],
+                  NO_SHOW: ["No-show forfeits the base fare__nls____nls__Contact airline"],
+                  SEAT_CHARGEABLE: ["__bs__Seat selection is chargeable__be__"],
+                },
+              },
+            },
+          },
+        ],
+      },
+    })) as typeof fetch;
+
+  const rules = await bookingApi.flightFareRules({ searchId: "s", fareId: "f" });
+
+  assert.deepEqual(rules, {
+    cancellation: [
+      "Cancellation Charges",
+      "INR 3500 per passenger",
+      "Non-refundable within 24 hours of departure",
+    ],
+    dateChange: ["Date change", "INR 2500 per passenger"],
+    noShow: ["No-show forfeits the base fare", "Contact airline"],
+    seatCharges: ["Seat selection is chargeable"],
+  });
+  const rendered = JSON.stringify(rules);
+  assert.ok(!rendered.includes("__nls__"));
+  assert.ok(!rendered.includes("__bs__"));
+  assert.ok(!rendered.includes("__be__"));
 });
 
 test("flightFareRules surfaces backend failures as booking errors", async () => {

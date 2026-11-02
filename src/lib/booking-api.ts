@@ -63,6 +63,22 @@ export const isBookingApiConfigured = bookingApiBaseUrl.length > 0;
 /* Fare-rule normalization                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Clean TripJack policy markers out of raw fare-rule text. `__nls__` marks
+ * a line break, `__bs__`/`__be__` wrap bold spans; none of them carry
+ * policy meaning, so amounts and conditions are preserved verbatim.
+ * Returns one readable line per provider line break.
+ */
+export function cleanFareRuleText(text: string): string[] {
+  return text
+    .replace(/__nls__/gi, "\n")
+    .replace(/__(bs|be)__/gi, "")
+    .replace(/_{2,}/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 0);
+}
+
 /** Coerce a raw tfr topic (string | string[] | objects) into clean lines. */
 function fareRuleLines(value: unknown): string[] {
   const items = Array.isArray(value) ? value : value == null ? [] : [value];
@@ -79,7 +95,7 @@ function fareRuleLines(value: unknown): string[] {
       }
       return "";
     })
-    .filter((line) => line.length > 0);
+    .flatMap((line) => cleanFareRuleText(line));
 }
 
 /**
