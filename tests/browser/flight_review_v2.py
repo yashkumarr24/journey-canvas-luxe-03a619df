@@ -21,6 +21,8 @@ async def check(browser, name, changed, delta=False):
             if delta:
                 data['priceChange']={"previous":{"amount":9000,"currency":"INR"},"current":{"amount":8450,"currency":"INR"},"difference":{"amount":550,"currency":"INR"},"direction":"decrease"}
             await route.fulfill(json={"success":True,"data":data})
+        elif '/analytics/' in route.request.url:
+            await route.fulfill(status=503,json={'success':False,'message':'Analytics unavailable'})
         elif '/flights/travellers' in route.request.url:
             calls.append(route.request.post_data_json)
             await route.fulfill(status=409,json={"success":False,"message":"Test submission intercepted"})
@@ -42,6 +44,9 @@ async def check(browser, name, changed, delta=False):
         await expect(button).to_be_enabled()
     else:
         await expect(button).to_be_enabled()
+    async with page.expect_response(lambda r: '/analytics/session/end' in r.url and r.status == 503):
+        await page.evaluate("() => { Object.defineProperty(document, 'visibilityState', {value:'hidden', configurable:true}); window.dispatchEvent(new Event('visibilitychange')); }")
+    await expect(page.get_by_role('heading',name='Traveller details',exact=True)).to_be_visible()
     await page.get_by_label('First name (as on ID)').fill('Test')
     await page.get_by_label('Last name (as on ID)').fill('Passenger')
     await page.get_by_label('Date of birth',exact=True).fill('1990-01-01')

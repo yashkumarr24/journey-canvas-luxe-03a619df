@@ -52,6 +52,8 @@ python3 /tmp/browser/flight-review-v2/check_review.py
 
 **3/3 browser cases passed:** success, unchanged-total FAREALERT, fare decrease. Real Review UI and booking client run against intercepted test responses; returned requirements render, false flags do not render, consent disables/enables Continue, and the intercepted traveller POST contains the expected consent. No provider, production database, real booking or payment requests were made. No browser page errors.
 
+Follow-up analytics verification: the actual local `POST /api/v1/analytics/session/end` returns 503 with `BOOKING_API_NOT_CONFIGURED` because this preview has no backend origin configured. The browser regression now forces analytics endpoints to return 503, dispatches the session-end visibility event, waits for that exact 503, and confirms Review remains rendered and traveller submission still works in all three cases. Zero page errors; no blank screen reproduced. Existing analytics error handling already isolates these failures, so no unrelated application code/configuration was changed. Restoring the analytics service requires the preview backend origin configuration; no successful delivery is claimed.
+
 Automatic preview checks: **build OK**. No manual production build/typecheck was run; these are managed by the preview harness.
 
 No deployment, migration application, VPS restart, provider call or production data change occurred. VPS compatibility is not certified by local tests; this checkout's existing plural columns must match the target VPS, as previously verified by the user.
