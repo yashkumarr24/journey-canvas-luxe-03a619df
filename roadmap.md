@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Flight Review condition audit
-- [ ] Verify official condition descriptions and align backend traveller requirements without inferred aliases or geography.
-- [ ] Run focused documented-field, missing/false-flag and Review compatibility regressions; report scope and VPS verification limits.
+- [x] Verify official PDF p4/p6/p22 visually: separate PAN, passport, document-ID and per-pax DOB flags; remove geography inference, retain unknown conditions without alias behavior.
+- [x] Pass 198 focused condition/session and Flight compatibility regressions; preview checks build OK. No deployment/provider calls; actual live VPS files were not supplied or inspected. Existing booking enforcement and frontend remain unchanged.
 
 ## Flight V2 Review contract
 - [x] Align selected server-side price IDs, returned booking handle and documented conditions with official Review docs.
