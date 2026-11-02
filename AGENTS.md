@@ -1,6 +1,6 @@
 # Project architecture rules
 
-- Flight Review resolves the selected fare's stored plural price references, retains provider bookingId privately and conditions in the existing session snapshot, and gates all FAREALERT/amount changes on existing consent; never constructs multi-city combinations or infers passport requirements from PAN flags or route geography.
+- Flight Review resolves the selected fare's stored plural price references, retains provider bookingId privately and conditions in the existing session snapshot, and gates all FAREALERT/amount changes on existing consent; map literal documented condition booleans to separate passport, PAN, document-ID and per-pax DOB requirements, preserving unknown fields without aliases or geography inference so distinct documents cannot be conflated; never construct multi-city combinations.
 
 - Normalize flight fare-rule response wrappers and dynamic route policy topics in the booking API client before Review rendering; keeps provider response shape out of the UI without changing other API contracts.
 

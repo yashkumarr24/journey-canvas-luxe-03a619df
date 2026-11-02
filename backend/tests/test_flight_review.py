@@ -111,7 +111,7 @@ def test_international_route_does_not_invent_document_requirements() -> None:
     body = review_body()
     body["tripInfos"][0]["sI"][0]["aa"] = {"code": "DXB", "city": "Dubai", "country": "AE"}
     outcome = normalize_review_response(body, currency="INR")
-    assert outcome.requirements.international is True
+    assert outcome.requirements.international is False
     assert outcome.requirements.passport_required is False
     assert outcome.requirements.date_of_birth_required is False
 

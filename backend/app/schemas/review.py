@@ -105,6 +105,10 @@ class TravellerRequirements(CamelModel):
     adult_dob_required: bool = False
     child_dob_required: bool = False
     infant_dob_required: bool = False
+    # PAN and student/senior document ID are distinct from passport fields.
+    pan_required: bool = False
+    document_id_applicable: bool = False
+    document_id_required: bool = False
 
 
 class ReviewFare(CamelModel):

@@ -62,6 +62,92 @@ def test_pan_applicable_is_not_passport_required():
     assert normalize_review_response(body, currency="INR").requirements.passport_required is False
 
 
+# Official PDF p4 (Review table), p6 (passenger fields), p22 (PAN handling).
+DOCUMENTED_REQUIREMENTS = [
+    ("ipa", "pan_required"),
+    ("pm", "passport_required"),
+    ("pped", "passport_expiry_required"),
+    ("adobr", "adult_dob_required"),
+    ("cdobr", "child_dob_required"),
+    ("idobr", "infant_dob_required"),
+    ("ida", "document_id_applicable"),
+    ("idm", "document_id_required"),
+]
+
+
+@pytest.mark.parametrize("flag,requirement", DOCUMENTED_REQUIREMENTS)
+def test_each_documented_condition_maps_only_to_its_requirement(flag, requirement):
+    body = review_body()
+    body["conditions"] = {flag: True}
+    result = normalize_review_response(body, currency="INR")
+    requirements = result.requirements.model_dump()
+    assert requirements[requirement] is True
+    assert {key for key, value in requirements.items() if value} == {requirement}
+    assert result.conditions == {flag: True}
+
+
+@pytest.mark.parametrize("flag,requirement", DOCUMENTED_REQUIREMENTS)
+@pytest.mark.parametrize("value", [False, None, 0, 1, "true", "false", {}, []])
+def test_false_null_and_non_boolean_flags_do_not_require_fields(flag, requirement, value):
+    body = review_body()
+    body["conditions"] = {flag: value}
+    result = normalize_review_response(body, currency="INR")
+    assert result.requirements.model_dump()[requirement] is False
+    assert not any(result.requirements.model_dump().values())
+    assert result.conditions == {flag: value}
+
+
+@pytest.mark.parametrize("conditions", [None, {}, []])
+def test_missing_or_invalid_conditions_have_no_inferred_requirements(conditions):
+    body = review_body()
+    if conditions is not None:
+        body["conditions"] = conditions
+    # Even an international itinerary does not establish traveller conditions.
+    body["tripInfos"][0]["sI"][0]["aa"] = {"code": "DXB", "country": "AE"}
+    result = normalize_review_response(body, currency="INR")
+    assert not any(result.requirements.model_dump().values())
+    assert result.conditions == {}
+
+
+def test_unknown_fields_and_group_labels_are_preserved_without_alias_behavior():
+    body = review_body()
+    conditions = {"pcs": True, "dob": True, "dc": True, "passportRequired": True,
+                  "nationalityRequired": True, "futureFlag": {"value": True},
+                  "isa": True, "iecr": True, "igm": True}
+    body["conditions"] = conditions
+    result = normalize_review_response(body, currency="INR")
+    assert result.conditions == conditions
+    assert not any(result.requirements.model_dump().values())
+
+
+@pytest.mark.asyncio
+async def test_documented_requirements_survive_session_storage_and_review_replay(monkeypatch):
+    conditions = {flag: True for flag, _ in DOCUMENTED_REQUIREMENTS}
+    conditions["futureFlag"] = {"nested": ["retained"]}
+    body = review_body()
+    body["conditions"] = conditions
+    outcome = normalize_review_response(body, currency="INR")
+    repo = AsyncMock()
+    repo.enabled = True
+    repo.get_search.return_value = SearchContext(SEARCH_ID, None, 1, 0, 0, "INR", "oneway")
+    repo.get_fare_ref.return_value = FareRef("ref", "primary", Decimal("8450"), "INR", _session().expires_at)
+    repo.create_session.side_effect = lambda values: _to_session({"id": "session", **values})
+    monkeypatch.setattr(service, "ReviewRepository", lambda _: repo)
+    monkeypatch.setattr(service, "_review_with_provider", AsyncMock(return_value=outcome))
+    monkeypatch.setattr(service.review_limiter, "check", lambda _: None)
+    monkeypatch.setattr(service, "client_identity", lambda *_: "test")
+    response = await service.select_flight(request=object(),
+        payload=FlightSelectionRequest(search_id=SEARCH_ID, fare_id="primary"),
+        auth=AuthContext(user_id=None), settings=Settings())
+    assert response.requirements == outcome.requirements
+    assert response.conditions == conditions
+    stored = repo.create_session.call_args.args[0]
+    assert stored["requirements"]["panRequired"] is True
+    assert stored["requirements"]["documentIdApplicable"] is True
+    assert stored["requirements"]["documentIdRequired"] is True
+    assert stored["itinerary"]["conditions"] == conditions
+
+
 def test_booking_handle_required_for_success():
     assert normalize_review_response(review_body(booking_id=""), currency="INR").sellable is False
 

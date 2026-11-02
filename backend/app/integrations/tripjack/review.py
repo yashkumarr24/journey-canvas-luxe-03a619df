@@ -20,7 +20,8 @@ Response fields read here (everything else is ignored, nothing is invented):
     alerts[]                                    provider notices (price/seat)
     conditions{}                                document requirements (see below)
 
-Condition names follow the official Review table (supplied PDF page 3).
+Condition names follow the official Review table (supplied PDF page 4),
+with PAN requirement semantics clarified by the PAN handling section (page 22).
 The existing fare/itinerary normalization remains unchanged: that reference
 does not provide a full Review response or a FAREALERT amount example.
 """
@@ -116,7 +117,7 @@ def normalize_review_response(body: dict[str, Any], *, currency: str) -> ReviewO
         taxes=taxes,
         itineraries=itineraries,
         fare=fare,
-        requirements=_requirements(body, itineraries),
+        requirements=_requirements(body),
         conditions=dict(get_map(body, "conditions")),
         # A review that produced no total is not sellable, whatever else it said.
         sellable=total > 0 and bool(itineraries) and bool(get_str(body, "bookingId")),
@@ -257,22 +258,25 @@ def _expiry(conditions: dict[str, Any]) -> datetime:
         return now  # malformed duration must not extend validity
 
 
-def _requirements(body: dict[str, Any], itineraries: list[FlightItinerary]) -> TravellerRequirements:
-    conditions = get_map(body, "conditions")
+def _requirements(body: dict[str, Any]) -> TravellerRequirements:
+    """Map literal documented booleans only; retain other fields in conditions.
 
-    countries = {
-        airport.country
-        for itinerary in itineraries
-        for segment in itinerary.segments
-        for airport in (segment.origin, segment.destination)
-        if airport and airport.country
-    }
-    international = len(countries) > 1
+    PDF p4: pm=passport mandatory, pped=passport expiry required,
+    adobr/cdobr/idobr=DOB required per pax type, ida=document ID applicable
+    (student/senior), idm=document ID mandatory. PDF p22 explicitly states
+    ipa=true means PAN required. Applicability never implies mandatory ID,
+    and PAN/document ID never implies passport, nationality or generic DOB.
+    Parenthetical labels (pcs/dob/dc) are not alternative flag names.
+    No documented condition derives requirements from route geography.
+    """
+    conditions = get_map(body, "conditions")
     return TravellerRequirements(
         passport_required=conditions.get("pm") is True,
         passport_expiry_required=conditions.get("pped") is True,
         adult_dob_required=conditions.get("adobr") is True,
         child_dob_required=conditions.get("cdobr") is True,
         infant_dob_required=conditions.get("idobr") is True,
-        international=international,
+        pan_required=conditions.get("ipa") is True,
+        document_id_applicable=conditions.get("ida") is True,
+        document_id_required=conditions.get("idm") is True,
     )
