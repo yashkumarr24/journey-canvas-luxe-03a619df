@@ -15,7 +15,7 @@ from app.integrations.tripjack.review import normalize_review_response, review_f
 from app.repositories.reviews import FareRef, ReviewRepository, SearchContext, _to_session
 from app.schemas.review import FlightSelectionRequest, TravellerDetailsRequest
 from app.services import flight_booking as service
-from test_flight_review import SEARCH_ID, _session, _traveller, review_body
+from tests.test_flight_review import SEARCH_ID, _session, _traveller, review_body
 
 
 @pytest.mark.asyncio
