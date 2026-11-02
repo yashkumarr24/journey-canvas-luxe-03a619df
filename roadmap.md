@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Review-to-Book v2 candidate
+- [x] Rebase requirements on the supplied VPS archive; preserve openai and fix only the private Flight RPC client compatibility.
+- [x] Pass 141 focused tests including six RPC regressions; all 11 patch paths dry-run with zero offsets/fuzz and byte-identical round-trip. Unmodified auxiliary payment test has one VPS-settings mismatch, reported without changing it.
+- [x] Deliver full replacement v2 patch, checksum and checks in Files; Book remains disabled. Actual DB/schema, raw conditions/expiry, UAT allowlisting and key/runtime readiness remain deployment blockers, outside this candidate task.
+
 ## Flight Review condition audit
 - [x] Verify official PDF p4/p6/p22 visually: separate PAN, passport, document-ID and per-pax DOB flags; remove geography inference, retain unknown conditions without alias behavior.
 - [x] Pass 198 focused condition/session and Flight compatibility regressions; preview checks build OK. No deployment/provider calls; actual live VPS files were not supplied or inspected. Existing booking enforcement and frontend remain unchanged.
