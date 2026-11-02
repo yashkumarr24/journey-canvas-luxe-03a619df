@@ -19,6 +19,7 @@ import type { FareRefs } from "@/lib/review-session";
 import type {
   ContactInput,
   FlightFareRules,
+  FlightReviewConditions,
   FlightItinerary,
   TravellerDetailsResponse,
   TravellerInput,
@@ -261,14 +262,13 @@ function ReviewPage() {
 
   return (
     <Shell>
-      {data.priceChange?.direction === "increase" && (
+      {data.status === "price_changed" && (
         <Alert className="mb-6" role="status">
           <AlertCircle className="size-4" aria-hidden="true" />
           <AlertTitle>The airline re-priced this fare</AlertTitle>
           <AlertDescription>
-            The total is now {formatMoney(data.priceChange.current.amount, data.priceChange.current.currency)} —{" "}
-            {formatMoney(data.priceChange.difference.amount, data.priceChange.difference.currency)} more than the
-            search result.
+            Please review the updated total of {formatMoney(price.amount, price.currency)} before continuing.
+            {data.priceChange && <> The fare is {formatMoney(data.priceChange.difference.amount, data.priceChange.difference.currency)} {data.priceChange.direction === "increase" ? "higher" : "lower"} than the search result.</>}
           </AlertDescription>
         </Alert>
       )}
@@ -282,6 +282,7 @@ function ReviewPage() {
           </section>
 
           <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
+          <ReviewRequirements conditions={data.conditions} />
 
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -301,7 +302,7 @@ function ReviewPage() {
               requirements={data.requirements}
               submitting={submit.isPending}
               priceChangeNotice={
-                data.priceChange?.direction === "increase"
+                data.status === "price_changed"
                   ? `I accept the updated total of ${formatMoney(price.amount, price.currency)}.`
                   : undefined
               }
@@ -346,7 +347,7 @@ function ReviewPage() {
               <li className="flex items-center gap-2">
                 <Clock className="size-3.5" aria-hidden="true" />
                 {data.validForSeconds > 0
-                  ? `Price held for about ${Math.max(1, Math.round(data.validForSeconds / 60))} min`
+                  ? `Review valid for about ${Math.max(1, Math.round(data.validForSeconds / 60))} min`
                   : "This quote has expired"}
               </li>
               {data.fare.seatsAvailable !== undefined && (
@@ -369,6 +370,35 @@ const FARE_RULE_TOPICS: { key: keyof FlightFareRules; label: string }[] = [
   { key: "noShow", label: "No-show" },
   { key: "seatCharges", label: "Seat charges" },
 ];
+
+const REVIEW_REQUIREMENTS: { key: keyof FlightReviewConditions; label: string }[] = [
+  { key: "isa", label: "Seat map available for this fare" },
+  { key: "isBA", label: "Hold/block permitted for this fare" },
+  { key: "iecr", label: "Emergency contact details required" },
+  { key: "igm", label: "GST details required" },
+  { key: "gstappl", label: "GST details applicable (optional unless required above)" },
+  { key: "pm", label: "Passport required" },
+  { key: "pped", label: "Passport expiry date required" },
+  { key: "adobr", label: "Adult date of birth required" },
+  { key: "cdobr", label: "Child date of birth required" },
+  { key: "idobr", label: "Infant date of birth required" },
+  { key: "ipa", label: "PAN card applicable" },
+  { key: "ida", label: "Student/senior document ID applicable" },
+  { key: "idm", label: "Document ID required" },
+];
+
+function ReviewRequirements({ conditions }: { conditions?: FlightReviewConditions }) {
+  const applicable = REVIEW_REQUIREMENTS.filter(({ key }) => conditions?.[key] === true);
+  if (applicable.length === 0) return null;
+  return (
+    <section aria-labelledby="review-requirements-heading" className="mt-8">
+      <h2 id="review-requirements-heading" className="font-display text-2xl">Requirements for this fare</h2>
+      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+        {applicable.map(({ key, label }) => <li key={key}>{label}</li>)}
+      </ul>
+    </section>
+  );
+}
 
 /**
  * Cancellation, date-change, no-show and seat-charge policies for the

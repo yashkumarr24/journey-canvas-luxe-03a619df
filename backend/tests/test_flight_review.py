@@ -107,18 +107,18 @@ def test_domestic_route_does_not_require_passport() -> None:
     assert outcome.requirements.passport_required is False
 
 
-def test_international_route_requires_passport() -> None:
+def test_international_route_does_not_invent_document_requirements() -> None:
     body = review_body()
     body["tripInfos"][0]["sI"][0]["aa"] = {"code": "DXB", "city": "Dubai", "country": "AE"}
     outcome = normalize_review_response(body, currency="INR")
     assert outcome.requirements.international is True
-    assert outcome.requirements.passport_required is True
-    assert outcome.requirements.date_of_birth_required is True
+    assert outcome.requirements.passport_required is False
+    assert outcome.requirements.date_of_birth_required is False
 
 
 def test_provider_passport_flag_is_honoured_on_domestic_route() -> None:
     body = review_body()
-    body["conditions"] = {"isPassportRequired": True}
+    body["conditions"] = {"pm": True}
     outcome = normalize_review_response(body, currency="INR")
     assert outcome.requirements.passport_required is True
 
