@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Flight V2 Review contract
-- [ ] Align selected server-side price IDs, returned booking handle and documented conditions with official Review docs.
-- [ ] Require review of FAREALERT updates and verify focused adapter/session and browser tests; preserve other flows.
+- [x] Align selected server-side price IDs, returned booking handle and documented conditions with official Review docs.
+- [x] Require review of FAREALERT updates; 83 focused adapter/session and compatibility tests plus 3 browser cases pass, preview build OK. Other flows preserved.
+- [ ] Full official Review-response conformance: blocked pending an official JSON sample defining fare-total and FAREALERT structure; existing money/itinerary parsing preserved, not claimed newly documented.
 
 ## Flight Review fare-rule response
 - [x] Reproduce the nested production response and normalize it before Review rendering; preserve request and other flows.
