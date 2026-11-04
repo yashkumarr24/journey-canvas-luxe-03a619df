@@ -1,10 +1,15 @@
 # Roadmap
 
+## Flight Book preflight naming-conflict correction
+- [x] Rename record a to attr_row and remove unused n; correct two reproduced CHECK deparser comparisons; capture DDL and Book behavior unchanged.
+- [x] Disposable PostgreSQL 17.11: 326 passed (1 positive, 325 fail-before-DDL); offline preflight 288 passed and full focused offline suite 488 passed. Strict 15-path patch check has zero fuzz/offsets/skips/failures.
+- [x] Deliver v5 patch, migration, results and SHA-256; no VPS access or Book enablement, disposable server stopped.
+
 ## Flight Book relation-check correction
 - [x] Correct only the 0031 relation null check in versioned v4 candidate; 15-path fresh archive dry-run has zero offsets/fuzz/skips/failures.
 - [x] Execute all 306 DB regressions on disposable PostgreSQL 17.11: 156 passed, 150 failed; 288 offline tests passed. Missing booking_items rejects before DDL; good schema also stops before DDL on existing record/alias a.attrelid ambiguity.
 - [x] Prepare corrected patch, SQL, report and new SHA-256; VPS untouched and Book disabled.
-- [ ] Good-schema acceptance blocked by additional pre-existing preflight record/SQL alias ambiguity; not changed under one-line correction scope.
+- [x] Additional pre-existing preflight ambiguity and good-schema acceptance resolved and verified in v5 above.
 
 ## Flight Book migration preflight candidate
 - [x] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; other code and DDL/function body byte-identical to v2.
