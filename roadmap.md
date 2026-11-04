@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book timestamp-helper configuration compatibility
+- [ ] Accept only NULL or exactly search_path=public for set_updated_at, preserving all other helper checks and behavior.
+- [ ] Run full disposable PostgreSQL 17 preflight tests, focused offline tests, and strict fresh-archive patch validation.
+- [ ] Deliver versioned replacement patch and results; no VPS SQL, helper modification, deployment or Book enablement.
+
 ## Flight Book guest-token prerequisite audit
 - [x] Trace supplied VPS/candidate Flight paths and repository-only operations/payment paths; booking hash is payment-shaped only, not Flight capture/Book or reference+email lookup ownership.
 - [x] Remove one unused 0031 prerequisite and test-manifest entries; PostgreSQL 17.11 without column: 325 DB tests passed including guest capture; 484 focused offline tests passed.
