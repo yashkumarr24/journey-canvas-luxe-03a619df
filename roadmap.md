@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Flight Book relation-check correction
-- [ ] Correct only the 0031 relation null check in the versioned candidate.
-- [ ] Execute good-schema and fail-before-DDL regressions on disposable PostgreSQL 17 only.
-- [ ] Deliver corrected patch, exact test results and new SHA-256; VPS untouched and Book disabled.
+- [x] Correct only the 0031 relation null check in versioned v4 candidate; 15-path fresh archive dry-run has zero offsets/fuzz/skips/failures.
+- [x] Execute all 306 DB regressions on disposable PostgreSQL 17.11: 156 passed, 150 failed; 288 offline tests passed. Missing booking_items rejects before DDL; good schema also stops before DDL on existing record/alias a.attrelid ambiguity.
+- [x] Prepare corrected patch, SQL, report and new SHA-256; VPS untouched and Book disabled.
+- [ ] Good-schema acceptance blocked by additional pre-existing preflight record/SQL alias ambiguity; not changed under one-line correction scope.
 
 ## Flight Book migration preflight candidate
 - [x] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; other code and DDL/function body byte-identical to v2.
