@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book relation-check correction
+- [ ] Correct only the 0031 relation null check in the versioned candidate.
+- [ ] Execute good-schema and fail-before-DDL regressions on disposable PostgreSQL 17 only.
+- [ ] Deliver corrected patch, exact test results and new SHA-256; VPS untouched and Book disabled.
+
 ## Flight Book migration preflight candidate
 - [x] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; other code and DDL/function body byte-identical to v2.
 - [x] Pass 488 offline Flight/contract tests; 306 database scenarios skipped under no-SQL instruction. Fresh-archive 15-path patch dry-run has zero offsets/fuzz/failures.
