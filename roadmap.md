@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book migration preflight candidate
+- [ ] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; preserve other code.
+- [ ] Run offline prerequisite mutation/parser tests and exact fresh-archive patch dry-run; no database SQL execution.
+- [ ] Deliver versioned patch, migration, prerequisite report and checksums; Book remains disabled.
+
 ## Flight Review-to-Book v2 candidate
 - [x] Rebase requirements on the supplied VPS archive; preserve openai and fix only the private Flight RPC client compatibility.
 - [x] Pass 141 focused tests including six RPC regressions; all 11 patch paths dry-run with zero offsets/fuzz and byte-identical round-trip. Unmodified auxiliary payment test has one VPS-settings mismatch, reported without changing it.
