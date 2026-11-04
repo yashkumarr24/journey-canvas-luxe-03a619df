@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Flight Book migration preflight candidate
-- [ ] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; preserve other code.
-- [ ] Run offline prerequisite mutation/parser tests and exact fresh-archive patch dry-run; no database SQL execution.
-- [ ] Deliver versioned patch, migration, prerequisite report and checksums; Book remains disabled.
+- [x] Revise combined patch 0031 to check all capture/DDL prerequisites before DDL; other code and DDL/function body byte-identical to v2.
+- [x] Pass 488 offline Flight/contract tests; 306 database scenarios skipped under no-SQL instruction. Fresh-archive 15-path patch dry-run has zero offsets/fuzz/failures.
+- [x] Prepare versioned patch, migration, prerequisite report and checksums; Book remains disabled. Live catalog reconciliation, actual SQL regressions, UAT allowlist and keys remain blockers outside offline delivery.
 
 ## Flight Review-to-Book v2 candidate
 - [x] Rebase requirements on the supplied VPS archive; preserve openai and fix only the private Flight RPC client compatibility.
