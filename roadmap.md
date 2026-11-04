@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book preflight naming-conflict correction
+- [ ] Resolve all preflight variable/alias conflicts without altering capture DDL or Book behavior.
+- [ ] Pass valid-schema and all fail-before-DDL cases on disposable PostgreSQL 17; rerun offline tests and strict archive patch check.
+- [ ] Deliver versioned corrected patch, migration, results and SHA-256; no VPS access or Book enablement.
+
 ## Flight Book relation-check correction
 - [x] Correct only the 0031 relation null check in versioned v4 candidate; 15-path fresh archive dry-run has zero offsets/fuzz/skips/failures.
 - [x] Execute all 306 DB regressions on disposable PostgreSQL 17.11: 156 passed, 150 failed; 288 offline tests passed. Missing booking_items rejects before DDL; good schema also stops before DDL on existing record/alias a.attrelid ambiguity.
