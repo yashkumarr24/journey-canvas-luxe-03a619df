@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book guest-token prerequisite audit
+- [ ] Trace booking-table guest hash separately from required Flight Review-session ownership and unrelated payment/Hotel uses.
+- [ ] Remove only an unused Flight prerequisite and update focused tests; validate disposable schema without that column.
+- [ ] Deliver replacement patch, source-path audit, changed files, test results and SHA-256; no live SQL or Book enablement.
+
 ## Flight Book preflight naming-conflict correction
 - [x] Rename record a to attr_row and remove unused n; correct two reproduced CHECK deparser comparisons; capture DDL and Book behavior unchanged.
 - [x] Disposable PostgreSQL 17.11: 326 passed (1 positive, 325 fail-before-DDL); offline preflight 288 passed and full focused offline suite 488 passed. Strict 15-path patch check has zero fuzz/offsets/skips/failures.
