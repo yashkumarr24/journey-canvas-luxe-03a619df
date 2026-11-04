@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book guest-token prerequisite audit
+- [x] Trace supplied VPS/candidate Flight paths and repository-only operations/payment paths; booking hash is payment-shaped only, not Flight capture/Book or reference+email lookup ownership.
+- [x] Remove one unused 0031 prerequisite and test-manifest entries; PostgreSQL 17.11 without column: 325 DB tests passed including guest capture; 484 focused offline tests passed.
+- [x] Deliver v6 replacement patch, source-cited report, migration and SHA-256; 15-path dry-run zero offsets/fuzz/skips/failures; no live SQL/Book enablement, disposable server stopped.
+
 ## Flight Book preflight naming-conflict correction
 - [x] Rename record a to attr_row and remove unused n; correct two reproduced CHECK deparser comparisons; capture DDL and Book behavior unchanged.
 - [x] Disposable PostgreSQL 17.11: 326 passed (1 positive, 325 fail-before-DDL); offline preflight 288 passed and full focused offline suite 488 passed. Strict 15-path patch check has zero fuzz/offsets/skips/failures.
