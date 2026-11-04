@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Book exact VPS timestamp-helper ending
+- [x] Accept only the two audited no-final-semicolon body forms in addition to existing forms; keep all other helper checks strict.
+- [x] PostgreSQL 17.11: 386 passed (10 positive, 376 fail-before-DDL); offline 484 passed; strict 15-path fresh-archive check zero offsets/fuzz/skips/failures.
+- [x] Deliver v9 replacement patch, migration, SHA-256 and report in review collection; no VPS queries/changes, deployment or Book enablement; disposable server stopped.
+
 ## Flight Book timestamp-helper configuration compatibility
 - [x] Accept only NULL or exactly search_path=public for set_updated_at, preserving all other helper checks and behavior.
 - [x] PostgreSQL 17.11: 354 passed (4 positive, 350 fail-before-DDL); focused offline: 484 passed; strict 15-path fresh-archive check zero offsets/fuzz/skips/failures. Extra legacy Review suite reproduces 81 baseline failures on v6 and v7, unchanged.
