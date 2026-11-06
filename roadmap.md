@@ -1,5 +1,10 @@
 # Roadmap
 
+## Current VPS Flight privacy and Review completion
+- [ ] Audit archived customer/guest/admin booking-details authorization and private capture evidence.
+- [ ] Prepare archived-source Review completion and Flight-only response/storage fix; preserve applied 0031 with a forward migration.
+- [ ] Deliver exact paths/checksums and manual dry-run instructions; tests/SQL/provider calls/deployment prohibited, production Book unchanged.
+
 ## Flight Review official-doc candidate audit
 - [x] Audit repository and reconstructed v12 + cryptography candidate against official PDF p4/p6 and image-49 Review screenshot.
 - [x] Candidate only: strict priceIds list, required bookingId, documented alert type and allowlisted 13-boolean Review projection; raw evidence/consent preserved, app source unchanged.
