@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Review official-doc candidate audit
+- [x] Audit repository and reconstructed v12 + cryptography candidate against official PDF p4/p6 and image-49 Review screenshot.
+- [x] Candidate only: strict priceIds list, required bookingId, documented alert type and allowlisted 13-boolean Review projection; raw evidence/consent preserved, app source unchanged.
+- [x] Deliver four-file incremental backend patch and source-cited report; AST/strict zero-fuzz scratch checks only, no tests/provider calls/SQL/deployment/Book enablement. Later capture-to-booking-details privacy issue and missing emergency/GST/PAN form handling documented as blockers outside scope.
+
 ## Flight Book exact VPS timestamp-helper ending
 - [x] Accept only the two audited no-final-semicolon body forms in addition to existing forms; keep all other helper checks strict.
 - [x] PostgreSQL 17.11: 386 passed (10 positive, 376 fail-before-DDL); offline 484 passed; strict 15-path fresh-archive check zero offsets/fuzz/skips/failures.
