@@ -432,20 +432,16 @@ export const bookingApi = {
 
   /**
    * Optional seat map for the reviewed fare. The browser sends only the
-   * opaque review token (guest token in a header, as with getReview); the
-   * server resolves the provider bookingId from its own session and calls
-   * the provider only when the stored Review conditions allow it.
+   * opaque review token (plus guestToken in the body for guest sessions);
+   * the server resolves the provider bookingId from its own session and
+   * calls the provider only when the stored Review conditions allow it.
    */
   flightSeatMap: (reviewToken: string, guestToken?: string | null, options?: RequestOptions) =>
     request<FlightSeatMapResponse>(
       "POST",
       "/api/v1/flights/seat-map",
-      { reviewToken },
-      {
-        timeoutMs: 20_000,
-        ...options,
-        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
-      },
+      { reviewToken, ...(guestToken ? { guestToken } : {}) },
+      { timeoutMs: 20_000, ...options },
     ),
 
   /** Submit traveller + contact details and create a draft booking. */
