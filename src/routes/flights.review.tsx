@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
+import { SeatMap, type SeatSelections } from "@/components/booking/SeatMap";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
@@ -106,6 +107,8 @@ function ReviewPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<TravellerDetailsResponse | null>(null);
   const [idempotencyKey] = useState(newIdempotencyKey);
+  // Seat choices are a page-state preference only — never posted or held.
+  const [seatSelections, setSeatSelections] = useState<SeatSelections>({});
 
   const guestToken = useMemo(() => (token ? readGuestToken(token) : null), [token]);
 
@@ -132,6 +135,22 @@ function ReviewPage() {
     refetchOnReconnect: false,
     retry: false,
     queryFn: ({ signal }) => bookingApi.flightFareRules(fareRefs as FareRefs, { signal }),
+  });
+
+  // Seat map is optional and fetched ONLY when the Review response's
+  // conditions.isa is literally true. The request carries just the opaque
+  // review token (plus the guest token header for guest sessions) — never a
+  // bookingId, segment id or price.
+  const seatMapAllowed = review.data?.conditions?.isa === true;
+  const seatMap = useQuery({
+    queryKey: ["flight-seat-map", token],
+    enabled: Boolean(token) && seatMapAllowed,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    queryFn: ({ signal }) => bookingApi.flightSeatMap(token as string, guestToken, { signal }),
   });
 
   const { track } = useAnalytics();
@@ -283,6 +302,17 @@ function ReviewPage() {
 
           <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
           <ReviewRequirements conditions={data.conditions} />
+
+          {seatMapAllowed && (
+            <SeatMap
+              seatMap={seatMap.data}
+              isPending={seatMap.isPending}
+              isError={seatMap.isError}
+              error={seatMap.error}
+              selections={seatSelections}
+              onSelectionsChange={setSeatSelections}
+            />
+          )}
 
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
