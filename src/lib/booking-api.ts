@@ -24,6 +24,7 @@ import type {
   FlightReviewResponse,
   FlightSearchRequest,
   FlightSearchResponse,
+  FlightSeatMapResponse,
   FlightSelectionRequest,
   HotelBookingRequest,
   HotelBookingResult,

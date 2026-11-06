@@ -495,6 +495,53 @@ export interface FlightReviewResponse {
   validForSeconds: number;
 }
 
+/* --- Seat map (optional, only when Review conditions.isa === true) --- */
+
+/**
+ * The browser sends ONLY the opaque review token; the server resolves the
+ * provider bookingId from its own review session. No bookingId, segment IDs
+ * or prices ever leave the browser.
+ */
+export interface FlightSeatMapRequest {
+  reviewToken: string;
+}
+
+/** One seat cell in the provider's cabin grid. */
+export interface FlightSeat {
+  /** Seat label shown to the customer, e.g. "12A". */
+  seatNo?: string;
+  /** Grid placement within the segment's rows × columns cabin. */
+  seatPosition: { row: number; column: number };
+  /** True ONLY when the provider literally returned isBooked=false. */
+  available: boolean;
+  /** Exact provider seat code — required for a seat to be selectable. */
+  code?: string;
+  /** Exact provider amount for this seat — required for selectability. */
+  amount?: number;
+  currency?: string;
+  /** Optional provider flags, preserved verbatim. */
+  aisle?: boolean;
+  legroom?: boolean;
+  exitRow?: boolean;
+  [flag: string]: unknown;
+}
+
+export interface FlightSeatMapSegment {
+  /** Matches the segment id returned by Review. */
+  segmentId: string;
+  rows: number;
+  columns: number;
+  /** Optional provider note for this segment's map. */
+  nt?: string;
+  seats: FlightSeat[];
+}
+
+export interface FlightSeatMapResponse {
+  /** False when the stored Review conditions do not allow a seat map. */
+  available: boolean;
+  segments: FlightSeatMapSegment[];
+}
+
 /* --- Fare rules (cancellation / date-change / no-show / seats) ------- */
 
 /**
