@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
+import { SeatMap, type SeatSelections } from "@/components/booking/SeatMap";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
@@ -106,6 +107,8 @@ function ReviewPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<TravellerDetailsResponse | null>(null);
   const [idempotencyKey] = useState(newIdempotencyKey);
+  // Seat choices are a page-state preference only — never posted or held.
+  const [seatSelections, setSeatSelections] = useState<SeatSelections>({});
 
   const guestToken = useMemo(() => (token ? readGuestToken(token) : null), [token]);
 
