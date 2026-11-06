@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Seat Map (TripJack Flights v2.0)
+- [x] Add read-only Seat Map endpoint (POST /api/v1/flights/seat-map): session-owned bookingId only, literal isa=true gate, verbatim tripSeatMap parsing, no DB writes or migration.
+- [x] Deliver 5-file patch + report with SHA-256; py_compile, strict zero-fuzz dry-run and byte-identical round-trip pass; no tests/provider calls/deployment per instruction; Book stays disabled.
+- [ ] Confirm seat-list key (sInfo) against the official screenshot when available; frontend seat-map UI and tests/certification deferred.
+
 ## Current VPS Flight privacy and Review completion
 - [x] Confirm archived customer/guest/admin routes share raw booking details; ownership predicates audited, missing auth internals/live RLS stated explicitly.
 - [x] Prepare six-path archived-source Review completion and Flight-only nested projections with forward 0032; original 0031 and Book gate byte-identical.
