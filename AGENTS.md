@@ -4,6 +4,8 @@
 
 - Normalize flight fare-rule response wrappers and dynamic route policy topics in the booking API client before Review rendering; keeps provider response shape out of the UI without changing other API contracts.
 
+- Flight Seat Map (backend app/services/flight_seatmap.py) is read-only and optional: the provider bookingId comes only from the owned review session, TripJack is called only when stored Review conditions.isa is literally true, and tripSeatMap seats/flags/amounts pass through verbatim with availability derived solely from isBooked=false; no DB writes, no Book/payment changes.
+
 - Use numbered additive DB migrations; preserve catalogue sync and data.
 - Flight customer booking items and HTTP details use nested display allowlists; keep raw Review evidence in private sessions/contexts and fix applied capture migrations forward-only, preventing owner/guest/provider-handle disclosure.
 - Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
