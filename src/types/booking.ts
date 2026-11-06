@@ -504,6 +504,8 @@ export interface FlightReviewResponse {
  */
 export interface FlightSeatMapRequest {
   reviewToken: string;
+  /** Present only for guest sessions; signed-in requests omit it. */
+  guestToken?: string;
 }
 
 /** One seat cell in the provider's cabin grid. */

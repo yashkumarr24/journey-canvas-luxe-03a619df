@@ -440,12 +440,8 @@ export const bookingApi = {
     request<FlightSeatMapResponse>(
       "POST",
       "/api/v1/flights/seat-map",
-      { reviewToken },
-      {
-        timeoutMs: 20_000,
-        ...options,
-        headers: { ...(guestToken ? { "X-Guest-Token": guestToken } : {}), ...options?.headers },
-      },
+      { reviewToken, ...(guestToken ? { guestToken } : {}) },
+      { timeoutMs: 20_000, ...options },
     ),
 
   /** Submit traveller + contact details and create a draft booking. */
