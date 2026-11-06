@@ -137,6 +137,22 @@ function ReviewPage() {
     queryFn: ({ signal }) => bookingApi.flightFareRules(fareRefs as FareRefs, { signal }),
   });
 
+  // Seat map is optional and fetched ONLY when the Review response's
+  // conditions.isa is literally true. The request carries just the opaque
+  // review token (plus the guest token header for guest sessions) — never a
+  // bookingId, segment id or price.
+  const seatMapAllowed = review.data?.conditions?.isa === true;
+  const seatMap = useQuery({
+    queryKey: ["flight-seat-map", token],
+    enabled: Boolean(token) && seatMapAllowed,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    queryFn: ({ signal }) => bookingApi.flightSeatMap(token as string, guestToken, { signal }),
+  });
+
   const { track } = useAnalytics();
   useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
   useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
@@ -286,6 +302,17 @@ function ReviewPage() {
 
           <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
           <ReviewRequirements conditions={data.conditions} />
+
+          {seatMapAllowed && (
+            <SeatMap
+              seatMap={seatMap.data}
+              isPending={seatMap.isPending}
+              isError={seatMap.isError}
+              error={seatMap.error}
+              selections={seatSelections}
+              onSelectionsChange={setSeatSelections}
+            />
+          )}
 
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
