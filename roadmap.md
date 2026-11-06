@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Current VPS Flight privacy and Review completion
-- [ ] Audit archived customer/guest/admin booking-details authorization and private capture evidence.
-- [ ] Prepare archived-source Review completion and Flight-only response/storage fix; preserve applied 0031 with a forward migration.
-- [ ] Deliver exact paths/checksums and manual dry-run instructions; tests/SQL/provider calls/deployment prohibited, production Book unchanged.
+- [x] Confirm archived customer/guest/admin routes share raw booking details; ownership predicates audited, missing auth internals/live RLS stated explicitly.
+- [x] Prepare six-path archived-source Review completion and Flight-only nested projections with forward 0032; original 0031 and Book gate byte-identical.
+- [x] Deliver patch/forward candidate/report and checksums; strict fresh-archive patch check passes without offsets/fuzz; no tests/SQL/provider calls/deployment.
+- [ ] Runtime/security/database regression testing and deployment await later user authorization; Book remains disabled.
 
 ## Flight Review official-doc candidate audit
 - [x] Audit repository and reconstructed v12 + cryptography candidate against official PDF p4/p6 and image-49 Review screenshot.
