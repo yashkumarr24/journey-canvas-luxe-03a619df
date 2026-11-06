@@ -1,5 +1,10 @@
 # Roadmap
 
+## Flight Review official-doc candidate audit
+- [ ] Audit repository and v12 candidate against the supplied official Review document and screenshot.
+- [ ] Complete only confirmed Review gaps; retain private provider evidence and explicit FAREALERT consent.
+- [ ] Deliver a Review-only backend patch, checksum and source-cited report; no tests, provider calls, SQL, deployment or Book enablement.
+
 ## Flight Book exact VPS timestamp-helper ending
 - [x] Accept only the two audited no-final-semicolon body forms in addition to existing forms; keep all other helper checks strict.
 - [x] PostgreSQL 17.11: 386 passed (10 positive, 376 fail-before-DDL); offline 484 passed; strict 15-path fresh-archive check zero offsets/fuzz/skips/failures.
