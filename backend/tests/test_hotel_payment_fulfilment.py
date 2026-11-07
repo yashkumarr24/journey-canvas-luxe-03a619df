@@ -1,6 +1,5 @@
 """Hotel fulfillment checks: mocked database/provider seams, no outbound access."""
 import asyncio
-from copy import deepcopy
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -10,6 +9,7 @@ import pytest
 from app.services import hotel_booking as hb
 from app.services import payment_fulfilment as fulfil
 from app.services.hotel_payment_fulfilment import DatabaseHotelPort, HotelPaymentMismatch
+from app.core.config import Settings
 from tests.test_payu_payments import settings, FakeHotel
 
 
@@ -37,7 +37,13 @@ def fixture(monkeypatch, guest=False):
                            subject_for_payment=AsyncMock(return_value=subject))
     store = SimpleNamespace(repo=object(), get=AsyncMock(return_value=b))
     monkeypatch.setattr(hb, "BookingStore", lambda s: store)
-    port = DatabaseHotelPort(settings(tripjack_api_key="test-only"), repo)
+    cfg = settings(tripjack_api_key="test-only")
+    # Supply non-secret config defaults without reading any .env file.
+    defaults = Settings(_env_file=None).model_dump()
+    for key, value in defaults.items():
+        if not hasattr(cfg, key):
+            setattr(cfg, key, value)
+    port = DatabaseHotelPort(cfg, repo)
     return port, p, subject, b
 
 

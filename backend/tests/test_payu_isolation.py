@@ -105,7 +105,8 @@ def no_tripjack(monkeypatch):
 def test_worker_never_calls_tripjack(monkeypatch, no_tripjack, fulfilment):
     repo, client = _captured("hotel", "DRAFT")
     monkeypatch.setattr(payments_worker, "get_settings",
-                        lambda: settings(payment_fulfilment_enabled=fulfilment))
+                        lambda: settings(payment_fulfilment_enabled=fulfilment,
+                                         supabase_url="", supabase_service_role_key=""))
     monkeypatch.setattr(payments_worker, "PaymentsRepo", lambda s: repo)
     monkeypatch.setattr(svc, "build_client", lambda s: client)
     for _ in range(3):

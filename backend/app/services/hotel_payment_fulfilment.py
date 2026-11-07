@@ -19,10 +19,10 @@ class HotelPaymentMismatch(hb.HotelPaymentRequiredError):
 def _amount(value):
     try:
         result = Decimal(str(value))
+        if not result.is_finite() or result <= 0 or result != result.quantize(Decimal("0.01")):
+            raise HotelPaymentMismatch()
     except (InvalidOperation, ValueError, TypeError):
         raise HotelPaymentMismatch() from None
-    if not result.is_finite() or result <= 0 or result != result.quantize(Decimal("0.01")):
-        raise HotelPaymentMismatch()
     return result
 
 
