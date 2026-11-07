@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Hotel-to-PayU record linkage
-- [ ] Atomically create and link the Hotel draft and bookings parent; fail guest submission on persistence errors.
-- [ ] Add mocked linkage/guest failure tests and an unapplied forward migration; preserve Flight and payment execution gates.
-- [ ] Report repository versus deployed payment schema compatibility and manual deployment steps.
+- [x] Atomically create and link the Hotel draft and bookings parent; fail guest submission on persistence errors.
+- [x] Add mocked linkage/guest failure tests and unapplied 0033; 320 Hotel/PayU/Flight regression checks pass, execution gates unchanged.
+- [x] Report repository versus deployed payment schema compatibility and manual steps in HOTEL_PAYU_PARENT_LINKAGE.md.
+- [ ] Live schema compatibility, disposable SQL/concurrency checks and deployment await separate authorization; live Hotel fulfilment port remains uninstalled.
 
 ## Disabled Flight Booking documented gaps
 - [x] Remove unfinished optional pre-book validation from frontend; no publish.
