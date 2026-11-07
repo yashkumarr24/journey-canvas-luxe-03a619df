@@ -24,6 +24,11 @@ class HotelBookingRepository:
         rows = await self._db.insert(HOTEL_BOOKINGS, values)
         return rows[0] if rows else None
 
+    async def create_linked_draft(self, values: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """One transaction owns deduplication, parent insert and Hotel linkage."""
+        rows = await self._db.rpc("hotel_create_linked_draft", {"p_draft": values})
+        return rows[0] if isinstance(rows, list) and rows else None
+
     async def by_reference(self, reference: str) -> Optional[dict[str, Any]]:
         rows = await self._db.select(HOTEL_BOOKINGS, columns="*",
                                      filters={"booking_reference": f"eq.{reference}"})

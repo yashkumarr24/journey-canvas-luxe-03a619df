@@ -179,6 +179,7 @@ class HotelBooking:
     currency: str = "INR"
     status: str = DRAFT
     row_id: Optional[str] = None
+    booking_id: Optional[str] = None
     user_id: Optional[str] = None
     guest_token_hash: Optional[str] = None
     previous_status: Optional[str] = None
@@ -206,7 +207,7 @@ class HotelBooking:
     cancelled_at: Optional[str] = None
 
     COLUMNS = (
-        "booking_reference", "review_token", "user_id", "guest_token_hash", "status",
+        "booking_reference", "review_token", "booking_id", "user_id", "guest_token_hash", "status",
         "previous_status", "mode", "idempotency_key", "provider_search_id", "provider_hotel_id",
         "provider_option_id", "provider_booking_id", "provider_status", "nationality", "currency",
         "total_amount", "provider_order_amount", "hotel", "room", "stay", "requirements", "guests",
@@ -260,19 +261,19 @@ class BookingStore:
         self.repo = repo if repo.enabled else None
 
     async def create(self, b: HotelBooking) -> HotelBooking:
-        if self.repo:
-            existing = await self.repo.by_review_token(b.review_token)
-            if existing:
-                return HotelBooking.from_row(existing)
-            row = await self.repo.insert(b.row())
-            if row:
-                return HotelBooking.from_row(row)
-        async with _memory.lock:
-            for x in _memory.by_ref.values():
-                if x.review_token == b.review_token:
-                    return x
-            _memory.by_ref[b.booking_reference] = b
-        return b
+        # An in-memory draft cannot be paid for. Never report it as persisted.
+        if not self.repo:
+            raise HotelBookingUnavailableError()
+        try:
+            row = await self.repo.create_linked_draft(b.row())
+            if not row or not row.get("id") or not row.get("booking_id"):
+                raise HotelBookingUnavailableError()
+            return HotelBooking.from_row(row)
+        except HotelBookingUnavailableError:
+            raise
+        except Exception:
+            logger.warning("hotel_booking_draft_persist_failed")
+            raise HotelBookingUnavailableError() from None
 
     async def get(self, reference: str) -> Optional[HotelBooking]:
         if self.repo:
