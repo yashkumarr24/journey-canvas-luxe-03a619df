@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Hotel-to-PayU record linkage
+- [x] Restore server Review guest-hash persistence/comparison on the quarantined parent candidate for the user-confirmed VPS PayU 0023 contract; no reference/email authorization.
 - [x] Reconcile against user-confirmed VPS payments.booking_id -> bookings and applied 0031/0032; quarantine 0033 and deliver a parent-only capture candidate diff/plan.
 - [x] Atomically create and link the Hotel draft and bookings parent; fail guest submission on persistence errors.
 - [x] Add mocked linkage/guest failure tests and unapplied 0033; 320 Hotel/PayU/Flight regression checks pass, execution gates unchanged.

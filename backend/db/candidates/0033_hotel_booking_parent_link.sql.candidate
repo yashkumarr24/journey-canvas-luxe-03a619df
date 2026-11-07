@@ -1,15 +1,27 @@
 -- Forward-only candidate. DO NOT apply remotely as part of development.
 -- VPS 0031/0032 are already applied per the user's current confirmation.
--- Requires the base bookings and Hotel schema; NOT the branch-only 0024 model.
--- Guest hashes stay on hotel_bookings; parent ownership is user_id + contact.
+-- Requires bookings.guest_token_hash from VPS PayU 0023, NOT branch-only 0024.
+-- Copy/compare the server Review guest hash on BOTH parent and Hotel rows.
 -- QUARANTINED: rename outside the migration runner; do not apply/deploy yet.
 -- No payment/capture/fulfilment functions or Flight data are changed.
 begin;
 
--- Reject an unknown reference rule before replacing it. Payment schema and
--- guest payment authorization must be reconciled separately before release.
+-- Fail before DDL if the PayU guest authorization column is missing/divergent.
+-- No reference/email-only authorization or automatic schema repair.
 do $$
 begin
+  if not exists (
+    select 1 from pg_catalog.pg_attribute a
+    where a.attrelid = pg_catalog.to_regclass('public.bookings')
+      and a.attname = 'guest_token_hash'
+      and a.atttypid = 'pg_catalog.text'::regtype
+      and a.atttypmod = -1 and not a.attnotnull
+      and a.attnum > 0 and not a.attisdropped
+      and a.attgenerated = '' and a.attidentity = ''
+  ) then
+    raise exception 'Hotel parent linkage requires nullable text bookings.guest_token_hash from VPS PayU 0023';
+  end if;
+
   if not exists (
     select 1 from pg_catalog.pg_constraint c
     where c.conrelid = 'public.bookings'::regclass
@@ -89,6 +101,7 @@ begin
   if found then
     if parent.booking_type <> 'hotel'
        or parent.user_id is distinct from incoming.user_id
+       or parent.guest_token_hash is distinct from incoming.guest_token_hash
        or parent.total_amount is distinct from incoming.total_amount
        or parent.currency::text is distinct from incoming.currency
        or parent.contact_email::text is distinct from lower(incoming.contact->>'email')
@@ -102,11 +115,11 @@ begin
       raise exception 'Hotel parent link is inconsistent';
     end if;
     insert into public.bookings (
-      booking_reference, booking_type, status, user_id,
+      booking_reference, booking_type, status, user_id, guest_token_hash,
       total_amount, currency, contact_email, contact_phone
     ) values (
       incoming.booking_reference, 'hotel', 'pending', incoming.user_id,
-      incoming.total_amount, incoming.currency,
+      incoming.guest_token_hash, incoming.total_amount, incoming.currency,
       lower(incoming.contact->>'email'), incoming.contact->>'phone'
     ) returning * into parent;
   end if;
