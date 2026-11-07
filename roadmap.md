@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Hotel PayU fulfillment code-only review
-- [ ] Install a database-validated Hotel worker port using payments.hotel_booking_id; preserve certified wire code, Flight and production refusal.
-- [ ] Run mocked authorization/retry regressions and report database prerequisites; no SQL, secrets, providers or deployment; 0033/0034 untouched.
+- [x] Install a database-validated Hotel worker port using payments.hotel_booking_id; preserve certified wire code, Flight and production refusal.
+- [x] Run mocked authorization/retry and Flight regressions: 367 passed; report database prerequisites; no SQL, secrets, providers or deployment; 0033/0034 untouched.
+- [ ] Checkout RPC, capture-time identity/immutability and deployed queue/CAS schema verification await separate authorization/evidence; production remains blocked.
 
 ## Staging-only Hotel/PayU schema reconciliation (verified VPS baseline)
 - [x] Prepare isolated code diff and unapplied SQL candidates: missing Hotel tables, parent-only payment FK, missing PayU enum/columns, no parent guest hash, FF reference format.
