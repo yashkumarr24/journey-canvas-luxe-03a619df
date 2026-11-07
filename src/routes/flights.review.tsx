@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { AlertCircle, ArrowRight, Clock, Luggage } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
@@ -17,12 +16,9 @@ import { readFareRefs, readGuestToken } from "@/lib/review-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
 import type { FareRefs } from "@/lib/review-session";
 import type {
-  ContactInput,
   FlightFareRules,
   FlightReviewConditions,
   FlightItinerary,
-  FlightFareValidateResponse,
-  TravellerInput,
 } from "@/types/booking";
 
 /**
@@ -103,7 +99,6 @@ function Leg({ itinerary }: { itinerary: FlightItinerary }) {
 
 function ReviewPage() {
   const { token } = Route.useSearch();
-  const [validation, setValidation] = useState<FlightFareValidateResponse | null>(null);
   // Seat choices are a page-state preference only — never posted or held.
   const [seatSelections, setSeatSelections] = useState<SeatSelections>({});
 
@@ -153,26 +148,6 @@ function ReviewPage() {
   useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
   useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
 
-  const submit = useMutation({
-    mutationFn: async (values: {
-      travellers: TravellerInput[];
-      contact: ContactInput;
-      acceptPriceChange: boolean;
-    }) => {
-      return bookingApi.flightFareValidate({
-        reviewToken: token as string,
-        guestToken: guestToken ?? undefined,
-        travellers: values.travellers,
-        contact: values.contact,
-        acceptPriceChange: values.acceptPriceChange,
-      });
-    },
-    onSuccess: (result) => {
-      setValidation(result);
-      if (result.clearSeats || result.alerts.includes("CLASS_SOLD_OUT")) setSeatSelections({});
-    },
-  });
-
   if (!token) {
     return (
       <Shell>
@@ -221,7 +196,6 @@ function ReviewPage() {
 
   const data = review.data;
   const price = data.fare.totalPrice;
-  const submitError = submit.isError ? toBookingError(submit.error) : null;
 
 
   return (
@@ -248,7 +222,7 @@ function ReviewPage() {
           <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
           <ReviewRequirements conditions={data.conditions} />
 
-          {seatMapAllowed && !validation && (
+          {seatMapAllowed && (
             <SeatMap
               seatMap={seatMap.data}
               isPending={seatMap.isPending}
@@ -259,43 +233,23 @@ function ReviewPage() {
             />
           )}
 
-          {validation && (
-            <Alert className="mt-8" variant={validation.status === "unavailable" ? "destructive" : "default"} role="alert">
-              <AlertCircle className="size-4" aria-hidden="true" />
-              <AlertTitle>{validation.status === "unavailable" ? "This fare is no longer available" : validation.alerts.includes("CLASS_SOLD_OUT") ? "The booking class changed" : validation.alerts.includes("FAREALERT") ? "The fare changed" : "Fare validation cannot be completed"}</AlertTitle>
-              <AlertDescription className="space-y-3">
-                <p>{validation.status === "unavailable" ? "This booking attempt has stopped. Start a new booking to see available fares." : validation.alerts.includes("CLASS_SOLD_OUT") ? "All previously selected seats have been cleared. Updated fare, booking class, baggage and fare rules cannot yet be displayed reliably, so you cannot confirm these changes or continue." : "The updated fare details cannot yet be displayed reliably. You cannot confirm changes or continue."}</p>
-                <p>No booking, seat hold or payment has been made.</p>
-                <Button asChild variant="outline"><Link to="/flights">Start a new booking</Link></Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Names must match the photo ID each traveller will carry.
           </p>
 
-          {submitError && (
-            <Alert variant="destructive" className="mt-4" role="alert">
-              <AlertCircle className="size-4" aria-hidden="true" />
-              <AlertDescription>{submitError.message}</AlertDescription>
-            </Alert>
-          )}
-
           <div className="mt-6">
             <TravellerForm
               passengers={data.passengers}
               requirements={data.requirements}
-              submitting={submit.isPending}
-              disabled={Boolean(validation)}
-              submitLabel="Validate fare (optional)"
+              submitting={false}
+              disabled
               priceChangeNotice={
                 data.status === "price_changed"
                   ? `I accept the updated total of ${formatMoney(price.amount, price.currency)}.`
                   : undefined
               }
-              onSubmit={(values) => submit.mutate(values)}
+              onSubmit={() => undefined}
             />
           </div>
         </div>

@@ -1,10 +1,10 @@
 # Roadmap
 
-## Optional pre-book Flight Fare Validate
-- [x] Prepare isolated UAT opt-in pre-book endpoint and documented traveller/SSR builder against latest uploaded VPS archive; no Book/payment calls or migrations.
-- [x] Add optional frontend validation before any draft/payment handoff, class-change seat clearing and terminal unavailable state; all continuation blocked until updated response mappings are documented.
-- [x] Deliver manual VPS patch and changed-file/hash report; no tests, certification, provider calls or deployment.
-- [ ] Updated fare/class/baggage/rules display and change acceptance await exact official response paths; no stale Review fallback or invented mapping.
+## Disabled Flight Booking documented gaps
+- [x] Remove unfinished optional pre-book validation from frontend; no publish.
+- [x] Inspect archived Booking mapping and official Instant/Hold/held-fare-check/Confirm-Book contracts; prepare pure documented builders and unconditional execution refusal.
+- [x] Deliver two-path archive-based backend candidate/report; no tests, SQL, provider calls, UAT flags or deployment.
+- [ ] Full Hold/check/Confirm schemas, success evidence, exact TF provenance and stored per-passenger SSR sources remain unresolved in supplied docs/archive; execution stays disabled.
 
 ## Flight Seat Map (TripJack Flights v2.0)
 - [x] Add read-only Seat Map endpoint (POST /api/v1/flights/seat-map): session-owned bookingId only, literal isa=true gate, verbatim tripSeatMap parsing, no DB writes or migration.
