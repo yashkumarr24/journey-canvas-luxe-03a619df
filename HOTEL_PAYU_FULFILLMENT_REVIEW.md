@@ -35,7 +35,7 @@ Before approval, database protections must ensure the Hotel owner/reference/amou
 
 ## Verification performed
 
-367 tests passed: new mocked Hotel adapter checks, PayU/payment isolation, Hotel lifecycle/host/parent-link regressions and all `test_flight*.py` suites. This includes one captured-payment-to-existing-Hotel-payload flow with a mocked timeout and no second Book call. Dependency deprecation warnings only. No hosted payment/provider end-to-end or certification was performed.
+367 focused tests passed: new mocked Hotel adapter checks, PayU/payment isolation, Hotel lifecycle/host/parent-link regressions and all `test_flight*.py` suites. The full backend suite then passed 936 tests. This includes one captured-payment-to-existing-Hotel-payload flow with a mocked timeout and no second Book call. Dependency deprecation warnings only. No hosted payment/provider end-to-end or certification was performed.
 
 Code patch assembled against the saved starting source and verified with a strict local zero-fuzz dry run. Certified integration files, Flight files and all database files remain outside the patch.
 
