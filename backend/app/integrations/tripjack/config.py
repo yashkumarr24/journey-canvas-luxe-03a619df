@@ -83,13 +83,16 @@ def build_config(settings: Settings) -> TripJackConfig:
     )
 
 
-# TripJack-CONFIRMED Hotel production hosts, by surface. Deliberately empty
-# until TripJack's written confirmation is recorded here in a reviewed change:
-# any non-UAT Hotel host not listed is rejected (fail closed), so a guessed or
-# typo'd address can never receive the production Hotel key.
+# Exact Hotel hosts per surface (TripJack Hotel API v3 documentation).
+# HMS = search / detail / review; OMS = book / booking details / cancel.
+# Anything else, or a host on the wrong surface, is rejected (fail closed).
+UAT_HOTEL_HOSTS: dict[str, frozenset[str]] = {
+    "hms": frozenset({"apitest-hms.tripjack.com"}),
+    "oms": frozenset({"apitest-hotel-booker.tripjack.com"}),
+}
 CONFIRMED_HOTEL_PRODUCTION_HOSTS: dict[str, frozenset[str]] = {
-    "hms": frozenset(),
-    "oms": frozenset(),
+    "hms": frozenset({"hms-search.tripjack.com"}),
+    "oms": frozenset({"hms-booker.tripjack.com"}),
 }
 
 HOTEL_ENV_UAT = "uat"
@@ -104,8 +107,11 @@ def _host_of(url: str) -> str:
 def _classify(url: str, surface: str) -> str:
     if not url.lower().startswith("https://"):
         return HOTEL_ENV_INVALID
-    host = _host_of(url)
-    if host.startswith(UAT_HOST_PREFIX) and host.endswith("." + PRODUCTION_HOST):
+    rest = url.split("//", 1)[-1]
+    if "/" in rest or "@" in rest or ":" in rest:
+        return HOTEL_ENV_INVALID  # bare origin only: no path, port or userinfo
+    host = rest.lower()
+    if host in UAT_HOTEL_HOSTS.get(surface, frozenset()):
         return HOTEL_ENV_UAT
     if host in CONFIRMED_HOTEL_PRODUCTION_HOSTS.get(surface, frozenset()):
         return HOTEL_ENV_PRODUCTION
