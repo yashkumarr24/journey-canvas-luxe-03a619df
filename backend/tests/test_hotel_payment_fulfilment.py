@@ -145,3 +145,43 @@ def test_uncertain_response_only_refreshes():
     job["attempts"] = 2
     assert asyncio.run(fulfil._run_hotel(job, hotel))[0] == "succeeded"
     assert hotel.book_calls == 1 and hotel.refresh_calls == 1
+
+
+def test_worker_database_check_to_existing_wire_flow_timeout_no_rebook(monkeypatch):
+    from app.integrations.tripjack import hotel_booking as wire
+    from app.integrations.tripjack.exceptions import TripJackTimeoutError
+
+    port, p, subject, b = fixture(monkeypatch)
+    b.stay = {"rooms": [{"adults": 1}]}
+    b.guests = [dict(room_index=1, type="adult", title="Mr", first_name="Test", last_name="Guest")]
+    b.contact = dict(email="guest@example.test", phone="9876543210", dial_code="+91")
+
+    async def transition(record, target, event, **values):
+        if not hb.can_transition(record.status, target):
+            raise hb.HotelBookingStateError()
+        record.status = target
+        for key, value in values.items():
+            setattr(record, key, value)
+        return True
+
+    async def save(record, **values):
+        for key, value in values.items():
+            setattr(record, key, value)
+
+    port.store.transition = transition
+    port.store.save = save
+    booker = SimpleNamespace(post=AsyncMock(side_effect=TripJackTimeoutError()))
+    monkeypatch.setattr(hb, "provider_factory", lambda s: hb.Provider(None, booker))
+    monkeypatch.setattr(hb, "_fresh_review", AsyncMock(return_value=wire.FreshReview(
+        booking_id="private-provider", total=4999.50, onhold_allowed=False,
+        pan_required=False, passport_required=False, gst_type=None, hold_deadline=None)))
+    job = dict(subject_type="hotel", subject_ref=b.booking_reference, payment_id="p1", attempts=1)
+    assert asyncio.run(fulfil._run_hotel(job, port))[0] == "uncertain"
+    assert b.status == hb.BOOKING_IN_PROGRESS
+    assert booker.post.await_args.args[0] == wire.HOTEL_BOOK_PATH
+    assert booker.post.await_args.args[1]["paymentInfos"] == [{"amount": 4999.50}]
+    # Read-only reconciliation after the timeout, never another Book send.
+    b.last_checked_at = hb._iso(hb._now())
+    job["attempts"] = 2
+    assert asyncio.run(fulfil._run_hotel(job, port))[0] == "uncertain"
+    assert booker.post.await_count == 1
