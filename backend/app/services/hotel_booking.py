@@ -352,12 +352,23 @@ provider_factory: Callable[[Settings], Provider] = _default_provider
 
 
 def _production_actions_gate(settings: Settings) -> None:
-    """Hotel Book / Confirm / Cancel are NOT enabled against TripJack production.
-    Refused before any state change or provider call unless both Hotel hosts are UAT."""
+    """Book / Confirm debit the TripJack wallet. They run only on the UAT Hotel
+    pair: no server-side PayU verification currently reaches these routes
+    (they pass payment_verified=False and the fulfilment hotel port is not
+    installed), so production stays fail-closed."""
     from app.integrations.tripjack.config import HOTEL_ENV_UAT, hotel_environment
-    # Only a consistent UAT Hotel pair may book; production and invalid refuse.
     if hotel_environment(settings) != HOTEL_ENV_UAT:
         logger.error("tripjack_hotel_production_booking_actions_disabled")
+        raise HotelBookingUnavailableError()
+
+
+def _cancel_gate(settings: Settings) -> None:
+    """Cancel moves no money and keeps ownership, compare-and-set and
+    unknown-outcome handling, so it runs on a consistent UAT or production pair;
+    an invalid or mixed Hotel host configuration still refuses."""
+    from app.integrations.tripjack.config import HOTEL_ENV_INVALID, hotel_environment
+    if hotel_environment(settings) == HOTEL_ENV_INVALID:
+        logger.error("tripjack_hotel_cancel_invalid_hosts")
         raise HotelBookingUnavailableError()
 
 
@@ -746,7 +757,7 @@ async def confirm_loaded_hold(
 
 
 async def cancel(*, settings: Settings, reference: str, user_id, guest_token) -> HotelBooking:
-    _production_actions_gate(settings)
+    _cancel_gate(settings)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
     if b.status in (CANCELLATION_REQUESTED, CANCELLATION_PENDING, CANCELLED):
