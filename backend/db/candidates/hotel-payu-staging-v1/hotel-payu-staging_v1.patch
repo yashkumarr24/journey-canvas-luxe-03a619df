@@ -1,15 +1,14 @@
 --- a/app/repositories/payments.py
 +++ b/app/repositories/payments.py
-@@ -12,6 +12,8 @@
+@@ -12,6 +12,7 @@
  from __future__ import annotations
  
  from typing import Any, Optional
 +from decimal import Decimal
-+from decimal import Decimal
  
  from app.core.config import Settings
  from app.repositories.supabase_rest import SupabaseRest
-@@ -21,7 +23,7 @@
+@@ -21,7 +22,7 @@
  HOTEL_BOOKINGS = "hotel_bookings"
  REFUNDS = "payment_refunds"
  WEBHOOKS = "payment_webhook_events"
@@ -18,33 +17,10 @@
  EVENTS = "booking_events"
  
  LIVE = "in.(created,pending,captured)"
-@@ -57,29 +59,73 @@
+@@ -57,29 +58,50 @@
          self._db = SupabaseRest(settings)
  
      # ---- subjects -----------------------------------------------------------
-+    async def _parent_subject(self, parent: dict[str, Any]) -> Optional[dict[str, Any]]:
-+        if parent.get("booking_type") == "flight":
-+            return _flight(parent)
-+        if parent.get("booking_type") != "hotel":
-+            return None
-+        rows = await self._db.select(HOTEL_BOOKINGS,
-+                                     filters={"booking_id": f"eq.{parent['id']}"})
-+        if len(rows) != 1:
-+            return None
-+        hotel = rows[0]
-+        if (hotel.get("booking_reference") != parent.get("booking_reference")
-+                or hotel.get("user_id") != parent.get("user_id")
-+                or str(hotel.get("currency", "")).strip() != str(parent.get("currency", "")).strip()
-+                or Decimal(str(hotel["total_amount"])) != Decimal(str(parent["total_amount"]))
-+                or (hotel.get("contact") or {}).get("email", "").lower() != str(parent.get("contact_email") or "").lower()
-+                or (hotel.get("contact") or {}).get("phone") != parent.get("contact_phone")
-+                or parent.get("status") not in ("pending", "payment_pending", "payment_processing")):
-+            return None
-+        subject = _hotel(hotel)
-+        subject["hotel_id"] = subject["id"]
-+        subject["id"] = str(parent["id"])
-+        return subject
-+
 +    async def _parent_subject(self, parent: dict[str, Any]) -> Optional[dict[str, Any]]:
 +        if parent.get("booking_type") == "flight":
 +            return _flight(parent)
@@ -108,7 +84,7 @@
  
      # ---- payments -----------------------------------------------------------
      async def open_payment_for(self, subject: dict[str, Any]) -> Optional[dict[str, Any]]:
-@@ -104,7 +150,7 @@
+@@ -104,7 +126,7 @@
  
      async def create_payment(self, subject: dict[str, Any], values: dict[str, Any]) -> Optional[dict[str, Any]]:
          """None when the one-live-payment unique index rejected a concurrent insert."""
@@ -117,7 +93,7 @@
          try:
              rows = await self._db.insert(PAYMENTS, {**values, col: subject["id"]})
          except Exception:  # unique violation: another request created it first
-@@ -120,10 +166,10 @@
+@@ -120,10 +142,10 @@
  
      async def capture(self, payment_id: str, expected: tuple[str, ...], *, mihpayid: str,
                        source: str, raw_status: str) -> bool:
@@ -132,18 +108,16 @@
          rows = await self._db.update(
 --- a/app/services/hotel_booking.py
 +++ b/app/services/hotel_booking.py
-@@ -336,6 +336,10 @@
+@@ -336,6 +336,8 @@
  
  
  def _default_provider(settings: Settings) -> Provider:
 +    # Review-only staging candidate: no Hotel provider operation is installed.
 +    raise HotelBookingUnavailableError()
-+    # Review-only staging candidate: no Hotel provider operation is installed.
-+    raise HotelBookingUnavailableError()
      from app.services.hotel_search import _provider as hms_provider  # reuse guards
  
      hms_client, _ = hms_provider(settings)
-@@ -354,8 +358,8 @@
+@@ -354,8 +356,8 @@
  def _payment_gate(settings: Settings, *, payment_verified: bool) -> None:
      """INSTANT book and hold CONFIRM debit the TripJack wallet. In production that
      must follow a verified customer payment, which is not implemented yet."""
