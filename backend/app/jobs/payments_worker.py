@@ -19,6 +19,7 @@ from app.core.config import get_settings
 from app.repositories.payments import PaymentsRepo
 from app.services import payment_fulfilment as fulfil
 from app.services import payments as svc
+from app.services.hotel_payment_fulfilment import DatabaseHotelPort
 
 
 async def tick() -> dict[str, dict[str, int]]:
@@ -27,7 +28,7 @@ async def tick() -> dict[str, dict[str, int]]:
         return {"skipped": {"payments_disabled": 1}}
     repo, client = PaymentsRepo(settings), svc.build_client(settings)
     payments = Counter(o.status for o in await svc.reconcile(repo, client))
-    jobs = Counter(await fulfil.run_once(repo, settings, hotel=fulfil.UninstalledHotelPort(settings)))
+    jobs = Counter(await fulfil.run_once(repo, settings, hotel=DatabaseHotelPort(settings, repo)))
     refunds = Counter(await svc.reconcile_refunds(repo, client))
     return {"payments": dict(payments), "jobs": dict(jobs), "refunds": dict(refunds)}
 

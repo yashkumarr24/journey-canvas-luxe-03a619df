@@ -587,6 +587,21 @@ async def book(
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
 
+    return await _book_loaded(settings=settings, store=store, b=b, mode=mode,
+                              idempotency_key=idempotency_key, payment_verified=payment_verified,
+                              gst_info=gst_info)
+
+
+async def _book_loaded(
+    *, settings: Settings, store: BookingStore, b: HotelBooking, mode: str,
+    idempotency_key: Optional[str], payment_verified: bool = False,
+    gst_info: Optional[dict] = None,
+) -> HotelBooking:
+    """Existing lifecycle, entered only after browser ownership or DB payment checks."""
+    if mode not in ("instant", "hold"):
+        raise HotelBookingValidationError()
+    _production_actions_gate(settings)
+
     # Idempotent replay: same key returns the existing attempt, never re-books.
     if b.status != DRAFT:
         if idempotency_key and b.idempotency_key == idempotency_key:
