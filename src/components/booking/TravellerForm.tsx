@@ -33,6 +33,8 @@ export interface TravellerFormProps {
   submitting: boolean;
   /** Present when Review requires explicit acknowledgement of the updated fare. */
   priceChangeNotice?: string;
+  submitLabel?: string;
+  disabled?: boolean;
   onSubmit: (values: { travellers: TravellerInput[]; contact: ContactInput; acceptPriceChange: boolean }) => void;
 }
 
@@ -69,6 +71,8 @@ export function TravellerForm({
   requirements,
   submitting,
   priceChangeNotice,
+  submitLabel,
+  disabled = false,
   onSubmit,
 }: TravellerFormProps) {
   const roster = useMemo(() => buildRoster(passengers), [passengers]);
@@ -352,11 +356,11 @@ export function TravellerForm({
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" size="lg" disabled={submitting || Boolean(priceChangeNotice && !accepted)}>
-          {submitting ? "Saving details…" : "Continue to payment"}
+        <Button type="submit" size="lg" disabled={disabled || submitting || Boolean(priceChangeNotice && !accepted)}>
+          {submitting ? (submitLabel ? "Checking fare…" : "Saving details…") : (submitLabel ?? "Continue to payment")}
         </Button>
         <p className="text-xs text-muted-foreground">
-          No payment is taken yet — you'll review the total on the next step.
+          {submitLabel ? "No booking, seat hold or payment is made." : "No payment is taken yet — you'll review the total on the next step."}
         </p>
       </div>
     </form>

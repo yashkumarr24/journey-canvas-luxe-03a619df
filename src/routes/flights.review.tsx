@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { AlertCircle, ArrowRight, Clock, Luggage, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, Clock, Luggage } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
@@ -11,10 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
 import { SeatMap, type SeatSelections } from "@/components/booking/SeatMap";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
-import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
+import { useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { newIdempotencyKey, readFareRefs, readGuestToken } from "@/lib/review-session";
-import { rememberBookingGuestToken, saveCheckoutSnapshot } from "@/lib/checkout-session";
+import { readFareRefs, readGuestToken } from "@/lib/review-session";
 import { formatDuration, formatMoney, formatTime } from "@/lib/flight-search";
 import type { FareRefs } from "@/lib/review-session";
 import type {
@@ -22,7 +21,7 @@ import type {
   FlightFareRules,
   FlightReviewConditions,
   FlightItinerary,
-  TravellerDetailsResponse,
+  FlightFareValidateResponse,
   TravellerInput,
 } from "@/types/booking";
 
@@ -104,9 +103,7 @@ function Leg({ itinerary }: { itinerary: FlightItinerary }) {
 
 function ReviewPage() {
   const { token } = Route.useSearch();
-  const navigate = useNavigate();
-  const [draft, setDraft] = useState<TravellerDetailsResponse | null>(null);
-  const [idempotencyKey] = useState(newIdempotencyKey);
+  const [validation, setValidation] = useState<FlightFareValidateResponse | null>(null);
   // Seat choices are a page-state preference only — never posted or held.
   const [seatSelections, setSeatSelections] = useState<SeatSelections>({});
 
@@ -139,7 +136,7 @@ function ReviewPage() {
 
   // Seat map is optional and fetched ONLY when the Review response's
   // conditions.isa is literally true. The request carries just the opaque
-  // review token (plus the guest token header for guest sessions) — never a
+  // review token (plus the guest token body field for guest sessions) — never a
   // bookingId, segment id or price.
   const seatMapAllowed = review.data?.conditions?.isa === true;
   const seatMap = useQuery({
@@ -153,7 +150,6 @@ function ReviewPage() {
     queryFn: ({ signal }) => bookingApi.flightSeatMap(token as string, guestToken, { signal }),
   });
 
-  const { track } = useAnalytics();
   useTrackOnce(ANALYTICS_EVENTS.flightReviewStarted, Boolean(review.data));
   useTrackOnce(ANALYTICS_EVENTS.travellerDetailsStarted, Boolean(review.data));
 
@@ -163,37 +159,17 @@ function ReviewPage() {
       contact: ContactInput;
       acceptPriceChange: boolean;
     }) => {
-      const result = await bookingApi.submitTravellers({
+      return bookingApi.flightFareValidate({
         reviewToken: token as string,
         guestToken: guestToken ?? undefined,
         travellers: values.travellers,
         contact: values.contact,
         acceptPriceChange: values.acceptPriceChange,
-        idempotencyKey,
       });
-      return { result, values };
     },
-    onSuccess: ({ result, values }) => {
-      setDraft(result);
-      track(ANALYTICS_EVENTS.travellerDetailsCompleted, {
-        travellerCount: values.travellers.length,
-      });
-      // Carry the reviewed journey forward so checkout can render it, and keep
-      // the guest secret with the booking reference (never in the URL).
-      rememberBookingGuestToken(result.bookingReference, guestToken);
-      if (review.data) {
-        saveCheckoutSnapshot({
-          bookingReference: result.bookingReference,
-          itineraries: review.data.itineraries,
-          fare: review.data.fare,
-          passengers: review.data.passengers,
-          travellers: values.travellers,
-          contact: values.contact,
-          priceChange: review.data.priceChange,
-          expiresAt: result.expiresAt,
-        });
-      }
-      navigate({ to: "/flights/checkout", search: { ref: result.bookingReference } });
+    onSuccess: (result) => {
+      setValidation(result);
+      if (result.clearSeats || result.alerts.includes("CLASS_SOLD_OUT")) setSeatSelections({});
     },
   });
 
@@ -247,37 +223,6 @@ function ReviewPage() {
   const price = data.fare.totalPrice;
   const submitError = submit.isError ? toBookingError(submit.error) : null;
 
-  if (draft) {
-    return (
-      <Shell>
-        <div className="rounded-3xl border border-foreground/10 bg-card p-8 text-center">
-          <ShieldCheck className="mx-auto size-8 text-gold" aria-hidden="true" />
-          <h2 className="mt-4 font-display text-3xl">Details saved</h2>
-          <p className="mt-2 text-muted-foreground">
-            Booking reference <span className="font-medium text-foreground">{draft.bookingReference}</span> is
-            held as a draft for {draft.travellerCount} traveller
-            {draft.travellerCount > 1 ? "s" : ""}. We've sent a copy to {draft.contactEmail}.
-          </p>
-          <p className="mt-4 font-display text-4xl">
-            {formatMoney(draft.totalPrice.amount, draft.totalPrice.currency)}
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            No payment has been taken and no seat is ticketed yet — secure payment is the next step.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button variant="outline" onClick={() => navigate({ to: "/flights" })}>
-              Back to search
-            </Button>
-            <Button asChild>
-              <Link to="/flights/checkout" search={{ ref: draft.bookingReference }}>
-                Continue to payment
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </Shell>
-    );
-  }
 
   return (
     <Shell>
@@ -303,7 +248,7 @@ function ReviewPage() {
           <FareRulesSection fareRules={fareRules} hasRefs={Boolean(fareRefs)} />
           <ReviewRequirements conditions={data.conditions} />
 
-          {seatMapAllowed && (
+          {seatMapAllowed && !validation && (
             <SeatMap
               seatMap={seatMap.data}
               isPending={seatMap.isPending}
@@ -312,6 +257,18 @@ function ReviewPage() {
               selections={seatSelections}
               onSelectionsChange={setSeatSelections}
             />
+          )}
+
+          {validation && (
+            <Alert className="mt-8" variant={validation.status === "unavailable" ? "destructive" : "default"} role="alert">
+              <AlertCircle className="size-4" aria-hidden="true" />
+              <AlertTitle>{validation.status === "unavailable" ? "This fare is no longer available" : validation.alerts.includes("CLASS_SOLD_OUT") ? "The booking class changed" : validation.alerts.includes("FAREALERT") ? "The fare changed" : "Fare validation cannot be completed"}</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>{validation.status === "unavailable" ? "This booking attempt has stopped. Start a new booking to see available fares." : validation.alerts.includes("CLASS_SOLD_OUT") ? "All previously selected seats have been cleared. Updated fare, booking class, baggage and fare rules cannot yet be displayed reliably, so you cannot confirm these changes or continue." : "The updated fare details cannot yet be displayed reliably. You cannot confirm changes or continue."}</p>
+                <p>No booking, seat hold or payment has been made.</p>
+                <Button asChild variant="outline"><Link to="/flights">Start a new booking</Link></Button>
+              </AlertDescription>
+            </Alert>
           )}
 
           <h2 className="mt-10 font-display text-2xl">Traveller details</h2>
@@ -331,6 +288,8 @@ function ReviewPage() {
               passengers={data.passengers}
               requirements={data.requirements}
               submitting={submit.isPending}
+              disabled={Boolean(validation)}
+              submitLabel="Validate fare (optional)"
               priceChangeNotice={
                 data.status === "price_changed"
                   ? `I accept the updated total of ${formatMoney(price.amount, price.currency)}.`
