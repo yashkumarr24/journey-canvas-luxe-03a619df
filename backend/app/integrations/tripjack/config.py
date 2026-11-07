@@ -13,8 +13,8 @@ Flights and Hotels are TWO different API surfaces on TWO different hosts:
   * Flights API v2.0 -> TRIPJACK_BASE_URL        (UAT https://apitest.tripjack.com)
   * Hotel   API v3.0 -> TRIPJACK_HOTEL_BASE_URL  (UAT https://apitest-hms.tripjack.com)
 
-The SAME api key covers both. `hotel_config()` returns the flight config with
-the hotel host swapped in, so the flight integration is untouched.
+Hotels use TRIPJACK_HOTEL_API_KEY (HMS and OMS); Flights keep TRIPJACK_API_KEY,
+so Hotels can run on production while Flights stay on UAT.
 """
 
 from __future__ import annotations
@@ -83,15 +83,31 @@ def build_config(settings: Settings) -> TripJackConfig:
     )
 
 
+def _hotel_api_key(settings: Settings, base_url: str) -> str:
+    """Hotel key for both HMS and OMS hosts.
+
+    TRIPJACK_HOTEL_API_KEY wins when set. Falling back to the Flight key is
+    allowed ONLY for UAT hosts: a production Hotel host with no Hotel key is
+    "not configured", so the Flight/UAT key is never sent to production.
+    """
+    hotel_key = getattr(settings, "tripjack_hotel_api_key", "") or ""
+    if hotel_key:
+        return hotel_key
+    probe = replace(build_config(settings), base_url=base_url)
+    return "" if probe.targets_production else settings.tripjack_api_key
+
+
 def build_hotel_config(settings: Settings) -> TripJackConfig:
-    """Hotel API v3 config: same credentials, dedicated HMS host."""
+    """Hotel API v3 config: Hotel key, dedicated HMS host."""
     hotel_base = (
         settings.tripjack_hotel_base_url or DEFAULT_UAT_HOTEL_BASE_URL
     ).rstrip("/")
-    return replace(build_config(settings), base_url=hotel_base)
+    return replace(build_config(settings), base_url=hotel_base,
+                   api_key=_hotel_api_key(settings, hotel_base))
 
 
 def build_hotel_booker_config(settings: Settings) -> TripJackConfig:
-    """Hotel booking (OMS v3) config: same credentials, dedicated booker host."""
+    """Hotel booking (OMS v3) config: Hotel key, dedicated booker host."""
     base = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
-    return replace(build_config(settings), base_url=base)
+    return replace(build_config(settings), base_url=base,
+                   api_key=_hotel_api_key(settings, base))
