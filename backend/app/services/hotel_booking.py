@@ -351,6 +351,16 @@ def _default_provider(settings: Settings) -> Provider:
 provider_factory: Callable[[Settings], Provider] = _default_provider
 
 
+def _production_actions_gate(settings: Settings) -> None:
+    """Hotel Book / Confirm / Cancel are NOT enabled against TripJack production.
+    Refused before any state change or provider call; UAT hosts are unaffected."""
+    from app.integrations.tripjack.config import DEFAULT_UAT_HOTEL_BOOKER_URL, TripJackConfig
+    url = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
+    if TripJackConfig(url, "", 0, 0, 0, 0, 0, 0).targets_production:
+        logger.error("tripjack_hotel_production_booking_actions_disabled")
+        raise HotelBookingUnavailableError()
+
+
 def _payment_gate(settings: Settings, *, payment_verified: bool) -> None:
     """INSTANT book and hold CONFIRM debit the TripJack wallet. In production that
     must follow a verified customer payment, which is not implemented yet."""
@@ -562,6 +572,7 @@ async def book(
 ) -> HotelBooking:
     if mode not in ("instant", "hold"):
         raise HotelBookingValidationError()
+    _production_actions_gate(settings)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
 
@@ -685,6 +696,7 @@ def _due(b: HotelBooking) -> bool:
 async def confirm_hold(
     *, settings: Settings, reference: str, user_id, guest_token, payment_verified: bool = False,
 ) -> HotelBooking:
+    _production_actions_gate(settings)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
     return await confirm_loaded_hold(settings=settings, store=store, b=b, payment_verified=payment_verified)
@@ -694,6 +706,7 @@ async def confirm_loaded_hold(
     *, settings: Settings, store: BookingStore, b: HotelBooking, payment_verified: bool = False,
 ) -> HotelBooking:
     """Confirm an ON_HOLD booking already loaded (and authorised) by the caller."""
+    _production_actions_gate(settings)
     if b.status in (CONFIRMING, CONFIRMED):
         raise HotelBookingDuplicateError()
     if b.status != ON_HOLD:
@@ -733,6 +746,7 @@ async def confirm_loaded_hold(
 
 
 async def cancel(*, settings: Settings, reference: str, user_id, guest_token) -> HotelBooking:
+    _production_actions_gate(settings)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
     if b.status in (CANCELLATION_REQUESTED, CANCELLATION_PENDING, CANCELLED):

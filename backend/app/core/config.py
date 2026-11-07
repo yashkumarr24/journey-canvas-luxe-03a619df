@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     tripjack_hotel_booker_url: str = Field(default="", alias="TRIPJACK_HOTEL_BOOKER_URL")
     tripjack_hotel_max_pages: int = Field(default=3, alias="TRIPJACK_HOTEL_MAX_PAGES")
     tripjack_api_key: str = Field(default="", alias="TRIPJACK_API_KEY")
+    # Hotel-only key (HMS + OMS/booker). Lets Hotels move to TripJack production
+    # while Flights stay on UAT with TRIPJACK_API_KEY. VPS environment only.
+    tripjack_hotel_api_key: str = Field(default="", alias="TRIPJACK_HOTEL_API_KEY")
     tripjack_connect_timeout: float = Field(default=5.0, alias="TRIPJACK_CONNECT_TIMEOUT")
     tripjack_read_timeout: float = Field(default=40.0, alias="TRIPJACK_READ_TIMEOUT")
     tripjack_write_timeout: float = Field(default=10.0, alias="TRIPJACK_WRITE_TIMEOUT")
