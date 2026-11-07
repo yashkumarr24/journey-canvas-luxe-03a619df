@@ -354,7 +354,9 @@ provider_factory: Callable[[Settings], Provider] = _default_provider
 def _production_actions_gate(settings: Settings) -> None:
     """Hotel Book / Confirm / Cancel are NOT enabled against TripJack production.
     Refused before any state change or provider call; UAT hosts are unaffected."""
-    if build_hotel_booker_config(settings).targets_production:
+    from app.integrations.tripjack.config import DEFAULT_UAT_HOTEL_BOOKER_URL, TripJackConfig
+    url = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
+    if TripJackConfig(url, "", 0, 0, 0, 0, 0, 0).targets_production:
         logger.error("tripjack_hotel_production_booking_actions_disabled")
         raise HotelBookingUnavailableError()
 
