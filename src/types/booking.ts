@@ -638,6 +638,15 @@ export interface TravellerDetailsResponse {
   nextStep: "payment";
 }
 
+/** App-owned DTO: provider response paths for updated details remain undocumented. */
+export interface FlightFareValidateResponse {
+  status: "unavailable" | "changes_require_review" | "mapping_unresolved";
+  alerts: ("FAREALERT" | "CLASS_SOLD_OUT")[];
+  clearSeats: boolean;
+  canContinue: false;
+  mappingResolved: false;
+}
+
 /* ------------------------------------------------------------------ */
 /* Checkout, payment + confirmation (PHASE 8)                          */
 /* ------------------------------------------------------------------ */
