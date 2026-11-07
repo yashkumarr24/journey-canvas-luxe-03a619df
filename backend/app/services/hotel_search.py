@@ -869,14 +869,6 @@ async def submit_guests(
     _validate_guests(payload, session)
 
     booking_reference = session.booking_reference or sessions.new_booking_reference()
-    await sessions.record_guest_details(
-        settings=settings,
-        session=session,
-        booking_reference=booking_reference,
-        guest_count=len(payload.guests),
-        contact_email=payload.contact.email,
-    )
-
     # Server-side booking draft for the Book lifecycle (services/hotel_booking.py).
     try:
         from app.services import hotel_booking as booking_service
@@ -891,13 +883,23 @@ async def submit_guests(
             repo = HotelBookingRepository(settings)
             if repo.enabled:
                 nationality = await repo.search_nationality(session.row_id)
-        await booking_service.create_draft(
+        draft = await booking_service.create_draft(
             settings=settings, review_session=session, booking_reference=booking_reference,
             guests=payload.guests, contact=payload.contact,
             special_requests=payload.special_requests, nationality=nationality,
         )
-    except Exception:  # noqa: BLE001 — draft failure must not break guest capture
+    except Exception:  # noqa: BLE001 — never proceed to payment without durable linkage
         logger.warning("hotel_booking_draft_failed")
+        from app.services.hotel_booking import HotelBookingUnavailableError
+
+        raise HotelBookingUnavailableError() from None
+
+    # A concurrent retry may have already assigned the canonical reference.
+    booking_reference = draft.booking_reference
+    await sessions.record_guest_details(
+        settings=settings, session=session, booking_reference=booking_reference,
+        guest_count=len(payload.guests), contact_email=payload.contact.email,
+    )
 
     logger.info(
         "hotel_guests_submitted",

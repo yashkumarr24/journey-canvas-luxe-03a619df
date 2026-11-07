@@ -13,6 +13,7 @@
 - Buttons wrap and grow; phone target/focus CSS excludes native offline controls, preserving recovery and auth.
 - Keep search editors mounted. Catalogue RPCs are FastAPI-only with indexed selections. Listing uses paced process-wide bounded workers, full-request deadlines and per-hotel context; incomplete searches stay explicit. Large hotel searches are progressive: an initial window answers, a same-pacing background task delivers the rest via the polled progress endpoint; partial never shows as complete.
 - Hotel Book/Details/Confirm/Cancel live in backend services/hotel_booking.py with compare-and-set status transitions on hotel_bookings (0018); prevents duplicate provider bookings and keeps provider handles server-side.
+- Hotel guest capture requires a durable bookings parent and hotel_bookings link created by one service-role RPC; no memory fallback or awaiting_payment on persistence failure, so checkout always has a stable parent identity.
 - Instant hotel booking and hold confirmation are refused in production until server-side payment verification exists; they debit the TripJack wallet.
 - Holiday packages (0019) are enquiry-only catalogue tables with indicative prices and no booking/payment fields; writes go through FastAPI service_role, clients read published rows only, so packages can never be booked or charged.
 - Package import keeps one package per source DOCX and only flags possible duplicates (code/name/destination) in package_duplicate_candidates (0020); merging needs human review so no source content is lost.

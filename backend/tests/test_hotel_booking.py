@@ -123,11 +123,22 @@ def contact(phone="9876543210"):
 
 
 def draft(ref="FNFHA1B2C3", **kw):
-    rs = review_session(**{k: v for k, v in kw.items() if k in ("rooms", "total", "pan_required")})
+    rs = kw.get("session") or review_session(**{k: v for k, v in kw.items() if k in ("rooms", "total", "pan_required")})
     g = kw.get("guests") or guests()
-    return asyncio.run(bk.create_draft(settings=settings(), review_session=rs, booking_reference=ref,
-                                       guests=g, contact=kw.get("contact") or contact(),
-                                       special_requests=None, nationality="IN"))
+    # Lifecycle tests seed a persisted-equivalent fake, not the production
+    # create_draft path (which now correctly refuses missing database config).
+    b = bk.HotelBooking(
+        booking_reference=ref, booking_id="parent-fixture", review_token=rs.token,
+        provider_hotel_id=rs.provider_hotel_id, provider_option_id=rs.provider_option_id,
+        provider_search_id=rs.provider_search_id, total_amount=rs.room.total_price.amount,
+        currency=rs.currency, user_id=rs.user_id, nationality="IN",
+        hotel=rs.hotel.model_dump(by_alias=True), room=rs.room.model_dump(by_alias=True),
+        stay=rs.stay.model_dump(by_alias=True), requirements=rs.requirements,
+        guests=[x.model_dump(mode="json") for x in g],
+        contact=(kw.get("contact") or contact()).model_dump(mode="json"),
+    )
+    bk._memory.by_ref[ref] = b
+    return b
 
 
 def prebook(wired, review=None, detail=None):
@@ -233,9 +244,7 @@ def test_multiple_rooms_adults_children_same_pan(wired):
     rs = review_session(rooms=rooms)
     rs.room = tj._room_option(two_room, "INR")
     rs.provider_option_id = rs.room.id
-    asyncio.run(bk.create_draft(settings=settings(), review_session=rs, booking_reference="FNFHA1B2C3",
-                                guests=guests(rooms=2, pans=(PAN1,), child=True), contact=contact(),
-                                special_requests=None, nationality="IN"))
+    draft(session=rs, guests=guests(rooms=2, pans=(PAN1,), child=True))
     prebook(wired, detail=reply(options=[two_room]), review=review_reply(opt=two_room))
     wired.booker.replies.append(ok("BK-SECRET"))
     do_book()
@@ -248,10 +257,7 @@ def test_multiple_rooms_adults_children_same_pan(wired):
 
 
 def test_international_booking_nationality_used(wired):
-    rs = review_session()
-    b = asyncio.run(bk.create_draft(settings=settings(), review_session=rs, booking_reference="FNFHA1B2C3",
-                                    guests=guests(), contact=contact(), special_requests=None,
-                                    nationality="IN"))
+    b = draft()
     assert b.nationality == "IN"
     prebook(wired)
     wired.booker.replies.append(ok("BK-SECRET"))
