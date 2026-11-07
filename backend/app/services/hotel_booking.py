@@ -696,6 +696,7 @@ def _due(b: HotelBooking) -> bool:
 async def confirm_hold(
     *, settings: Settings, reference: str, user_id, guest_token, payment_verified: bool = False,
 ) -> HotelBooking:
+    _production_actions_gate(settings)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
     return await confirm_loaded_hold(settings=settings, store=store, b=b, payment_verified=payment_verified)
