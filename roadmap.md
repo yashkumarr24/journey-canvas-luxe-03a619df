@@ -1,5 +1,10 @@
 # Roadmap
 
+## Optional pre-book Flight Fare Validate
+- [ ] Verify the official pre-book request/alert contract and implement only that endpoint using the owned Review session.
+- [ ] Add frontend validation before payment handoff, explicit change consent, class-change seat clearing and terminal unavailable state; Book remains disabled.
+- [ ] Deliver a manual VPS patch, changed-file report and checksums; no tests, certification, provider calls or deployment.
+
 ## Flight Seat Map (TripJack Flights v2.0)
 - [x] Add read-only Seat Map endpoint (POST /api/v1/flights/seat-map): session-owned bookingId only, literal isa=true gate, verbatim tripSeatMap parsing, no DB writes or migration.
 - [x] Deliver 5-file patch + report with SHA-256; py_compile, strict zero-fuzz dry-run and byte-identical round-trip pass; no tests/provider calls/deployment per instruction; Book stays disabled.
