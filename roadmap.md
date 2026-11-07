@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Optional pre-book Flight Fare Validate
-- [ ] Implement the documented POST oms/v1/air/book/fare-validate with owned Review session and Book traveller/SSR fields; blocked pending official response JSON/schema (PDF pp4–6 defines behavior but not updated-response field paths).
-- [ ] Add frontend validation before payment handoff, explicit change consent, class-change seat clearing and terminal unavailable state; blocked by the same response contract; Book remains disabled.
-- [ ] Deliver a manual VPS patch, changed-file report and checksums after response contract is supplied; no application/backend changes, tests, certification, provider calls or deployment in the investigation.
+- [x] Prepare isolated UAT opt-in pre-book endpoint and documented traveller/SSR builder against latest uploaded VPS archive; no Book/payment calls or migrations.
+- [x] Add optional frontend validation before any draft/payment handoff, class-change seat clearing and terminal unavailable state; all continuation blocked until updated response mappings are documented.
+- [x] Deliver manual VPS patch and changed-file/hash report; no tests, certification, provider calls or deployment.
+- [ ] Updated fare/class/baggage/rules display and change acceptance await exact official response paths; no stale Review fallback or invented mapping.
 
 ## Flight Seat Map (TripJack Flights v2.0)
 - [x] Add read-only Seat Map endpoint (POST /api/v1/flights/seat-map): session-owned bookingId only, literal isa=true gate, verbatim tripSeatMap parsing, no DB writes or migration.
