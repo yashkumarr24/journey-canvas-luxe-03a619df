@@ -83,31 +83,68 @@ def build_config(settings: Settings) -> TripJackConfig:
     )
 
 
-def _hotel_api_key(settings: Settings, base_url: str) -> str:
-    """Hotel key for both HMS and OMS hosts.
+# TripJack-CONFIRMED Hotel production hosts, by surface. Deliberately empty
+# until TripJack's written confirmation is recorded here in a reviewed change:
+# any non-UAT Hotel host not listed is rejected (fail closed), so a guessed or
+# typo'd address can never receive the production Hotel key.
+CONFIRMED_HOTEL_PRODUCTION_HOSTS: dict[str, frozenset[str]] = {
+    "hms": frozenset(),
+    "oms": frozenset(),
+}
 
-    TRIPJACK_HOTEL_API_KEY wins when set. Falling back to the Flight key is
-    allowed ONLY for UAT hosts: a production Hotel host with no Hotel key is
-    "not configured", so the Flight/UAT key is never sent to production.
-    """
-    hotel_key = getattr(settings, "tripjack_hotel_api_key", "") or ""
-    if hotel_key:
-        return hotel_key
-    probe = replace(build_config(settings), base_url=base_url)
-    return "" if probe.targets_production else settings.tripjack_api_key
+HOTEL_ENV_UAT = "uat"
+HOTEL_ENV_PRODUCTION = "production"
+HOTEL_ENV_INVALID = "invalid"
+
+
+def _host_of(url: str) -> str:
+    return url.split("//", 1)[-1].split("/", 1)[0].lower()
+
+
+def _classify(url: str, surface: str) -> str:
+    if not url.lower().startswith("https://"):
+        return HOTEL_ENV_INVALID
+    host = _host_of(url)
+    if host.startswith(UAT_HOST_PREFIX) and host.endswith("." + PRODUCTION_HOST):
+        return HOTEL_ENV_UAT
+    if host in CONFIRMED_HOTEL_PRODUCTION_HOSTS.get(surface, frozenset()):
+        return HOTEL_ENV_PRODUCTION
+    return HOTEL_ENV_INVALID
+
+
+def _hotel_urls(settings: Settings) -> tuple[str, str]:
+    hms = (getattr(settings, "tripjack_hotel_base_url", "") or DEFAULT_UAT_HOTEL_BASE_URL).rstrip("/")
+    oms = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
+    return hms, oms
+
+
+def hotel_environment(settings: Settings) -> str:
+    """One environment for BOTH Hotel hosts. Mixed UAT/production, unconfirmed
+    or non-HTTPS hosts are "invalid" and leave Hotels unconfigured."""
+    hms, oms = _hotel_urls(settings)
+    a, b = _classify(hms, "hms"), _classify(oms, "oms")
+    return a if a == b and a != HOTEL_ENV_INVALID else HOTEL_ENV_INVALID
+
+
+def _hotel_api_key(settings: Settings) -> str:
+    """Production Hotel hosts get ONLY TRIPJACK_HOTEL_API_KEY; UAT Hotel hosts
+    get ONLY the existing UAT key, so the production key never reaches UAT and
+    the UAT key never reaches production. Invalid/mixed -> no key."""
+    env = hotel_environment(settings)
+    if env == HOTEL_ENV_PRODUCTION:
+        return getattr(settings, "tripjack_hotel_api_key", "") or ""
+    if env == HOTEL_ENV_UAT:
+        return getattr(settings, "tripjack_api_key", "") or ""
+    return ""
 
 
 def build_hotel_config(settings: Settings) -> TripJackConfig:
-    """Hotel API v3 config: Hotel key, dedicated HMS host."""
-    hotel_base = (
-        settings.tripjack_hotel_base_url or DEFAULT_UAT_HOTEL_BASE_URL
-    ).rstrip("/")
-    return replace(build_config(settings), base_url=hotel_base,
-                   api_key=_hotel_api_key(settings, hotel_base))
+    """Hotel API v3 config: dedicated HMS host, environment-matched key."""
+    hms, _ = _hotel_urls(settings)
+    return replace(build_config(settings), base_url=hms, api_key=_hotel_api_key(settings))
 
 
 def build_hotel_booker_config(settings: Settings) -> TripJackConfig:
-    """Hotel booking (OMS v3) config: Hotel key, dedicated booker host."""
-    base = (getattr(settings, "tripjack_hotel_booker_url", "") or DEFAULT_UAT_HOTEL_BOOKER_URL).rstrip("/")
-    return replace(build_config(settings), base_url=base,
-                   api_key=_hotel_api_key(settings, base))
+    """Hotel booking (OMS v3) config: dedicated booker host, environment-matched key."""
+    _, oms = _hotel_urls(settings)
+    return replace(build_config(settings), base_url=oms, api_key=_hotel_api_key(settings))
