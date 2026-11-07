@@ -1,9 +1,7 @@
 """Durable fulfilment of verified PayU payments.
 
-ISOLATED TEST PACKAGE: the hotel/flight booking modules are protected and
-unchanged, so the live port (UninstalledHotelPort) is unavailable and run_once
-never claims a job, whatever PAYMENT_FULFILMENT_ENABLED says. The booking logic
-below is kept and unit-tested with fakes for a later, reviewed merge.
+The VPS worker installs a database-validated, UAT-only Hotel adapter. Production
+remains unavailable. Flight fulfillment is unchanged and unimplemented.
 
 A job row is created by the database in the same transaction as the capture
 (payu_capture, migration 0024). Workers claim jobs with FOR UPDATE SKIP LOCKED
@@ -69,6 +67,14 @@ def _hotel_outcome(status: Optional[str]) -> str:
 
 async def _run_hotel(job: dict, hotel: HotelPort) -> tuple[str, Optional[str]]:
     ref = job["subject_ref"]
+    authorize = getattr(hotel, "authorize_job", None)
+    if authorize is not None:
+        try:
+            await authorize(job)
+        except AppError as exc:
+            return "manual_review", exc.code
+        except Exception:
+            return "manual_review", "hotel_payment_evidence_unavailable"
     b = await hotel.get(ref)
     if b is None:
         return "manual_review", "hotel_booking_missing"
@@ -76,9 +82,15 @@ async def _run_hotel(job: dict, hotel: HotelPort) -> tuple[str, Optional[str]]:
         # A Book call was (or may have been) sent earlier: read-only reconcile.
         fresh = await hotel.refresh(ref) or b
         return _hotel_outcome(fresh.status), f"details:{fresh.status}"
+    if int(job.get("attempts") or 0) > 1:
+        # A reclaimed/uncertain job with DRAFT has no durable proof that a
+        # previous send did not happen. Staff reconcile it; never rebook.
+        return "manual_review", "hotel_prior_attempt_unresolved"
     try:
         b = await hotel.book(ref, f"payu:{job['payment_id']}")
     except AppError as exc:
+        if exc.code in ("HOTEL_PAYMENT_EVIDENCE_MISMATCH", "HOTEL_BOOKING_UNAVAILABLE"):
+            return "manual_review", exc.code
         after = await hotel.get(ref)
         if after is not None and after.status == "DRAFT":
             # Refused before any Book request was sent (price change, sold out,
@@ -89,7 +101,8 @@ async def _run_hotel(job: dict, hotel: HotelPort) -> tuple[str, Optional[str]]:
 
 
 async def run_once(repo: JobRepo, settings: Settings, *, hotel: HotelPort, limit: int = 10) -> list[str]:
-    if not pay.fulfilment_allowed(settings):
+    allows = getattr(hotel, "allows", None)
+    if not (allows(settings) if allows is not None else pay.fulfilment_allowed(settings)):
         logger.info("payment_fulfilment_disabled")
         return []
     if not getattr(hotel, "available", False):
