@@ -1,10 +1,11 @@
 # Roadmap
 
 ## Hotel-to-PayU record linkage
+- [x] Reconcile against user-confirmed VPS payments.booking_id -> bookings and applied 0031/0032; quarantine 0033 and deliver a parent-only capture candidate diff/plan.
 - [x] Atomically create and link the Hotel draft and bookings parent; fail guest submission on persistence errors.
 - [x] Add mocked linkage/guest failure tests and unapplied 0033; 320 Hotel/PayU/Flight regression checks pass, execution gates unchanged.
 - [x] Report repository versus deployed payment schema compatibility and manual steps in HOTEL_PAYU_PARENT_LINKAGE.md.
-- [ ] Live schema compatibility, disposable SQL/concurrency checks and deployment await separate authorization; live Hotel fulfilment port remains uninstalled.
+- [ ] Exact current VPS Hotel/payment source and schema metadata are needed for complete compatibility; candidate SQL/concurrency checks and deployment await separate authorization. Hotel fulfilment remains unimplemented/unverified on VPS.
 
 ## Disabled Flight Booking documented gaps
 - [x] Remove unfinished optional pre-book validation from frontend; no publish.

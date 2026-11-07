@@ -1,19 +1,25 @@
 -- Forward-only candidate. DO NOT apply remotely as part of development.
--- 0031/0032 are reserved by the separately delivered Flight migrations.
--- Requires 0004, 0018 and the bookings.guest_token_hash column from 0023.
+-- VPS 0031/0032 are already applied per the user's current confirmation.
+-- Requires the base bookings and Hotel schema; NOT the branch-only 0024 model.
+-- Guest hashes stay on hotel_bookings; parent ownership is user_id + contact.
+-- QUARANTINED: rename outside the migration runner; do not apply/deploy yet.
 -- No payment/capture/fulfilment functions or Flight data are changed.
 begin;
 
--- Fail before DDL when the deployed payment ownership prerequisite is missing.
+-- Reject an unknown reference rule before replacing it. Payment schema and
+-- guest payment authorization must be reconciled separately before release.
 do $$
 begin
   if not exists (
-    select 1 from pg_catalog.pg_attribute
-    where attrelid = 'public.bookings'::regclass
-      and attname = 'guest_token_hash' and atttypid = 'text'::regtype
-      and not attisdropped
+    select 1 from pg_catalog.pg_constraint c
+    where c.conrelid = 'public.bookings'::regclass
+      and c.conname = 'bookings_reference_format_chk'
+      and c.contype = 'c' and c.convalidated
+      and regexp_replace(pg_catalog.pg_get_expr(c.conbin, c.conrelid),
+                         '[[:space:]()]', '', 'g') =
+          'booking_reference~''^FF-[0-9A-Z]{8}$''::text'
   ) then
-    raise exception 'Hotel parent linkage requires bookings.guest_token_hash (0023 prerequisite)';
+    raise exception 'Hotel parent linkage requires the reviewed base reference constraint';
   end if;
 end $$;
 
@@ -83,7 +89,6 @@ begin
   if found then
     if parent.booking_type <> 'hotel'
        or parent.user_id is distinct from incoming.user_id
-       or parent.guest_token_hash is distinct from incoming.guest_token_hash
        or parent.total_amount is distinct from incoming.total_amount
        or parent.currency::text is distinct from incoming.currency
        or parent.contact_email::text is distinct from lower(incoming.contact->>'email')
@@ -97,11 +102,11 @@ begin
       raise exception 'Hotel parent link is inconsistent';
     end if;
     insert into public.bookings (
-      booking_reference, booking_type, status, user_id, guest_token_hash,
+      booking_reference, booking_type, status, user_id,
       total_amount, currency, contact_email, contact_phone
     ) values (
       incoming.booking_reference, 'hotel', 'pending', incoming.user_id,
-      incoming.guest_token_hash, incoming.total_amount, incoming.currency,
+      incoming.total_amount, incoming.currency,
       lower(incoming.contact->>'email'), incoming.contact->>'phone'
     ) returning * into parent;
   end if;
