@@ -5,7 +5,6 @@ import { AlertCircle, ArrowRight, Clock, Luggage } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TravellerForm } from "@/components/booking/TravellerForm";
