@@ -123,7 +123,7 @@ def contact(phone="9876543210"):
 
 
 def draft(ref="FNFHA1B2C3", **kw):
-    rs = review_session(**{k: v for k, v in kw.items() if k in ("rooms", "total", "pan_required")})
+    rs = kw.get("session") or review_session(**{k: v for k, v in kw.items() if k in ("rooms", "total", "pan_required")})
     g = kw.get("guests") or guests()
     # Lifecycle tests seed a persisted-equivalent fake, not the production
     # create_draft path (which now correctly refuses missing database config).
@@ -244,9 +244,7 @@ def test_multiple_rooms_adults_children_same_pan(wired):
     rs = review_session(rooms=rooms)
     rs.room = tj._room_option(two_room, "INR")
     rs.provider_option_id = rs.room.id
-    asyncio.run(bk.create_draft(settings=settings(), review_session=rs, booking_reference="FNFHA1B2C3",
-                                guests=guests(rooms=2, pans=(PAN1,), child=True), contact=contact(),
-                                special_requests=None, nationality="IN"))
+    draft(session=rs, guests=guests(rooms=2, pans=(PAN1,), child=True))
     prebook(wired, detail=reply(options=[two_room]), review=review_reply(opt=two_room))
     wired.booker.replies.append(ok("BK-SECRET"))
     do_book()
@@ -259,10 +257,7 @@ def test_multiple_rooms_adults_children_same_pan(wired):
 
 
 def test_international_booking_nationality_used(wired):
-    rs = review_session()
-    b = asyncio.run(bk.create_draft(settings=settings(), review_session=rs, booking_reference="FNFHA1B2C3",
-                                    guests=guests(), contact=contact(), special_requests=None,
-                                    nationality="IN"))
+    b = draft()
     assert b.nationality == "IN"
     prebook(wired)
     wired.booker.replies.append(ok("BK-SECRET"))
