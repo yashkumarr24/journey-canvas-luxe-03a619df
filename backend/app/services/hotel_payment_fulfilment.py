@@ -42,10 +42,10 @@ class DatabaseHotelPort:
         return bool(
             not settings.is_production and settings.payu_env == "test"
             and pay.payments_allowed(settings) and settings.payment_fulfilment_enabled
+            and self.store.repo is not None
             and hotel_environment(settings) == HOTEL_ENV_UAT
             and build_hotel_config(settings).is_configured
             and build_hotel_booker_config(settings).is_configured
-            and self.store.repo is not None
         )
 
     @property
