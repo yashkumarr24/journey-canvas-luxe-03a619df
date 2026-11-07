@@ -2,7 +2,7 @@
 
 ## Hotel PayU fulfillment code-only review
 - [x] Install a database-validated Hotel worker port using payments.hotel_booking_id; preserve certified wire code, Flight and production refusal.
-- [x] Run mocked authorization/retry and Flight regressions: 367 passed; report database prerequisites; no SQL, secrets, providers or deployment; 0033/0034 untouched.
+- [x] Run mocked authorization/retry and Flight regressions: 367 focused and 936 full-suite passed; deliver strict six-file diff/report; no SQL, secrets, providers or deployment; 0033/0034 untouched.
 - [ ] Checkout RPC, capture-time identity/immutability and deployed queue/CAS schema verification await separate authorization/evidence; production remains blocked.
 
 ## Staging-only Hotel/PayU schema reconciliation (verified VPS baseline)
