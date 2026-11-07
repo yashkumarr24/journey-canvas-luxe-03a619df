@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Staging-only Hotel/PayU schema reconciliation (verified VPS baseline)
-- [ ] Prepare isolated code diff and unapplied SQL candidates: missing Hotel tables, parent-only payment FK, missing PayU enum/columns, no parent guest hash, FF reference format.
-- [ ] Document migration reconciliation, private guest ownership, atomic verification/outbox, staging apply checks and rollback; no SQL, secrets, external calls or deployment.
+- [x] Prepare isolated code diff and unapplied SQL candidates: missing Hotel tables, parent-only payment FK, missing PayU enum/columns, no parent guest hash, FF reference format.
+- [x] Document migration reconciliation, private guest ownership, atomic verification/outbox, staging apply checks and rollback; no SQL, secrets, external calls or deployment.
 - [ ] Staging SQL/runtime/concurrency and provider verification await separate authorization and full catalog prerequisites; production remains unchanged.
 
 ## Hotel-to-PayU record linkage

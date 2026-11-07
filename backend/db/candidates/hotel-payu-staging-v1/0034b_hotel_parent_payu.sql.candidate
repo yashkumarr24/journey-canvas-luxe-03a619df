@@ -193,6 +193,12 @@ begin
        or existing.currency is distinct from incoming.currency
        or existing.contact is distinct from incoming.contact
        or existing.guests is distinct from incoming.guests
+       or existing.special_requests is distinct from incoming.special_requests
+       or existing.nationality is distinct from incoming.nationality
+       or existing.hotel is distinct from incoming.hotel
+       or existing.room is distinct from incoming.room
+       or existing.stay is distinct from incoming.stay
+       or existing.requirements is distinct from incoming.requirements
        or existing.provider_hotel_id is distinct from incoming.provider_hotel_id
        or existing.provider_option_id is distinct from incoming.provider_option_id then
       raise exception 'Hotel draft retry does not match persisted evidence';
@@ -206,6 +212,9 @@ begin
   select * into parent from public.bookings
     where booking_reference = incoming.booking_reference for update;
   if found then
+    if existing.id is null then
+      raise exception 'Reference collision: unrelated parent must never be adopted';
+    end if;
     if parent.booking_type <> 'hotel'
        or parent.user_id is distinct from incoming.user_id
        or parent.total_amount is distinct from incoming.total_amount
