@@ -1,0 +1,307 @@
+-- STAGING ONLY, UNEXECUTED candidate. Never automatically discover in a runner.
+-- Requires committed 0034a and separately reviewed 0011 session prerequisites.
+begin;
+do $$
+begin
+ if current_setting('fnf.staging_review', true) is distinct from 'HOTEL-PAYU-STAGING-V1' then
+  raise exception 'Explicit staging review acknowledgement required';
+ end if;
+ if to_regclass('public.hotel_bookings') is not null
+    or to_regclass('public.hotel_booking_events') is not null
+    or to_regclass('public.hotel_certification_runs') is not null then
+  raise exception 'Expected absent Hotel lifecycle tables; reconcile rather than overwrite';
+ end if;
+ if to_regclass('public.hotel_review_sessions') is null then
+  raise exception 'Durable Hotel Review sessions must be reviewed and installed first';
+ end if;
+ if not exists (select 1 from pg_catalog.pg_constraint c
+   join pg_catalog.pg_attribute a on a.attrelid=c.conrelid and a.attnum=any(c.conkey)
+   where c.conrelid='public.payments'::regclass and c.contype='f'
+   and c.confrelid='public.bookings'::regclass and a.attname='booking_id') then
+  raise exception 'Parent payments FK required';
+ end if;
+end $$;
+alter table public.payments
+ add column if not exists txnid text,
+ add column if not exists provider_mihpayid text,
+ add column if not exists verified_at timestamptz,
+ add column if not exists verification_source text,
+ add column if not exists raw_status text;
+create unique index hotel_staging_payu_txnid_idx on public.payments(txnid) where txnid is not null;
+create unique index hotel_staging_payu_mihpayid_idx on public.payments(provider_mihpayid) where provider_mihpayid is not null;
+create unique index hotel_staging_one_live_payu_idx on public.payments(booking_id)
+ where provider='payu' and status in ('created','pending','captured');
+create table public.hotel_bookings (
+  id                         uuid primary key default gen_random_uuid(),
+  booking_id                 uuid not null unique references public.bookings(id) on delete restrict,
+  booking_reference          text not null unique,
+  review_token               text not null unique,       -- one booking per review session
+  user_id                    uuid,
+  guest_token_hash           text,
+
+  status                     text not null default 'DRAFT' check (status in (
+    'DRAFT','REVIEWED','BOOKING_IN_PROGRESS','CONFIRMED','ON_HOLD','CONFIRMING',
+    'FAILED','ABORTED','CANCELLATION_REQUESTED','CANCELLATION_PENDING','CANCELLED')),
+  previous_status            text,
+  mode                       text check (mode in ('instant','hold')),
+  idempotency_key            text,
+
+  -- Provider-only handles (never returned to the browser).
+  provider_search_id         text,
+  provider_hotel_id          text not null,
+  provider_option_id         text not null,
+  provider_booking_id        text,
+  provider_status            text,
+
+  nationality                text,
+  currency                   text not null default 'INR',
+  total_amount               numeric(12,2) not null,      -- authoritative (Review)
+  provider_order_amount      numeric(12,2),
+
+  hotel                      jsonb not null default '{}'::jsonb,
+  room                       jsonb not null default '{}'::jsonb,
+  stay                       jsonb not null default '{}'::jsonb,
+  requirements               jsonb not null default '{}'::jsonb,
+  guests                     jsonb not null default '[]'::jsonb,
+  contact                    jsonb not null default '{}'::jsonb,
+  special_requests           text,
+
+  hold_deadline              timestamptz,
+  hotel_confirmation_number  text,
+  cancellation               jsonb,
+  status_message             text,
+
+  booked_at                  timestamptz,
+  last_checked_at            timestamptz,
+  confirmed_at               timestamptz,
+  cancelled_at               timestamptz,
+  created_at                 timestamptz not null default now(),
+  updated_at                 timestamptz not null default now()
+);
+grant all on public.hotel_bookings to service_role;
+alter table public.hotel_bookings enable row level security;
+
+
+create unique index hotel_bookings_idem_idx
+  on public.hotel_bookings (idempotency_key) where idempotency_key is not null;
+create index hotel_bookings_user_idx on public.hotel_bookings (user_id);
+create index hotel_bookings_status_idx on public.hotel_bookings (status);
+
+create table public.hotel_booking_events (
+  id            uuid primary key default gen_random_uuid(),
+  booking_id    uuid not null references public.hotel_bookings(id) on delete cascade,
+  from_status   text,
+  to_status     text not null,
+  event         text not null,
+  meta          jsonb not null default '{}'::jsonb,   -- sanitised; no PII / secrets
+  created_at    timestamptz not null default now()
+);
+grant all on public.hotel_booking_events to service_role;
+alter table public.hotel_booking_events enable row level security;
+
+create index hotel_booking_events_booking_idx on public.hotel_booking_events (booking_id, created_at);
+
+create table public.hotel_certification_runs (
+  id                   uuid primary key default gen_random_uuid(),
+  case_code            text not null,
+  booking_reference    text,
+  request_summary      jsonb not null default '{}'::jsonb,   -- field names/types only
+  response_summary     jsonb not null default '{}'::jsonb,   -- sanitised
+  provider_booking_id  text,            -- needed for TripJack certification submission
+  confirmation_number  text,            -- as returned by TripJack; never invented
+  final_status         text,
+  cancellation_status  text,
+  notes                text,
+  evidence             jsonb not null default '{}'::jsonb,
+  recorded_at          timestamptz not null default now()
+);
+grant all on public.hotel_certification_runs to service_role;
+alter table public.hotel_certification_runs enable row level security;
+
+create index hotel_certification_runs_case_idx on public.hotel_certification_runs (case_code, recorded_at);
+
+grant all on public.hotel_bookings to service_role;
+grant all on public.hotel_booking_events to service_role;
+grant all on public.hotel_certification_runs to service_role;
+
+alter table public.hotel_bookings enable row level security;
+alter table public.hotel_booking_events enable row level security;
+alter table public.hotel_certification_runs enable row level security;
+-- No anon/authenticated policies on purpose.
+
+create table public.hotel_payu_staging_jobs (
+ id uuid primary key default gen_random_uuid(),
+ payment_id uuid not null unique references public.payments(id) on delete restrict,
+ subject_type text not null default 'hotel' check(subject_type='hotel'),
+ subject_ref text not null,
+ status text not null default 'manual_review' check(status='manual_review'),
+ attempts integer not null default 0 check(attempts=0),
+ created_at timestamptz not null default now()
+);
+grant all on public.hotel_payu_staging_jobs to service_role;
+alter table public.hotel_payu_staging_jobs enable row level security;
+-- No worker is installed or allowed to claim these jobs.
+create function public.hotel_create_linked_draft(p_draft jsonb)
+returns setof public.hotel_bookings
+language plpgsql security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  incoming public.hotel_bookings%rowtype;
+  existing public.hotel_bookings%rowtype;
+  parent public.bookings%rowtype;
+  review public.hotel_review_sessions%rowtype;
+begin
+  incoming := jsonb_populate_record(null::public.hotel_bookings, p_draft);
+  if incoming.review_token is null or incoming.review_token = ''
+     or incoming.booking_reference is null
+     or incoming.booking_reference !~ '^FF-[0-9A-Z]{8}$'
+     or incoming.status is distinct from 'DRAFT'
+     or incoming.booking_id is not null
+     or num_nonnulls(incoming.user_id, incoming.guest_token_hash) <> 1
+     or incoming.guest_token_hash = ''
+     or incoming.total_amount is null or incoming.total_amount <= 0
+     or incoming.total_amount::text in ('NaN', 'Infinity', '-Infinity')
+     or incoming.currency is null or incoming.currency !~ '^[A-Z]{3}$'
+     or coalesce(incoming.contact->>'email', '') = ''
+     or coalesce(incoming.contact->>'phone', '') = '' then
+    raise exception 'Invalid Hotel draft linkage';
+  end if;
+
+  -- Serialize retries for the same Review, even before the first row exists.
+  perform pg_advisory_xact_lock(hashtextextended(incoming.review_token, 0));
+  select * into review from public.hotel_review_sessions
+    where review_token=incoming.review_token for update;
+  if not found or review.expires_at <= now()
+     or review.status::text not in ('reviewed','price_changed','guests_submitted')
+     or review.user_id is distinct from incoming.user_id
+     or review.guest_token_hash is distinct from incoming.guest_token_hash
+     or review.total_amount is distinct from incoming.total_amount
+     or review.currency::text is distinct from incoming.currency
+     or review.provider_hotel_id is distinct from incoming.provider_hotel_id
+     or review.provider_option_id is distinct from incoming.provider_option_id
+     or (review.status::text='price_changed' and review.price_accepted_at is null) then
+    raise exception 'Durable Review evidence mismatch or expired';
+  end if;
+  select * into existing from public.hotel_bookings
+    where review_token = incoming.review_token for update;
+  if found then
+    -- Never mutate owner, accepted price, contact or guest data on a retry.
+    if existing.user_id is distinct from incoming.user_id
+       or existing.guest_token_hash is distinct from incoming.guest_token_hash
+       or existing.total_amount is distinct from incoming.total_amount
+       or existing.currency is distinct from incoming.currency
+       or existing.contact is distinct from incoming.contact
+       or existing.guests is distinct from incoming.guests
+       or existing.special_requests is distinct from incoming.special_requests
+       or existing.nationality is distinct from incoming.nationality
+       or existing.hotel is distinct from incoming.hotel
+       or existing.room is distinct from incoming.room
+       or existing.stay is distinct from incoming.stay
+       or existing.requirements is distinct from incoming.requirements
+       or existing.provider_hotel_id is distinct from incoming.provider_hotel_id
+       or existing.provider_option_id is distinct from incoming.provider_option_id then
+      raise exception 'Hotel draft retry does not match persisted evidence';
+    end if;
+    incoming := existing;
+    if incoming.booking_id is null and incoming.status <> 'DRAFT' then
+      raise exception 'Legacy non-draft Hotel requires manual reconciliation';
+    end if;
+  end if;
+
+  select * into parent from public.bookings
+    where booking_reference = incoming.booking_reference for update;
+  if found then
+    if existing.id is null then
+      raise exception 'Reference collision: unrelated parent must never be adopted';
+    end if;
+    if parent.booking_type <> 'hotel'
+       or parent.user_id is distinct from incoming.user_id
+       or parent.total_amount is distinct from incoming.total_amount
+       or parent.currency::text is distinct from incoming.currency
+       or parent.contact_email::text is distinct from lower(incoming.contact->>'email')
+       or parent.contact_phone is distinct from incoming.contact->>'phone'
+       or (incoming.booking_id is not null and incoming.booking_id <> parent.id)
+       or (incoming.booking_id is null and parent.status <> 'pending') then
+      raise exception 'Hotel parent identity or amount mismatch';
+    end if;
+  else
+    if incoming.booking_id is not null then
+      raise exception 'Hotel parent link is inconsistent';
+    end if;
+    insert into public.bookings (
+      booking_reference, booking_type, status, user_id,
+      total_amount, currency, contact_email, contact_phone
+    ) values (
+      incoming.booking_reference, 'hotel', 'pending', incoming.user_id,
+      incoming.total_amount, incoming.currency,
+      lower(incoming.contact->>'email'), incoming.contact->>'phone'
+    ) returning * into parent;
+  end if;
+
+  if existing.id is not null then
+    update public.hotel_bookings set booking_id = parent.id
+      where id = existing.id and booking_id is null;
+  else
+    insert into public.hotel_bookings (
+      booking_id, booking_reference, review_token, user_id, guest_token_hash,
+      status, provider_search_id, provider_hotel_id, provider_option_id,
+      nationality, currency, total_amount, hotel, room, stay, requirements,
+      guests, contact, special_requests
+    ) values (
+      parent.id, incoming.booking_reference, incoming.review_token,
+      incoming.user_id, incoming.guest_token_hash, 'DRAFT',
+      incoming.provider_search_id, incoming.provider_hotel_id, incoming.provider_option_id,
+      incoming.nationality, incoming.currency, incoming.total_amount,
+      incoming.hotel, incoming.room, incoming.stay, incoming.requirements,
+      incoming.guests, incoming.contact, incoming.special_requests
+    );
+  end if;
+  update public.hotel_review_sessions set booking_reference=incoming.booking_reference,
+    contact_email=lower(incoming.contact->>'email'), guest_count=jsonb_array_length(incoming.guests),
+    status='guests_submitted' where id=review.id;
+  return query select * from public.hotel_bookings where review_token = incoming.review_token;
+end $$;
+
+revoke all on function public.hotel_create_linked_draft(jsonb) from public, anon, authenticated;
+grant execute on function public.hotel_create_linked_draft(jsonb) to service_role;
+
+create function public.hotel_payu_capture_staging_v1(
+ p_payment_id uuid, p_expected text[], p_mihpayid text, p_source text, p_raw_status text
+) returns boolean language plpgsql security definer
+set search_path=pg_catalog, public, pg_temp as $$
+declare
+ p public.payments%rowtype;
+ b public.bookings%rowtype;
+ h public.hotel_bookings%rowtype;
+begin
+ select * into p from public.payments where id=p_payment_id for update;
+ if not found or p.provider::text<>'payu' or p.txnid is null
+    or coalesce(p_mihpayid,'')='' or p_source not in ('return','webhook','reconcile')
+    or p_raw_status is distinct from 'success' then return false; end if;
+ select * into b from public.bookings where id=p.booking_id for update;
+ if not found or b.booking_type::text<>'hotel' then return false; end if;
+ select * into h from public.hotel_bookings where booking_id=b.id for update;
+ if not found or h.status<>'DRAFT' or h.booking_reference<>b.booking_reference
+    or h.user_id is distinct from b.user_id
+    or num_nonnulls(h.user_id,h.guest_token_hash)<>1
+    or p.amount<>b.total_amount or h.total_amount<>b.total_amount
+    or p.currency<>b.currency or h.currency<>b.currency::text then return false; end if;
+ if p.status::text='captured' then
+   return exists(select 1 from public.hotel_payu_staging_jobs where payment_id=p.id)
+          and p.provider_mihpayid=p_mihpayid;
+ end if;
+ if not(p.status::text=any(p_expected)) or b.status::text not in ('pending','payment_pending') then
+   return false;
+ end if;
+ -- Caller is trusted server only, after reverse hash + verify_payment equality.
+ update public.payments set status='captured', provider_payment_id=p_mihpayid,
+   provider_mihpayid=p_mihpayid, verified_at=now(), verification_source=p_source,
+   raw_status=p_raw_status where id=p.id;
+ update public.bookings set status='payment_processing' where id=b.id;
+ insert into public.hotel_payu_staging_jobs(payment_id,subject_ref) values(p.id,b.booking_reference);
+ return true;
+end $$;
+revoke all on function public.hotel_payu_capture_staging_v1(uuid,text[],text,text,text) from public,anon,authenticated;
+grant execute on function public.hotel_payu_capture_staging_v1(uuid,text[],text,text,text) to service_role;
+commit;

@@ -1,0 +1,5 @@
+-- STAGING ONLY. Quarantined; explicitly commit before 0034b.
+-- Not a claim about applied migration history. Do not run on production.
+begin;
+alter type public.provider_code add value if not exists 'payu';
+commit;

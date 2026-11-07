@@ -1,0 +1,166 @@
+--- a/app/repositories/payments.py
++++ b/app/repositories/payments.py
+@@ -12,6 +12,7 @@
+ from __future__ import annotations
+ 
+ from typing import Any, Optional
++from decimal import Decimal
+ 
+ from app.core.config import Settings
+ from app.repositories.supabase_rest import SupabaseRest
+@@ -21,7 +22,7 @@
+ HOTEL_BOOKINGS = "hotel_bookings"
+ REFUNDS = "payment_refunds"
+ WEBHOOKS = "payment_webhook_events"
+-JOBS = "payment_fulfilment_jobs"
++JOBS = "hotel_payu_staging_jobs"
+ EVENTS = "booking_events"
+ 
+ LIVE = "in.(created,pending,captured)"
+@@ -57,29 +58,50 @@
+         self._db = SupabaseRest(settings)
+ 
+     # ---- subjects -----------------------------------------------------------
++    async def _parent_subject(self, parent: dict[str, Any]) -> Optional[dict[str, Any]]:
++        if parent.get("booking_type") == "flight":
++            return _flight(parent)
++        if parent.get("booking_type") != "hotel":
++            return None
++        rows = await self._db.select(HOTEL_BOOKINGS,
++                                     filters={"booking_id": f"eq.{parent['id']}"})
++        if len(rows) != 1:
++            return None
++        hotel = rows[0]
++        if (hotel.get("booking_reference") != parent.get("booking_reference")
++                or hotel.get("user_id") != parent.get("user_id")
++                or str(hotel.get("currency", "")).strip() != str(parent.get("currency", "")).strip()
++                or Decimal(str(hotel["total_amount"])) != Decimal(str(parent["total_amount"]))
++                or (hotel.get("contact") or {}).get("email", "").lower() != str(parent.get("contact_email") or "").lower()
++                or (hotel.get("contact") or {}).get("phone") != parent.get("contact_phone")
++                or parent.get("status") not in ("pending", "payment_pending", "payment_processing")):
++            return None
++        subject = _hotel(hotel)
++        subject["hotel_id"] = subject["id"]
++        subject["id"] = str(parent["id"])
++        return subject
++
+     async def subject_by_reference(self, ref: str) -> Optional[dict[str, Any]]:
+-        kind = subject_kind(ref)
+-        if kind == "flight":
+-            rows = await self._db.select(BOOKINGS, filters={"booking_reference": f"eq.{ref}"})
+-            return _flight(rows[0]) if rows else None
+-        if kind == "hotel":
+-            rows = await self._db.select(HOTEL_BOOKINGS, filters={"booking_reference": f"eq.{ref}"})
+-            return _hotel(rows[0]) if rows else None
++        rows = await self._db.select(BOOKINGS, filters={"booking_reference": f"eq.{ref}"})
++        if rows:
++            return await self._parent_subject(rows[0])
++        # Legacy reference remains lookup-only; authorization still requires the token/owner.
++        if ref.startswith("FNFH"):
++            hotels = await self._db.select(HOTEL_BOOKINGS, filters={"booking_reference": f"eq.{ref}"})
++            if len(hotels) == 1 and hotels[0].get("booking_id"):
++                parents = await self._db.select(BOOKINGS, filters={"id": f"eq.{hotels[0]['booking_id']}"})
++                return await self._parent_subject(parents[0]) if parents else None
+         return None
+ 
+     async def subject_for_payment(self, payment: dict[str, Any]) -> Optional[dict[str, Any]]:
+-        if payment.get("booking_id"):
+-            rows = await self._db.select(BOOKINGS, filters={"id": f"eq.{payment['booking_id']}"})
+-            return _flight(rows[0]) if rows else None
+-        if payment.get("hotel_booking_id"):
+-            rows = await self._db.select(HOTEL_BOOKINGS, filters={"id": f"eq.{payment['hotel_booking_id']}"})
+-            return _hotel(rows[0]) if rows else None
+-        return None
++        if not payment.get("booking_id"):
++            return None
++        rows = await self._db.select(BOOKINGS, filters={"id": f"eq.{payment['booking_id']}"})
++        return await self._parent_subject(rows[0]) if rows else None
+ 
+     @staticmethod
+     def _subject_filter(subject: dict[str, Any]) -> dict[str, str]:
+-        col = "booking_id" if subject["kind"] == "flight" else "hotel_booking_id"
+-        return {col: f"eq.{subject['id']}"}
++        return {"booking_id": f"eq.{subject['id']}"}
+ 
+     # ---- payments -----------------------------------------------------------
+     async def open_payment_for(self, subject: dict[str, Any]) -> Optional[dict[str, Any]]:
+@@ -104,7 +126,7 @@
+ 
+     async def create_payment(self, subject: dict[str, Any], values: dict[str, Any]) -> Optional[dict[str, Any]]:
+         """None when the one-live-payment unique index rejected a concurrent insert."""
+-        col = "booking_id" if subject["kind"] == "flight" else "hotel_booking_id"
++        col = "booking_id"
+         try:
+             rows = await self._db.insert(PAYMENTS, {**values, col: subject["id"]})
+         except Exception:  # unique violation: another request created it first
+@@ -120,10 +142,10 @@
+ 
+     async def capture(self, payment_id: str, expected: tuple[str, ...], *, mihpayid: str,
+                       source: str, raw_status: str) -> bool:
+-        res = await self._db.rpc("payu_capture", {
++        res = await self._db.rpc("hotel_payu_capture_staging_v1", {
+             "p_payment_id": payment_id, "p_expected": list(expected), "p_mihpayid": mihpayid,
+             "p_source": source, "p_raw_status": raw_status})
+-        return bool(res)
++        return res is True or (isinstance(res, list) and res == [True])
+ 
+     async def set_flight_status(self, booking_id: str, expected: tuple[str, ...], status: str) -> bool:
+         rows = await self._db.update(
+--- a/app/services/hotel_booking.py
++++ b/app/services/hotel_booking.py
+@@ -336,6 +336,8 @@
+ 
+ 
+ def _default_provider(settings: Settings) -> Provider:
++    # Review-only staging candidate: no Hotel provider operation is installed.
++    raise HotelBookingUnavailableError()
+     from app.services.hotel_search import _provider as hms_provider  # reuse guards
+ 
+     hms_client, _ = hms_provider(settings)
+@@ -354,8 +356,8 @@
+ def _payment_gate(settings: Settings, *, payment_verified: bool) -> None:
+     """INSTANT book and hold CONFIRM debit the TripJack wallet. In production that
+     must follow a verified customer payment, which is not implemented yet."""
+-    if settings.is_production and not payment_verified:
+-        raise HotelPaymentRequiredError()
++    # A caller boolean is never proof of captured money. Paid port is uninstalled.
++    raise HotelPaymentRequiredError()
+ 
+ 
+ # ------------------------------------------------------------------- draft --
+--- a/app/services/hotel_sessions.py
++++ b/app/services/hotel_sessions.py
+@@ -57,7 +57,7 @@
+ 
+ def new_booking_reference() -> str:
+     """Draft reference. Human-readable, no user data encoded in it."""
+-    return "FNFH" + secrets.token_hex(3).upper()
++    return "FF-" + "".join(secrets.choice("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(8))
+ 
+ 
+ def _now() -> datetime:
+--- a/app/services/payments.py
++++ b/app/services/payments.py
+@@ -268,7 +268,8 @@
+         return Outcome(ref, kind, "pending")
+ 
+     expected_amount = to_amount(payment["amount"])
+-    if verified.status == "success" and verified.amount == expected_amount and verified.mihpayid:
++    if (verified.status == "success" and verified.txnid == txnid
++            and verified.amount == expected_amount and verified.mihpayid):
+         expected = OPEN
+         if payment["status"] == "failed":
+             other = await repo.open_payment_for(subject) if subject else None
+@@ -283,7 +284,11 @@
+         if won:
+             await repo.record_event(subject, "payment_succeeded",
+                                     f"PayU payment verified via {source}.", "payment_processing")
+-        return Outcome(ref, kind, "captured")
++        durable = await repo.payment_by_id(payment["id"])
++        job = await repo.job_for_payment(payment["id"])
++        captured = bool(durable and durable.get("status") in ("captured", "partially_refunded", "refunded")
++                        and job and job.get("subject_type") == "hotel" and job.get("subject_ref") == ref)
++        return Outcome(ref, kind, "captured" if captured else "pending")
+ 
+     if verified.status == "success":  # amount mismatch: never capture, flag for staff
+         await repo.transition(payment["id"], OPEN, {"status": "pending", "raw_status": "amount_mismatch"})
