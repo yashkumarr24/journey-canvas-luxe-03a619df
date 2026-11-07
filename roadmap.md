@@ -1,5 +1,10 @@
 # Roadmap
 
+## Staging-only Hotel/PayU schema reconciliation (verified VPS baseline)
+- [ ] Prepare isolated code diff and unapplied SQL candidates: missing Hotel tables, parent-only payment FK, missing PayU enum/columns, no parent guest hash, FF reference format.
+- [ ] Document migration reconciliation, private guest ownership, atomic verification/outbox, staging apply checks and rollback; no SQL, secrets, external calls or deployment.
+- [ ] Staging SQL/runtime/concurrency and provider verification await separate authorization and full catalog prerequisites; production remains unchanged.
+
 ## Hotel-to-PayU record linkage
 - [x] Restore server Review guest-hash persistence/comparison on the quarantined parent candidate for the user-confirmed VPS PayU 0023 contract; no reference/email authorization.
 - [x] Reconcile against user-confirmed VPS payments.booking_id -> bookings and applied 0031/0032; quarantine 0033 and deliver a parent-only capture candidate diff/plan.
