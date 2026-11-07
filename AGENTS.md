@@ -1,6 +1,6 @@
 # Project architecture rules
 
-- Optional pre-book Fare Validate uses an isolated VPS service/client and the existing booking API client; unresolved provider updated-detail mappings fail closed before traveller capture/payment so no stale Review fare is accepted.
+- Optional pre-book Fare Validate is excluded; Flight Booking candidates use server-owned Review evidence and pure documented request builders with unconditional execution refusal until separately authorized, preventing unfinished validation or paid/held bookings from shipping.
 
 - Flight Review resolves the selected fare's stored plural price references, retains provider bookingId privately and conditions in the existing session snapshot, and gates all FAREALERT/amount changes on existing consent; map literal documented condition booleans to separate passport, PAN, document-ID and per-pax DOB requirements, preserving unknown fields without aliases or geography inference so distinct documents cannot be conflated; never construct multi-city combinations.
 

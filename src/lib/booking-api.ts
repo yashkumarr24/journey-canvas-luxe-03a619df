@@ -22,7 +22,6 @@ import type {
   FlightFareRuleRequest,
   FlightFareRules,
   FlightReviewResponse,
-  FlightFareValidateResponse,
   FlightSearchRequest,
   FlightSearchResponse,
   FlightSeatMapResponse,
@@ -448,10 +447,6 @@ export const bookingApi = {
   /** Submit traveller + contact details and create a draft booking. */
   submitTravellers: (payload: TravellerDetailsRequest, options?: RequestOptions) =>
     request<TravellerDetailsResponse>("POST", "/api/v1/flights/travellers", payload, options),
-
-  /** Optional pre-book validation only; never Book, Hold validation or payment. */
-  flightFareValidate: (payload: Omit<TravellerDetailsRequest, "idempotencyKey">, options?: RequestOptions) =>
-    request<FlightFareValidateResponse>("POST", "/api/v1/flights/book/fare-validate", payload, options),
 
   /* --- Checkout / payment (PHASE 8) ----------------------------------- */
 

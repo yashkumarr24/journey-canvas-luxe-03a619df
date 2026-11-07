@@ -33,7 +33,6 @@ export interface TravellerFormProps {
   submitting: boolean;
   /** Present when Review requires explicit acknowledgement of the updated fare. */
   priceChangeNotice?: string;
-  submitLabel?: string;
   disabled?: boolean;
   onSubmit: (values: { travellers: TravellerInput[]; contact: ContactInput; acceptPriceChange: boolean }) => void;
 }
@@ -71,7 +70,6 @@ export function TravellerForm({
   requirements,
   submitting,
   priceChangeNotice,
-  submitLabel,
   disabled = false,
   onSubmit,
 }: TravellerFormProps) {
@@ -126,6 +124,7 @@ export function TravellerForm({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (disabled || submitting) return;
     const found = validate();
     setErrors(found);
     if (found.length > 0) return;
@@ -357,10 +356,10 @@ export function TravellerForm({
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" size="lg" disabled={disabled || submitting || Boolean(priceChangeNotice && !accepted)}>
-          {submitting ? (submitLabel ? "Checking fare…" : "Saving details…") : (submitLabel ?? "Continue to payment")}
+          {disabled ? "Booking unavailable" : submitting ? "Saving details…" : "Continue to payment"}
         </Button>
         <p className="text-xs text-muted-foreground">
-          {submitLabel ? "No booking, seat hold or payment is made." : "No payment is taken yet — you'll review the total on the next step."}
+          {disabled ? "No booking, seat hold or payment is made." : "No payment is taken yet — you'll review the total on the next step."}
         </p>
       </div>
     </form>
