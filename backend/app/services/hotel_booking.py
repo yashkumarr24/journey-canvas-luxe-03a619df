@@ -351,15 +351,53 @@ def _default_provider(settings: Settings) -> Provider:
 provider_factory: Callable[[Settings], Provider] = _default_provider
 
 
-def _production_actions_gate(settings: Settings) -> None:
-    """Book / Confirm debit the TripJack wallet. They run only on the UAT Hotel
-    pair: no server-side PayU verification currently reaches these routes
-    (they pass payment_verified=False and the fulfilment hotel port is not
-    installed), so production stays fail-closed."""
-    from app.integrations.tripjack.config import HOTEL_ENV_UAT, hotel_environment
-    if hotel_environment(settings) != HOTEL_ENV_UAT:
-        logger.error("tripjack_hotel_production_booking_actions_disabled")
-        raise HotelBookingUnavailableError()
+@dataclass(frozen=True)
+class VerifiedHotelPayment:
+    """Server-side proof built only by the VPS PayU adapter from database rows.
+
+    Browser routes never construct this; a plain boolean cannot stand in for it.
+    """
+    payment_id: str
+    hotel_booking_id: str
+    reference: str
+    amount: Decimal
+    currency: str
+
+
+def _verified_matches(b: "HotelBooking", proof: Optional[VerifiedHotelPayment]) -> bool:
+    if not isinstance(proof, VerifiedHotelPayment):
+        return False
+    try:
+        total = Decimal(str(b.total_amount)).quantize(Decimal("0.01"))
+    except (InvalidOperation, ValueError, TypeError):
+        return False
+    return bool(
+        proof.payment_id and str(proof.hotel_booking_id) == str(b.row_id)
+        and proof.reference == b.booking_reference
+        and proof.currency == b.currency == "INR" and proof.amount == total
+    )
+
+
+def _production_actions_gate(settings: Settings, *, b: Optional["HotelBooking"] = None,
+                             mode: Optional[str] = None,
+                             verified_payment: Optional[VerifiedHotelPayment] = None) -> None:
+    """Book / Confirm debit the TripJack wallet. On the UAT Hotel pair they run
+    as before. On the confirmed production pair only an INSTANT Book carrying
+    database-verified PayU capture proof for this exact Hotel row may proceed,
+    and only with HOTEL_PRODUCTION_FULFILMENT_ENABLED; browser routes, holds and
+    hold confirmation stay refused."""
+    from app.integrations.tripjack.config import (
+        HOTEL_ENV_PRODUCTION, HOTEL_ENV_UAT, hotel_environment)
+    env = hotel_environment(settings)
+    if env == HOTEL_ENV_UAT:
+        return
+    if (env == HOTEL_ENV_PRODUCTION and mode == "instant" and b is not None
+            and settings.is_production
+            and getattr(settings, "hotel_production_fulfilment_enabled", False) is True
+            and _verified_matches(b, verified_payment)):
+        return
+    logger.error("tripjack_hotel_production_booking_actions_disabled")
+    raise HotelBookingUnavailableError()
 
 
 def _cancel_gate(settings: Settings) -> None:
@@ -372,10 +410,11 @@ def _cancel_gate(settings: Settings) -> None:
         raise HotelBookingUnavailableError()
 
 
-def _payment_gate(settings: Settings, *, payment_verified: bool) -> None:
+def _payment_gate(settings: Settings, *, payment_verified: bool, b: Optional["HotelBooking"] = None,
+                  verified_payment: Optional[VerifiedHotelPayment] = None) -> None:
     """INSTANT book and hold CONFIRM debit the TripJack wallet. In production that
-    must follow a verified customer payment, which is not implemented yet."""
-    if settings.is_production and not payment_verified:
+    must follow a database-verified PayU capture for this exact Hotel row."""
+    if settings.is_production and not (b is not None and _verified_matches(b, verified_payment)):
         raise HotelPaymentRequiredError()
 
 
@@ -583,7 +622,7 @@ async def book(
 ) -> HotelBooking:
     if mode not in ("instant", "hold"):
         raise HotelBookingValidationError()
-    _production_actions_gate(settings)
+    _production_actions_gate(settings, b=b, mode=mode, verified_payment=verified_payment)
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
 
@@ -596,6 +635,7 @@ async def _book_loaded(
     *, settings: Settings, store: BookingStore, b: HotelBooking, mode: str,
     idempotency_key: Optional[str], payment_verified: bool = False,
     gst_info: Optional[dict] = None,
+    verified_payment: Optional[VerifiedHotelPayment] = None,
 ) -> HotelBooking:
     """Existing lifecycle, entered only after browser ownership or DB payment checks."""
     if mode not in ("instant", "hold"):
@@ -608,7 +648,8 @@ async def _book_loaded(
             return b
         raise HotelBookingDuplicateError()
     if mode == "instant":
-        _payment_gate(settings, payment_verified=payment_verified)
+        _payment_gate(settings, payment_verified=payment_verified, b=b,
+                      verified_payment=verified_payment)
 
     if not await store.transition(b, REVIEWED, "prebook_review_started",
                                   mode=mode, idempotency_key=idempotency_key):
