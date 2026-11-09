@@ -623,7 +623,7 @@ async def book(
 ) -> HotelBooking:
     if mode not in ("instant", "hold"):
         raise HotelBookingValidationError()
-    _production_actions_gate(settings, b=b, mode=mode, verified_payment=verified_payment)
+    _production_actions_gate(settings)  # browser route: never carries payment proof
     store = BookingStore(settings)
     b = await _load_owned(store, reference, user_id, guest_token)
 
@@ -641,7 +641,7 @@ async def _book_loaded(
     """Existing lifecycle, entered only after browser ownership or DB payment checks."""
     if mode not in ("instant", "hold"):
         raise HotelBookingValidationError()
-    _production_actions_gate(settings)
+    _production_actions_gate(settings, b=b, mode=mode, verified_payment=verified_payment)
 
     # Idempotent replay: same key returns the existing attempt, never re-books.
     if b.status != DRAFT:
