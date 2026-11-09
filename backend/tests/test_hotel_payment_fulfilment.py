@@ -185,3 +185,140 @@ def test_worker_database_check_to_existing_wire_flow_timeout_no_rebook(monkeypat
     job["attempts"] = 2
     assert asyncio.run(fulfil._run_hotel(job, port))[0] == "uncertain"
     assert booker.post.await_count == 1
+
+# ---------------------------------------------------------------- production --
+
+PROD = dict(is_production=True, payu_env="production", payu_production_approved=True,
+            hotel_production_fulfilment_enabled=True, tripjack_api_key="flight-uat-only",
+            tripjack_hotel_api_key="hotel-prod-only",
+            tripjack_base_url="https://apitest.tripjack.com",
+            tripjack_hotel_base_url="https://hms-search.tripjack.com",
+            tripjack_hotel_booker_url="https://hms-booker.tripjack.com")
+
+
+def prod_fixture(monkeypatch, **changes):
+    port, p, subject, b = fixture(monkeypatch)
+    for key, value in {**PROD, **changes}.items():
+        setattr(port.settings, key, value)
+    return port, p, subject, b
+
+
+def test_production_hosts_use_hotel_key_and_flight_stays_uat(monkeypatch):
+    from app.integrations.tripjack.config import (
+        build_config, build_hotel_booker_config, build_hotel_config)
+    port, *_ = prod_fixture(monkeypatch)
+    assert port.available
+    hms, oms = build_hotel_config(port.settings), build_hotel_booker_config(port.settings)
+    assert (hms.base_url, hms.api_key) == ("https://hms-search.tripjack.com", "hotel-prod-only")
+    assert (oms.base_url, oms.api_key) == ("https://hms-booker.tripjack.com", "hotel-prod-only")
+    flight = build_config(port.settings)
+    assert (flight.base_url, flight.api_key) == ("https://apitest.tripjack.com", "flight-uat-only")
+
+
+@pytest.mark.parametrize("changes", [
+    dict(hotel_production_fulfilment_enabled=False), dict(payment_fulfilment_enabled=False),
+    dict(payments_enabled=False), dict(payu_env="test"), dict(payu_production_approved=False),
+    dict(is_production=False), dict(tripjack_hotel_api_key=""),
+    dict(tripjack_hotel_booker_url="https://apitest-hotel-booker.tripjack.com"),
+    dict(tripjack_hotel_base_url="https://hms-booker.tripjack.com"),
+    dict(tripjack_hotel_booker_url="https://hms-booker.tripjack.com.evil.test"),
+    dict(tripjack_hotel_base_url="http://hms-search.tripjack.com"),
+])
+def test_production_requires_every_gate(monkeypatch, changes):
+    port, *_ = prod_fixture(monkeypatch, **changes)
+    repo = SimpleNamespace(claim_jobs=AsyncMock())
+    assert asyncio.run(fulfil.run_once(repo, port.settings, hotel=port)) == []
+    repo.claim_jobs.assert_not_awaited()
+
+
+def test_flag_defaults_are_off():
+    s = Settings(_env_file=None)
+    assert s.payments_enabled is False and s.payment_fulfilment_enabled is False
+    assert s.hotel_production_fulfilment_enabled is False and s.payu_production_approved is False
+
+
+def test_production_book_passes_database_proof_not_boolean(monkeypatch):
+    port, p, subject, b = prod_fixture(monkeypatch)
+    loaded = AsyncMock(return_value=b)
+    monkeypatch.setattr(hb, "_book_loaded", loaded)
+    asyncio.run(port.book(b.booking_reference, "payu:p1"))
+    kw = loaded.await_args.kwargs
+    assert kw["payment_verified"] is False and kw["mode"] == "instant"
+    proof = kw["verified_payment"]
+    assert (proof.payment_id, proof.hotel_booking_id, proof.reference, str(proof.amount),
+            proof.currency) == ("p1", "hotel1", b.booking_reference, "4999.50", "INR")
+
+
+@pytest.mark.parametrize("field,value", [("status", "authorized"), ("amount", "4999.00"),
+    ("currency", "USD"), ("hotel_booking_id", "other"), ("user_id", "u2")])
+def test_production_mismatch_never_reaches_book(monkeypatch, field, value):
+    port, p, subject, b = prod_fixture(monkeypatch)
+    p[field] = value
+    loaded = AsyncMock()
+    monkeypatch.setattr(hb, "_book_loaded", loaded)
+    with pytest.raises(HotelPaymentMismatch):
+        asyncio.run(port.book(b.booking_reference, "payu:p1"))
+    loaded.assert_not_awaited()
+
+
+def test_lifecycle_gate_rejects_production_without_matching_proof(monkeypatch):
+    port, p, subject, b = prod_fixture(monkeypatch)
+    good = hb.VerifiedHotelPayment("p1", "hotel1", b.booking_reference,
+                                   hb.Decimal("4999.50"), "INR")
+    hb._production_actions_gate(port.settings, b=b, mode="instant", verified_payment=good)
+    hb._payment_gate(port.settings, payment_verified=False, b=b, verified_payment=good)
+    for bad, mode in [(None, "instant"), (good, "hold"),
+                      (hb.VerifiedHotelPayment("p1", "other", b.booking_reference, good.amount, "INR"), "instant"),
+                      (hb.VerifiedHotelPayment("p1", "hotel1", b.booking_reference, hb.Decimal("1.00"), "INR"), "instant"),
+                      (SimpleNamespace(**good.__dict__), "instant")]:
+        with pytest.raises(hb.HotelBookingUnavailableError):
+            hb._production_actions_gate(port.settings, b=b, mode=mode, verified_payment=bad)
+    # Browser route and hold confirmation never carry proof: refused in production.
+    with pytest.raises(hb.HotelBookingUnavailableError):
+        hb._production_actions_gate(port.settings)
+    with pytest.raises(hb.HotelPaymentRequiredError):
+        hb._payment_gate(port.settings, payment_verified=True)
+    port.settings.hotel_production_fulfilment_enabled = False
+    with pytest.raises(hb.HotelBookingUnavailableError):
+        hb._production_actions_gate(port.settings, b=b, mode="instant", verified_payment=good)
+
+
+def test_production_timeout_never_rebooks_and_hold_goes_to_manual_review(monkeypatch):
+    from app.integrations.tripjack import hotel_booking as wire
+    from app.integrations.tripjack.exceptions import TripJackTimeoutError
+
+    port, p, subject, b = prod_fixture(monkeypatch)
+    b.stay = {"rooms": [{"adults": 1}]}
+    b.guests = [dict(room_index=1, type="adult", title="Mr", first_name="Test", last_name="Guest")]
+    b.contact = dict(email="guest@example.test", phone="9876543210", dial_code="+91")
+
+    async def transition(record, target, event, **values):
+        if not hb.can_transition(record.status, target):
+            raise hb.HotelBookingStateError()
+        record.status = target
+        for key, value in values.items():
+            setattr(record, key, value)
+        return True
+
+    async def save(record, **values):
+        for key, value in values.items():
+            setattr(record, key, value)
+
+    port.store.transition, port.store.save = transition, save
+    booker = SimpleNamespace(post=AsyncMock(side_effect=TripJackTimeoutError()))
+    monkeypatch.setattr(hb, "provider_factory", lambda s: hb.Provider(None, booker))
+    monkeypatch.setattr(hb, "_fresh_review", AsyncMock(return_value=wire.FreshReview(
+        booking_id="private-provider", total=4999.50, onhold_allowed=False,
+        pan_required=False, passport_required=False, gst_type=None, hold_deadline=None)))
+    job = dict(subject_type="hotel", subject_ref=b.booking_reference, payment_id="p1", attempts=1)
+    assert asyncio.run(fulfil._run_hotel(job, port))[0] == "uncertain"
+    assert booker.post.await_args.args[1]["paymentInfos"] == [{"amount": 4999.50}]
+    b.last_checked_at = hb._iso(hb._now())
+    job["attempts"] = fulfil.MAX_UNCERTAIN_ATTEMPTS
+    repo = SimpleNamespace(claim_jobs=AsyncMock(return_value=[dict(job, id="j1")]), update_job=AsyncMock())
+    assert asyncio.run(fulfil.run_once(repo, port.settings, hotel=port)) == ["manual_review"]
+    assert booker.post.await_count == 1
+    # A paid booking that only reached ON_HOLD is never auto-confirmed.
+    b.status = hb.ON_HOLD
+    assert asyncio.run(fulfil._run_hotel(dict(job, attempts=1), port))[0] == "manual_review"
+    assert booker.post.await_count == 1
