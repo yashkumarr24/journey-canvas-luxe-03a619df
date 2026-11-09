@@ -6,7 +6,7 @@ import secrets
 from decimal import Decimal, InvalidOperation
 
 from app.integrations.tripjack.config import (
-    HOTEL_ENV_UAT, build_hotel_config, build_hotel_booker_config, hotel_environment,
+    HOTEL_ENV_PRODUCTION, HOTEL_ENV_UAT, build_hotel_config, build_hotel_booker_config, hotel_environment,
 )
 from app.services import hotel_booking as hb
 from app.services import payments as pay
@@ -29,7 +29,9 @@ def _amount(value):
 class DatabaseHotelPort:
     """Captured DB state authorizes only its direct Hotel FK, never a parent.
 
-    Production is deliberately unavailable. Checkout's linked-draft RPC is a
+    UAT: PayU test + UAT Hotel pair. Production: PayU production (approved) +
+    the confirmed production Hotel pair + TRIPJACK_HOTEL_API_KEY + the
+    Hotel-only HOTEL_PRODUCTION_FULFILMENT_ENABLED flag. Checkout's linked-draft RPC is a
     separate prerequisite; this adapter neither creates drafts nor probes SQL.
     """
 
@@ -39,14 +41,21 @@ class DatabaseHotelPort:
 
     def allows(self, settings):
         # Hotel hosts are checked independently of Flight's UAT configuration.
-        return bool(
-            not settings.is_production and settings.payu_env == "test"
-            and pay.payments_allowed(settings) and settings.payment_fulfilment_enabled
-            and self.store.repo is not None
-            and hotel_environment(settings) == HOTEL_ENV_UAT
-            and build_hotel_config(settings).is_configured
-            and build_hotel_booker_config(settings).is_configured
-        )
+        if not (pay.payments_allowed(settings) and settings.payment_fulfilment_enabled is True
+                and self.store.repo is not None):
+            return False
+        env = hotel_environment(settings)
+        if env == HOTEL_ENV_UAT:
+            ok = not settings.is_production and settings.payu_env == "test"
+        elif env == HOTEL_ENV_PRODUCTION:
+            ok = (settings.is_production and settings.payu_env == "production"
+                  and settings.payu_production_approved is True
+                  and getattr(settings, "hotel_production_fulfilment_enabled", False) is True
+                  and bool(getattr(settings, "tripjack_hotel_api_key", "")))
+        else:
+            ok = False
+        return bool(ok and build_hotel_config(settings).is_configured
+                    and build_hotel_booker_config(settings).is_configured)
 
     @property
     def available(self):
@@ -60,7 +69,8 @@ class DatabaseHotelPort:
     async def authorize_job(self, job):
         if job.get("subject_type") != "hotel":
             raise HotelPaymentMismatch()
-        return await self._validated(job.get("payment_id"), job.get("subject_ref"))
+        b, _ = await self._validated(job.get("payment_id"), job.get("subject_ref"))
+        return b
 
     async def _validated(self, payment_id, reference):
         if not payment_id or not reference:
@@ -104,7 +114,9 @@ class DatabaseHotelPort:
                 or _amount(p.get("amount")) != _amount(subject.get("amount")) \
                 or _amount(p.get("amount")) != _amount(b.total_amount):
             raise HotelPaymentMismatch()
-        return b
+        return b, hb.VerifiedHotelPayment(
+            payment_id=str(p["id"]), hotel_booking_id=str(p["hotel_booking_id"]),
+            reference=reference, amount=_amount(p.get("amount")), currency=p["currency"])
 
     async def book(self, reference, idempotency_key):
         if not self.available:
@@ -113,14 +125,16 @@ class DatabaseHotelPort:
         if not idempotency_key.startswith(prefix):
             raise HotelPaymentMismatch()
         # Read payment and Hotel again immediately before the existing CAS flow.
-        b = await self._validated(idempotency_key[len(prefix):], reference)
+        b, proof = await self._validated(idempotency_key[len(prefix):], reference)
         if b.status != hb.DRAFT:
             raise hb.HotelBookingDuplicateError()
-        # No payment_verified=True shortcut: UAT-only, database-authorized loaded
-        # record. Production remains refused by both adapter and lifecycle gate.
+        # No payment_verified=True shortcut: the lifecycle re-checks the
+        # database-built proof against this exact row. Instant only; holds are
+        # never created from paid jobs.
         return await hb._book_loaded(
             settings=self.settings, store=self.store, b=b, mode="instant",
             idempotency_key=idempotency_key, payment_verified=False, gst_info=None,
+            verified_payment=proof,
         )
 
     async def refresh(self, reference):
