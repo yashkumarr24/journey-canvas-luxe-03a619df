@@ -5,13 +5,15 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
 import { pickFeaturedCity } from "@/components/home/featured-cities";
+import { PremiumDestinationsFallback } from "@/components/home/PremiumDestinationsFallback";
 import { DealsSkeleton } from "@/components/home/DealsSkeleton";
 import { blankRoom, hotelSearchQueryOptions, stayLabel, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 
 /**
  * "Luxury stays in <city>": a live hotel search (existing TripJack-backed
  * search) for a destination picked per visitor, showing the most expensive
- * properties it returns. Hidden entirely when there are no live results.
+ * properties it returns. Falls back to price-free premium destinations
+ * when no live rates are available.
  */
 const KEY = "fnf-featured-city";
 
@@ -39,7 +41,9 @@ export function FeaturedStays() {
   }, [query.data?.results]);
 
   if (!values) return null;
-  if (!query.isFetching && stays.length === 0) return null;
+  if (!query.isFetching && stays.length === 0) {
+    return <PremiumDestinationsFallback checkIn={values.checkIn} checkOut={values.checkOut} />;
+  }
 
   return (
     <section aria-labelledby="featured-stays-heading" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
