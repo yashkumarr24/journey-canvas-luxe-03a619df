@@ -38,28 +38,24 @@ function reviewWord(score: number) {
   return "Rated";
 }
 
+const cardClass =
+  "hotel-result-card group block overflow-hidden rounded-xl border border-foreground/10 bg-card text-foreground transition-all hover:border-gold/40 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 sm:flex";
+
+function CardShell({ result, searchId, onOpen, children }: { result: HotelResult; searchId?: string; onOpen?: (result: HotelResult) => void; children: ReactNode }) {
+  if (!searchId) return <article className={cardClass}>{children}</article>;
+  return (
+    <Link to="/hotels/detail" search={{ searchId, hotelId: result.id }} onClick={() => onOpen?.(result)} className={cardClass}>
+      {children}
+      <span className="sr-only">View rooms and rates</span>
+    </Link>
+  );
+}
+
 export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }: HotelResultCardProps) {
   const rate = result.rate;
   const location = result.location;
-  const cardClass =
-    "hotel-result-card group block overflow-hidden rounded-xl border border-foreground/10 bg-card text-foreground transition-all hover:border-gold/40 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 sm:flex";
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    searchId ? (
-      <Link
-        to="/hotels/detail"
-        search={{ searchId, hotelId: result.id }}
-        onClick={() => onOpen?.(result)}
-        className={cardClass}
-      >
-        {children}
-        <span className="sr-only">View rooms and rates</span>
-      </Link>
-    ) : (
-      <article className={cardClass}>{children}</article>
-    );
-
   return (
-    <Wrapper>
+    <CardShell result={result} searchId={searchId} onOpen={onOpen}>
       <div className="hotel-result-photo relative aspect-[16/10] shrink-0 overflow-hidden sm:aspect-auto sm:min-h-56 sm:w-72">
         {result.thumbnailUrl ? (
           <img
@@ -177,6 +173,6 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
           )}
         </div>
       </div>
-    </Wrapper>
+    </CardShell>
   );
 }
