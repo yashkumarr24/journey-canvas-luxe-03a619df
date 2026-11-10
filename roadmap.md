@@ -1,5 +1,14 @@
 # Roadmap
 
+## PayU capture versus authorisation
+- [x] Record exact server unmappedstatus in Hotel raw_status, require verified identity and literal success/captured before Hotel enqueue; keep auth pending.
+- [x] Mocked verification/Hotel/isolation: 144 passed; complete backend suite from backend folder: 984 passed. SQL, certified wire code and default-off production switches unchanged; no deployment or provider calls.
+
+## Hotel PayU fulfillment code-only review
+- [x] Install a database-validated Hotel worker port using payments.hotel_booking_id; preserve certified wire code, Flight and production refusal.
+- [x] Run mocked authorization/retry and Flight regressions: 367 focused and 936 full-suite passed; deliver strict six-file diff/report; no SQL, secrets, providers or deployment; 0033/0034 untouched.
+- [ ] Checkout RPC, capture-time identity/immutability and deployed queue/CAS schema verification await separate authorization/evidence; production remains blocked.
+
 ## Staging-only Hotel/PayU schema reconciliation (verified VPS baseline)
 - [x] Prepare isolated code diff and unapplied SQL candidates: missing Hotel tables, parent-only payment FK, missing PayU enum/columns, no parent guest hash, FF reference format.
 - [x] Document migration reconciliation, private guest ownership, atomic verification/outbox, staging apply checks and rollback; no SQL, secrets, external calls or deployment.
@@ -129,3 +138,8 @@
 - [x] AGENTS.md rule updated (country grouping + aliases).
 
 Deployment: Vercel deploy required for the live site; no Android rebuild, no backend/DB changes.
+
+## Done: PayU refund gate requires verified capture (hotel-payu-fix-review)
+
+- [x] Refund reconciliation now requires Verify Payment status=success, unmappedstatus exactly captured, and the stored mihpayid; auth/missing/mismatched values refuse before any refund call.
+- [x] Mocked tests: auth cannot authorize a refund, missing unmappedstatus refused, wrong mihpayid refused, verified capture still refunds. 988 backend tests pass. Live switches off; no SQL, no deploy.

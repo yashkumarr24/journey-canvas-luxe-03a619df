@@ -82,6 +82,7 @@ class VerifiedTxn:
     status: str            # "success" | "failure" | "pending" | other PayU value
     amount: Optional[str]  # as reported by PayU, 2dp
     mihpayid: Optional[str]
+    unmappedstatus: Optional[str] = None  # exact server value; never infer capture
 
 
 class PayUClient:
@@ -127,10 +128,11 @@ class PayUClient:
             details = {}
         amt = details.get("amt") or details.get("transaction_amount")
         return VerifiedTxn(
-            txnid=txnid,
+            txnid=str(details.get("txnid") or ""),
             status=str(details.get("status") or "not_found").lower(),
             amount=format_amount(amt) if amt not in (None, "") else None,
             mihpayid=str(details["mihpayid"]) if details.get("mihpayid") else None,
+            unmappedstatus=details.get("unmappedstatus") if isinstance(details.get("unmappedstatus"), str) else None,
         )
 
     async def refund(self, mihpayid: str, token: str, amount: str) -> dict[str, Any]:

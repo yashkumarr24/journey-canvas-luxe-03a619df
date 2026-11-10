@@ -6,7 +6,7 @@ Rules enforced here, never in the browser:
 - Only the booking owner (verified user id, or the hashed guest token) can
   create a payment or read its status. A booking reference alone grants nothing.
 - Capture requires BOTH the documented reverse hash AND PayU's server-to-server
-  verify_payment reporting success for the same txnid and amount. The webhook
+  verify_payment reporting success/captured for matching txnid, amount and mihpayid. The webhook
   URL being hard to guess is NOT authentication; every callback goes through
   the same verification.
 - Capture is atomic in the database (payu_capture): payment -> captured, flight
@@ -268,7 +268,14 @@ async def settle(repo: Repo, client: PayUClient, fields: Mapping[str, str], *,
         return Outcome(ref, kind, "pending")
 
     expected_amount = to_amount(payment["amount"])
-    if verified.status == "success" and verified.amount == expected_amount and verified.mihpayid:
+    # Callback success can mean authorisation, not capture. Only the server
+    # Verify Payment response can authorize the atomic capture/job enqueue.
+    expected_mihpayid = payment.get("provider_mihpayid") or payment.get("provider_payment_id")
+    identity_matches = (verified.txnid == payment["txnid"]
+                        and verified.amount == expected_amount and bool(verified.mihpayid)
+                        and (not expected_mihpayid or verified.mihpayid == expected_mihpayid)
+                        and (source == "reconcile" or verified.mihpayid == fields.get("mihpayid")))
+    if verified.status == "success" and identity_matches and verified.unmappedstatus == "captured":
         expected = OPEN
         if payment["status"] == "failed":
             other = await repo.open_payment_for(subject) if subject else None
@@ -279,15 +286,19 @@ async def settle(repo: Repo, client: PayUClient, fields: Mapping[str, str], *,
                 return Outcome(ref, kind, "pending")
             expected = ("failed",)
         won = await repo.capture(payment["id"], expected, mihpayid=verified.mihpayid,
-                                 source=source, raw_status=verified.status)
+                                 source=source, raw_status=(verified.unmappedstatus if kind == "hotel" else verified.status))
         if won:
             await repo.record_event(subject, "payment_succeeded",
                                     f"PayU payment verified via {source}.", "payment_processing")
         return Outcome(ref, kind, "captured")
 
-    if verified.status == "success":  # amount mismatch: never capture, flag for staff
-        await repo.transition(payment["id"], OPEN, {"status": "pending", "raw_status": "amount_mismatch"})
-        await repo.record_event(subject, "note", "PayU amount mismatch; held for reconciliation.")
+    if verified.status == "success":
+        # Reuse raw_status for the exact server value; no schema change.
+        await repo.transition(payment["id"], (*OPEN, "failed"), {
+            "status": "pending", "raw_status": verified.unmappedstatus,
+            "verified_at": _now().isoformat(), "verification_source": source})
+        if not identity_matches:
+            await repo.record_event(subject, "note", "PayU identity or amount mismatch; held for reconciliation.")
         return Outcome(ref, kind, "pending")
 
     if payment["status"] == "failed":
@@ -359,9 +370,13 @@ async def refund(repo: Repo, client: PayUClient, *, payment_id: str, amount: Any
     subject = await repo.subject_for_payment(payment)
     if not subject or not await eligible(payment, subject):
         raise RefundNotAllowed("The booking is not reconciled as failed or cancelled; refund not sent.")
-    # Reconcile with PayU before money moves.
+    # Reconcile with PayU before money moves: only a server-verified capture
+    # (status=success, unmappedstatus=captured, expected mihpayid) may refund.
+    # An authorised-but-uncaptured payment (unmappedstatus=auth) has no captured
+    # money to return, so it is refused here, never refunded.
     verified = await client.verify_payment(payment["txnid"])
-    if verified.status != "success" or verified.mihpayid != payment.get("provider_mihpayid"):
+    if (verified.status != "success" or verified.unmappedstatus != "captured"
+            or verified.mihpayid != payment.get("provider_mihpayid")):
         raise RefundNotAllowed("Payment could not be reconciled with PayU; refund not sent.")
     amt = to_amount(amount)
     try:

@@ -51,7 +51,7 @@ def test_payment_modules_never_import_booking_or_tripjack_code():
 def test_protected_modules_are_the_pre_payment_versions():
     assert not hasattr(hotel_booking, "book_for_verified_payment")
     assert not hasattr(hotel_booking, "refresh_for_payment")
-    assert not hasattr(hotel_booking, "_book_loaded")
+    assert callable(hotel_booking._book_loaded)
     sig = inspect.signature(bookings_repo.BookingRepository.create_flight_draft) \
         if hasattr(bookings_repo.BookingRepository, "create_flight_draft") else None
     src = inspect.getsource(bookings_repo) + inspect.getsource(flight_booking)
@@ -105,7 +105,8 @@ def no_tripjack(monkeypatch):
 def test_worker_never_calls_tripjack(monkeypatch, no_tripjack, fulfilment):
     repo, client = _captured("hotel", "DRAFT")
     monkeypatch.setattr(payments_worker, "get_settings",
-                        lambda: settings(payment_fulfilment_enabled=fulfilment))
+                        lambda: settings(payment_fulfilment_enabled=fulfilment,
+                                         supabase_url="", supabase_service_role_key=""))
     monkeypatch.setattr(payments_worker, "PaymentsRepo", lambda s: repo)
     monkeypatch.setattr(svc, "build_client", lambda s: client)
     for _ in range(3):

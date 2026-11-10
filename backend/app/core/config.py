@@ -124,6 +124,10 @@ class Settings(BaseSettings):
     # Verified payments create provider bookings ONLY when this is true. In
     # PayU test mode every TripJack host must also be a UAT host.
     payment_fulfilment_enabled: bool = Field(default=False, alias="PAYMENT_FULFILMENT_ENABLED")
+    # Hotel-only: lets verified production PayU captures book on the confirmed
+    # TripJack Hotel production hosts. Flight is unaffected. Off by default.
+    hotel_production_fulfilment_enabled: bool = Field(
+        default=False, alias="HOTEL_PRODUCTION_FULFILMENT_ENABLED")
     # Canonical customer-facing site (payment returns, app links).
     public_site_url: str = Field(
         default="https://www.flynfeelholiday.com", alias="PUBLIC_SITE_URL"

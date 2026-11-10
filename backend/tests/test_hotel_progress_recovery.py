@@ -11,12 +11,13 @@ import asyncio
 from types import SimpleNamespace
 
 from app.core.auth import AuthContext
-from app.core.config import Settings
 from app.integrations.tripjack import hotels as tj
 from app.integrations.tripjack.listing_dispatch import ListingDispatch
 from app.services import hotel_progress, hotel_search as svc, hotel_sessions
 from tests.test_hotel_listing import ids, req
-from tests.test_hotel_progressive_search import Client
+from tests.test_hotel_progressive_search import (
+    Client, offline_progress_tests, offline_settings,
+)
 
 
 import pytest  # noqa: E402  (kept with fixtures below)
@@ -61,7 +62,7 @@ def service_stub(monkeypatch):
 
 def _poll(search_id, offset=0):
     return svc.search_progress(request=None, search_id=search_id, offset=offset,
-                               auth=AuthContext(user_id=None), settings=Settings())
+                               auth=AuthContext(user_id=None), settings=offline_settings())
 
 
 def test_restart_after_initial_batches_reports_interrupted_not_complete(fast_dispatch, service_stub):
@@ -71,7 +72,7 @@ def test_restart_after_initial_batches_reports_interrupted_not_complete(fast_dis
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         assert response.loading is True
         entry = hotel_progress.get(response.search_id)
         assert entry is not None and entry.task is not None
@@ -104,7 +105,7 @@ def test_restart_after_full_completion_still_reports_complete(fast_dispatch, ser
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         entry = hotel_progress.get(response.search_id)
         await entry.task
         assert entry.status == 'complete'
@@ -115,6 +116,7 @@ def test_restart_after_full_completion_still_reports_complete(fast_dispatch, ser
         assert snapshot.incomplete_reason is None
         assert snapshot.completed_batches == 67 and snapshot.total_batches == 67
         assert snapshot.next_offset == 6684
+        assert {r.id for r in snapshot.results} == set(ids(6684))
         tail = await _poll(response.search_id, offset=6684)
         assert tail.results == [] and tail.status == 'complete'
 
@@ -128,7 +130,7 @@ def test_restart_after_partial_completion_keeps_partial(fast_dispatch, service_s
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         entry = hotel_progress.get(response.search_id)
         await entry.task
         assert entry.status == 'partial'
@@ -139,6 +141,7 @@ def test_restart_after_partial_completion_keeps_partial(fast_dispatch, service_s
         assert snapshot.incomplete_reason == 'provider_failure'
         assert snapshot.failed_batches == 1 and snapshot.completed_batches == 66
         assert snapshot.next_offset == 6584
+        assert {r.id for r in snapshot.results} == set(ids(6684)) - set(ids(100, 3600))
 
     asyncio.run(run())
 
@@ -150,10 +153,10 @@ def test_continuation_finish_persists_progress_on_session(fast_dispatch, service
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         entry = hotel_progress.get(response.search_id)
         await entry.task
-        session = await hotel_sessions.get_search_session(settings=Settings(),
+        session = await hotel_sessions.get_search_session(settings=offline_settings(),
                                                           search_id=response.search_id)
         assert session is not None and session.progress is not None
         assert session.progress['status'] == 'complete'
@@ -170,11 +173,11 @@ def test_interrupted_search_keeps_persisted_loading_state(fast_dispatch, service
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         entry = hotel_progress.get(response.search_id)
         entry.task.cancel()
         await asyncio.gather(entry.task, return_exceptions=True)
-        session = await hotel_sessions.get_search_session(settings=Settings(),
+        session = await hotel_sessions.get_search_session(settings=offline_settings(),
                                                           search_id=response.search_id)
         assert session.progress['status'] == 'loading'  # unfinished stays unfinished
 
@@ -188,7 +191,7 @@ def test_small_city_without_progress_entry_still_complete(fast_dispatch, service
 
     async def run():
         response = await svc.search_hotels(request=None, payload=req(),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         assert response.loading is False
         assert hotel_progress.get(response.search_id) is None
         snapshot = await _poll(response.search_id)
@@ -205,7 +208,7 @@ def test_legacy_session_without_progress_reports_complete(service_stub):
 
     async def run():
         session = await hotel_sessions.create_search_session(
-            settings=Settings(), destination='Dubai', check_in='2026-11-01',
+            settings=offline_settings(), destination='Dubai', check_in='2026-11-01',
             check_out='2026-11-03', nights=2, rooms=req().rooms, nationality=None,
             results=[HotelResult(id='h1', name='Sea View')],
             provider_search_id=None, currency='INR', user_id=None,
