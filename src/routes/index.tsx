@@ -6,6 +6,8 @@ import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/Hero";
 import { Marquee } from "@/components/Marquee";
 import { TopDeals } from "@/components/home/TopDeals";
+import { FeaturedStays } from "@/components/home/FeaturedStays";
+import { ExploreLinks } from "@/components/home/ExploreLinks";
 import { StayStyles } from "@/components/home/StayStyles";
 import { TravelStyles } from "@/components/home/TravelStyles";
 import { SignInPrompt } from "@/components/home/SignInPrompt";
@@ -142,12 +144,14 @@ function Index() {
       <Nav />
       <Hero catalogue={catalogue} />
       <TopDeals />
+      <FeaturedStays />
       <StayStyles />
       <TravelStyles />
       <Marquee />
       <ValueProps />
       <Experiences />
       <Testimonials />
+      <ExploreLinks />
       <BlogTeaser />
       <CTABand />
       <Footer />

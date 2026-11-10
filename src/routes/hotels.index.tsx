@@ -403,7 +403,7 @@ function HotelsPage() {
                 )}
 
                 {!query.isFetching && visible.length > 0 && (
-                  <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {visible.map((result) => (
                       <HotelResultCard
                         key={result.id}
