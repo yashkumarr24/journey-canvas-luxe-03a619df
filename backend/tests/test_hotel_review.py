@@ -242,10 +242,7 @@ def _no_secrets(caplog):
 
 def test_pricing_no_rooms_logs_reason_and_is_not_sold_out(flow, caplog):
     client, _ = flow
-    client.replies += [reply(options=[])] if "options" in reply.__code__.co_varnames else []
-    if not client.replies:
-        r = reply(); r["hotel"]["ops"] = [] if "hotel" in r else None
-        client.replies.append(r)
+    client.replies += [reply(options=[])]
     caplog.set_level("WARNING")
     with pytest.raises(svc.HotelRoomUnavailableError) as info:
         select()
