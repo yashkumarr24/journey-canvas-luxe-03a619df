@@ -59,7 +59,7 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
   const freeUntil = rate?.freeCancellationUntil ? new Date(rate.freeCancellationUntil) : null;
   return (
     <CardShell result={result} searchId={searchId} onOpen={onOpen}>
-      <div className="relative aspect-[16/10] shrink-0 overflow-hidden p-2 pb-0">
+      <div className="hotel-result-photo relative aspect-[16/10] shrink-0 overflow-hidden p-2 pb-0">
         {result.thumbnailUrl ? (
           <img src={result.thumbnailUrl} alt={result.name} loading="lazy" className="size-full rounded-lg object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         ) : (
@@ -75,7 +75,7 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-4">
+      <div className="hotel-result-body flex min-w-0 flex-1 flex-col p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <h3 className="line-clamp-2 font-display text-lg font-semibold leading-snug transition-colors group-hover:text-gold">{result.name}</h3>
           <StarRating rating={result.starRating} />
