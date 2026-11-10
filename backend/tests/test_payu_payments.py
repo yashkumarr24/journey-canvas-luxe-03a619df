@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
+import httpx
+from unittest.mock import AsyncMock
 
 from app.core.auth import AuthContext
 from app.core.errors import AppError
@@ -49,6 +51,7 @@ class FakeRepo:
         self.webhooks: set[str] = set()
         self.events: list[str] = []
         self.race = False
+        self.capture_calls = 0
 
     async def subject_by_reference(self, ref):
         return self.subject if ref == self.subject["reference"] else None
@@ -89,11 +92,12 @@ class FakeRepo:
         return False
 
     async def capture(self, pid, expected, *, mihpayid, source, raw_status):
+        self.capture_calls += 1
         p = await self.payment_by_id(pid)
         if not p or p["status"] not in expected:
             return False
         p.update(status="captured", provider_mihpayid=mihpayid, provider_payment_id=mihpayid,
-                 verification_source=source)
+                 verification_source=source, raw_status=raw_status)
         if self.subject["kind"] == "flight" and self.subject["status"] in ("pending", "payment_pending"):
             self.subject["status"] = "payment_processing"
         if not any(j["payment_id"] == pid for j in self.jobs):
@@ -187,7 +191,7 @@ class FakeClient(PayUClient):
     async def verify_payment(self, txnid):
         self.verify_calls += 1
         v = self.verified
-        return VerifiedTxn(txnid, v[0], v[1], v[2]) if v else VerifiedTxn(txnid, "not_found", None, None)
+        return VerifiedTxn(txnid, v[0], v[1], v[2], v[3] if len(v) > 3 else "captured") if v else VerifiedTxn(txnid, "not_found", None, None)
 
     async def refund(self, mihpayid, token, amount):
         self.refund_calls += 1
@@ -336,6 +340,63 @@ def test_hotel_order_only_from_draft():
 
 
 # ---- settle ----------------------------------------------------------------
+
+@pytest.mark.parametrize("unmappedstatus", ["auth", "captured", None, "CAPTURED", "captured "])
+@pytest.mark.parametrize("source", ["return", "webhook", "reconcile"])
+def test_server_capture_not_authorisation_controls_hotel_job(unmappedstatus, source):
+    repo = FakeRepo()
+    c = FakeClient(("success", "4999.50", "MIH1", unmappedstatus))
+    f = signed_return(order(repo, c).fields, unmappedstatus="captured")
+    result = run(svc.settle(repo, c, f, source=source))
+    captured = unmappedstatus == "captured"
+    assert result.status == ("captured" if captured else "pending")
+    assert repo.payments[0]["status"] == result.status
+    assert repo.payments[0]["raw_status"] == unmappedstatus
+    assert repo.capture_calls == (1 if captured else 0)
+    assert len(repo.jobs) == (1 if captured else 0)
+    assert repo.subject["status"] == "DRAFT"
+
+
+def test_auth_then_captured_enqueues_only_once():
+    repo = FakeRepo()
+    c = FakeClient(("success", "4999.50", "MIH1", "auth"))
+    f = signed_return(order(repo, c).fields)
+    assert run(svc.handle_webhook(repo, c, f)).status == "pending"
+    assert repo.capture_calls == 0 and repo.jobs == []
+    c.verified = ("success", "4999.50", "MIH1", "captured")
+    assert run(svc.handle_webhook(repo, c, f)).status == "captured"
+    assert run(svc.handle_webhook(repo, c, f)).status == "captured"
+    assert repo.capture_calls == 1 and len(repo.jobs) == 1
+
+
+@pytest.mark.parametrize("field,value", [("txnid", "other"), ("amount", "1.00"),
+                                        ("mihpayid", "other"), ("mihpayid", None)])
+def test_verified_identity_mismatch_never_calls_capture(field, value):
+    repo, c = FakeRepo(), FakeClient()
+    f = signed_return(order(repo, c).fields)
+    evidence = dict(txnid=f["txnid"], status="success", amount="4999.50",
+                    mihpayid="MIH1", unmappedstatus="captured")
+    evidence[field] = value
+    c.verify_payment = AsyncMock(return_value=VerifiedTxn(**evidence))
+    assert run(svc.settle(repo, c, f, source="return")).status == "pending"
+    assert repo.capture_calls == 0 and repo.jobs == []
+
+
+@pytest.mark.parametrize("unmappedstatus", ["auth", "captured", None, "CAPTURED"])
+def test_verify_client_records_exact_server_fields(unmappedstatus):
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json={
+        "transaction_details": {"T1": {"txnid": "T1", "status": "success", "amt": "4999.50",
+                                       "mihpayid": "MIH1", "unmappedstatus": unmappedstatus}}}))
+    c = PayUClient(key=KEY, salt=SALT, env="test", transport=transport)
+    assert run(c.verify_payment("T1")) == VerifiedTxn("T1", "success", "4999.50", "MIH1", unmappedstatus)
+
+
+def test_verify_client_does_not_invent_returned_txnid():
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json={
+        "transaction_details": {"T1": {"status": "success", "amt": "4999.50",
+                                       "mihpayid": "MIH1", "unmappedstatus": "captured"}}}))
+    c = PayUClient(key=KEY, salt=SALT, env="test", transport=transport)
+    assert run(c.verify_payment("T1")).txnid == ""
 
 def test_verified_success_captures_once_across_return_and_webhook():
     repo = FakeRepo()
