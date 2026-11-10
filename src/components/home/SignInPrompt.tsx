@@ -60,7 +60,7 @@ export function SignInPrompt() {
           <Link to="/auth/login" search={{ redirect: "/" }}>Sign in</Link>
         </Button>
         <Button asChild variant="outline" onClick={() => markSignInPromptDismissed()}>
-          <Link to="/auth/register">Create account</Link>
+          <Link to="/auth/register" search={{ redirect: "/" }}>Create account</Link>
         </Button>
       </div>
     </div>
