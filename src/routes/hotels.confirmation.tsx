@@ -70,7 +70,7 @@ function HotelConfirmationPage() {
     // Keep checking while the hotel is still confirming the room.
     refetchInterval: (query) => {
       const s = query.state.data?.status;
-      return s === "booking_processing" || s === "confirming" ? 5_000 : false;
+      return s === "payment_processing" || s === "booking_processing" || s === "confirming" ? 5_000 : false;
     },
     queryFn: ({ signal }) => hotelApi.getBooking(ref as string, guestToken, signal),
   });
@@ -131,7 +131,8 @@ function HotelConfirmationPage() {
   }
 
   const data = booking.data;
-  const confirming = data.status === "booking_processing" || data.status === "confirming";
+  const confirming =
+    data.status === "payment_processing" || data.status === "booking_processing" || data.status === "confirming";
   const onHold = data.status === "on_hold";
   const cancelPending = data.status === "cancellation_pending";
   const confirmed = data.status === "confirmed";
@@ -160,7 +161,9 @@ function HotelConfirmationPage() {
           <Loader2 className="mx-auto size-8 animate-spin text-gold" aria-hidden="true" />
           <h2 className="mt-4 font-display text-3xl">Confirming with the hotel</h2>
           <p className="mt-2 text-muted-foreground">
-            Your payment went through and the hotel is confirming the room now. This page updates on its own —
+            {data.status === "payment_processing"
+              ? "We're verifying your payment with PayU. Once it's confirmed, we book the room with the hotel."
+              : "Your payment went through and the hotel is confirming the room now."} This page updates on its own —
             you can safely leave it open.
           </p>
           <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
