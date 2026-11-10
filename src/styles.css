@@ -380,3 +380,23 @@ html:has(body.assistant-suggestion-visible) {
     min-width: 48px;
   }
 }
+
+/* Instrument Serif ships one weight; a hairline stroke makes headings read
+   slightly bolder without faux-bold distortion. */
+:is(h1, h2, h3):is(.font-display, .font-editorial),
+:is(.font-display, .font-editorial).font-semibold {
+  font-weight: 400;
+  -webkit-text-stroke: 0.022em currentColor;
+}
+
+/* Homepage hero over photography */
+:root {
+  --hero-ink: #ffffff;
+  --hero-scrim: linear-gradient(180deg, rgba(10, 12, 20, 0.55) 0%, rgba(10, 12, 20, 0.28) 38%, rgba(10, 12, 20, 0.5) 100%);
+}
+@utility hero-scrim {
+  background-image: var(--hero-scrim);
+}
+@utility text-hero-ink {
+  color: var(--hero-ink);
+}
