@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HotelSearchForm } from "@/components/booking/HotelSearchForm";
-import { FlightMaintenanceNotice } from "@/components/booking/FlightMaintenance";
-import { FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
 import { HotelResultsSkeleton } from "@/components/booking/HotelResultsSkeleton";
 import { FlightResultCard } from "@/components/booking/FlightResultCard";
@@ -70,7 +68,6 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
   const patch = (next: Partial<FlightSearchFormValues>) => setValues((current) => ({ ...current, ...next }));
   const submitFlight = (event: FormEvent) => {
     event.preventDefault();
-    if (FLIGHTS_UNDER_MAINTENANCE) return;
     const parsed = flightSearchSchema.safeParse({ ...values, tripType: mode === "multicity" ? "oneway" : mode, returnDate: mode === "roundtrip" ? values.returnDate : "" });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check your search details."); return; }
     setError(null);
@@ -110,8 +107,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
         ))}
       </div>
       <div id="home-search-panel" role="tabpanel" className="border-x border-b border-foreground/10 bg-card p-4 shadow-[var(--shadow-luxe)] sm:p-5">
-        {service === "flights" && FLIGHTS_UNDER_MAINTENANCE && <FlightMaintenanceNotice />}
-        {service === "flights" && !FLIGHTS_UNDER_MAINTENANCE && (
+        {service === "flights" && (
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Select value={mode} onValueChange={(value) => { setMode(value as FlightMode); setError(null); }}>
@@ -201,7 +197,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
         {hotelQuery.data?.partial && <div role="status" className="space-y-2 text-sm text-muted-foreground"><p><strong>Incomplete hotel search.</strong> Results from {hotelQuery.data.completedBatches} of {(hotelQuery.data.completedBatches ?? 0) + (hotelQuery.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={hotelQuery.isFetching} onClick={() => void hotelQuery.refetch()}>Retry hotel search</Button></div>}
         {!hotelQuery.isFetching && hotelQuery.data && <><p className="text-sm font-medium">{hotelQuery.data.results.length} stays in {hotelRequest.destination}</p>{hotelQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No stays found for these dates. Try another destination or date.</p>}{hotelQuery.data.results.slice(0, 3).map((result) => <HotelResultCard key={result.id} result={result} nights={hotelQuery.data.nights ?? 0} roomCount={hotelRequest.rooms.length} onSelect={hotelQuery.data.searchId ? () => void navigate({ to: "/hotels/detail", search: { searchId: hotelQuery.data.searchId, hotelId: result.id } }) : undefined} />)}{hotelQuery.data.results.length > 0 && <Button asChild variant="outline"><Link to="/hotels" search={hotelValues}>Explore more stays<ArrowRight className="size-4" aria-hidden="true" /></Link></Button>}</>}
       </div>}
-      {service === "flights" && !FLIGHTS_UNDER_MAINTENANCE && flightRequest && flightValues && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">
+      {service === "flights" && flightRequest && flightValues && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">
         {flightQuery.isFetching && <FlightResultsSkeleton />}
         {flightQuery.isError && <p role="alert" className="text-sm text-destructive">{toBookingError(flightQuery.error).message}</p>}
         {!flightQuery.isFetching && flightQuery.data && <><p className="text-sm font-medium">{flightQuery.data.results.length} flights {flightRequest.origin} → {flightRequest.destination}</p>{flightQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No flights found for these dates. Try nearby dates or airports.</p>}{flightQuery.data.results.slice(0, 3).map((result) => <FlightResultCard key={result.id} result={result} />)}{flightQuery.data.results.length > 0 && <Button asChild variant="outline"><Link to="/flights" search={flightValues}>Explore more flights<ArrowRight className="size-4" aria-hidden="true" /></Link></Button>}</>}

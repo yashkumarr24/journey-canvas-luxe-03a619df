@@ -5,7 +5,6 @@ import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
 import { flightSearchQueryOptions } from "@/lib/flight-search";
-import { assertFlightTransactionsAvailable, FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import { hotelSearchQueryOptions } from "@/lib/hotel-search";
 import { newIdempotencyKey, rememberGuestToken } from "@/lib/review-session";
 import type {
@@ -98,7 +97,7 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
 
   const runSearch = useCallback(() => {
     if (!active || !canSearch || !flightValidation.ok || !flightValidation.request) return;
-    setFlightRequest(FLIGHTS_UNDER_MAINTENANCE ? null : flightValidation.request);
+    setFlightRequest(flightValidation.request);
     setHotelRequest(
       needsHotel && hotelValidation.ok && hotelValidation.request ? hotelValidation.request : null,
     );
@@ -133,14 +132,12 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
   }, [active, runSearch, searchKey]);
 
   const selectFlight = useMutation({
-    mutationFn: (result: FlightResult) => {
-      assertFlightTransactionsAvailable();
-      return bookingApi.selectFlight({
+    mutationFn: (result: FlightResult) =>
+      bookingApi.selectFlight({
         searchId: flightQuery.data?.searchId as string,
         fareId: result.fare?.fareId ?? result.id,
         idempotencyKey: newIdempotencyKey(),
-      });
-    },
+      }),
     onSuccess: (review) => {
       rememberGuestToken(review.reviewToken, review.guestToken);
       track(ANALYTICS_EVENTS.assistantFlightSelected);
@@ -153,7 +150,7 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
 
   const handleFlightSelect = useCallback(
     (result: FlightResult) => {
-      if (FLIGHTS_UNDER_MAINTENANCE || !flightQuery.data?.searchId || selectFlight.isPending) return;
+      if (!flightQuery.data?.searchId || selectFlight.isPending) return;
       setSelectingId(result.id);
       selectFlight.mutate(result);
     },
@@ -189,7 +186,7 @@ export function useAssistantSearch({ active = true }: { active?: boolean } = {})
         : [],
     runSearch,
     clearSearch,
-    hasSearch: flightRequest !== null || hotelRequest !== null || (FLIGHTS_UNDER_MAINTENANCE && canSearch),
+    hasSearch: flightRequest !== null,
     searching: flightQuery.isFetching || (hotelRequest !== null && hotelQuery.isFetching),
     flightQuery,
     hotelQuery,

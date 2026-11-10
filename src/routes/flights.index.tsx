@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { FlightMaintenancePage } from "@/components/booking/FlightMaintenance";
-import { FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -73,7 +71,7 @@ export const Route = createFileRoute("/flights/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: FLIGHTS_UNDER_MAINTENANCE ? FlightMaintenancePage : FlightsPage,
+  component: FlightsPage,
 });
 
 function FlightsPage() {
