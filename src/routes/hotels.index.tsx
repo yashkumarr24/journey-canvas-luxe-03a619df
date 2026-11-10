@@ -308,7 +308,7 @@ function HotelsPage() {
                       Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[90vw] max-w-sm overflow-y-auto p-4">
+                  <SheetContent side="left" data-lenis-prevent className="w-[90vw] max-w-sm overflow-y-auto overscroll-contain p-4">
                     <SheetHeader>
                       <SheetTitle>Filter stays</SheetTitle>
                     </SheetHeader>
@@ -332,7 +332,14 @@ function HotelsPage() {
             </div>
 
             <div className="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
-              <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start">{filtersPanel}</aside>
+              <aside
+                aria-label="Hotel filters"
+                tabIndex={0}
+                data-lenis-prevent
+                className="hidden lg:block lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]"
+              >
+                {filtersPanel}
+              </aside>
 
               <div className="min-w-0">
                 {query.data?.partial && !query.data.loading && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {query.data.completedBatches} of {(query.data.completedBatches ?? 0) + (query.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
