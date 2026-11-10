@@ -223,3 +223,75 @@ def test_service_review_price_change_reported(flow):
     client.replies += [reply(), review_reply(option(total=2200.0, base=2176.4))]
     resp = select()
     assert resp.status == "price_changed" and resp.total_payable.amount == 2200.0
+
+
+# ------------------------------------------------ pre-review diagnosis
+
+
+def _diag(caplog):
+    recs = [r for r in caplog.records if r.getMessage() == "hotel_pre_review_failure"]
+    assert len(recs) == 1
+    return recs[0].extra_fields
+
+
+def _no_secrets(caplog):
+    text = " ".join(f"{r.getMessage()} {getattr(r, 'extra_fields', '')}" for r in caplog.records)
+    for leak in ("LIST-CORR", "RH-secret", "opt-1", "forged-option", HID, "apikey"):
+        assert leak not in text
+
+
+def test_pricing_no_rooms_logs_reason_and_is_not_sold_out(flow, caplog):
+    client, _ = flow
+    client.replies += [reply(options=[])]
+    caplog.set_level("WARNING")
+    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+        select()
+    assert not isinstance(info.value, svc.HotelRoomSoldOutError)
+    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE" and "sold" not in info.value.message
+    assert _diag(caplog) == {"reason": "pricing_no_rooms", "room_count": 0}
+    assert [c[0] for c in client.calls] == [wire.HOTEL_PRICING_PATH]
+    _no_secrets(caplog)
+
+
+def test_selected_rate_absent_logs_counts_only(flow, caplog):
+    client, _ = flow
+    client.replies += [reply()]
+    caplog.set_level("WARNING")
+    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+        select("forged-option")
+    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE"
+    d = _diag(caplog)
+    assert d["reason"] == "selected_rate_absent_from_pricing" and d["rate_id_present"] is True
+    assert d["room_count"] >= 1
+    assert len(client.calls) == 1
+    _no_secrets(caplog)
+
+
+def test_missing_review_hash_logs_presence_flags(flow, caplog):
+    client, _ = flow
+    client.replies += [reply(reviewHash=None)]
+    caplog.set_level("WARNING")
+    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+        select()
+    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE"
+    d = _diag(caplog)
+    assert d["reason"] == "review_hash_missing"
+    assert d["review_hash_present"] is False and d["correlation_id_present"] is True
+    assert len(client.calls) == 1
+    _no_secrets(caplog)
+
+
+def test_only_option_sold_out_is_described_as_sold_out(flow):
+    client, _ = flow
+    client.replies += [reply(), TripJackBadRequestError("x", provider_code="OPTION_SOLD_OUT")]
+    with pytest.raises(svc.HotelRoomSoldOutError) as info:
+        select()
+    assert info.value.code == "HOTEL_ROOM_SOLD_OUT" and "sold" in info.value.message
+
+
+def test_invalid_hotel_id_is_not_sold_out(flow):
+    client, _ = flow
+    client.replies += [reply(), TripJackBadRequestError("x", provider_code="INVALID_HOTEL_ID")]
+    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+        select()
+    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE" and "sold" not in info.value.message

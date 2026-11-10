@@ -47,6 +47,9 @@ import type {
 } from "@/types/booking";
 
 /** True while the hotel journey is served by the local mock provider. */
+/** Confirmed provider sold-out (TripJack OPTION_SOLD_OUT) only. */
+export const HOTEL_ROOM_SOLD_OUT = "HOTEL_ROOM_SOLD_OUT";
+
 export const useMockHotels =
   !isBookingApiConfigured || import.meta.env.VITE_HOTEL_TEST_MODE === "true";
 
@@ -66,6 +69,11 @@ const DOMAIN_ERRORS: Record<string, { message: string; kind: BookingApiError["ki
       "This room was only held for a short time and the hold has ended. Please search again to pick a room.",
   },
   [HOTEL_ROOM_UNAVAILABLE]: {
+    kind: "conflict",
+    message: "We couldn't confirm the latest rate for this room. Please choose another room or search again.",
+  },
+  // Only TripJack's confirmed OPTION_SOLD_OUT response maps here.
+  [HOTEL_ROOM_SOLD_OUT]: {
     kind: "conflict",
     message: "The hotel has just sold this room. Please choose another room or another property.",
   },
@@ -107,7 +115,8 @@ export function isHotelSessionExpired(error: unknown): boolean {
 }
 
 export function isHotelRoomUnavailable(error: unknown): boolean {
-  return asBookingError(error).code === HOTEL_ROOM_UNAVAILABLE;
+  const code = asBookingError(error).code;
+  return code === HOTEL_ROOM_UNAVAILABLE || code === HOTEL_ROOM_SOLD_OUT;
 }
 
 export const hotelApi = {

@@ -189,7 +189,7 @@ function HotelDetailPage() {
             {selectError && (
               <Alert variant="destructive" className="mt-6" role="alert">
                 <AlertCircle className="size-4" aria-hidden="true" />
-                <AlertTitle>We couldn't hold that room</AlertTitle>
+                <AlertTitle>We couldn't continue with that room</AlertTitle>
                 <AlertDescription className="space-y-3">
                   <p>{selectError.message}</p>
                   <Button asChild size="sm" variant="outline">
