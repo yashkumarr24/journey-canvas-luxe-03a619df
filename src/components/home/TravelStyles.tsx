@@ -36,8 +36,8 @@ const domestic: Card[] = domesticPackageDestinations.flatMap((d) =>
 );
 
 const tabs = [
-  { id: "international", label: `International (${international.length})`, cards: international, all: "/international-packages" },
-  { id: "domestic", label: `Domestic (${domestic.length})`, cards: domestic, all: "/domestic-packages" },
+  { id: "international", label: `International (${international.length})`, cards: international },
+  { id: "domestic", label: `Domestic (${domestic.length})`, cards: domestic },
 ] as const;
 
 export function TravelStyles() {
@@ -87,9 +87,9 @@ export function TravelStyles() {
             {expanded ? "Show fewer" : `Show all ${current.cards.length} packages`}
           </button>
         )}
-        <a href={current.all} className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary">
-          Browse {active === "international" ? "international" : "domestic"} destinations <ArrowRight className="size-4" aria-hidden="true" />
-        </a>
+        <Link to="/holidays" className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary">
+          Explore all holidays <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
       </div>
     </section>
   );
