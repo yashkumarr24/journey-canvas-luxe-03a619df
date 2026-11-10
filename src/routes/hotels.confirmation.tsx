@@ -359,15 +359,6 @@ function HoldPanel({
   guestToken: string | null;
   onDone: () => void;
 }) {
-  const [error, setError] = useState<string | null>(null);
-  const confirm = useMutation({
-    mutationFn: () => hotelApi.confirmHold(data.bookingReference, guestToken),
-    onSuccess: (r) => {
-      setError(r.status === "on_hold" ? (r.message ?? null) : null);
-      onDone();
-    },
-    onError: (e) => setError(toBookingError(e).message),
-  });
   const deadline = formatDeadline(data.holdDeadline);
   return (
     <div className="rounded-3xl border border-foreground/10 bg-card p-8 text-center">
@@ -379,11 +370,10 @@ function HoldPanel({
           : "The hotel hasn't shared the hold deadline yet. This page updates on its own."}
       </p>
       <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
-      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+      <p className="mt-4 text-sm text-muted-foreground">
+        Our team is reviewing this booking and will contact you. Nothing more is needed from you here.
+      </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button type="button" disabled={!data.canConfirmHold || confirm.isPending} onClick={() => confirm.mutate()}>
-          {confirm.isPending ? "Confirming…" : "Confirm booking"}
-        </Button>
         {data.canCancel && <CancelButton data={data} guestToken={guestToken} onDone={onDone} inline />}
       </div>
     </div>
