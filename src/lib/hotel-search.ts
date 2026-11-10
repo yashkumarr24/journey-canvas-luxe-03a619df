@@ -12,6 +12,7 @@ import type {
   HotelOccupancy,
   HotelResult,
   HotelSearchRequest,
+  HotelSearchResponse,
   HotelSortKey,
 } from "@/types/booking";
 
