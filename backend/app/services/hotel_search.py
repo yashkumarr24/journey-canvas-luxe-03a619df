@@ -173,7 +173,7 @@ REVIEW_UNAVAILABLE_CODES = {"INVALID_HOTEL_ID"}
 def _log_pre_review_failure(reason: str, **fields: object) -> None:
     """Safe diagnosis only: a reason label, counts and presence booleans.
     Never IDs, hashes, credentials, guest details or provider payloads."""
-    logger.warning("hotel_pre_review_failure", reason=reason, **fields)
+    logger.warning("hotel_pre_review_failure", extra=log_extra(reason=reason, **fields))
 REVIEW_EXPIRED_CODES = {"SEARCH_SESSION_EXPIRED", "INVALID_SEARCH_ID"}
 
 
