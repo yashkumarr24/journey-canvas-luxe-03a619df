@@ -597,6 +597,39 @@ def test_refund_refused_when_payu_no_longer_reports_success():
         _refund(repo, c)
 
 
+def test_refund_refused_when_payu_reports_auth_not_captured():
+    # status=success with unmappedstatus=auth means authorised, not captured:
+    # there is no captured money to return, so no refund may be sent.
+    repo, c = _captured()
+    c.verified = ("success", "4999.50", "MIH1", "auth")
+    with pytest.raises(svc.RefundNotAllowed):
+        _refund(repo, c)
+    assert c.refund_calls == 0 and not repo.refunds
+
+
+def test_refund_refused_when_unmappedstatus_missing():
+    repo, c = _captured()
+    c.verified = ("success", "4999.50", "MIH1", None)
+    with pytest.raises(svc.RefundNotAllowed):
+        _refund(repo, c)
+    assert c.refund_calls == 0 and not repo.refunds
+
+
+def test_refund_refused_when_mihpayid_differs():
+    repo, c = _captured()
+    c.verified = ("success", "4999.50", "MIH-OTHER", "captured")
+    with pytest.raises(svc.RefundNotAllowed):
+        _refund(repo, c)
+    assert c.refund_calls == 0 and not repo.refunds
+
+
+def test_refund_allowed_only_on_verified_capture():
+    repo, c = _captured()
+    c.verified = ("success", "4999.50", "MIH1", "captured")
+    row = _refund(repo, c)
+    assert row["status"] == "queued" and c.refund_calls == 1
+
+
 def test_refund_refused_until_booking_reconciled():
     repo, c = _captured()
     with pytest.raises(svc.RefundNotAllowed):
