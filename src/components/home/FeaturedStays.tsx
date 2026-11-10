@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
+import { pickFeaturedCity } from "@/components/home/featured-cities";
 import { DealsSkeleton } from "@/components/home/DealsSkeleton";
 import { blankRoom, hotelSearchQueryOptions, stayLabel, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 
@@ -12,18 +13,12 @@ import { blankRoom, hotelSearchQueryOptions, stayLabel, toHotelSearchRequest, ty
  * search) for a destination picked per visitor, showing the most expensive
  * properties it returns. Hidden entirely when there are no live results.
  */
-export const FEATURED_CITIES = ["Dubai", "Singapore", "Bangkok", "Bali", "Goa", "Mumbai", "Jaipur", "Udaipur", "Maldives", "London", "Paris", "Phuket"];
 const KEY = "fnf-featured-city";
 
 function isoInDays(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
-}
-
-export function pickFeaturedCity(stored: string | null, random = Math.random()) {
-  if (stored && FEATURED_CITIES.includes(stored)) return stored;
-  return FEATURED_CITIES[Math.floor(random * FEATURED_CITIES.length) % FEATURED_CITIES.length];
 }
 
 export function FeaturedStays() {
