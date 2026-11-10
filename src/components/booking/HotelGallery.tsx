@@ -6,12 +6,9 @@ import type { HotelImage } from "@/types/booking";
 /**
  * Compact hotel gallery: one prominent photo beside a neat grid of smaller
  * thumbnails (desktop) or a main photo with a short thumbnail row (mobile).
- * When there are more photos than the grid shows, the last tile carries a
- * "+N photos" control that opens the full set in a dialog.
+ * When there are more photos than the grid shows, a "View all photos" tile
+ * opens the full set in a dialog.
  */
-
-const VISIBLE_DESKTOP = 5; // 1 main + 4 thumbnails
-const VISIBLE_MOBILE = 4; // 1 main + 3 thumbnails
 
 export function HotelGallery({ images, name }: { images?: HotelImage[]; name: string }) {
   const list = images ?? [];
@@ -26,58 +23,64 @@ export function HotelGallery({ images, name }: { images?: HotelImage[]; name: st
     );
   }
 
-  const extraCount = list.length - VISIBLE_DESKTOP;
+  /**
+   * Desktop: 4-column grid, main photo spans 2x2, leaving a 2x2 area for
+   * thumbnails + the "view all" tile. Mobile: 2-column grid, main photo spans
+   * the full row, one thumbnail row below.
+   */
+  const desktopThumbs = list.slice(1, 4);
+  const mobileThumbs = list.slice(1, 2);
+  const hasMore = list.length > 4;
 
-  const thumbButton = (image: HotelImage, index: number, isLastVisible: boolean) => {
-    const showMore = isLastVisible && extraCount > 0;
-    return (
-      <button
-        key={`${image.url}-${index}`}
-        type="button"
-        aria-label={showMore ? `View all ${list.length} photos` : (image.caption ?? `Photo ${index + 1}`)}
-        aria-current={!showMore && index === active}
-        onClick={() => setActive(index)}
-        className={`relative block size-full overflow-hidden rounded-xl border transition-opacity ${
-          index === active && !showMore ? "border-gold" : "border-foreground/10 opacity-80 hover:opacity-100"
-        }`}
-      >
-        <img src={image.url} alt="" loading="lazy" className="aspect-[4/3] size-full object-cover" />
-        {showMore && (
-          <span className="absolute inset-0 flex items-center justify-center gap-1.5 bg-primary/70 text-sm font-medium text-primary-foreground">
-            <Images className="size-4" aria-hidden="true" /> +{extraCount}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  const grid = (visible: number) => (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-      <div className="col-span-2 sm:row-span-2">
-        <img
-          src={current.url}
-          alt={current.caption ?? name}
-          className="aspect-[4/3] size-full rounded-xl border border-foreground/10 object-cover sm:aspect-auto sm:h-full"
-        />
-      </div>
-      {list.slice(1, visible).map((image, i) => thumbButton(image, i + 1, i + 1 === visible - 1 && list.length > visible))}
-      {list.length > visible && (
-        <AllPhotosTrigger list={list} name={name} onPick={setActive} />
-      )}
-    </div>
+  const thumb = (image: HotelImage, index: number) => (
+    <button
+      key={`${image.url}-${index}`}
+      type="button"
+      aria-label={image.caption ?? `Photo ${index + 1}`}
+      aria-current={index === active}
+      onClick={() => setActive(index)}
+      className={`block size-full overflow-hidden rounded-xl border transition-opacity ${
+        index === active ? "border-gold" : "border-foreground/10 opacity-80 hover:opacity-100"
+      }`}
+    >
+      <img src={image.url} alt="" loading="lazy" className="aspect-[4/3] size-full object-cover" />
+    </button>
   );
+
+  const viewAll = <AllPhotosTile list={list} name={name} onPick={setActive} />;
 
   return (
     <div>
-      {/* Mobile: main photo + compact row */}
-      <div className="sm:hidden">{grid(VISIBLE_MOBILE)}</div>
-      {/* Desktop: main photo beside a 2x2 thumbnail grid */}
-      <div className="hidden sm:block">{grid(VISIBLE_DESKTOP)}</div>
+      {/* Mobile: main photo + one compact thumbnail row */}
+      <div className="grid grid-cols-2 gap-2 sm:hidden">
+        <div className="col-span-2">
+          <img
+            src={current.url}
+            alt={current.caption ?? name}
+            className="aspect-[4/3] size-full rounded-xl border border-foreground/10 object-cover"
+          />
+        </div>
+        {mobileThumbs.map((image, i) => thumb(image, i + 1))}
+        {list.length > 2 && viewAll}
+      </div>
+
+      {/* Desktop: prominent photo beside a 2x2 thumbnail grid */}
+      <div className="hidden grid-cols-4 gap-3 sm:grid">
+        <div className="col-span-2 row-span-2">
+          <img
+            src={current.url}
+            alt={current.caption ?? name}
+            className="size-full rounded-xl border border-foreground/10 object-cover"
+          />
+        </div>
+        {desktopThumbs.map((image, i) => thumb(image, i + 1))}
+        {hasMore ? viewAll : list.length > 1 && list.length <= 4 ? null : null}
+      </div>
     </div>
   );
 }
 
-function AllPhotosTrigger({
+function AllPhotosTile({
   list,
   name,
   onPick,
@@ -86,14 +89,16 @@ function AllPhotosTrigger({
   name: string;
   onPick: (index: number) => void;
 }) {
+  const extra = list.length - 4;
   return (
     <Dialog>
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex aspect-[4/3] size-full items-center justify-center gap-1.5 rounded-xl border border-foreground/10 bg-card text-sm font-medium text-foreground transition-colors hover:border-gold hover:text-gold"
+          className="flex aspect-[4/3] size-full flex-col items-center justify-center gap-1.5 rounded-xl border border-foreground/10 bg-card text-sm font-medium text-foreground transition-colors hover:border-gold hover:text-gold sm:aspect-auto"
         >
-          <Images className="size-4" aria-hidden="true" /> View all {list.length} photos
+          <Images className="size-4" aria-hidden="true" />
+          {extra > 0 ? `+${extra} photos` : "View all photos"}
         </button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
