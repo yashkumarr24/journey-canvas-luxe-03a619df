@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { queryOptions } from "@tanstack/react-query";
 import { bookingApi } from "@/lib/booking-api";
+import { assertFlightTransactionsAvailable, FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import type {
   CabinClass,
   FlightResult,
@@ -129,8 +130,11 @@ export function flightSearchKey(request: FlightSearchRequest) {
 export function flightSearchQueryOptions(request: FlightSearchRequest | null) {
   return queryOptions({
     queryKey: request ? flightSearchKey(request) : (["booking", "flights", "search", "idle"] as const),
-    queryFn: ({ signal }) => bookingApi.searchFlights(request as FlightSearchRequest, { signal }),
-    enabled: request !== null,
+    queryFn: ({ signal }) => {
+      assertFlightTransactionsAvailable();
+      return bookingApi.searchFlights(request as FlightSearchRequest, { signal });
+    },
+    enabled: !FLIGHTS_UNDER_MAINTENANCE && request !== null,
     retry: false,
     // Quotes go stale quickly; never serve a cached fare silently for long.
     staleTime: 60_000,
