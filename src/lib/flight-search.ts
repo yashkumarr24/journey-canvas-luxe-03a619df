@@ -1,3 +1,4 @@
+import { FLIGHTS_UNDER_MAINTENANCE } from "@/components/booking/FlightMaintenance";
 /**
  * Flight search form schema, validation and TanStack Query helpers.
  * Generic validation only — no airline-specific rules are invented here.
@@ -130,7 +131,7 @@ export function flightSearchQueryOptions(request: FlightSearchRequest | null) {
   return queryOptions({
     queryKey: request ? flightSearchKey(request) : (["booking", "flights", "search", "idle"] as const),
     queryFn: ({ signal }) => bookingApi.searchFlights(request as FlightSearchRequest, { signal }),
-    enabled: request !== null,
+    enabled: request !== null && !FLIGHTS_UNDER_MAINTENANCE,
     retry: false,
     // Quotes go stale quickly; never serve a cached fare silently for long.
     staleTime: 60_000,
