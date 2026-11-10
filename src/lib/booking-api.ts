@@ -294,6 +294,14 @@ async function request<T>(
     });
   }
 
+  // Flights are under maintenance: never start a flight request from the browser.
+  if (path.startsWith("/api/v1/flights")) {
+    throw makeError("not_implemented", {
+      code: "FLIGHTS_UNDER_MAINTENANCE",
+      message: "Flight search and booking are under maintenance. Please check back soon.",
+    });
+  }
+
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), timeoutMs);
