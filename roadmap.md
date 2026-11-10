@@ -138,3 +138,8 @@
 - [x] AGENTS.md rule updated (country grouping + aliases).
 
 Deployment: Vercel deploy required for the live site; no Android rebuild, no backend/DB changes.
+
+## Done: PayU refund gate requires verified capture (hotel-payu-fix-review)
+
+- [x] Refund reconciliation now requires Verify Payment status=success, unmappedstatus exactly captured, and the stored mihpayid; auth/missing/mismatched values refuse before any refund call.
+- [x] Mocked tests: auth cannot authorize a refund, missing unmappedstatus refused, wrong mihpayid refused, verified capture still refunds. 988 backend tests pass. Live switches off; no SQL, no deploy.
