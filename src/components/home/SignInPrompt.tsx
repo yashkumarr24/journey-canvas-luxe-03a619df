@@ -13,7 +13,6 @@ import { markSignInPromptDismissed, markSignInPromptShown, signInPromptAllowed }
 export function SignInPrompt() {
   const { isAuthenticated, isInitializing, isConfigured } = useAuth();
   const [open, setOpen] = useState(false);
-  if (typeof window !== "undefined") console.log("SIGNINDBG", isInitializing, isAuthenticated, isConfigured);
 
   useEffect(() => {
     if (isInitializing || isAuthenticated || !isConfigured) return;
