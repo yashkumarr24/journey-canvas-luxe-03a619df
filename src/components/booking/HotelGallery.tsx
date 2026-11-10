@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Images } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { HotelImage } from "@/types/booking";
 
 /**
@@ -12,8 +12,7 @@ import type { HotelImage } from "@/types/booking";
 
 export function HotelGallery({ images, name }: { images?: HotelImage[]; name: string }) {
   const list = images ?? [];
-  const [active, setActive] = useState(0);
-  const current = list[Math.min(active, Math.max(list.length - 1, 0))];
+  const [open, setOpen] = useState(false);
 
   if (list.length === 0) {
     return (
@@ -23,99 +22,40 @@ export function HotelGallery({ images, name }: { images?: HotelImage[]; name: st
     );
   }
 
-  /**
-   * Desktop: 4-column grid, main photo spans 2x2, leaving a 2x2 area for
-   * thumbnails + the "view all" tile. Mobile: 2-column grid, main photo spans
-   * the full row, one thumbnail row below.
-   */
-  const desktopThumbs = list.slice(1, 4);
-  const mobileThumbs = list.slice(1, 2);
-  const hasMore = list.length > 4;
-
-  const thumb = (image: HotelImage, index: number) => (
-    <button
-      key={`${image.url}-${index}`}
-      type="button"
-      aria-label={image.caption ?? `Photo ${index + 1}`}
-      aria-current={index === active}
-      onClick={() => setActive(index)}
-      className={`block size-full overflow-hidden rounded-xl border transition-opacity ${
-        index === active ? "border-gold" : "border-foreground/10 opacity-80 hover:opacity-100"
-      }`}
-    >
-      <img src={image.url} alt="" loading="lazy" className="aspect-[4/3] size-full object-cover" />
-    </button>
-  );
-
-  const viewAll = <AllPhotosTile list={list} name={name} onPick={setActive} />;
+  /** Big photo on the left, two stacked photos on the right; the last one opens all photos. */
+  const side = list.slice(1, 3);
+  const extra = list.length - 3;
 
   return (
-    <div>
-      {/* Mobile: main photo + one compact thumbnail row */}
-      <div className="grid grid-cols-2 gap-2 sm:hidden">
-        <div className="col-span-2">
-          <img
-            src={current.url}
-            alt={current.caption ?? name}
-            className="aspect-[4/3] size-full rounded-xl border border-foreground/10 object-cover"
-          />
-        </div>
-        {mobileThumbs.map((image, i) => thumb(image, i + 1))}
-        {list.length > 2 && viewAll}
-      </div>
-
-      {/* Desktop: prominent photo beside a 2x2 thumbnail grid */}
-      <div className="hidden grid-cols-4 gap-3 sm:grid">
-        <div className="col-span-2 row-span-2">
-          <img
-            src={current.url}
-            alt={current.caption ?? name}
-            className="size-full rounded-xl border border-foreground/10 object-cover"
-          />
-        </div>
-        {desktopThumbs.map((image, i) => thumb(image, i + 1))}
-        {hasMore && viewAll}
-      </div>
+    <div className="grid grid-cols-3 gap-2 sm:h-[340px] sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] sm:grid-rows-2">
+      <button type="button" aria-label="Open all photos" onClick={() => setOpen(true)} className="col-span-3 overflow-hidden rounded-xl sm:col-span-1 sm:row-span-2">
+        <img src={list[0].url} alt={list[0].caption ?? name} className="aspect-[16/10] size-full object-cover sm:aspect-auto" />
+      </button>
+      {side.map((image, i) => (
+        <button key={`${image.url}-${i}`} type="button" aria-label={i === side.length - 1 && extra > 0 ? `View all ${list.length} photos` : image.caption ?? `Photo ${i + 2}`} onClick={() => setOpen(true)} className="relative overflow-hidden rounded-xl">
+          <img src={image.url} alt="" loading="lazy" className="aspect-[4/3] size-full object-cover sm:aspect-auto" />
+          {i === side.length - 1 && extra > 0 && (
+            <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-foreground/75 px-2 py-1 text-xs font-medium text-background">
+              <Images className="size-3.5" aria-hidden="true" />+{extra} photos
+            </span>
+          )}
+        </button>
+      ))}
+      <AllPhotos list={list} name={name} open={open} onOpenChange={setOpen} />
     </div>
   );
 }
 
-function AllPhotosTile({
-  list,
-  name,
-  onPick,
-}: {
-  list: HotelImage[];
-  name: string;
-  onPick: (index: number) => void;
-}) {
-  const extra = list.length - 4;
+function AllPhotos({ list, name, open, onOpenChange }: { list: HotelImage[]; name: string; open: boolean; onOpenChange: (v: boolean) => void }) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="flex aspect-[4/3] size-full flex-col items-center justify-center gap-1.5 rounded-xl border border-foreground/10 bg-card text-sm font-medium text-foreground transition-colors hover:border-gold hover:text-gold sm:aspect-auto"
-        >
-          <Images className="size-4" aria-hidden="true" />
-          {extra > 0 ? `+${extra} photos` : "View all photos"}
-        </button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{name} — all photos</DialogTitle>
+          <DialogTitle>{name} — {list.length} photos</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {list.map((image, index) => (
-            <button
-              key={`${image.url}-all-${index}`}
-              type="button"
-              aria-label={image.caption ?? `Photo ${index + 1}`}
-              onClick={() => onPick(index)}
-              className="overflow-hidden rounded-xl border border-foreground/10 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-            >
-              <img src={image.url} alt="" loading="lazy" className="aspect-[4/3] size-full object-cover" />
-            </button>
+            <img key={`${image.url}-all-${index}`} src={image.url} alt={image.caption ?? `Photo ${index + 1}`} loading="lazy" className="aspect-[4/3] w-full rounded-xl object-cover" />
           ))}
         </div>
       </DialogContent>
