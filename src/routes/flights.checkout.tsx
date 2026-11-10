@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FlightMaintenancePage } from "@/components/booking/FlightMaintenance";
+import { FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, Clock, FlaskConical, Loader2, Lock, ShieldCheck } from "lucide-react";
@@ -66,7 +68,7 @@ export const Route = createFileRoute("/flights/checkout")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: CheckoutPage,
+  component: FLIGHTS_UNDER_MAINTENANCE ? FlightMaintenancePage : CheckoutPage,
 });
 
 function CheckoutPage() {

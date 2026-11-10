@@ -1,6 +1,8 @@
 import { AlertCircle, BedDouble, Info, Plane } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toBookingError } from "@/lib/booking-api";
+import { FlightMaintenanceNotice } from "@/components/booking/FlightMaintenance";
+import { FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import type { AssistantSearchController } from "@/lib/assistant/use-assistant-search";
 import { AssistantFlightCard, AssistantHotelCard, ResultLoading } from "./AssistantResultCards";
 
@@ -21,13 +23,13 @@ export function AssistantSearchResults({ search }: { search: AssistantSearchCont
         <div className="mb-4 flex items-center gap-2">
           <Plane className="size-5 text-primary" />
           <h2 className="font-display text-2xl">Flights</h2>
-          {flightQuery.isSuccess ? (
+          {!FLIGHTS_UNDER_MAINTENANCE && flightQuery.isSuccess ? (
             <span className="text-xs text-muted-foreground">
               {search.preferredFlights.length} available
             </span>
           ) : null}
         </div>
-        {flightQuery.isFetching ? (
+        {FLIGHTS_UNDER_MAINTENANCE ? <FlightMaintenanceNotice /> : flightQuery.isFetching ? (
           <ResultLoading>Finding the best available flights…</ResultLoading>
         ) : flightQuery.isError ? (
           <SearchError title="Flight search unavailable" error={flightQuery.error} />

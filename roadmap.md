@@ -1,5 +1,9 @@
 # Roadmap
 
+## Flight frontend maintenance
+- [ ] Replace Flight search/review/checkout with Under Maintenance; block homepage and assistant Flight transactions without changing Hotels or backend.
+- [ ] Verify focused guard tests and desktop/mobile Flight entry points.
+
 ## PayU capture versus authorisation
 - [x] Record exact server unmappedstatus in Hotel raw_status, require verified identity and literal success/captured before Hotel enqueue; keep auth pending.
 - [x] Mocked verification/Hotel/isolation: 144 passed; complete backend suite from backend folder: 984 passed. SQL, certified wire code and default-off production switches unchanged; no deployment or provider calls.

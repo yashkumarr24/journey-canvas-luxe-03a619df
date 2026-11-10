@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { FlightMaintenancePage } from "@/components/booking/FlightMaintenance";
+import { FLIGHTS_UNDER_MAINTENANCE } from "@/lib/flight-maintenance";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { AlertCircle, ArrowRight, Clock, Luggage } from "lucide-react";
@@ -55,7 +57,7 @@ export const Route = createFileRoute("/flights/review")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ReviewPage,
+  component: FLIGHTS_UNDER_MAINTENANCE ? FlightMaintenancePage : ReviewPage,
 });
 
 function Leg({ itinerary }: { itinerary: FlightItinerary }) {
