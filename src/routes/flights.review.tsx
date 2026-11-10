@@ -1,3 +1,4 @@
+import { FLIGHTS_UNDER_MAINTENANCE, FlightMaintenanceNotice } from "@/components/booking/FlightMaintenance";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/flights/review")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ReviewPage,
+  component: () => (FLIGHTS_UNDER_MAINTENANCE ? <FlightMaintenanceNotice fullPage /> : <ReviewPage />),
 });
 
 function Leg({ itinerary }: { itinerary: FlightItinerary }) {
