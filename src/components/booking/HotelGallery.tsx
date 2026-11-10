@@ -74,7 +74,7 @@ export function HotelGallery({ images, name }: { images?: HotelImage[]; name: st
           />
         </div>
         {desktopThumbs.map((image, i) => thumb(image, i + 1))}
-        {hasMore ? viewAll : list.length > 1 && list.length <= 4 ? null : null}
+        {hasMore && viewAll}
       </div>
     </div>
   );
