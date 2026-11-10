@@ -257,3 +257,50 @@ export function sortHotelResults(results: HotelResult[], sort: HotelSortKey): Ho
       return list;
   }
 }
+
+/**
+ * Re-open an existing server search session after a page refresh. Results are
+ * read back from the server's own progress endpoint (offset 0); if the session
+ * has expired the query fails and the page asks the visitor to search again —
+ * nothing cached or invented is shown.
+ */
+export function hotelSearchRestoreQueryOptions(searchId: string | null, request: HotelSearchRequest | null) {
+  return queryOptions({
+    queryKey: ["booking", "hotels", "restore", searchId ?? "none"] as const,
+    enabled: Boolean(searchId && request),
+    retry: false,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    queryFn: async ({ signal }): Promise<HotelSearchResponse> => {
+      const id = searchId as string;
+      const seen = new Set<string>();
+      const results: HotelSearchResponse["results"] = [];
+      let offset = 0;
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        const chunk = await bookingApi.hotelSearchProgress(id, offset, { signal });
+        for (const result of chunk.results) {
+          if (!seen.has(result.id)) {
+            seen.add(result.id);
+            results.push(result);
+          }
+        }
+        offset = chunk.nextOffset;
+        if (chunk.status !== "loading") {
+          return {
+            searchId: id,
+            results,
+            currency: request?.currency,
+            nights: nightsBetween(request?.checkIn, request?.checkOut),
+            expiresAt: chunk.expiresAt,
+            partial: chunk.status === "partial",
+            completedBatches: chunk.completedBatches,
+            failedBatches: chunk.failedBatches,
+            totalBatches: chunk.totalBatches,
+          };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      throw new Error("Hotel search restore timed out");
+    },
+  });
+}
