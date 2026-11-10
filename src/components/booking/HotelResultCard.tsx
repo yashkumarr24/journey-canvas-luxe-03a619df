@@ -56,7 +56,7 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
   const location = result.location;
   return (
     <CardShell result={result} searchId={searchId} onOpen={onOpen}>
-      <div className="hotel-result-photo relative aspect-[16/10] shrink-0 overflow-hidden sm:aspect-auto sm:min-h-56 sm:w-72">
+      <div className="hotel-result-photo relative aspect-[16/10] shrink-0 overflow-hidden sm:aspect-auto sm:min-h-44 sm:w-60">
         {result.thumbnailUrl ? (
           <img
             src={result.thumbnailUrl}
@@ -76,10 +76,10 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
         )}
       </div>
 
-      <div className="hotel-result-body flex min-w-0 flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-stretch sm:gap-6">
+      <div className="hotel-result-body flex min-w-0 flex-1 flex-col gap-3 p-4 sm:flex-row sm:items-stretch sm:gap-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h3 className="font-display text-2xl font-semibold leading-tight transition-colors group-hover:text-gold">{result.name}</h3>
+            <h3 className="font-display text-xl font-semibold leading-tight transition-colors group-hover:text-gold">{result.name}</h3>
             <StarRating rating={result.starRating} />
           </div>
 
@@ -95,7 +95,7 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
 
           {result.amenities && result.amenities.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-2">
-              {result.amenities.slice(0, 5).map((amenity) => (
+              {result.amenities.slice(0, 4).map((amenity) => (
                 <li
                   key={amenity}
                   className="rounded-sm border border-foreground/10 px-2.5 py-1 text-xs text-muted-foreground"
@@ -103,9 +103,9 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
                   {amenity}
                 </li>
               ))}
-              {result.amenities.length > 5 && (
+              {result.amenities.length > 4 && (
                 <li className="px-1 py-1 text-xs text-muted-foreground">
-                  +{result.amenities.length - 5} more
+                  +{result.amenities.length - 4} more
                 </li>
               )}
             </ul>
@@ -146,7 +146,7 @@ export function HotelResultCard({ result, nights, roomCount, searchId, onOpen }:
 
           {rate ? (
             <>
-              <p className="mt-3 font-display text-3xl font-semibold leading-none">
+              <p className="mt-3 font-display text-2xl font-semibold leading-none">
                 {formatMoney(rate.totalPrice.amount, rate.totalPrice.currency)}
               </p>
               <p className="mt-1.5 text-xs text-muted-foreground">
