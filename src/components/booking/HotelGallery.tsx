@@ -25,12 +25,12 @@ export function HotelGallery({ images, name }: { images?: HotelImage[]; name: st
         <img
           src={current.url}
           alt={current.caption ?? name}
-          className="aspect-[16/9] w-full object-cover"
+          className="aspect-[16/9] w-full object-cover lg:aspect-auto lg:h-[min(56vh,520px)]"
         />
       </div>
 
       {list.length > 1 && (
-        <div className="mt-3 grid grid-cols-4 gap-3">
+        <div className="mt-3 grid grid-cols-4 gap-3 lg:grid-cols-6">
           {list.map((image, index) => (
             <button
               key={`${image.url}-${index}`}
