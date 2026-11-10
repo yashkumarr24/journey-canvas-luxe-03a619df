@@ -5,13 +5,13 @@ import { Cursor } from "@/components/Cursor";
 import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/Hero";
 import { Marquee } from "@/components/Marquee";
-import { Destinations } from "@/components/Destinations";
+import { TopDeals } from "@/components/home/TopDeals";
+import { SignInPrompt } from "@/components/home/SignInPrompt";
 import { Experiences } from "@/components/Experiences";
 import { Testimonials } from "@/components/Testimonials";
 import { Footer } from "@/components/Footer";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { SectionTitle } from "@/components/Section";
-import { domesticDestinations, internationalDestinations } from "@/data/destinations";
 import { posts } from "@/data/posts";
 import { listInternationalCatalogue } from "@/lib/packages/packages.functions";
 
@@ -139,26 +139,15 @@ function Index() {
       <Cursor />
       <Nav />
       <Hero catalogue={catalogue} />
+      <TopDeals />
       <Marquee />
       <ValueProps />
-      <Destinations
-        items={domesticDestinations}
-        id="destinations"
-        eyebrow="India · Domestic Tours"
-        title={<>Hand‑picked escapes <span className="italic gold-gradient">across India</span></>}
-        subtitle="From the Himalayas to the Arabian Sea — each itinerary is crafted with private guides, considered hotels and seamless transfers."
-      />
-      <Destinations
-        items={internationalDestinations}
-        eyebrow="The World · International Tours"
-        title={<>The world, <span className="italic gold-gradient">tailored to you.</span></>}
-        subtitle="Five international routes designed around comfort, value and time well spent — from Halong Bay to the Dubai dunes."
-      />
       <Experiences />
       <Testimonials />
       <BlogTeaser />
       <CTABand />
       <Footer />
+      <SignInPrompt />
     </main>
   );
 }
