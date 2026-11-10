@@ -30,7 +30,7 @@ def fixture(monkeypatch, guest=False):
                    amount="4999.50", currency="INR")
     p = dict(id="p1", hotel_booking_id="hotel1", booking_id=None, provider="payu",
              status="captured", verified_at="2026-11-07T23:00:00+00:00",
-             verification_source="webhook", raw_status="success", txnid="transaction",
+             verification_source="webhook", raw_status="captured", txnid="transaction",
              provider_mihpayid="mih", provider_payment_id="mih", amount="4999.50",
              currency="INR", amount_refunded="0")
     repo = SimpleNamespace(payment_by_id=AsyncMock(return_value=p),
@@ -59,6 +59,7 @@ def test_direct_hotel_fk_authorizes_without_parent(monkeypatch, guest):
     ("id", "other"), ("hotel_booking_id", "other"), ("hotel_booking_id", None),
     ("booking_id", "parent"), ("provider", "manual"), ("status", "pending"),
     ("verified_at", None), ("verification_source", "browser"), ("raw_status", "pending"),
+    ("raw_status", "auth"), ("raw_status", "success"),
     ("txnid", None), ("provider_mihpayid", None), ("provider_payment_id", "different"),
     ("amount", "4999.51"), ("amount", "4999.501"), ("amount", "NaN"),
     ("amount", "0"), ("currency", "USD"), ("amount_refunded", "1"), ("user_id", "u2"),

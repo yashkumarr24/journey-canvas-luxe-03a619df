@@ -1,5 +1,9 @@
 # Roadmap
 
+## PayU capture versus authorisation
+- [x] Record exact server unmappedstatus in Hotel raw_status, require verified identity and literal success/captured before Hotel enqueue; keep auth pending.
+- [x] Mocked verification/Hotel/isolation: 144 passed; complete backend suite from backend folder: 984 passed. SQL, certified wire code and default-off production switches unchanged; no deployment or provider calls.
+
 ## Hotel PayU fulfillment code-only review
 - [x] Install a database-validated Hotel worker port using payments.hotel_booking_id; preserve certified wire code, Flight and production refusal.
 - [x] Run mocked authorization/retry and Flight regressions: 367 focused and 936 full-suite passed; deliver strict six-file diff/report; no SQL, secrets, providers or deployment; 0033/0034 untouched.

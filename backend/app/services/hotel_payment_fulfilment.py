@@ -81,7 +81,7 @@ class DatabaseHotelPort:
                 or p.get("booking_id") is not None:
             raise HotelPaymentMismatch()
         if not p.get("verified_at") or p.get("verification_source") not in ("return", "webhook", "reconcile") \
-                or p.get("raw_status") != "success" or not p.get("txnid") \
+                or p.get("raw_status") != "captured" or not p.get("txnid") \
                 or not p.get("provider_mihpayid") \
                 or p.get("provider_payment_id") != p.get("provider_mihpayid") \
                 or Decimal(str(p.get("amount_refunded") or "0")) != 0:
