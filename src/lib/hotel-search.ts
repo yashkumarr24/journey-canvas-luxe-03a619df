@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { queryOptions } from "@tanstack/react-query";
 import { hotelApi } from "@/lib/hotel-api";
+import { bookingApi } from "@/lib/booking-api";
 import type {
   HotelFilters,
   HotelOccupancy,
