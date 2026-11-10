@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BedDouble } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HotelResultCard } from "@/components/booking/HotelResultCard";
-import { HotelResultsSkeleton } from "@/components/booking/HotelResultsSkeleton";
+import { DealsSkeleton } from "@/components/home/DealsSkeleton";
 import { readRecentHotelSearch } from "@/lib/hotel-results-state";
 import { hotelSearchQueryOptions, occupancyLabel, stayLabel, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 
@@ -17,8 +17,11 @@ import { hotelSearchQueryOptions, occupancyLabel, stayLabel, toHotelSearchReques
 export function TopDeals() {
   const [recent, setRecent] = useState<HotelSearchFormValues | null>(null);
   const [ready, setReady] = useState(false);
+  // Alternate between the lowest-priced and the premium end of the results.
+  const [premium, setPremium] = useState(false);
   useEffect(() => {
     setRecent(readRecentHotelSearch());
+    setPremium(Math.random() < 0.5);
     setReady(true);
   }, []);
   const request = useMemo(() => (recent ? toHotelSearchRequest(recent) : null), [recent]);
@@ -26,10 +29,12 @@ export function TopDeals() {
 
   const deals = useMemo(() => {
     const priced = (query.data?.results ?? []).filter((result) => result.rate?.totalPrice);
-    return [...priced].sort((a, b) => (a.rate!.totalPrice.amount - b.rate!.totalPrice.amount)).slice(0, 4);
-  }, [query.data?.results]);
+    const dir = premium ? -1 : 1;
+    return [...priced].sort((a, b) => dir * (a.rate!.totalPrice.amount - b.rate!.totalPrice.amount)).slice(0, 4);
+  }, [query.data?.results, premium]);
 
-  if (!ready) return null;
+  // First-time visitors never see this section; FeaturedStays covers them.
+  if (!ready || !recent) return null;
 
   return (
     <section aria-labelledby="top-deals-heading" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
@@ -41,7 +46,7 @@ export function TopDeals() {
           </h2>
           {recent && (
             <p className="mt-1 truncate text-sm text-muted-foreground">
-              {recent.destination} · {stayLabel(recent.checkIn, recent.checkOut)} · {occupancyLabel(recent.rooms)}
+              {premium ? "Premium picks" : "Best-priced stays"} in {recent.destination} · {stayLabel(recent.checkIn, recent.checkOut)} · {occupancyLabel(recent.rooms)}
             </p>
           )}
         </div>
@@ -56,7 +61,7 @@ export function TopDeals() {
         {!recent && (
           <EmptyDeals text="Search for a hotel and we'll show the best-priced stays for your destination and dates here." />
         )}
-        {recent && query.isFetching && <HotelResultsSkeleton />}
+        {recent && query.isFetching && <DealsSkeleton />}
         {recent && !query.isFetching && query.isError && (
           <EmptyDeals text="We couldn't load live rates for your recent search just now. Try searching again." />
         )}
@@ -64,7 +69,7 @@ export function TopDeals() {
           <EmptyDeals text={`No stays are available in ${recent.destination} for those dates. Try different dates.`} />
         )}
         {deals.length > 0 && !query.isFetching && (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {deals.map((result) => (
               <HotelResultCard
                 key={result.id}
@@ -81,7 +86,7 @@ export function TopDeals() {
   );
 }
 
-function EmptyDeals({ text }: { text: string }) {
+export function EmptyDeals({ text }: { text: string }) {
   return (
     <div className="grid gap-4 rounded-xl border border-dashed border-foreground/15 bg-card p-6 sm:flex sm:items-center sm:justify-between">
       <p className="flex min-w-0 items-start gap-3 text-sm text-muted-foreground">
