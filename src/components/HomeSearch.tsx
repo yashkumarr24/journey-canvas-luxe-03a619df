@@ -1,6 +1,6 @@
 import { FLIGHTS_UNDER_MAINTENANCE, FlightMaintenanceNotice } from "@/components/booking/FlightMaintenance";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Armchair, ArrowLeftRight, ArrowRight, BedDouble, Car, ChevronDown, FileText, Gift, Globe2, Loader2, MapPinned, Minus, PlaneTakeoff, Plus, Search, Ship, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { FlightResultsSkeleton } from "@/components/booking/FlightResultsSkeleto
 import { DateRangeField } from "@/components/booking/DateRangeField";
 import { PackageDestinationSearch } from "@/components/PackageDestinationSearch";
 import { useMockHotels } from "@/lib/hotel-api";
+import { rememberRecentHotelSearch } from "@/lib/hotel-results-state";
 import { hotelSearchQueryOptions, toHotelSearchRequest, type HotelSearchFormValues } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
 import { cabinClassOptions, defaultFlightSearchValues, flightSearchQueryOptions, flightSearchSchema, MAX_PASSENGERS, toSearchRequest, type FlightSearchFormValues } from "@/lib/flight-search";
@@ -52,7 +53,6 @@ const emptySegment = (): Segment => ({ origin: "", destination: "", date: "" });
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
 export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
-  const navigate = useNavigate();
   const [service, setService] = useState<Service>("flights");
   const [mode, setMode] = useState<FlightMode>("roundtrip");
   const [values, setValues] = useState<FlightSearchFormValues>(defaultFlightSearchValues);
@@ -75,6 +75,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
     setFlightValues(parsed.data);
   };
   const submitHotel = (next: HotelSearchFormValues) => {
+    rememberRecentHotelSearch(next);
     setHotelValues(next);
   };
   const patchSegment = (index: number, patch: Partial<Segment>) => setSegments((current) => current.map((segment, i) => i === index ? { ...segment, ...patch } : segment));
@@ -197,7 +198,7 @@ export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
         {hotelQuery.isFetching && <HotelResultsSkeleton />}
         {hotelQuery.isError && <p role="alert" className="text-sm text-destructive">{toBookingError(hotelQuery.error).message}</p>}
         {hotelQuery.data?.partial && <div role="status" className="space-y-2 text-sm text-muted-foreground"><p><strong>Incomplete hotel search.</strong> Results from {hotelQuery.data.completedBatches} of {(hotelQuery.data.completedBatches ?? 0) + (hotelQuery.data.failedBatches ?? 0)} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={hotelQuery.isFetching} onClick={() => void hotelQuery.refetch()}>Retry hotel search</Button></div>}
-        {!hotelQuery.isFetching && hotelQuery.data && <><p className="text-sm font-medium">{hotelQuery.data.results.length} stays in {hotelRequest.destination}</p>{hotelQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No stays found for these dates. Try another destination or date.</p>}{hotelQuery.data.results.slice(0, 3).map((result) => <HotelResultCard key={result.id} result={result} nights={hotelQuery.data.nights ?? 0} roomCount={hotelRequest.rooms.length} onSelect={hotelQuery.data.searchId ? () => void navigate({ to: "/hotels/detail", search: { searchId: hotelQuery.data.searchId, hotelId: result.id } }) : undefined} />)}{hotelQuery.data.results.length > 0 && <Button asChild variant="outline"><Link to="/hotels" search={hotelValues}>Explore more stays<ArrowRight className="size-4" aria-hidden="true" /></Link></Button>}</>}
+        {!hotelQuery.isFetching && hotelQuery.data && <><p className="text-sm font-medium">{hotelQuery.data.results.length} stays in {hotelRequest.destination}</p>{hotelQuery.data.results.length === 0 && <p className="text-sm text-muted-foreground">No stays found for these dates. Try another destination or date.</p>}{hotelQuery.data.results.slice(0, 3).map((result) => <HotelResultCard key={result.id} result={result} nights={hotelQuery.data.nights ?? 0} roomCount={hotelRequest.rooms.length} searchId={hotelQuery.data.searchId} />)}{hotelQuery.data.results.length > 0 && <Button asChild variant="outline"><Link to="/hotels" search={hotelValues}>Explore more stays<ArrowRight className="size-4" aria-hidden="true" /></Link></Button>}</>}
       </div>}
       {service === "flights" && !FLIGHTS_UNDER_MAINTENANCE && flightRequest && flightValues && <div className="mt-4 space-y-3 bg-card p-4 sm:p-6" aria-live="polite">
         {flightQuery.isFetching && <FlightResultsSkeleton />}

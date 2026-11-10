@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { AlertCircle, FlaskConical, Info, Loader2, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, FlaskConical, History, Info, Loader2, SlidersHorizontal } from "lucide-react";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SectionTitle } from "@/components/Section";
@@ -29,7 +29,9 @@ import {
   defaultHotelSearchValues,
   hotelSearchSchema,
   hotelPriceRange,
+  hotelSearchKey,
   hotelSearchQueryOptions,
+  hotelSearchRestoreQueryOptions,
   hotelSortOptions,
   occupancyLabel,
   sortHotelResults,
@@ -38,6 +40,12 @@ import {
   type HotelSearchFormValues,
 } from "@/lib/hotel-search";
 import { bookingApi, toBookingError } from "@/lib/booking-api";
+import {
+  readHotelResultsView,
+  rememberLastResults,
+  rememberRecentHotelSearch,
+  saveHotelResultsView,
+} from "@/lib/hotel-results-state";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
@@ -67,6 +75,8 @@ export const Route = createFileRoute("/hotels/")({
     rooms: z.unknown().optional(),
     nationality: z.string().optional(),
     currency: z.string().optional(),
+    /** Server search session, so a refresh can reopen the same results. */
+    sid: z.string().max(128).optional(),
   }),
   head: () => ({
     meta: [
@@ -93,13 +103,23 @@ function HotelsPage() {
   const search = Route.useSearch();
   const initialParsed = hotelSearchSchema.safeParse({ ...defaultHotelSearchValues, ...search, rooms: search.rooms ?? defaultHotelSearchValues.rooms });
   const initialValues = search.destination && initialParsed.success ? initialParsed.data : undefined;
+  const queryClient = useQueryClient();
   const [request, setRequest] = useState<HotelSearchRequest | null>(() => initialValues ? toHotelSearchRequest(initialValues) : null);
   const [filters, setFilters] = useState<HotelFilters>(defaultHotelFilters);
   const [sort, setSort] = useState<HotelSortKey>("recommended");
   const { track } = useAnalytics();
 
-  // refetchOnMount: false keeps results handed over from the homepage.
-  const query = useQuery({ ...hotelSearchQueryOptions(request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
+  // Back/refresh: reuse cached results when present (Back), otherwise reopen
+  // the server session named in the URL (refresh). A fresh search only runs
+  // when the visitor asks for one.
+  const [restoreId, setRestoreId] = useState<string | null>(() => {
+    if (!search.sid || !request || useMockHotels) return null;
+    return queryClient.getQueryData(hotelSearchKey(request)) ? null : search.sid;
+  });
+  const searchQuery = useQuery({ ...hotelSearchQueryOptions(restoreId ? null : request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
+  const restoreQuery = useQuery({ ...hotelSearchRestoreQueryOptions(restoreId, request), refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false });
+  const query = restoreId ? restoreQuery : searchQuery;
+  const restoreExpired = Boolean(restoreId && restoreQuery.isError);
 
   // Progressive search: while the server reports `loading`, poll the
   // progress endpoint and append new stays (deduplicated by id) until the
@@ -143,6 +163,36 @@ function HotelsPage() {
     };
   }, [searchId, query.data?.loading, query.data?.results]);
 
+  // Put the server session id in the URL once results arrive (replace, so Back
+  // still goes to the previous page) and remember it for the detail page.
+  useEffect(() => {
+    if (!searchId || !request) return;
+    const next = { ...search, sid: searchId };
+    if (search.sid !== searchId) void navigate({ to: "/hotels", search: next, replace: true });
+    rememberLastResults(next);
+  }, [searchId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Restore this visitor's filters, sort and scroll for the same session.
+  const restoredFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!searchId || restoredFor.current === searchId || query.isFetching) return;
+    restoredFor.current = searchId;
+    const view = readHotelResultsView(searchId);
+    if (!view) return;
+    setFilters({ ...defaultHotelFilters, ...view.filters });
+    setSort(view.sort);
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: view.scrollY })));
+  }, [searchId, query.isFetching]);
+
+  useEffect(() => {
+    if (!searchId || restoredFor.current !== searchId) return;
+    saveHotelResultsView(searchId, { filters, sort, scrollY: readHotelResultsView(searchId)?.scrollY ?? 0 });
+  }, [searchId, filters, sort]);
+
+  const rememberScroll = () => {
+    if (searchId) saveHotelResultsView(searchId, { filters, sort, scrollY: window.scrollY });
+  };
+
   const results = useMemo(
     () => [...(query.data?.results ?? []), ...appended],
     [query.data?.results, appended],
@@ -175,7 +225,11 @@ function HotelsPage() {
     setAppended([]);
     setProgress(null);
     const request = toHotelSearchRequest(values);
+    rememberRecentHotelSearch(values);
+    setRestoreId(null);
     setRequest(request);
+    restoredFor.current = null;
+    void navigate({ to: "/hotels", search: { ...values } });
     // Destination, dates and occupancy counts only — no guest identity.
     track(ANALYTICS_EVENTS.hotelSearch, {
       destination: request.destination,
@@ -187,15 +241,7 @@ function HotelsPage() {
     });
   };
 
-  const openHotel = (result: HotelResult) => {
-    if (!query.data?.searchId) return;
-    navigate({
-      to: "/hotels/detail",
-      search: { searchId: query.data.searchId, hotelId: result.id },
-    });
-  };
-
-  const error = query.isError ? toBookingError(query.error) : null;
+  const error = query.isError && !restoreExpired ? toBookingError(query.error) : null;
   const notConfigured = error?.kind === "not_implemented";
   const unsupported = error?.code === "HOTEL_DESTINATION_UNSUPPORTED";
 
@@ -247,7 +293,7 @@ function HotelsPage() {
           <div className="mt-4 lg:mt-10">
             <div className="grid gap-3 lg:flex lg:flex-wrap lg:items-end lg:justify-between">
               <div className="hidden min-w-0 lg:block">
-                <p className="font-display text-2xl leading-tight">{request.destination}</p>
+                <h1 className="font-display text-3xl font-semibold leading-tight">{request.destination}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {stayLabel(request.checkIn, request.checkOut)} · {occupancyLabel(request.rooms)}
                   {query.data ? ` · ${results.length} stays found` : ""}
@@ -299,6 +345,26 @@ function HotelsPage() {
                 {progress?.status === "partial" && <Alert className="mb-4" role="status"><AlertTitle>Incomplete hotel search</AlertTitle><AlertDescription className="space-y-2"><p>Results from {progress.completedBatches} of {progress.totalBatches} batches are shown. Other properties could not be checked.</p><Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>Retry hotel search</Button></AlertDescription></Alert>}
                 {query.isFetching && <HotelResultsSkeleton />}
 
+                {restoreExpired && (
+                  <div className="rounded-xl border border-foreground/10 bg-card p-8 text-center" role="alert">
+                    <History className="mx-auto size-6 text-gold" aria-hidden="true" />
+                    <p className="mt-3 font-display text-2xl font-semibold">This search has expired</p>
+                    <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                      Hotel rates change quickly, so we don't show results from an expired search. Search again for current prices.
+                    </p>
+                    <Button
+                      type="button"
+                      className="mt-5"
+                      onClick={() => {
+                        setRestoreId(null);
+                        void navigate({ to: "/hotels", search: { ...search, sid: undefined }, replace: true });
+                      }}
+                    >
+                      Search again
+                    </Button>
+                  </div>
+                )}
+
                 {!query.isFetching && error && (
                   <Alert variant={notConfigured ? "default" : "destructive"} role="alert">
                     {notConfigured ? (
@@ -318,7 +384,7 @@ function HotelsPage() {
                   </Alert>
                 )}
 
-                {!query.isFetching && !error && !loadingMore && results.length === 0 && (
+                {!query.isFetching && !error && !restoreExpired && !loadingMore && results.length === 0 && (
                    <div className="rounded-sm border border-dashed border-foreground/15 p-10 text-center">
                     <p className="font-display text-2xl">No stays for these dates</p>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -344,7 +410,8 @@ function HotelsPage() {
                         result={result}
                         nights={nights}
                         roomCount={roomCount}
-                        onSelect={openHotel}
+                        searchId={searchId}
+                        onOpen={rememberScroll}
                       />
                     ))}
                   </div>
