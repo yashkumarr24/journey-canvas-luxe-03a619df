@@ -5,8 +5,10 @@ The continuation must reuse the same paced dispatch guard (no rate increase),
 append without duplicates, and never report partial results as complete.
 """
 import asyncio
+import socket
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
 from app.core.auth import AuthContext
@@ -16,6 +18,42 @@ from app.integrations.tripjack.exceptions import TripJackRateLimitError, TripJac
 from app.integrations.tripjack.listing_dispatch import ListingDispatch
 from app.services import hotel_progress, hotel_search as svc, hotel_sessions
 from tests.test_hotel_listing import body, hotel, ids, req
+
+
+def offline_settings():
+    """Defaults only: bypass Settings sources, including .env and credentials."""
+    return Settings.model_construct()
+
+
+@pytest.fixture(autouse=True)
+def offline_progress_tests(monkeypatch):
+    """Isolate progress/session state and forbid all real outbound traffic.
+
+    Stubbing the catalogue and TripJack alone does NOT select memory sessions:
+    Settings() can enable the real database from .env. Concurrent durable
+    read/merge/write appends can then lose batches, unlike the memory store
+    these tests intend to exercise. Explicitly select a fresh memory store.
+    """
+    monkeypatch.setattr(hotel_sessions, '_repo', lambda _: None)
+    monkeypatch.setattr(hotel_sessions, '_memory', hotel_sessions._MemoryStore())
+    monkeypatch.setattr(hotel_progress, '_entries', {})
+    attempted = []
+
+    def deny_network(*args, **kwargs):
+        attempted.append('outbound connection')
+        raise AssertionError('External services are forbidden in progress tests')
+
+    async def deny_http(*args, **kwargs):
+        deny_network()
+
+    monkeypatch.setattr(socket.socket, 'connect', deny_network)
+    monkeypatch.setattr(socket.socket, 'connect_ex', deny_network)
+    monkeypatch.setattr(socket, 'create_connection', deny_network)
+    monkeypatch.setattr(httpx.HTTPTransport, 'handle_request', deny_network)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, 'handle_async_request', deny_http)
+    yield
+    # Service fallbacks catch exceptions: a blocked attempt must still fail.
+    assert attempted == [], 'A progress test attempted an external service call'
 
 
 class Client:
@@ -79,7 +117,7 @@ def service_stub(monkeypatch):
 async def _run_search(state, n):
     state['hids'] = ids(n)
     response = await svc.search_hotels(request=None, payload=req(),
-                                       auth=AuthContext(user_id=None), settings=Settings())
+                                       auth=AuthContext(user_id=None), settings=offline_settings())
     entry = hotel_progress.get(response.search_id) if response.loading else None
     if entry is not None:
         await entry.task
@@ -102,8 +140,10 @@ def test_large_city_initial_window_then_background_completes(fast_dispatch, serv
     assert len({r.id for r in entry.results}) == 6684  # no duplicates
     assert len(service_stub['client'].calls) == 67
     # Late arrivals merged into the durable session for detail/review.
-    session = asyncio.run(hotel_sessions.get_search_session(settings=Settings(), search_id=response.search_id))
+    session = asyncio.run(hotel_sessions.get_search_session(settings=offline_settings(), search_id=response.search_id))
     assert session is not None and len(session.results) == 6684
+    assert set(session.results) == set(ids(6684))
+    assert session.provider_search_ids == entry.provider_search_ids
     assert session.provider_search_ids[ids(1, 3600)[0]] == 'batch-36'
 
 
@@ -182,11 +222,11 @@ def test_progress_poll_slices_by_offset_without_duplicates(fast_dispatch, servic
     async def run():
         response, entry = await _run_search(service_stub, 6684)
         first = await svc.search_progress(request=None, search_id=response.search_id, offset=0,
-                                          auth=AuthContext(user_id=None), settings=Settings())
+                                          auth=AuthContext(user_id=None), settings=offline_settings())
         assert first.status == 'complete' and first.next_offset == 6684
         second = await svc.search_progress(request=None, search_id=response.search_id,
                                            offset=len(response.results),
-                                           auth=AuthContext(user_id=None), settings=Settings())
+                                           auth=AuthContext(user_id=None), settings=offline_settings())
         assert second.next_offset == 6684
         initial_ids = {r.id for r in response.results}
         assert all(r.id not in initial_ids for r in second.results)
@@ -200,7 +240,7 @@ def test_progress_unknown_search_id_is_expired_not_loading(service_stub):
     async def run():
         with pytest.raises(svc.HotelSearchExpiredError):
             await svc.search_progress(request=None, search_id='x' * 48, offset=0,
-                                      auth=AuthContext(user_id=None), settings=Settings())
+                                      auth=AuthContext(user_id=None), settings=offline_settings())
 
     asyncio.run(run())
 
@@ -212,11 +252,11 @@ def test_progress_falls_back_to_session_as_complete_without_entry(fast_dispatch,
     async def run():
         response, _ = await _run_search(service_stub, 200)
         snapshot = await svc.search_progress(request=None, search_id=response.search_id, offset=0,
-                                             auth=AuthContext(user_id=None), settings=Settings())
+                                             auth=AuthContext(user_id=None), settings=offline_settings())
         assert snapshot.status == 'complete'
         assert snapshot.next_offset == 200 and len(snapshot.results) == 200
         tail = await svc.search_progress(request=None, search_id=response.search_id, offset=200,
-                                         auth=AuthContext(user_id=None), settings=Settings())
+                                         auth=AuthContext(user_id=None), settings=offline_settings())
         assert tail.results == [] and tail.next_offset == 200
 
     asyncio.run(run())
@@ -226,6 +266,37 @@ def test_progress_rejects_malformed_search_id(service_stub):
     async def run():
         with pytest.raises(svc.HotelSearchRejectedError):
             await svc.search_progress(request=None, search_id='bad id!', offset=0,
-                                      auth=AuthContext(user_id=None), settings=Settings())
+                                      auth=AuthContext(user_id=None), settings=offline_settings())
 
     asyncio.run(run())
+
+
+def test_progress_settings_never_load_environment_or_dotenv(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / '.env').write_text(
+        'SUPABASE_URL=https://database.invalid\n'
+        'SUPABASE_SERVICE_ROLE_KEY=synthetic-not-a-credential\n'
+        'TRIPJACK_API_KEY=synthetic-not-a-credential\n'
+        'PAYMENTS_ENABLED=true\n'
+        'HOTEL_SEARCH_INITIAL_BATCHES=10\n'
+    )
+    monkeypatch.setenv('SUPABASE_URL', 'https://environment.invalid')
+    monkeypatch.setenv('SUPABASE_SERVICE_ROLE_KEY', 'synthetic-not-a-credential')
+    monkeypatch.setenv('PAYU_MERCHANT_KEY', 'synthetic-not-a-credential')
+
+    def deny_settings_sources(*args, **kwargs):
+        pytest.fail('Progress tests must never instantiate environment-backed Settings')
+
+    monkeypatch.setattr(Settings, '__init__', deny_settings_sources)
+    settings = offline_settings()
+    assert settings.supabase_url == settings.supabase_service_role_key == ''
+    assert settings.tripjack_api_key == settings.payu_merchant_key == ''
+    assert settings.payments_enabled is False
+    assert settings.hotel_search_initial_batches == 4
+    assert hotel_sessions._repo(settings) is None
+
+
+def test_progress_fixture_starts_with_empty_stores():
+    assert hotel_progress._entries == {}
+    assert hotel_sessions._memory.searches == {}
+    assert hotel_sessions._memory.reviews == {}
