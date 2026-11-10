@@ -370,9 +370,13 @@ async def refund(repo: Repo, client: PayUClient, *, payment_id: str, amount: Any
     subject = await repo.subject_for_payment(payment)
     if not subject or not await eligible(payment, subject):
         raise RefundNotAllowed("The booking is not reconciled as failed or cancelled; refund not sent.")
-    # Reconcile with PayU before money moves.
+    # Reconcile with PayU before money moves: only a server-verified capture
+    # (status=success, unmappedstatus=captured, expected mihpayid) may refund.
+    # An authorised-but-uncaptured payment (unmappedstatus=auth) has no captured
+    # money to return, so it is refused here, never refunded.
     verified = await client.verify_payment(payment["txnid"])
-    if verified.status != "success" or verified.mihpayid != payment.get("provider_mihpayid"):
+    if (verified.status != "success" or verified.unmappedstatus != "captured"
+            or verified.mihpayid != payment.get("provider_mihpayid")):
         raise RefundNotAllowed("Payment could not be reconciled with PayU; refund not sent.")
     amt = to_amount(amount)
     try:
