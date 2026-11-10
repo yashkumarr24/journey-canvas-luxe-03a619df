@@ -131,6 +131,13 @@ class HotelReviewExpiredError(AppError):
 class HotelRoomUnavailableError(AppError):
     status_code = status.HTTP_409_CONFLICT
     code = "HOTEL_ROOM_UNAVAILABLE"
+    message = "We couldn't confirm the latest rate for this room. Please choose another room or search again."
+
+
+class HotelRoomSoldOutError(HotelRoomUnavailableError):
+    """Only for TripJack's confirmed OPTION_SOLD_OUT review response."""
+
+    code = "HOTEL_ROOM_SOLD_OUT"
     message = "The hotel has just sold this room. Please choose another room or property."
 
 
@@ -159,7 +166,14 @@ class HotelDestinationUnsupportedError(AppError):
 
 
 # TripJack v3 review error codes (docs "Error Codes").
-REVIEW_UNAVAILABLE_CODES = {"OPTION_SOLD_OUT", "INVALID_HOTEL_ID"}
+REVIEW_SOLD_OUT_CODES = {"OPTION_SOLD_OUT"}
+REVIEW_UNAVAILABLE_CODES = {"INVALID_HOTEL_ID"}
+
+
+def _log_pre_review_failure(reason: str, **fields: object) -> None:
+    """Safe diagnosis only: a reason label, counts and presence booleans.
+    Never IDs, hashes, credentials, guest details or provider payloads."""
+    logger.warning("hotel_pre_review_failure", reason=reason, **fields)
 REVIEW_EXPIRED_CODES = {"SEARCH_SESSION_EXPIRED", "INVALID_SEARCH_ID"}
 
 
@@ -610,6 +624,7 @@ async def _priced_hotel(
         raise _map_provider_error(exc) from None
 
     if not priced.detail.rooms:
+        _log_pre_review_failure("pricing_no_rooms", room_count=0)
         raise HotelRoomUnavailableError()
     return priced.detail, priced.review_hash
 
@@ -650,12 +665,23 @@ async def select_room(
 
     selected = next((room for room in detail.rooms if room.id == payload.rate_id), None)
     if selected is None:
+        _log_pre_review_failure(
+            "selected_rate_absent_from_pricing",
+            room_count=len(detail.rooms),
+            rate_id_present=bool(payload.rate_id),
+        )
         raise HotelRoomUnavailableError()
 
     previous_total = selected.total_price.amount
 
     if not pricing_review_hash or not session.provider_search_id:
         # Review needs the detail reviewHash and the listing correlationId.
+        _log_pre_review_failure(
+            "review_hash_missing" if not pricing_review_hash else "correlation_id_missing",
+            room_count=len(detail.rooms),
+            review_hash_present=bool(pricing_review_hash),
+            correlation_id_present=bool(session.provider_search_id),
+        )
         raise HotelRoomUnavailableError()
 
     # Final v3 review. Anything unusable means the rate is gone — we never
@@ -676,6 +702,8 @@ async def select_room(
     except TripJackBadRequestError as exc:
         if exc.provider_code in REVIEW_EXPIRED_CODES:
             raise HotelSearchExpiredError() from None
+        if exc.provider_code in REVIEW_SOLD_OUT_CODES:
+            raise HotelRoomSoldOutError() from None
         if exc.provider_code in REVIEW_UNAVAILABLE_CODES:
             raise HotelRoomUnavailableError() from None
         raise _map_provider_error(exc) from None
