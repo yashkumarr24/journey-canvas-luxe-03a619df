@@ -1,6 +1,6 @@
 import { FLIGHTS_UNDER_MAINTENANCE, FlightMaintenanceNotice } from "@/components/booking/FlightMaintenance";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Armchair, ArrowLeftRight, ArrowRight, BedDouble, Car, ChevronDown, FileText, Gift, Globe2, Loader2, MapPinned, Minus, PlaneTakeoff, Plus, Search, Ship, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,6 @@ const emptySegment = (): Segment => ({ origin: "", destination: "", date: "" });
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
 export function HomeSearch({ catalogue }: { catalogue: Catalogue }) {
-  const navigate = useNavigate();
   const [service, setService] = useState<Service>("flights");
   const [mode, setMode] = useState<FlightMode>("roundtrip");
   const [values, setValues] = useState<FlightSearchFormValues>(defaultFlightSearchValues);
