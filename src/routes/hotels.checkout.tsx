@@ -21,9 +21,6 @@ import { PAYMENTS_UNAVAILABLE_MESSAGE, resolvePaymentHandoff } from "@/lib/payme
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
 import { occupancyLabel } from "@/lib/hotel-search";
-import { useAuth } from "@/lib/auth/auth-context";
-import { useMockOperations } from "@/lib/ops/ops-api";
-import { recordHotelBooking } from "@/lib/ops/ops-mock";
 import { useAnalytics, useTrackOnce } from "@/lib/analytics/tracker";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PaymentOrder } from "@/types/booking";
@@ -81,7 +78,7 @@ function HotelCheckoutPage() {
   const [order, setOrder] = useState<PaymentOrder | null>(null);
   const [testSheet, setTestSheet] = useState<PaymentOrder | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+  const [idempotencyKey] = useState(newIdempotencyKey);
 
   const guestToken = ref ? readHotelBookingGuestToken(ref) : null;
 
@@ -96,7 +93,6 @@ function HotelCheckoutPage() {
   const data = booking.data;
 
   const { track } = useAnalytics();
-  const { userId } = useAuth();
   useTrackOnce(ANALYTICS_EVENTS.hotelCheckoutStarted, Boolean(data));
 
   // Align the default method with what the backend actually offers.
@@ -107,73 +103,9 @@ function HotelCheckoutPage() {
     }
   }, [data, method]);
 
-  const confirm = useMutation({
-    mutationFn: (payload: { paymentId: string; orderId: string; signature?: string }) => {
-      setStage("booking");
-      return hotelApi.book({
-        bookingReference: ref as string,
-        guestToken: guestToken ?? undefined,
-        provider: useMockHotels ? "test" : "razorpay",
-        orderId: payload.orderId,
-        paymentId: payload.paymentId,
-        signature: payload.signature,
-        idempotencyKey,
-      });
-    },
-    onSuccess: (result) => {
-      // Mirror the outcome into the operations records ("my trips" + admin desk).
-      // Test mode only, best effort — it must never affect the booking result.
-      if (useMockOperations) recordHotelBooking(result.booking, { userId });
-      if (result.status === "confirmed" || result.status === "booking_processing") {
-        track(ANALYTICS_EVENTS.hotelPaymentSuccess);
-        track(ANALYTICS_EVENTS.hotelBookingCompleted, {
-          reference: result.booking.bookingReference,
-          bookingStatus: result.status,
-        });
-        navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
-        return;
-      }
-      setStage("booking_failed");
-      setMessage(result.message ?? result.booking.statusMessage ?? null);
-      track(ANALYTICS_EVENTS.hotelBookingFailed, { bookingStatus: result.status });
-
-      // A fresh attempt must not reuse the previous idempotency key.
-      setIdempotencyKey(newIdempotencyKey());
-      booking.refetch();
-    },
-    onError: (error) => {
-      setStage("failed");
-      setMessage(toBookingError(error).message);
-      track(ANALYTICS_EVENTS.hotelBookingFailed, { reason: toBookingError(error).kind });
-      setIdempotencyKey(newIdempotencyKey());
-    },
-  });
-
-  // Hold: reserve the room without payment where the hotel allows it.
-  const hold = useMutation({
-    mutationFn: () =>
-      hotelApi.book({
-        bookingReference: ref as string,
-        guestToken: guestToken ?? undefined,
-        mode: "hold",
-        idempotencyKey,
-      }),
-    onSuccess: (result) => {
-      if (result.status === "failed") {
-        setStage("booking_failed");
-        setMessage(result.message ?? result.booking.statusMessage ?? null);
-        setIdempotencyKey(newIdempotencyKey());
-        return;
-      }
-      navigate({ to: "/hotels/confirmation", search: { ref: result.booking.bookingReference } });
-    },
-    onError: (error) => {
-      setStage("failed");
-      setMessage(toBookingError(error).message);
-      setIdempotencyKey(newIdempotencyKey());
-    },
-  });
-
+  // The browser never calls Book, Hold or Confirm. After PayU capture is
+  // verified server-side, the backend worker books the room; the
+  // confirmation page polls the booking status.
   const reportFailure = (reason: "cancelled" | "failed", note?: string) => {
     if (!ref) return;
     hotelApi
@@ -295,7 +227,7 @@ function HotelCheckoutPage() {
           <p className="mt-3 text-sm text-muted-foreground">
             {stage === "booking"
               ? "We're confirming the room with the hotel. This can take up to a minute — please don't close or refresh this page."
-              : "Please don't close or refresh this page."}
+              : "You'll be taken to PayU's secure page. Please don't close or refresh this page."}
           </p>
           <p className="mt-6 font-display text-2xl">{formatMoney(payable.amount, payable.currency)}</p>
         </div>
@@ -305,8 +237,8 @@ function HotelCheckoutPage() {
             order={testSheet}
             onAuthorise={(paymentId) => {
               setTestSheet(null);
-              setStage("processing");
-              confirm.mutate({ paymentId, orderId: (order ?? testSheet)?.orderId ?? "" });
+              void paymentId;
+              navigate({ to: "/hotels/confirmation", search: { ref } });
             }}
             onFail={() => {
               setTestSheet(null);
@@ -461,20 +393,6 @@ function HotelCheckoutPage() {
                 : `Pay ${formatMoney(payable.amount, payable.currency)}`}
 
             </Button>
-
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              className="mt-3 w-full"
-              disabled={expired || hold.isPending || pay.isPending}
-              onClick={() => hold.mutate()}
-            >
-              {hold.isPending ? "Holding your room…" : "Hold room, pay later"}
-            </Button>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Only for rooms the hotel lets us hold. You confirm before the hotel's deadline.
-            </p>
 
             <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
