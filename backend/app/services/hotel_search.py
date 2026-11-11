@@ -646,8 +646,9 @@ def _match_reissued_option(summary, rooms: list, rate_id: str):
     plan = next((p for p in plans if p.option_id == rate_id), None)
     if plan is None or not (plan.room_name or plan.meal_plan):
         return None
-    criteria = {"room_name": plan.room_name, "meal_plan": plan.meal_plan,
-                "rate_plan_type": plan.type}
+    # Room name and meal plan only: the derived plan-type label is computed
+    # differently on the listing and detail paths, so it cannot be compared.
+    criteria = {"room_name": plan.room_name, "meal_plan": plan.meal_plan}
     matches = [
         room for room in rooms
         if all(value is None or getattr(room, field) == value
