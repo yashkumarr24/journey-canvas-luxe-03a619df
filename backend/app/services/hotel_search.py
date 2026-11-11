@@ -665,6 +665,12 @@ async def select_room(
 
     selected = next((room for room in detail.rooms if room.id == payload.rate_id), None)
     if selected is None:
+        # The optionId may have been reissued between detail and selection.
+        # The listing retained the selected option's details; accept a fresh
+        # option only when those details identify exactly ONE option. Never
+        # match by a shared roomId alone or substitute another room/rate.
+        selected = _match_reissued_option(summary, detail.rooms, payload.rate_id)
+    if selected is None:
         _log_pre_review_failure(
             "selected_rate_absent_from_pricing",
             room_count=len(detail.rooms),
