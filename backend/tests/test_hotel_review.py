@@ -20,7 +20,7 @@ from app.integrations.tripjack.exceptions import (
 )
 from app.services import hotel_search as svc
 from app.services import hotel_sessions as sessions
-from tests.test_hotel_detail import FakeClient, option, reply, session
+from tests.test_hotel_detail import FakeClient, option, reply, session, snap_session
 
 HID = "100000001897"
 LEAKS = ("LIST-CORR", "RH-secret", "BK-SECRET", "gstClaimableAmount", "commercial",
@@ -144,7 +144,7 @@ def flow(monkeypatch):
     monkeypatch.setattr(svc, "client_identity", lambda *a: "x")
 
     async def fake_get(*, settings, search_id):
-        return session()
+        return snap_session()
 
     async def fake_create(**kw):
         captured.update(kw)
@@ -261,7 +261,7 @@ def test_selected_rate_absent_logs_counts_only(flow, caplog):
         select("forged-option")
     assert info.value.code == "HOTEL_ROOM_UNAVAILABLE"
     d = _diag(caplog)
-    assert d["reason"] == "selected_rate_absent_from_pricing" and d["rate_id_present"] is True
+    assert d["reason"] == "selected_rate_not_in_detail_snapshot" and d["rate_id_present"] is True
     assert d["room_count"] >= 1
     assert len(client.calls) == 1
     _no_secrets(caplog)
@@ -297,96 +297,176 @@ def test_invalid_hotel_id_is_not_sold_out(flow):
     assert info.value.code == "HOTEL_ROOM_UNAVAILABLE" and "sold" not in info.value.message
 
 
-# ------------------------------------------- reissued optionId matching
+# ---------------------------------- detail snapshot -> fresh Pricing match
 
 
-from app.schemas.flights import Money
-from app.schemas.hotels import HotelRatePlan
+def _room(name, oid, meal="Breakfast", adults=2, rid="r1", **extra):
+    return option(oid=oid, mealBasis=meal,
+                  roomInfo=[{"id": rid, "name": name, "adults": adults, "children": 0}], **extra)
 
 
-def _plan(option_id, room_name="Deluxe Room", meal_plan="Breakfast", type_="CHEAPEST"):
-    return HotelRatePlan(type=type_, label=type_.title(), option_id=option_id,
-                         total_price=Money(amount=2136.07, currency="INR"),
-                         room_name=room_name, meal_plan=meal_plan)
-
-
-def _session_with_plans(plans):
-    s = session()
-    summary = s.results[HID]
-    s.results[HID] = summary.model_copy(update={"rate_plans": plans})
-    return s
+def _live_26(prefix="opt"):
+    """26 distinct options, all sharing one roomId (as TripJack allows)."""
+    names = ["Deluxe Room", "Superior Room", "Premier Room", "Suite", "Family Room",
+             "Studio", "Club Room", "Executive Room", "Twin Room", "King Room",
+             "Garden Room", "Pool Room", "Sea View Room"]
+    return [_room(n, f"{prefix}-{i}-{m}", meal=m, rid="SHARED")
+            for i, n in enumerate(names) for m in ("Breakfast", "Room Only")]
 
 
 @pytest.fixture
-def flow_with_plans(monkeypatch):
-    """Like `flow`, but the stored listing retained rate plans for the hotel."""
+def snap_flow(monkeypatch):
+    """`flow` with a configurable detail snapshot (what the customer saw)."""
     client = FakeClient([])
     captured: dict = {}
-    plans: list = []
+    shown: list = []
     monkeypatch.setattr(svc, "_provider", lambda settings: (client, SimpleNamespace(search_retries=0)))
     monkeypatch.setattr(svc.hotel_session_limiter, "check", lambda *_: None)
     monkeypatch.setattr(svc, "client_identity", lambda *a: "x")
 
     async def fake_get(*, settings, search_id):
-        return _session_with_plans(plans)
+        return snap_session(list(shown))
 
     async def fake_create(**kw):
         captured.update(kw)
-        s = SimpleNamespace(token="rev-tok", hotel=kw["hotel"], room=kw["room"], stay=kw["stay"],
-                            currency=kw["currency"], previous_total=kw["previous_total"],
-                            requirements=kw["requirements"])
-        return s, None
+        return SimpleNamespace(token="rev-tok", hotel=kw["hotel"], room=kw["room"], stay=kw["stay"],
+                               currency=kw["currency"], previous_total=kw["previous_total"],
+                               requirements=kw["requirements"]), None
 
     monkeypatch.setattr(sessions, "get_search_session", fake_get)
     monkeypatch.setattr(sessions, "create_review_session", fake_create)
     monkeypatch.setattr(sessions, "expires_at_iso", lambda s: "2026-10-01T00:00:00Z")
     monkeypatch.setattr(sessions, "seconds_left", lambda s: 600)
     monkeypatch.setattr(svc, "_requirements", lambda s: svc._requirements_for(s.room, s.hotel))
-    return client, captured, plans
+    return client, captured, shown
 
 
-def test_reissued_option_matched_by_retained_details(flow_with_plans):
-    """optionId reissued after detail: the listing's retained room name, meal
-    plan and plan type identify exactly one fresh option; Review gets the
-    FRESH optionId."""
-    client, captured, plans = flow_with_plans
-    plans.append(_plan("opt-1"))
-    reissued = option(oid="opt-9")  # same room name/meal/type, new optionId
-    client.replies += [reply(options=[reissued]), review_reply(opt=reissued)]
-    resp = select("opt-1")
-    assert client.calls[1][1]["optionId"] == "opt-9"
-    assert captured["provider_option_id"] == "opt-9"
-    assert resp.status == "reviewed"
+def test_live_26_options_shared_room_id_selects_exact_option(snap_flow):
+    """Live scenario: 26 detail options sharing one roomId. The chosen
+    optionId is in the snapshot and in fresh Pricing -> Review gets exactly it."""
+    client, captured, shown = snap_flow
+    opts = _live_26()
+    shown += opts
+    client.replies += [reply(options=opts), review_reply(opt=opts[7])]
+    select(opts[7]["optionId"])
+    assert client.calls[1][1]["optionId"] == opts[7]["optionId"]
+    assert client.calls[1][1]["reviewHash"] == "RH-secret"
+    assert captured["provider_option_id"] == opts[7]["optionId"]
 
 
-def test_ambiguous_details_never_substitute_another_option(flow_with_plans):
-    """Two fresh options share the retained details: no unique match, so the
-    safe neutral failure stands and Review is never called."""
-    client, _, plans = flow_with_plans
-    plans.append(_plan("opt-1"))
-    client.replies += [reply(options=[option(oid="opt-9"), option(oid="opt-10")])]
-    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+def test_live_26_options_reissued_ids_match_unique_fingerprint(snap_flow):
+    """Fresh Pricing reissued every optionId: the retained room name, meal
+    plan and occupancy identify exactly one fresh option; its FRESH optionId
+    and the fresh reviewHash go to Review."""
+    client, captured, shown = snap_flow
+    shown += _live_26("old")
+    fresh = _live_26("new")
+    client.replies += [reply(options=fresh, reviewHash="RH-fresh"), review_reply(opt=fresh[5])]
+    select("old-2-Room Only")
+    assert client.calls[1][1]["optionId"] == "new-2-Room Only" == fresh[5]["optionId"]
+    assert client.calls[1][1]["reviewHash"] == "RH-fresh"
+    assert captured["provider_option_id"] == "new-2-Room Only"
+
+
+def test_missing_snapshot_fails_without_review(flow, monkeypatch, caplog):
+    client, _ = flow
+
+    async def no_snapshot(*, settings, search_id):
+        return session()  # session exists, but detail options were never retained
+
+    monkeypatch.setattr(sessions, "get_search_session", no_snapshot)
+    client.replies += [reply()]
+    caplog.set_level("WARNING")
+    with pytest.raises(svc.HotelRoomUnavailableError):
         select("opt-1")
-    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE"
-    assert len(client.calls) == 1  # pricing only, review never called
+    assert [c[0] for c in client.calls] == [wire.HOTEL_PRICING_PATH]
+    assert _diag(caplog)["reason"] == "detail_snapshot_missing"
 
 
-def test_unknown_rate_id_without_retained_details_fails(flow_with_plans):
-    """A rate id the listing never retained cannot be matched by details."""
-    client, _, plans = flow_with_plans
-    plans.append(_plan("opt-1"))
-    client.replies += [reply()]
+def test_rate_not_shown_in_detail_is_refused_even_if_priced(snap_flow):
+    """A rate id fresh Pricing knows but the customer was never shown."""
+    client, _, shown = snap_flow
+    shown.append(_room("Deluxe Room", "opt-1"))
+    client.replies += [reply(options=[_room("Deluxe Room", "opt-1"), _room("Suite", "opt-2")])]
     with pytest.raises(svc.HotelRoomUnavailableError):
-        select("forged-option")
+        select("opt-2")
     assert len(client.calls) == 1
 
 
-def test_room_id_alone_never_matches(flow_with_plans):
-    """The shared room/category id (`roomInfo[].id` / generic `id`) is never
-    enough: a rate id equal to it must still fail closed."""
-    client, _, plans = flow_with_plans
-    plans.append(_plan("opt-1"))
-    client.replies += [reply()]
+def test_reissued_ambiguous_fresh_match_fails(snap_flow):
+    client, _, shown = snap_flow
+    shown.append(_room("Deluxe Room", "opt-1"))
+    client.replies += [reply(options=[_room("Deluxe Room", "opt-9"), _room("Deluxe Room", "opt-10")])]
     with pytest.raises(svc.HotelRoomUnavailableError):
-        select("r1")  # the roomInfo id inside the fresh option
+        select("opt-1")
     assert len(client.calls) == 1
+
+
+def test_reissued_ambiguous_snapshot_fails(snap_flow):
+    """Customer saw two indistinguishable options: no unique identity, refuse."""
+    client, _, shown = snap_flow
+    shown += [_room("Deluxe Room", "opt-1"), _room("Deluxe Room", "opt-2")]
+    client.replies += [reply(options=[_room("Deluxe Room", "opt-9")])]
+    with pytest.raises(svc.HotelRoomUnavailableError):
+        select("opt-1")
+    assert len(client.calls) == 1
+
+
+def test_reissued_different_meal_or_occupancy_never_substitutes(snap_flow):
+    client, _, shown = snap_flow
+    shown.append(_room("Deluxe Room", "opt-1", meal="Breakfast", adults=2))
+    client.replies += [reply(options=[_room("Deluxe Room", "opt-9", meal="Room Only"),
+                                      _room("Deluxe Room", "opt-10", adults=3)])]
+    with pytest.raises(svc.HotelRoomUnavailableError):
+        select("opt-1")
+    assert len(client.calls) == 1
+
+
+def test_shared_room_id_alone_never_matches(snap_flow):
+    client, _, shown = snap_flow
+    shown += _live_26()
+    client.replies += [reply(options=_live_26("new"))]
+    with pytest.raises(svc.HotelRoomUnavailableError):
+        select("SHARED")
+    assert len(client.calls) == 1
+
+
+def test_expired_session_refuses_before_pricing(flow, monkeypatch):
+    client, _ = flow
+
+    async def expired(*, settings, search_id):
+        return None  # get_search_session returns None once expired
+
+    monkeypatch.setattr(sessions, "get_search_session", expired)
+    with pytest.raises(svc.HotelSearchExpiredError):
+        select("opt-1")
+    assert client.calls == []
+
+
+def test_hotel_detail_retains_displayed_options(monkeypatch):
+    client = FakeClient([reply(options=_live_26())])
+    monkeypatch.setattr(svc, "_provider", lambda settings: (client, SimpleNamespace(search_retries=0)))
+    monkeypatch.setattr(svc.hotel_session_limiter, "check", lambda *_: None)
+    monkeypatch.setattr(svc, "client_identity", lambda *a: "x")
+    monkeypatch.setattr(sessions, "_repo", lambda settings: None)
+    s = session()
+    sessions._memory.searches[s.id] = s
+
+    async def fake_get(*, settings, search_id):
+        return s
+
+    monkeypatch.setattr(sessions, "get_search_session", fake_get)
+    monkeypatch.setattr(sessions, "expires_at_iso", lambda x: "2026-10-01T00:00:00Z")
+    payload = SimpleNamespace(search_id="tok", hotel_id=HID)
+    auth = SimpleNamespace(user_id=None, is_authenticated=False)
+    try:
+        asyncio.run(svc.hotel_detail(request=None, payload=payload, auth=auth, settings=None))
+        snap = sessions.get_detail_snapshot(s, HID)
+        assert [o["option_id"] for o in snap] == [o["optionId"] for o in _live_26()]
+        assert all("total_price" not in o for o in snap)
+        # A later progress update keeps the snapshot.
+        asyncio.run(sessions.update_search_progress(settings=None, search_id=s.id,
+                                                    progress={"status": "complete"}))
+        assert len(sessions.get_detail_snapshot(s, HID)) == 26
+    finally:
+        sessions._memory.searches.pop(s.id, None)

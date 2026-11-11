@@ -181,6 +181,16 @@ def session(**kw):
     return s
 
 
+def snap_session(options=None, **kw):
+    """A search session that retained the detail options shown to the
+    customer (the server-side snapshot select_room validates against)."""
+    s = session(**kw)
+    opts = [option()] if options is None else options
+    shown = [svc._option_fingerprint(tj._room_option(o, "INR")) for o in opts]
+    s.progress = {sessions.DETAIL_SNAPSHOT_KEY: {"100000001897": shown}}
+    return s
+
+
 @pytest.fixture
 def wired(monkeypatch):
     client = FakeClient([])
@@ -241,7 +251,7 @@ def test_select_room_propagates_pricing_review_hash(wired, monkeypatch):
     captured = {}
 
     async def fake_get(*, settings, search_id):
-        return session()
+        return snap_session()
 
     async def fake_review(*a, **k):
         assert k["review_hash"] == "RH-secret" and k["listing_correlation_id"] == "LIST-CORR"
