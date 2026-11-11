@@ -24,6 +24,12 @@ import { hotelApi } from "@/lib/hotel-api";
 import { readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { occupancyLabel } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
+import {
+  confirmationHeaderCopy,
+  NEUTRAL_CONFIRMATION_HEADER,
+  unpaidBookingCopy,
+  type ConfirmationHeaderCopy,
+} from "@/lib/hotel-confirmation-status";
 import type { HotelBookingSummary } from "@/types/booking";
 
 /**
@@ -42,14 +48,14 @@ export const Route = createFileRoute("/hotels/confirmation")({
   }),
   head: () => ({
     meta: [
-      { title: "Hotel Booking Confirmed — Fly n Feel Holidays" },
+      { title: "Hotel Booking Status — Fly n Feel Holidays" },
       {
         name: "description",
         content:
-          "Your Fly n Feel Holidays hotel booking confirmation, with your booking reference, hotel details, room, guests and payment summary.",
+          "Your Fly n Feel Holidays hotel booking status, with your booking reference, hotel details, room, guests and payment summary.",
       },
-      { property: "og:title", content: "Hotel Booking Confirmed — Fly n Feel Holidays" },
-      { property: "og:description", content: "Your hotel booking reference and stay details." },
+      { property: "og:title", content: "Hotel Booking Status — Fly n Feel Holidays" },
+      { property: "og:description", content: "Your hotel booking reference, status and stay details." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "twitter:card", content: "summary" },
@@ -138,9 +144,11 @@ function HotelConfirmationPage() {
   const confirmed = data.status === "confirmed";
   const unpaid = data.status === "awaiting_payment" || data.status === "payment_failed";
   const failed = data.status === "failed" || data.status === "cancelled" || data.status === "expired";
+  const header = confirmationHeaderCopy(data.status);
+  const unpaidCopy = unpaid ? unpaidBookingCopy(data.status) : null;
 
   return (
-    <Shell>
+    <Shell header={header}>
       {confirmed && (
         <div className="rounded-3xl border border-foreground/10 bg-card p-8 text-center">
           <CheckCircle2 className="mx-auto size-9 text-gold" aria-hidden="true" />
@@ -186,12 +194,12 @@ function HotelConfirmationPage() {
         <CancelButton data={data} guestToken={guestToken} onDone={() => booking.refetch()} />
       )}
 
-      {unpaid && (
+      {unpaid && unpaidCopy && (
         <Alert role="status">
           <AlertCircle className="size-4" aria-hidden="true" />
-          <AlertTitle>This booking isn't paid yet</AlertTitle>
+          <AlertTitle>{unpaidCopy.title}</AlertTitle>
           <AlertDescription className="space-y-3">
-            <p>{data.statusMessage ?? "Your room is still held. Complete payment to confirm your stay."}</p>
+            <p>{data.statusMessage ?? unpaidCopy.body}</p>
             <Button asChild size="sm">
               <Link to="/hotels/checkout" search={{ ref: data.bookingReference }}>
                 Continue to payment
@@ -323,7 +331,8 @@ function DocumentAction({
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, header }: { children: React.ReactNode; header?: ConfirmationHeaderCopy }) {
+  const copy = header ?? NEUTRAL_CONFIRMATION_HEADER;
   return (
     <main className="relative min-h-svh bg-background text-foreground">
       <Nav />
@@ -332,10 +341,10 @@ function Shell({ children }: { children: React.ReactNode }) {
           eyebrow="Confirmation"
           title={
             <>
-              Your stay, <span className="italic gold-gradient">confirmed.</span>
+              {copy.title} <span className="italic gold-gradient">{copy.accent}</span>
             </>
           }
-          subtitle="Keep your booking reference handy — it's all the hotel needs at check-in."
+          subtitle={copy.subtitle}
         />
         <div className="mt-10">{children}</div>
       </section>
