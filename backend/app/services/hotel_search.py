@@ -572,6 +572,13 @@ async def hotel_detail(
         fallback=summary,
     )
 
+    await sessions.save_detail_snapshot(
+        settings=settings,
+        search_id=session.id,
+        hotel_id=payload.hotel_id,
+        options=[_option_fingerprint(room) for room in detail.rooms],
+    )
+
     return HotelDetailResponse(
         search_id=session.id,
         hotel=detail,
@@ -632,29 +639,61 @@ async def _priced_hotel(
 # ========================= select / review =================================
 
 
-def _match_reissued_option(summary, rooms: list, rate_id: str):
-    """Identify the selected option in fresh Pricing when its optionId was
-    reissued after the detail the customer saw.
+_FINGERPRINT_FIELDS = (
+    "room_name", "room_type", "bed_type", "meal_plan", "room_count",
+    "option_type", "rate_plan_type", "adults", "child_ages",
+)
 
-    The search session retained the listing's rate plans for this hotel,
-    including the selected option's room name, meal plan and plan type. Those
-    details may stand in for the id ONLY when they match exactly one fresh
-    option; zero or several matches stay a safe, neutral failure. A shared
-    roomId on its own never authorises a match.
+
+def _option_fingerprint(room) -> dict:
+    """Distinguishing, non-price details of one displayed option."""
+    occupancy = getattr(room, "occupancy", None)
+    return {
+        "option_id": room.id,
+        "room_name": room.room_name,
+        "room_type": room.room_type,
+        "bed_type": room.bed_type,
+        "meal_plan": room.meal_plan,
+        "room_count": room.room_count,
+        "option_type": room.option_type,
+        "rate_plan_type": room.rate_plan_type,
+        "adults": getattr(occupancy, "adults", None),
+        "child_ages": sorted(getattr(occupancy, "child_ages", None) or []),
+    }
+
+
+def _match_snapshot_option(snapshot: list, rooms: list, rate_id: str):
+    """Resolve the customer's choice against fresh Pricing.
+
+    rate_id must be one of the options the detail response showed (the
+    server-side snapshot). The fresh option with the same optionId wins;
+    if TripJack reissued the id, accept a fresh option only when its full
+    fingerprint matches exactly ONE fresh option and the retained details
+    were themselves unique in the snapshot. Never roomId alone, never the
+    first/closest option.
     """
-    plans = getattr(summary, "rate_plans", None) or []
-    plan = next((p for p in plans if p.option_id == rate_id), None)
-    if plan is None or not (plan.room_name or plan.meal_plan):
-        return None
-    # Room name and meal plan only: the derived plan-type label is computed
-    # differently on the listing and detail paths, so it cannot be compared.
-    criteria = {"room_name": plan.room_name, "meal_plan": plan.meal_plan}
-    matches = [
-        room for room in rooms
-        if all(value is None or getattr(room, field) == value
-               for field, value in criteria.items())
-    ]
-    return matches[0] if len(matches) == 1 else None
+    retained = [o for o in snapshot if o.get("option_id") == rate_id]
+    if len(retained) != 1:
+        return None, "selected_rate_not_in_detail_snapshot"
+    by_id = [room for room in rooms if room.id == rate_id]
+    if len(by_id) == 1:
+        return by_id[0], None
+    if by_id:
+        return None, "selected_rate_ambiguous_in_pricing"
+    target = {k: retained[0].get(k) for k in _FINGERPRINT_FIELDS}
+    if not target.get("room_name"):
+        return None, "selected_rate_absent_from_pricing"
+    twins = [o for o in snapshot
+             if {k: o.get(k) for k in _FINGERPRINT_FIELDS} == target]
+    if len(twins) != 1:
+        return None, "selected_rate_ambiguous_in_snapshot"
+    matches = [room for room in rooms
+               if {k: _option_fingerprint(room).get(k) for k in _FINGERPRINT_FIELDS} == target]
+    if len(matches) == 1:
+        return matches[0], None
+    if matches:
+        return None, "selected_rate_ambiguous_in_pricing"
+    return None, "selected_rate_absent_from_pricing"
 
 
 async def select_room(
@@ -688,16 +727,19 @@ async def select_room(
         fallback=summary,
     )
 
-    selected = next((room for room in detail.rooms if room.id == payload.rate_id), None)
-    if selected is None:
-        # The optionId may have been reissued between detail and selection.
-        # The listing retained the selected option's details; accept a fresh
-        # option only when those details identify exactly ONE option. Never
-        # match by a shared roomId alone or substitute another room/rate.
-        selected = _match_reissued_option(summary, detail.rooms, payload.rate_id)
+    snapshot = sessions.get_detail_snapshot(session, payload.hotel_id)
+    if not snapshot:
+        # No trusted record of what the customer was shown: refuse.
+        _log_pre_review_failure(
+            "detail_snapshot_missing",
+            room_count=len(detail.rooms),
+            rate_id_present=bool(payload.rate_id),
+        )
+        raise HotelRoomUnavailableError()
+    selected, reason = _match_snapshot_option(snapshot, detail.rooms, payload.rate_id)
     if selected is None:
         _log_pre_review_failure(
-            "selected_rate_absent_from_pricing",
+            reason or "selected_rate_absent_from_pricing",
             room_count=len(detail.rooms),
             rate_id_present=bool(payload.rate_id),
         )

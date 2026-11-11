@@ -304,7 +304,7 @@ async def update_search_progress(
     """
     session = _memory.searches.get(search_id)
     if session is not None and not session.is_expired:
-        session.progress = progress
+        session.progress = _keep_snapshots(session.progress, progress)
 
     repo = _repo(settings)
     if repo is not None:
@@ -312,9 +312,81 @@ async def update_search_progress(
             row = await repo.get_search(search_id)
             if not row:
                 return
-            await repo.update_search(str(row.get("id")), {"progress": progress})
+            await repo.update_search(
+                str(row.get("id")),
+                {"progress": _keep_snapshots(row.get("progress"), progress)},
+            )
         except Exception:  # noqa: BLE001
             logger.warning("hotel_search_progress_persist_failed")
+
+
+# ------------------------------------------------- detail option snapshots --
+#
+# The exact options the Hotel detail/Pricing response showed the customer,
+# kept server-side inside the existing search session (its JSON `progress`
+# column, under a private key the progress endpoint never reads) so they
+# share the session's expiry. Selection validates the submitted rate id
+# against this snapshot; the browser's word is never trusted.
+
+DETAIL_SNAPSHOT_KEY = "detail_option_snapshots"
+MAX_SNAPSHOT_HOTELS = 20
+
+
+def _keep_snapshots(old: Any, new: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(new or {})
+    if isinstance(old, dict) and isinstance(old.get(DETAIL_SNAPSHOT_KEY), dict):
+        merged.setdefault(DETAIL_SNAPSHOT_KEY, old[DETAIL_SNAPSHOT_KEY])
+    return merged
+
+
+def get_detail_snapshot(
+    session: SearchSession, hotel_id: str
+) -> Optional[List[Dict[str, Any]]]:
+    progress = session.progress if isinstance(session.progress, dict) else {}
+    store = progress.get(DETAIL_SNAPSHOT_KEY)
+    if not isinstance(store, dict):
+        return None
+    options = store.get(hotel_id)
+    if not isinstance(options, list):
+        return None
+    return [o for o in options if isinstance(o, dict)]
+
+
+async def save_detail_snapshot(
+    *,
+    settings: Settings,
+    search_id: str,
+    hotel_id: str,
+    options: List[Dict[str, Any]],
+) -> None:
+    """Retain the displayed options for one hotel. Failure is logged; the
+    later selection then fails safely because no snapshot exists."""
+
+    def _apply(progress: Any) -> Dict[str, Any]:
+        merged = dict(progress) if isinstance(progress, dict) else {}
+        store = dict(merged.get(DETAIL_SNAPSHOT_KEY) or {})
+        store.pop(hotel_id, None)
+        store[hotel_id] = options
+        while len(store) > MAX_SNAPSHOT_HOTELS:
+            store.pop(next(iter(store)), None)
+        merged[DETAIL_SNAPSHOT_KEY] = store
+        return merged
+
+    session = _memory.searches.get(search_id)
+    if session is not None and not session.is_expired:
+        session.progress = _apply(session.progress)
+
+    repo = _repo(settings)
+    if repo is not None:
+        try:
+            row = await repo.get_search(search_id)
+            if not row:
+                return
+            await repo.update_search(
+                str(row.get("id")), {"progress": _apply(row.get("progress"))}
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("hotel_detail_snapshot_persist_failed")
 
 
 async def get_search_session(
