@@ -295,3 +295,98 @@ def test_invalid_hotel_id_is_not_sold_out(flow):
     with pytest.raises(svc.HotelRoomUnavailableError) as info:
         select()
     assert info.value.code == "HOTEL_ROOM_UNAVAILABLE" and "sold" not in info.value.message
+
+
+# ------------------------------------------- reissued optionId matching
+
+
+from app.schemas.flights import Money
+from app.schemas.hotels import HotelRatePlan
+
+
+def _plan(option_id, room_name="Deluxe Room", meal_plan="Breakfast", type_="CHEAPEST"):
+    return HotelRatePlan(type=type_, label=type_.title(), option_id=option_id,
+                         total_price=Money(amount=2136.07, currency="INR"),
+                         room_name=room_name, meal_plan=meal_plan)
+
+
+def _session_with_plans(plans):
+    s = session()
+    summary = s.results[HID]
+    s.results[HID] = summary.model_copy(update={"rate_plans": plans})
+    return s
+
+
+@pytest.fixture
+def flow_with_plans(monkeypatch):
+    """Like `flow`, but the stored listing retained rate plans for the hotel."""
+    client = FakeClient([])
+    captured: dict = {}
+    plans: list = []
+    monkeypatch.setattr(svc, "_provider", lambda settings: (client, SimpleNamespace(search_retries=0)))
+    monkeypatch.setattr(svc.hotel_session_limiter, "check", lambda *_: None)
+    monkeypatch.setattr(svc, "client_identity", lambda *a: "x")
+
+    async def fake_get(*, settings, search_id):
+        return _session_with_plans(plans)
+
+    async def fake_create(**kw):
+        captured.update(kw)
+        s = SimpleNamespace(token="rev-tok", hotel=kw["hotel"], room=kw["room"], stay=kw["stay"],
+                            currency=kw["currency"], previous_total=kw["previous_total"],
+                            requirements=kw["requirements"])
+        return s, None
+
+    monkeypatch.setattr(sessions, "get_search_session", fake_get)
+    monkeypatch.setattr(sessions, "create_review_session", fake_create)
+    monkeypatch.setattr(sessions, "expires_at_iso", lambda s: "2026-10-01T00:00:00Z")
+    monkeypatch.setattr(sessions, "seconds_left", lambda s: 600)
+    monkeypatch.setattr(svc, "_requirements", lambda s: svc._requirements_for(s.room, s.hotel))
+    return client, captured, plans
+
+
+def test_reissued_option_matched_by_retained_details(flow_with_plans):
+    """optionId reissued after detail: the listing's retained room name, meal
+    plan and plan type identify exactly one fresh option; Review gets the
+    FRESH optionId."""
+    client, captured, plans = flow_with_plans
+    plans.append(_plan("opt-1"))
+    reissued = option(oid="opt-9")  # same room name/meal/type, new optionId
+    client.replies += [reply(options=[reissued]), review_reply(opt=reissued)]
+    resp = select("opt-1")
+    assert client.calls[1][1]["optionId"] == "opt-9"
+    assert captured["provider_option_id"] == "opt-9"
+    assert resp.status == "reviewed"
+
+
+def test_ambiguous_details_never_substitute_another_option(flow_with_plans):
+    """Two fresh options share the retained details: no unique match, so the
+    safe neutral failure stands and Review is never called."""
+    client, _, plans = flow_with_plans
+    plans.append(_plan("opt-1"))
+    client.replies += [reply(options=[option(oid="opt-9"), option(oid="opt-10")])]
+    with pytest.raises(svc.HotelRoomUnavailableError) as info:
+        select("opt-1")
+    assert info.value.code == "HOTEL_ROOM_UNAVAILABLE"
+    assert len(client.calls) == 1  # pricing only, review never called
+
+
+def test_unknown_rate_id_without_retained_details_fails(flow_with_plans):
+    """A rate id the listing never retained cannot be matched by details."""
+    client, _, plans = flow_with_plans
+    plans.append(_plan("opt-1"))
+    client.replies += [reply()]
+    with pytest.raises(svc.HotelRoomUnavailableError):
+        select("forged-option")
+    assert len(client.calls) == 1
+
+
+def test_room_id_alone_never_matches(flow_with_plans):
+    """The shared room/category id (`roomInfo[].id` / generic `id`) is never
+    enough: a rate id equal to it must still fail closed."""
+    client, _, plans = flow_with_plans
+    plans.append(_plan("opt-1"))
+    client.replies += [reply()]
+    with pytest.raises(svc.HotelRoomUnavailableError):
+        select("r1")  # the roomInfo id inside the fresh option
+    assert len(client.calls) == 1

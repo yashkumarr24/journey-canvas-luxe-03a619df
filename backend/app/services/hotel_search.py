@@ -632,6 +632,31 @@ async def _priced_hotel(
 # ========================= select / review =================================
 
 
+def _match_reissued_option(summary, rooms: list, rate_id: str):
+    """Identify the selected option in fresh Pricing when its optionId was
+    reissued after the detail the customer saw.
+
+    The search session retained the listing's rate plans for this hotel,
+    including the selected option's room name, meal plan and plan type. Those
+    details may stand in for the id ONLY when they match exactly one fresh
+    option; zero or several matches stay a safe, neutral failure. A shared
+    roomId on its own never authorises a match.
+    """
+    plans = getattr(summary, "rate_plans", None) or []
+    plan = next((p for p in plans if p.option_id == rate_id), None)
+    if plan is None or not (plan.room_name or plan.meal_plan):
+        return None
+    # Room name and meal plan only: the derived plan-type label is computed
+    # differently on the listing and detail paths, so it cannot be compared.
+    criteria = {"room_name": plan.room_name, "meal_plan": plan.meal_plan}
+    matches = [
+        room for room in rooms
+        if all(value is None or getattr(room, field) == value
+               for field, value in criteria.items())
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 async def select_room(
     *,
     request: Request,
@@ -664,6 +689,12 @@ async def select_room(
     )
 
     selected = next((room for room in detail.rooms if room.id == payload.rate_id), None)
+    if selected is None:
+        # The optionId may have been reissued between detail and selection.
+        # The listing retained the selected option's details; accept a fresh
+        # option only when those details identify exactly ONE option. Never
+        # match by a shared roomId alone or substitute another room/rate.
+        selected = _match_reissued_option(summary, detail.rooms, payload.rate_id)
     if selected is None:
         _log_pre_review_failure(
             "selected_rate_absent_from_pricing",

@@ -578,7 +578,9 @@ def _rate_plans(
     nights = nights or get_int(raw, "nights")
 
     for option in _raw_options(raw):
-        option_id = get_str(option, "id", "optionId", "rateId")
+        # `optionId` identifies the option; a generic `id` may be a shared
+        # room/category id, so it is only a fallback.
+        option_id = get_str(option, "optionId", "id", "rateId")
         prices = _prices(option)
         total = prices["total"]
         if not option_id or total is None:
@@ -802,7 +804,9 @@ def _rooms(raw: dict[str, Any], currency: str) -> list[HotelRoomOption]:
 
 
 def _room_option(option: dict[str, Any], currency: str) -> HotelRoomOption | None:
-    option_id = get_str(option, "id", "optionId", "rateId", "bookingCode")
+    # TripJack: `id`/`roomId` can be a room/category id SHARED by several
+    # options; `optionId` identifies the specific sellable option. Prefer it.
+    option_id = get_str(option, "optionId", "id", "rateId", "bookingCode")
     prices = _prices(option)
     total = prices["total"]
     if not option_id or total is None:

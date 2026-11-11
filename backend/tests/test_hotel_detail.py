@@ -262,3 +262,23 @@ def test_select_room_propagates_pricing_review_hash(wired, monkeypatch):
         asyncio.run(svc.select_room(request=None, payload=payload, auth=auth, settings=None))
     assert captured["provider_review_hash"] == "RH-secret"
     assert captured["room"].total_price.amount == 2136.07
+
+
+# ------------------------------------------------------- optionId vs id
+
+
+def test_option_id_preferred_over_shared_room_id():
+    """TripJack: `id` can be a room/category id shared by several options;
+    `optionId` identifies the specific option. The parser must prefer it."""
+    opts = [option("opt-a", total=3000, id="room-42"),
+            option("opt-b", total=2000, id="room-42")]
+    d = price(FakeClient([reply(options=opts)])).detail
+    assert sorted(r.id for r in d.rooms) == ["opt-a", "opt-b"]
+    assert d.rate.total_price.amount == 2000
+
+
+def test_generic_id_used_only_when_no_option_id():
+    opts = [option("opt-a", total=3000, id="room-42"),
+            {"id": "room-7", "optionType": "SRSM", "pricing": {"totalPrice": 1500}}]
+    d = price(FakeClient([reply(options=opts)])).detail
+    assert sorted(r.id for r in d.rooms) == ["opt-a", "room-7"]
