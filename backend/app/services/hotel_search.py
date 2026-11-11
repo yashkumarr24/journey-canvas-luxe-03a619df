@@ -632,6 +632,30 @@ async def _priced_hotel(
 # ========================= select / review =================================
 
 
+def _match_reissued_option(summary, rooms: list, rate_id: str):
+    """Identify the selected option in fresh Pricing when its optionId was
+    reissued after the detail the customer saw.
+
+    The search session retained the listing's rate plans for this hotel,
+    including the selected option's room name, meal plan and plan type. Those
+    details may stand in for the id ONLY when they match exactly one fresh
+    option; zero or several matches stay a safe, neutral failure. A shared
+    roomId on its own never authorises a match.
+    """
+    plans = getattr(summary, "rate_plans", None) or []
+    plan = next((p for p in plans if p.option_id == rate_id), None)
+    if plan is None or not (plan.room_name or plan.meal_plan):
+        return None
+    criteria = {"room_name": plan.room_name, "meal_plan": plan.meal_plan,
+                "rate_plan_type": plan.type}
+    matches = [
+        room for room in rooms
+        if all(value is None or getattr(room, field) == value
+               for field, value in criteria.items())
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 async def select_room(
     *,
     request: Request,
