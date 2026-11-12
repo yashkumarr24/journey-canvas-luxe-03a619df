@@ -16,6 +16,7 @@ import {
 } from "@/components/ops/OpsBadges";
 import { formatMoney } from "@/lib/flight-search";
 import { opsApi } from "@/lib/ops/ops-api";
+import { sanitizeBookingReference } from "@/lib/booking-reference";
 
 /**
  * Guest booking retrieval.
@@ -25,6 +26,10 @@ import { opsApi } from "@/lib/ops/ops-api";
  * record returned to a guest omits dates of birth and document numbers.
  */
 export const Route = createFileRoute("/booking-lookup")({
+  // Only the booking reference may arrive in the URL; email is always typed.
+  validateSearch: (search: Record<string, unknown>): { ref?: string } => ({
+    ref: sanitizeBookingReference(search.ref),
+  }),
   head: () => ({
     meta: [
       { title: "Find your booking — Fly n Feel Holidays" },
@@ -47,7 +52,8 @@ export const Route = createFileRoute("/booking-lookup")({
 });
 
 function BookingLookupPage() {
-  const [reference, setReference] = useState("");
+  const { ref: prefilledRef } = Route.useSearch();
+  const [reference, setReference] = useState(prefilledRef ?? "");
   const [email, setEmail] = useState("");
 
   const lookup = useMutation({

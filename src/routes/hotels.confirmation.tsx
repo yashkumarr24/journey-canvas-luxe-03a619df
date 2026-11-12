@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -21,7 +21,8 @@ import { FareBreakdown } from "@/components/booking/FareBreakdown";
 import { HotelStaySummary } from "@/components/booking/HotelStaySummary";
 import { HotelGuestSummary } from "@/components/booking/HotelGuestSummary";
 import { hotelApi } from "@/lib/hotel-api";
-import { readHotelBookingGuestToken } from "@/lib/hotel-session";
+import { forgetHotelBookingGuestToken, readHotelBookingGuestToken } from "@/lib/hotel-session";
+import { isAccessRejection, sanitizeBookingReference } from "@/lib/booking-reference";
 import { occupancyLabel } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
 import {
@@ -81,6 +82,13 @@ function HotelConfirmationPage() {
     queryFn: ({ signal }) => hotelApi.getBooking(ref as string, guestToken, signal),
   });
 
+  const rejectedStatus = booking.isError ? toBookingError(booking.error).status : undefined;
+  const accessRejected = isAccessRejection(rejectedStatus);
+  useEffect(() => {
+    // The server refused this booking's saved pass: drop it for this booking only.
+    if (ref && accessRejected) forgetHotelBookingGuestToken(ref);
+  }, [ref, accessRejected]);
+
   if (!ref) {
     return (
       <Shell>
@@ -118,7 +126,7 @@ function HotelConfirmationPage() {
     // No usable pass (missing/expired, e.g. the app was closed or payment
     // returned in another browser): offer the existing reference + email
     // lookup. The server still decides who may see the booking.
-    if (!guestToken && (error.status === 401 || error.status === 403 || error.status === 404)) {
+    if (isAccessRejection(error.status)) {
       return (
         <Shell>
           <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
@@ -129,7 +137,9 @@ function HotelConfirmationPage() {
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button asChild>
-                <Link to="/booking-lookup">Look up my booking</Link>
+                <Link to="/booking-lookup" search={{ ref: sanitizeBookingReference(ref) }}>
+                  Look up my booking
+                </Link>
               </Button>
               <Button asChild variant="outline">
                 <Link to="/account/bookings">My bookings</Link>
