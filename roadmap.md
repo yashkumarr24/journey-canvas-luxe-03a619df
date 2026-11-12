@@ -4,6 +4,9 @@
 - [x] Add default-off, nonproduction-only one-time handoff without changing website payment lifecycle.
 - [x] Add iOS-only Browser handoff and reference-only recovery; no automatic order retry.
 - [x] Prepare quarantined migration proposal, run offline mocks and document device/staging prerequisites (104 backend, 37 frontend passed; local mocked POST/mobile checks passed).
+- [x] Phase 1.1: accept both approved Hotel reference formats and verify exact backend reference matching.
+- [x] Phase 1.1: remove resume redirects, clear only authoritative terminal recovery, and bound/back off iOS status checks with manual status-only refresh.
+- [x] Phase 1.1: document same-payment replacement-token design only; keep 0035 quarantined and both switches off.
 - [ ] Device/payment testing awaits independently verified nonproduction infrastructure and separate approval.
 
 ## PayU capture versus authorisation

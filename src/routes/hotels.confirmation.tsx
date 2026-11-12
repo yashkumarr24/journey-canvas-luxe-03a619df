@@ -23,7 +23,13 @@ import { HotelGuestSummary } from "@/components/booking/HotelGuestSummary";
 import { hotelApi } from "@/lib/hotel-api";
 import { forgetHotelBookingGuestToken, readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { isAccessRejection, sanitizeBookingReference } from "@/lib/booking-reference";
-import { IOS_PAYU_HANDOFF_ENABLED, isIosPayment } from "@/lib/native/ios-payu";
+import {
+  clearIosPaymentRecoveryForStatus,
+  IOS_PAYU_HANDOFF_ENABLED,
+  isIosPayment,
+  isIosPaymentStatusPending,
+  runIosPaymentStatusChecks,
+} from "@/lib/native/ios-payu";
 import { occupancyLabel } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
 import {
@@ -57,7 +63,10 @@ export const Route = createFileRoute("/hotels/confirmation")({
           "Your Fly n Feel Holidays hotel booking status, with your booking reference, hotel details, room, guests and payment summary.",
       },
       { property: "og:title", content: "Hotel Booking Status — Fly n Feel Holidays" },
-      { property: "og:description", content: "Your hotel booking reference, status and stay details." },
+      {
+        property: "og:description",
+        content: "Your hotel booking reference, status and stay details.",
+      },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "twitter:card", content: "summary" },
@@ -69,30 +78,74 @@ export const Route = createFileRoute("/hotels/confirmation")({
 function HotelConfirmationPage() {
   const { ref } = Route.useSearch();
   const guestToken = ref ? readHotelBookingGuestToken(ref) : null;
+  const [iosRecovery, setIosRecovery] = useState(false);
+  const [iosChecksExhausted, setIosChecksExhausted] = useState(false);
+
+  useEffect(() => {
+    const platform = (
+      window as unknown as {
+        Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string };
+      }
+    ).Capacitor;
+    setIosRecovery(IOS_PAYU_HANDOFF_ENABLED && isIosPayment(platform));
+  }, []);
 
   const booking = useQuery<HotelBookingSummary>({
     queryKey: ["hotel-booking", ref],
     enabled: Boolean(ref),
     retry: false,
     staleTime: 0,
-    // Keep checking while the hotel is still confirming the room.
+    // Website behaviour is unchanged. Native iOS uses the bounded effect below.
     refetchInterval: (query) => {
+      if (iosRecovery) return false;
       const s = query.state.data?.status;
-      const platform = typeof window === "undefined" ? undefined :
-        (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
-      // iOS may resume before the PayU return arrives. Pending is not success.
-      if (IOS_PAYU_HANDOFF_ENABLED && isIosPayment(platform) && s === "awaiting_payment") return 5_000;
-      return s === "payment_processing" || s === "booking_processing" || s === "confirming" ? 5_000 : false;
+      return s === "payment_processing" || s === "booking_processing" || s === "confirming"
+        ? 5_000
+        : false;
     },
     queryFn: ({ signal }) => hotelApi.getBooking(ref as string, guestToken, signal),
   });
 
+  const refetchBooking = booking.refetch;
   const rejectedStatus = booking.isError ? toBookingError(booking.error).status : undefined;
   const accessRejected = isAccessRejection(rejectedStatus);
   useEffect(() => {
     // The server refused this booking's saved pass: drop it for this booking only.
     if (ref && accessRejected) forgetHotelBookingGuestToken(ref);
   }, [ref, accessRejected]);
+
+  const iosStatusPending = isIosPaymentStatusPending(booking.data?.status);
+  useEffect(() => {
+    if (iosRecovery && booking.data) {
+      clearIosPaymentRecoveryForStatus(booking.data.status, window.localStorage);
+    }
+  }, [iosRecovery, booking.data]);
+
+  useEffect(() => {
+    setIosChecksExhausted(false);
+    if (!iosRecovery || !ref || !iosStatusPending) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    void runIosPaymentStatusChecks({
+      wait: (delay) =>
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, delay);
+        }),
+      check: async () => (await refetchBooking()).data?.status,
+      isActive: () => active,
+    })
+      .then((result) => {
+        if (active && result === "exhausted") setIosChecksExhausted(true);
+      })
+      .catch(() => {
+        // A failed read is not a payment result and never clears recovery.
+        if (active) setIosChecksExhausted(true);
+      });
+    return () => {
+      active = false;
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, [iosRecovery, ref, iosStatusPending, refetchBooking]);
 
   if (!ref) {
     return (
@@ -138,7 +191,8 @@ function HotelConfirmationPage() {
             <p className="font-display text-2xl">Find your booking</p>
             <p className="mt-2 text-sm text-muted-foreground">
               For your security, please enter your booking reference{" "}
-              <span className="font-medium text-foreground">{ref}</span> and the email address you used at checkout.
+              <span className="font-medium text-foreground">{ref}</span> and the email address you
+              used at checkout.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button asChild>
@@ -155,7 +209,6 @@ function HotelConfirmationPage() {
       );
     }
     return (
-
       <Shell>
         <Alert variant="destructive" role="alert">
           <AlertCircle className="size-4" aria-hidden="true" />
@@ -177,13 +230,17 @@ function HotelConfirmationPage() {
   }
 
   const data = booking.data;
+  const iosStatusStopped = iosRecovery && iosStatusPending && iosChecksExhausted;
   const confirming =
-    data.status === "payment_processing" || data.status === "booking_processing" || data.status === "confirming";
+    data.status === "payment_processing" ||
+    data.status === "booking_processing" ||
+    data.status === "confirming";
   const onHold = data.status === "on_hold";
   const cancelPending = data.status === "cancellation_pending";
   const confirmed = data.status === "confirmed";
   const unpaid = data.status === "awaiting_payment" || data.status === "payment_failed";
-  const failed = data.status === "failed" || data.status === "cancelled" || data.status === "expired";
+  const failed =
+    data.status === "failed" || data.status === "cancelled" || data.status === "expired";
   const header = confirmationHeaderCopy(data.status);
   const unpaidCopy = unpaid ? unpaidBookingCopy(data.status) : null;
 
@@ -193,7 +250,9 @@ function HotelConfirmationPage() {
         <div className="rounded-3xl border border-foreground/10 bg-card p-8 text-center">
           <CheckCircle2 className="mx-auto size-9 text-gold" aria-hidden="true" />
           <h2 className="mt-4 font-display text-3xl sm:text-4xl">Your stay is booked</h2>
-          <p className="mt-2 text-muted-foreground">A voucher is on its way to {data.contact.email}.</p>
+          <p className="mt-2 text-muted-foreground">
+            A voucher is on its way to {data.contact.email}.
+          </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Field label="Booking reference" value={data.bookingReference} />
             <Field
@@ -209,12 +268,29 @@ function HotelConfirmationPage() {
           <Loader2 className="mx-auto size-8 animate-spin text-gold" aria-hidden="true" />
           <h2 className="mt-4 font-display text-3xl">Confirming with the hotel</h2>
           <p className="mt-2 text-muted-foreground">
-            {data.status === "payment_processing"
-              ? "We're verifying your payment with PayU. Once it's confirmed, we book the room with the hotel."
-              : "Your payment went through and the hotel is confirming the room now."} This page updates on its own —
-            you can safely leave it open.
+            {iosStatusStopped
+              ? "We haven't confirmed the latest payment and hotel status yet. No new payment has been created. Check the existing booking again, or contact our travel desk for help."
+              : data.status === "payment_processing"
+                ? "We're verifying your payment with PayU. Once it's confirmed, we book the room with the hotel. Automatic status checks will slow down and stop after a limited number of tries."
+                : "Your payment went through and the hotel is confirming the room now. Automatic status checks will slow down and stop after a limited number of tries."}
           </p>
-          <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
+          {iosStatusStopped && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-5"
+              disabled={booking.isFetching}
+              onClick={() => void booking.refetch()}
+            >
+              {booking.isFetching ? "Checking status…" : "Check status again"}
+            </Button>
+          )}
+          <Field
+            className="mx-auto mt-6 max-w-xs"
+            label="Booking reference"
+            value={data.bookingReference}
+          />
         </div>
       )}
 
@@ -225,7 +301,8 @@ function HotelConfirmationPage() {
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
           <AlertTitle>Cancellation in progress</AlertTitle>
           <AlertDescription>
-            {data.statusMessage ?? "The hotel is processing your cancellation. We'll email you when it's final."}
+            {data.statusMessage ??
+              "The hotel is processing your cancellation. We'll email you when it's final."}
           </AlertDescription>
         </Alert>
       )}
@@ -239,12 +316,28 @@ function HotelConfirmationPage() {
           <AlertCircle className="size-4" aria-hidden="true" />
           <AlertTitle>{unpaidCopy.title}</AlertTitle>
           <AlertDescription className="space-y-3">
-            <p>{data.statusMessage ?? unpaidCopy.body}</p>
-            <Button asChild size="sm">
-              <Link to="/hotels/checkout" search={{ ref: data.bookingReference }}>
-                Continue to payment
-              </Link>
-            </Button>
+            <p>
+              {iosStatusStopped
+                ? "We haven't confirmed your payment status yet. No new payment has been created. You can check this existing booking again without starting another payment."
+                : (data.statusMessage ?? unpaidCopy.body)}
+            </p>
+            {iosRecovery && data.status === "awaiting_payment" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={booking.isFetching || !iosStatusStopped}
+                onClick={() => void booking.refetch()}
+              >
+                {booking.isFetching ? "Checking status…" : "Check status again"}
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link to="/hotels/checkout" search={{ ref: data.bookingReference }}>
+                  Continue to payment
+                </Link>
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -297,10 +390,22 @@ function HotelConfirmationPage() {
           </div>
 
           <div className="rounded-3xl border border-foreground/10 bg-card p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Your documents</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Your documents
+            </p>
             <div className="mt-4 space-y-3">
-              <DocumentAction icon={Ticket} label="Hotel voucher" href={data.voucherUrl} pending={confirmed} />
-              <DocumentAction icon={FileText} label="Invoice" href={data.invoiceUrl} pending={confirmed} />
+              <DocumentAction
+                icon={Ticket}
+                label="Hotel voucher"
+                href={data.voucherUrl}
+                pending={confirmed}
+              />
+              <DocumentAction
+                icon={FileText}
+                label="Invoice"
+                href={data.invoiceUrl}
+                pending={confirmed}
+              />
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
               {confirmed
@@ -371,7 +476,13 @@ function DocumentAction({
   );
 }
 
-function Shell({ children, header }: { children: React.ReactNode; header?: ConfirmationHeaderCopy }) {
+function Shell({
+  children,
+  header,
+}: {
+  children: React.ReactNode;
+  header?: ConfirmationHeaderCopy;
+}) {
   const copy = header ?? NEUTRAL_CONFIRMATION_HEADER;
   return (
     <main className="relative min-h-svh bg-background text-foreground">
@@ -418,12 +529,19 @@ function HoldPanel({
           ? `Confirm before ${deadline}, or the hotel releases the room automatically.`
           : "The hotel hasn't shared the hold deadline yet. This page updates on its own."}
       </p>
-      <Field className="mx-auto mt-6 max-w-xs" label="Booking reference" value={data.bookingReference} />
+      <Field
+        className="mx-auto mt-6 max-w-xs"
+        label="Booking reference"
+        value={data.bookingReference}
+      />
       <p className="mt-4 text-sm text-muted-foreground">
-        Our team is reviewing this booking and will contact you. Nothing more is needed from you here.
+        Our team is reviewing this booking and will contact you. Nothing more is needed from you
+        here.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        {data.canCancel && <CancelButton data={data} guestToken={guestToken} onDone={onDone} inline />}
+        {data.canCancel && (
+          <CancelButton data={data} guestToken={guestToken} onDone={onDone} inline />
+        )}
       </div>
     </div>
   );
@@ -452,7 +570,11 @@ function CancelButton({
       variant="outline"
       disabled={cancel.isPending}
       onClick={() => {
-        if (window.confirm("Cancel this booking? Cancellation charges may apply as per the hotel's policy.")) {
+        if (
+          window.confirm(
+            "Cancel this booking? Cancellation charges may apply as per the hotel's policy.",
+          )
+        ) {
           cancel.mutate();
         }
       }}

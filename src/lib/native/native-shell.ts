@@ -37,11 +37,14 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
         const path = takeIosPaymentRecovery(window.localStorage);
         if (path && window.location.pathname + window.location.search !== path) navigate(path);
         // Already on confirmation: its existing polling reads backend status.
-      } catch { /* Storage unavailable: never infer success or create an order. */ }
+      } catch {
+        /* Storage unavailable: never infer success or create an order. */
+      }
     };
     void Browser.addListener("browserFinished", recoverPayment);
-    void App.addListener("appStateChange", ({ isActive }) => { if (isActive) recoverPayment(); });
-    recoverPayment(); // cold-start recovery, no payment API calls
+    // Foreground/resume is not a payment result. Only Browser dismissal and
+    // this one cold-start check may open status; neither creates an order.
+    recoverPayment();
   }
 
   void SplashScreen.hide().catch(() => undefined);
@@ -105,8 +108,11 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
   // error events or wrap fetch: background requests must not replace the page.
   if (Capacitor.getPlatform() === "android") {
     window.addEventListener("unhandledrejection", (event) => {
-      if (/chunk|dynamically imported module|module script/i.test(String(event.reason)) &&
-          isNavigationNetworkError(event.reason)) void showNativeOffline();
+      if (
+        /chunk|dynamically imported module|module script/i.test(String(event.reason)) &&
+        isNavigationNetworkError(event.reason)
+      )
+        void showNativeOffline();
     });
   }
   // window.open from scripts (e.g. maps, share links)
