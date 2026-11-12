@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MOCK iOS PayU handoff</title>
+<style>body{font:17px -apple-system;padding:calc(env(safe-area-inset-top) + 16px) 20px 20px}
+button,input{font-size:18px;padding:12px;width:100%;box-sizing:border-box;margin:6px 0}
+#log{font:13px ui-monospace;white-space:pre-wrap;background:#f3f4f6;padding:8px;border-radius:6px}
+.b{background:#fde68a;padding:8px;border-radius:6px}</style></head><body>
+<p class=b><b>MOCK demo build</b> — no PayU, bookings, or production services.</p>
+<label>Mac mock server<input id=host placeholder="http://YOUR-MAC.local:8787"></label>
+<button id=pay>Pay (mock)</button>
+<button id=check>Check status again</button>
+<p>Status: <b id=status>—</b></p><div id=log></div>
+<script>
+// Mirrors src/lib/native/ios-payu.ts: store reference only, recover on
+// browserFinished or cold start, clear on terminal status, bounded checks.
+var KEY="fnf:ios-payu:recovery", TERMINAL=["confirmed","payment_failed","failed","cancelled","expired","on_hold"];
+var DELAYS=[5000,10000,20000,40000,60000];
+var P=(window.Capacitor&&Capacitor.Plugins)||{}, Browser=P.Browser;
+var $=function(i){return document.getElementById(i)}, run=0;
+function log(m){$('log').textContent=new Date().toLocaleTimeString()+"  "+m+"\n"+$('log').textContent}
+$('host').value=localStorage.getItem("mockHost")||"";
+function host(){var h=$('host').value.trim().replace(/\/$/,"");localStorage.setItem("mockHost",h);return h}
+async function status(ref){var r=await fetch(host()+"/mock/status?ref="+encodeURIComponent(ref));var j=await r.json();
+  $('status').textContent=ref+": "+j.status;log("status "+j.status);
+  if(TERMINAL.indexOf(j.status)>=0){localStorage.removeItem(KEY);log("recovery cleared")}return j.status}
+async function bounded(ref){var id=++run;for(var d of DELAYS){
+  try{if(TERMINAL.indexOf(await status(ref))>=0)return}catch(e){log("status read failed")}
+  await new Promise(function(r){setTimeout(r,d)});if(id!==run)return}
+  log("checks exhausted — tap Check status again")}
+function recover(src){var raw=localStorage.getItem(KEY);if(!raw)return log(src+": nothing to recover");
+  var e=JSON.parse(raw);if(e.expiresAt<Date.now()){localStorage.removeItem(KEY);return log("recovery expired")}
+  log(src+": recovering "+e.ref);bounded(e.ref)}
+$('pay').onclick=async function(){try{
+  var r=await fetch(host()+"/mock/order");var h=await r.json();
+  if(!/^(FNFH[0-9A-F]{6}|FF-[0-9A-Z]{8})$/.test(h.bookingReference))throw new Error("bad ref");
+  localStorage.setItem(KEY,JSON.stringify({ref:h.bookingReference,expiresAt:Date.now()+48*3600e3}));
+  log("opening Safari sheet for "+h.bookingReference);
+  await Browser.open({url:h.handoffUrl,presentationStyle:"popover"});
+}catch(e){log("Pay failed: "+e.message)}};
+$('check').onclick=function(){var raw=localStorage.getItem(KEY);if(raw)status(JSON.parse(raw).ref).catch(function(){log("status read failed")});else log("no saved payment")};
+if(Browser){Browser.addListener("browserFinished",function(){recover("browserFinished")});}
+else log("Capacitor Browser plugin missing");
+recover("cold start");
+</script></body></html>

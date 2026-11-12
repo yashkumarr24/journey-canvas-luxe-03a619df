@@ -12,6 +12,10 @@ import { KeyboardResize } from "@capacitor/keyboard";
  * assetlinks.json / apple-app-site-association files. Change it before the
  * first store upload if you want a different one; it can't change afterwards.
  */
+// MOCK iPhone demo only: `CAP_IOS_MOCK=1 npx cap sync ios` bundles the local
+// mock harness and never loads the live site. Default builds are unchanged.
+const IOS_MOCK = process.env.CAP_IOS_MOCK === "1";
+
 const config: CapacitorConfig = {
   appId: "com.flynfeelholiday.app",
   appName: "Fly n Feel",
@@ -52,4 +56,12 @@ const config: CapacitorConfig = {
   },
 };
 
-export default config;
+const mockConfig: CapacitorConfig = {
+  ...config,
+  appId: "com.flynfeelholiday.app.mockpayu",
+  appName: "FnF PayU Mock",
+  webDir: "mobile/ios-mock/www",
+  server: undefined,
+};
+
+export default IOS_MOCK ? mockConfig : config;
