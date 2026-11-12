@@ -4,10 +4,11 @@ No PayU, TripJack, Supabase or production API is ever contacted. Every page
 says MOCK. Usage: python3 mobile/ios-mock/server.py  (port 8787)"""
 import html, json, secrets, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Lock
 from urllib.parse import parse_qs, urlparse
 
-REF = "FNFH" + secrets.token_hex(3).upper()
 STATE = {"tokens": {}, "status": {}}  # token -> (ref, expiry, used); ref -> status
+ATTEMPT_LOCK = Lock()
 
 def page(title, body):
     return f"""<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
@@ -29,10 +30,14 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         if u.path == "/mock/order":          # app asks for a handoff link
-            ref = parse_qs(u.query).get("ref", [REF])[0]
-            tok = secrets.token_urlsafe(32)
-            STATE["tokens"][tok] = [ref, time.time() + 120, False]
-            STATE["status"].setdefault(ref, "awaiting_payment")
+            # Every click is a separate mock attempt, never a reused result.
+            with ATTEMPT_LOCK:
+                ref = "FNFH" + secrets.token_hex(3).upper()
+                while ref in STATE["status"]:
+                    ref = "FNFH" + secrets.token_hex(3).upper()
+                tok = secrets.token_urlsafe(32)
+                STATE["tokens"][tok] = [ref, time.time() + 120, False]
+                STATE["status"][ref] = "awaiting_payment"
             host = self.headers["Host"]
             return self._send(200, json.dumps({"bookingReference": ref,
                 "handoffUrl": f"http://{host}/handoff#token={tok}"}), "application/json")
@@ -51,7 +56,8 @@ else document.body.insertAdjacentHTML('beforeend','<p>Link missing or used.</p>'
 
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0)
-        form = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode()).items()}
+        values = parse_qs(self.rfile.read(n).decode(), keep_blank_values=True)
+        form = {k: v[0] for k, v in values.items()}
         u = urlparse(self.path)
         if u.path == "/handoff/redeem":      # burn once, return auto-POST "signed" form
             rec = STATE["tokens"].get(form.get("token", ""))
@@ -71,7 +77,11 @@ else document.body.insertAdjacentHTML('beforeend','<p>Link missing or used.</p>'
 <button name=r value=failure style="font-size:20px;padding:12px;width:100%">Simulate failure</button></form>"""))
         if u.path == "/mock-result":
             ref = form.get("txnid", "")
-            ok = form.get("r") == "success"
+            if values.get("r") not in (["success"], ["failure"]):
+                return self._send(400, page("Invalid outcome", "<p>Select an explicit mock success or failure. Status was not changed.</p>"))
+            if ref not in STATE["status"]:
+                return self._send(404, page("Unknown attempt", "<p>Mock attempt not found. Status was not changed.</p>"))
+            ok = form["r"] == "success"
             STATE["status"][ref] = "confirmed" if ok else "payment_failed"
             return self._send(200, page("Done", f"<h2>Mock payment {'successful' if ok else 'failed'}</h2><p>Tap <b>Done</b> (top-left) to return to the app.</p>"))
         self._send(404, "")
