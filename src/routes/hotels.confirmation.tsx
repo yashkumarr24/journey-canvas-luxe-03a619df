@@ -115,7 +115,32 @@ function HotelConfirmationPage() {
 
   if (booking.isError || !booking.data) {
     const error = toBookingError(booking.error);
+    // No usable pass (missing/expired, e.g. the app was closed or payment
+    // returned in another browser): offer the existing reference + email
+    // lookup. The server still decides who may see the booking.
+    if (!guestToken && (error.status === 401 || error.status === 403 || error.status === 404)) {
+      return (
+        <Shell>
+          <div className="rounded-3xl border border-dashed border-foreground/15 p-10 text-center">
+            <p className="font-display text-2xl">Find your booking</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              For your security, please enter your booking reference{" "}
+              <span className="font-medium text-foreground">{ref}</span> and the email address you used at checkout.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild>
+                <Link to="/booking-lookup">Look up my booking</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/account/bookings">My bookings</Link>
+              </Button>
+            </div>
+          </div>
+        </Shell>
+      );
+    }
     return (
+
       <Shell>
         <Alert variant="destructive" role="alert">
           <AlertCircle className="size-4" aria-hidden="true" />
