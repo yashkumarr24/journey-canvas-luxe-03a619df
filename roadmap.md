@@ -1,5 +1,11 @@
 # Roadmap
 
+## iOS handoff development safety correction
+- [x] Correct character(3) currency preflight and quarantine conservative 0035 SQL corrections.
+- [x] Document atomic initial issuance, shared late-charge exclusion and backend-enforced tester/build activation design.
+- [x] Run offline mocked/static checks (207 passed, lint clean) and prepare candidate-only commit.
+- [ ] Actual database concurrency, preserved VPS overlay, shared payment safety implementation and native attestation await separate approval/infrastructure.
+
 ## iOS PayU Phase 1 — isolated development
 - [x] Add default-off, nonproduction-only one-time handoff without changing website payment lifecycle.
 - [x] Add iOS-only Browser handoff and reference-only recovery; no automatic order retry.

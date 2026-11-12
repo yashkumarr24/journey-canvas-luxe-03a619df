@@ -1,0 +1,3 @@
+# Isolated development parser/lint environment only; not production requirements.
+pglast==8.7
+ruff==0.17.5

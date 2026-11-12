@@ -2,6 +2,8 @@
 
 - iOS PayU handoff is additive and default-off (production needs its own extra approval switch): digest-only DB links bound to one payment attempt, bounded replacements reuse the same txnid only while it is untouched and PayU Verify shows no transaction, never a second order; native recovery is status-only; website settlement, retries and Android unchanged.
 
+- Quarantined iOS SQL uses invoker-only service RPCs and refuses first issuance until atomic origin reservation is reviewed; replacements cannot follow consumed links, because already delivered signed forms cannot be revoked. Tester/build authorization and shared late-charge exclusion remain design-only activation prerequisites.
+
 - Optional pre-book Fare Validate is excluded; Flight Booking candidates use server-owned Review evidence and pure documented request builders with unconditional execution refusal until separately authorized, preventing unfinished validation or paid/held bookings from shipping.
 
 - Flight Review resolves the selected fare's stored plural price references, retains provider bookingId privately and conditions in the existing session snapshot, and gates all FAREALERT/amount changes on existing consent; map literal documented condition booleans to separate passport, PAN, document-ID and per-pax DOB requirements, preserving unknown fields without aliases or geography inference so distinct documents cannot be conflated; never construct multi-city combinations.
