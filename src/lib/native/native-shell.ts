@@ -21,6 +21,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 
 import { classifyLink, deepLinkPath, isRootPath } from "./link-policy";
 import { isNavigationNetworkError, showNativeOffline } from "./offline-navigation";
+import { IOS_PAYU_HANDOFF_ENABLED, takeIosPaymentRecovery } from "./ios-payu";
 
 let started = false;
 
@@ -29,6 +30,19 @@ export async function startNativeShell(navigate: (path: string) => void): Promis
   started = true;
   const root = document.documentElement;
   root.classList.add("native-app", `native-${Capacitor.getPlatform()}`);
+
+  if (Capacitor.getPlatform() === "ios" && IOS_PAYU_HANDOFF_ENABLED) {
+    const recoverPayment = () => {
+      try {
+        const path = takeIosPaymentRecovery(window.localStorage);
+        if (path && window.location.pathname + window.location.search !== path) navigate(path);
+        // Already on confirmation: its existing polling reads backend status.
+      } catch { /* Storage unavailable: never infer success or create an order. */ }
+    };
+    void Browser.addListener("browserFinished", recoverPayment);
+    void App.addListener("appStateChange", ({ isActive }) => { if (isActive) recoverPayment(); });
+    recoverPayment(); // cold-start recovery, no payment API calls
+  }
 
   void SplashScreen.hide().catch(() => undefined);
   void StatusBar.setStyle({ style: Style.Light }).catch(() => undefined);

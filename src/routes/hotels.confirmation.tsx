@@ -23,6 +23,7 @@ import { HotelGuestSummary } from "@/components/booking/HotelGuestSummary";
 import { hotelApi } from "@/lib/hotel-api";
 import { forgetHotelBookingGuestToken, readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { isAccessRejection, sanitizeBookingReference } from "@/lib/booking-reference";
+import { IOS_PAYU_HANDOFF_ENABLED, isIosPayment } from "@/lib/native/ios-payu";
 import { occupancyLabel } from "@/lib/hotel-search";
 import { toBookingError } from "@/lib/booking-api";
 import {
@@ -77,6 +78,10 @@ function HotelConfirmationPage() {
     // Keep checking while the hotel is still confirming the room.
     refetchInterval: (query) => {
       const s = query.state.data?.status;
+      const platform = typeof window === "undefined" ? undefined :
+        (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+      // iOS may resume before the PayU return arrives. Pending is not success.
+      if (IOS_PAYU_HANDOFF_ENABLED && isIosPayment(platform) && s === "awaiting_payment") return 5_000;
       return s === "payment_processing" || s === "booking_processing" || s === "confirming" ? 5_000 : false;
     },
     queryFn: ({ signal }) => hotelApi.getBooking(ref as string, guestToken, signal),

@@ -16,6 +16,7 @@ from app.api.v1 import (
     notifications,
     operations,
     payments,
+    payu_handoff,
     review,
 )
 
@@ -30,5 +31,6 @@ api_router.include_router(operations.router)
 api_router.include_router(assistant.router)
 api_router.include_router(notifications.router)
 api_router.include_router(payments.router)
+api_router.include_router(payu_handoff.router)
 
 __all__ = ["api_router"]

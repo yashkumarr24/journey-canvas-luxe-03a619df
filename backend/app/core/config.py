@@ -112,6 +112,8 @@ class Settings(BaseSettings):
     # Payments are OFF unless PAYMENTS_ENABLED=true. PAYU_ENV=production is
     # refused until PAYU_PRODUCTION_APPROVED=true is set after UAT sign-off.
     payments_enabled: bool = Field(default=False, alias="PAYMENTS_ENABLED")
+    # Additive iOS handoff: development/test only, never production in Phase 1.
+    payu_handoff_enabled: bool = Field(default=False, alias="PAYU_HANDOFF_ENABLED")
     payu_env: str = Field(default="test", alias="PAYU_ENV")
     payu_production_approved: bool = Field(default=False, alias="PAYU_PRODUCTION_APPROVED")
     payu_merchant_key: str = Field(default="", alias="PAYU_MERCHANT_KEY")

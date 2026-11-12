@@ -1,5 +1,11 @@
 # Roadmap
 
+## iOS PayU Phase 1 — isolated development
+- [x] Add default-off, nonproduction-only one-time handoff without changing website payment lifecycle.
+- [x] Add iOS-only Browser handoff and reference-only recovery; no automatic order retry.
+- [x] Prepare quarantined migration proposal, run offline mocks and document device/staging prerequisites (104 backend, 37 frontend passed; local mocked POST/mobile checks passed).
+- [ ] Device/payment testing awaits independently verified nonproduction infrastructure and separate approval.
+
 ## PayU capture versus authorisation
 - [x] Record exact server unmappedstatus in Hotel raw_status, require verified identity and literal success/captured before Hotel enqueue; keep auth pending.
 - [x] Mocked verification/Hotel/isolation: 144 passed; complete backend suite from backend folder: 984 passed. SQL, certified wire code and default-off production switches unchanged; no deployment or provider calls.

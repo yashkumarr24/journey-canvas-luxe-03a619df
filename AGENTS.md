@@ -1,5 +1,7 @@
 # Project architecture rules
 
+- iOS PayU handoff is additive, default-off and nonproduction-only: short-lived digest-only DB capabilities are consumed once for an existing payment, raw HTML strips fragments before POST, and native recovery stores only a booking reference and opens server-authoritative status; website settlement, retries and Android remain unchanged.
+
 - Optional pre-book Fare Validate is excluded; Flight Booking candidates use server-owned Review evidence and pure documented request builders with unconditional execution refusal until separately authorized, preventing unfinished validation or paid/held bookings from shipping.
 
 - Flight Review resolves the selected fare's stored plural price references, retains provider bookingId privately and conditions in the existing session snapshot, and gates all FAREALERT/amount changes on existing consent; map literal documented condition booleans to separate passport, PAN, document-ID and per-pax DOB requirements, preserving unknown fields without aliases or geography inference so distinct documents cannot be conflated; never construct multi-city combinations.

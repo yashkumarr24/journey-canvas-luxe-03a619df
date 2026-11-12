@@ -17,6 +17,8 @@ import { hotelApi, useMockHotels } from "@/lib/hotel-api";
 import { readHotelBookingGuestToken } from "@/lib/hotel-session";
 import { newIdempotencyKey } from "@/lib/review-session";
 import { submitPayuForm } from "@/lib/payu";
+import { bookingApi } from "@/lib/booking-api";
+import { beginIosPayment, isIosPayment, iosPaymentAvailable, openIosPayment } from "@/lib/native/ios-payu";
 import { PAYMENTS_UNAVAILABLE_MESSAGE, resolvePaymentHandoff } from "@/lib/payment-handoff";
 import { toBookingError } from "@/lib/booking-api";
 import { formatMoney } from "@/lib/flight-search";
@@ -121,7 +123,26 @@ function HotelCheckoutPage() {
   };
 
   const pay = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      const platform = typeof window === "undefined" ? undefined :
+        (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+      if (isIosPayment(platform)) {
+        // Refuse before order creation when off. Never fall back to the broken
+        // Safari GET, simulated payment or website POST from native iOS.
+        if (!ref || !iosPaymentAvailable()) throw new Error(PAYMENTS_UNAVAILABLE_MESSAGE);
+        setStage("creating_order");
+        setMessage(null);
+        // Write recovery before issuing: even a lost response opens status on
+        // resume, never creates another order. Stores only booking reference.
+        await beginIosPayment({
+          enabled: iosPaymentAvailable(), ref, store: window.localStorage,
+          request: () => bookingApi.createIosPaymentHandoff({
+            bookingReference: ref, guestToken: guestToken ?? undefined, method, idempotencyKey,
+          }),
+          open: openIosPayment,
+        });
+        return null;
+      }
       setStage("creating_order");
       setMessage(null);
       // Method only — never an amount or any card detail.
@@ -134,6 +155,10 @@ function HotelCheckoutPage() {
       });
     },
     onSuccess: async (created) => {
+      if (created === null) {
+        setStage("awaiting_payment");
+        return;
+      }
       setOrder(created);
       setStage("awaiting_payment");
 

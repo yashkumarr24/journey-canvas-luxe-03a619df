@@ -473,6 +473,11 @@ export const bookingApi = {
   createPaymentOrder: (payload: PaymentOrderRequest, options?: RequestOptions) =>
     request<PaymentOrder>("POST", "/api/v1/payments/order", payload, options),
 
+  /** New iOS-only path; existing website order endpoint is unchanged. */
+  createIosPaymentHandoff: (payload: PaymentOrderRequest, options?: RequestOptions) =>
+    request<{ handoffUrl: string; bookingReference: string; expiresAt: string }>(
+      "POST", "/api/v1/payments/handoff", payload, options),
+
   /**
    * Hands the provider acknowledgement to the backend, which verifies the
    * signature server-side and then issues the booking.
