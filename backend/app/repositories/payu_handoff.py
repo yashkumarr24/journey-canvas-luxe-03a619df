@@ -21,12 +21,16 @@ class HandoffRepo:
             raise RuntimeError("Handoff storage unavailable")
         return response.json() if representation else None
 
-    async def insert(self, values):
+    async def chain(self, payment_id):
+        """Link count for an iOS-started attempt; None when not a handoff attempt."""
+        rows = await self._post("rpc/payu_handoff_chain", {"p_payment_id": payment_id}, True)
+        return rows[0] if rows and rows[0].get("links") else None
+
+    async def issue(self, payment_id, digest, expires_at):
         try:
-            # Unique payment_id disallows issuing a replacement token.
-            # returning=False prevents a successful response from carrying hashes.
-            await self._post("payu_handoffs", values)
-            return True
+            rows = await self._post("rpc/payu_issue_handoff", {"p_payment_id": payment_id,
+                "p_token_hash": digest, "p_expires_at": expires_at}, True)
+            return bool(rows)
         except Exception:
             return False
 

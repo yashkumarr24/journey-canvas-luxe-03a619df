@@ -63,3 +63,8 @@ Existing payment service, payment router, PayU client, worker, capture/verificat
 8. Device-test on Capacitor 7.6.9 with installed Browser plugin: dismissal, background/foreground, force-close, lost response, expired/replayed token, bank flow, verified capture and terminal polling. Universal Links/iOS signing remain separate setup. Android and website regression testing required before any later release.
 
 No switches have been activated. This candidate is ready for code review, not production deployment or live payment testing.
+## Phase 1.2 — replacement links (same attempt only)
+- Replacement link allowed only while the payment is `created`, ≤15 min old, began as a handoff, under 3 links total, and PayU Verify returns `not_found`. Otherwise status-only.
+- Replacement re-posts the same txnid; `create_order` is never called again. Previous unused link is revoked.
+- Production gate: `PAYU_HANDOFF_ENABLED` + `PAYU_HANDOFF_PRODUCTION_APPROVED` + `PAYU_PRODUCTION_APPROVED` + `PAYU_ENV=production` + production app mode. All default OFF.
+- 0035 proposal adapted to verified columns; preflight aborts before DDL if unverified columns (`payments.amount/currency/created_at`, `hotel_bookings.status/currency/total_amount`) are missing. Still quarantined.

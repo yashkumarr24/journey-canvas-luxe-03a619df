@@ -1,6 +1,6 @@
 # Project architecture rules
 
-- iOS PayU handoff is additive, default-off and nonproduction-only: short-lived digest-only DB capabilities are consumed once for an existing payment, raw HTML strips fragments before POST, and native recovery stores only a booking reference and opens server-authoritative status; website settlement, retries and Android remain unchanged.
+- iOS PayU handoff is additive and default-off (production needs its own extra approval switch): digest-only DB links bound to one payment attempt, bounded replacements reuse the same txnid only while it is untouched and PayU Verify shows no transaction, never a second order; native recovery is status-only; website settlement, retries and Android unchanged.
 
 - Optional pre-book Fare Validate is excluded; Flight Booking candidates use server-owned Review evidence and pure documented request builders with unconditional execution refusal until separately authorized, preventing unfinished validation or paid/held bookings from shipping.
 

@@ -29,16 +29,25 @@ def config(**kw):
 
 
 class Store:
+    """Mirrors the proposal RPCs: digest-only, one active link, max 3, burn once."""
     def __init__(self):
         self.rows = {}
-    async def insert(self, row):
-        if any(r["payment_id"] == row["payment_id"] for r in self.rows.values()):
+    async def chain(self, pid):
+        n = sum(r["payment_id"] == pid for r in self.rows.values())
+        return {"links": n} if n else None
+    async def issue(self, pid, digest, expires_at):
+        n = sum(r["payment_id"] == pid for r in self.rows.values())
+        if n >= svc.MAX_LINKS:
             return False
-        self.rows[row["token_hash"]] = dict(row)
+        for r in self.rows.values():
+            if r["payment_id"] == pid and not r.get("consumed"):
+                r["revoked"] = True
+        self.rows[digest] = {"token_hash": digest, "payment_id": pid, "expires_at": expires_at}
         return True
     async def consume(self, digest):
         row = self.rows.get(digest)
-        if not row or row.get("consumed") or datetime.fromisoformat(row["expires_at"]) <= datetime.now(timezone.utc):
+        if (not row or row.get("consumed") or row.get("revoked")
+                or datetime.fromisoformat(row["expires_at"]) <= datetime.now(timezone.utc)):
             return None
         row["consumed"] = True
         return {"payment_id": row["payment_id"]}
@@ -88,11 +97,14 @@ def test_expiry_never_reorders():
     token = response["handoffUrl"].split("#token=")[1]
     store.rows[svc.token_digest(token)]["expires_at"] = (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()
     with pytest.raises(svc.HandoffUnavailable): run(svc.redeem(repo, store, FakeClient(), config(), token))
-    with pytest.raises(svc.HandoffUnavailable): issue(repo, store)
+    # Expired link -> replacement for the SAME attempt, never a second order.
+    fresh = tok(issue(repo, store))
+    html, _ = run(svc.redeem(repo, store, FakeClient(), config(), fresh))
+    assert 'value="' + repo.payments[0]["txnid"] + '"' in html
     assert len(repo.payments) == 1
 
 
-@pytest.mark.parametrize("status", ["failed", "pending", "captured", "created"])
+@pytest.mark.parametrize("status", ["failed", "pending", "captured"])
 def test_existing_attempt_never_creates_another(status):
     repo, store = FakeRepo(), Store()
     issue(repo, store)
@@ -109,7 +121,7 @@ def test_wrong_owner_cannot_issue():
 
 def test_missing_storage_fails_without_second_order():
     repo = FakeRepo()
-    store = SimpleNamespace(insert=AsyncMock(return_value=False))
+    store = SimpleNamespace(issue=AsyncMock(return_value=False), chain=AsyncMock(return_value=None))
     with pytest.raises(svc.HandoffUnavailable): issue(repo, store)
     assert len(repo.payments) == 1
     with pytest.raises(svc.HandoffUnavailable): issue(repo, store)
@@ -162,3 +174,126 @@ def test_same_payment_signed_fields_match_existing_website_builder():
     for key, value in form.fields.items():
         assert 'name="' + escape(key, quote=True) + '" value="' + escape(value, quote=True) + '"' in html
     assert len(repo.payments) == 1
+
+def tok(response):
+    return response["handoffUrl"].split("#token=")[1]
+
+
+def issue_with(repo, store, client, cfg=None):
+    return run(svc.issue(repo, store, client, cfg or config(),
+        booking_reference="FNFHABC123", auth=AuthContext("u1"), guest_token=None))
+
+
+def test_replacement_reuses_same_txnid_and_revokes_previous_link():
+    repo, store = FakeRepo(), Store()
+    first = tok(issue(repo, store))
+    second = tok(issue(repo, store))
+    assert first != second and len(repo.payments) == 1
+    with pytest.raises(svc.HandoffUnavailable):
+        run(svc.redeem(repo, store, FakeClient(), config(), first))
+    html, _ = run(svc.redeem(repo, store, FakeClient(), config(), second))
+    assert 'name="txnid" value="' + repo.payments[0]["txnid"] + '"' in html
+
+
+def test_replacements_are_bounded():
+    repo, store = FakeRepo(), Store()
+    for _ in range(svc.MAX_LINKS):
+        issue(repo, store)
+    with pytest.raises(svc.HandoffUnavailable): issue(repo, store)
+    assert len(repo.payments) == 1
+
+
+def test_replacement_refused_when_payu_has_seen_the_txnid():
+    repo, store = FakeRepo(), Store()
+    issue(repo, store)
+    client = FakeClient(verified=("pending", "4999.50", "MIH1", "auth"))
+    with pytest.raises(svc.HandoffUnavailable): issue_with(repo, store, client)
+    assert client.verify_calls == 1 and len(repo.payments) == 1
+
+
+def test_replacement_refused_when_payu_verify_fails():
+    repo, store = FakeRepo(), Store()
+    issue(repo, store)
+    client = FakeClient()
+    client.verify_payment = AsyncMock(side_effect=RuntimeError("unreachable"))
+    with pytest.raises(svc.HandoffUnavailable): issue_with(repo, store, client)
+    assert len(repo.payments) == 1
+
+
+@pytest.mark.parametrize("status", ["pending", "captured", "failed"])
+def test_pending_or_late_captured_attempt_gets_status_only(status):
+    repo, store = FakeRepo(), Store()
+    issue(repo, store)
+    repo.payments[0]["status"] = status
+    client = FakeClient()
+    with pytest.raises(svc.HandoffUnavailable): issue_with(repo, store, client)
+    assert client.verify_calls == 0 and len(repo.payments) == 1 and repo.jobs == []
+
+
+def test_replacement_refused_after_attempt_window():
+    repo, store = FakeRepo(), Store()
+    issue(repo, store)
+    repo.payments[0]["created_at"] = (datetime.now(timezone.utc) - svc.ATTEMPT_WINDOW
+                                      - timedelta(seconds=1)).isoformat()
+    with pytest.raises(svc.HandoffUnavailable): issue(repo, store)
+    assert len(repo.payments) == 1
+
+
+def test_website_started_attempt_never_gets_handoff():
+    from app.services import payments
+    repo, store, cfg = FakeRepo(), Store(), config()
+    run(payments.create_order(repo, FakeClient(), cfg, booking_reference="FNFHABC123",
+                              auth=AuthContext("u1"), guest_token=None))
+    with pytest.raises(svc.HandoffUnavailable): issue(repo, store, cfg)
+    assert store.rows == {} and len(repo.payments) == 1
+
+
+def test_concurrent_redemption_only_one_form():
+    repo, store = FakeRepo(), Store()
+    token = tok(issue(repo, store))
+    async def both():
+        return await asyncio.gather(*(svc.redeem(repo, store, FakeClient(), config(), token)
+                                      for _ in range(5)), return_exceptions=True)
+    results = run(both())
+    assert sum(isinstance(r, tuple) for r in results) == 1
+    assert all(isinstance(r, svc.HandoffUnavailable) for r in results if not isinstance(r, tuple))
+    assert len(repo.payments) == 1 and repo.capture_calls == 0
+
+
+def test_concurrent_issue_creates_one_payment():
+    repo, store = FakeRepo(), Store()
+    async def both():
+        return await asyncio.gather(*(svc.issue(repo, store, FakeClient(), config(),
+            booking_reference="FNFHABC123", auth=AuthContext("u1"), guest_token=None)
+            for _ in range(3)), return_exceptions=True)
+    run(both())
+    assert len(repo.payments) == 1
+
+
+def prod(**kw):
+    base = dict(payu_handoff_enabled=True, payu_handoff_production_approved=True,
+                payu_production_approved=True, payu_env="production", is_production=True,
+                public_site_url="https://www.flynfeelholiday.com")
+    base.update(kw)
+    return SimpleNamespace(**base)
+
+
+def test_production_switch_defaults_off():
+    assert Settings.model_fields["payu_handoff_production_approved"].default is False
+
+
+@pytest.mark.parametrize("missing", ["payu_handoff_enabled", "payu_handoff_production_approved",
+                                     "payu_production_approved", "is_production"])
+def test_production_needs_every_approval(missing):
+    with pytest.raises(svc.HandoffUnavailable): svc.require_enabled(prod(**{missing: False}))
+
+
+def test_production_needs_consistent_payu_env():
+    with pytest.raises(svc.HandoffUnavailable): svc.require_enabled(prod(payu_env="test"))
+    svc.require_enabled(prod())   # capable once separately approved; not activated anywhere
+
+
+def test_production_form_uses_only_production_payu_host():
+    _, headers = svc.render_form("https://secure.payu.in/_payment", {"a": "b"})
+    assert "form-action https://secure.payu.in;" in headers["Content-Security-Policy"]
+    assert svc.expected_action(prod()) == "https://secure.payu.in/_payment"
